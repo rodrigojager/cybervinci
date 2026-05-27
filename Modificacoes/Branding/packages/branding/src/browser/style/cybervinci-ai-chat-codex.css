@@ -1,0 +1,422 @@
+/**
+ * CyberVinci AI Chat — Codex-inspired layout.
+ * Keeps the CyberVinci logo centered as a watermark; tasks list at top; compact input card at bottom.
+ */
+
+.chat-view-widget {
+  background-color: color-mix(in srgb, var(--theia-sideBar-background) 92%, #000 8%);
+}
+
+.chat-view-widget .chat-tree-view-widget {
+  background: transparent;
+}
+
+/* ── Welcome layout: tasks on top, logo centered in remaining space ── */
+
+.chat-view-widget .theia-WelcomeMessage-Container {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.chat-view-widget .theia-WelcomeMessage-Container-Inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  min-height: 0;
+}
+
+.chat-view-widget .theia-WelcomeMessage-Divider {
+  display: none;
+}
+
+/* Recent chats — Codex "Tasks" strip at top */
+.chat-view-widget .cybervinci-codex-tasks {
+  order: 1;
+  flex: 0 0 auto;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+}
+
+.chat-view-widget .cybervinci-codex-tasks-section {
+  align-items: stretch;
+  padding: 14px 16px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chat-view-widget .cybervinci-codex-tasks-heading {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 10px 0;
+  text-align: left;
+  color: var(--theia-foreground);
+}
+
+.chat-view-widget .theia-WelcomeMessage-SessionCards {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  grid-template-columns: unset;
+  grid-auto-rows: unset;
+  justify-content: flex-start;
+  max-width: none;
+}
+
+.chat-view-widget .theia-WelcomeMessage-SessionCards > * {
+  width: 100%;
+}
+
+.chat-view-widget .theia-WelcomeMessage-SessionCards .theia-Card {
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  min-height: unset;
+  padding: 8px 10px;
+}
+
+.chat-view-widget .theia-WelcomeMessage-SessionCards .theia-Card:hover {
+  background: color-mix(in srgb, var(--theia-list-hoverBackground) 70%, transparent);
+}
+
+.chat-view-widget .theia-WelcomeMessage-BrowseAllLink {
+  margin-top: 8px;
+  padding-bottom: 0;
+  text-align: left;
+}
+
+.chat-view-widget .theia-WelcomeMessage-BrowseAllLink a {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+/* CyberVinci logo — centered watermark (same position as Codex cloud icon) */
+.chat-view-widget .cybervinci-codex-welcome {
+  order: 2;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 32px;
+  min-height: 180px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chat-view-widget .cybervinci-codex-welcome-logo {
+  width: 180px !important;
+  height: 180px !important;
+  opacity: 0.2;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  filter: saturate(0.85);
+  pointer-events: none;
+  user-select: none;
+}
+
+.chat-view-widget .cybervinci-codex-welcome .theia-WelcomeMessage-Content {
+  max-width: 300px;
+  padding: 0 12px;
+  opacity: 0.5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.chat-view-widget .cybervinci-codex-welcome .theia-WelcomeMessage-Content h2 {
+  display: none;
+}
+
+.chat-view-widget .cybervinci-codex-welcome .theia-WelcomeMessage-Content p {
+  margin: 0;
+  font-size: 12px;
+}
+
+.chat-view-widget .cybervinci-codex-welcome .theia-WelcomeMessage-Content em {
+  font-style: normal;
+  opacity: 0.9;
+}
+
+/* ── Input card — Codex-style unified box (editor + toolbar inside one border) ── */
+
+.chat-view-widget .chat-input-widget {
+  container-type: inline-size;
+  padding: 0 10px 10px;
+  min-height: 0;
+}
+
+.chat-view-widget .theia-ChatInput {
+  margin-top: 0;
+  gap: 0;
+}
+
+.chat-view-widget .theia-ChatInput-Editor-Box.cybervinci-codex-input-card {
+  margin: 0;
+  padding: 10px 12px 8px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 6px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--theia-foreground) 11%, transparent);
+  background-color: color-mix(in srgb, var(--theia-input-background, var(--theia-editor-background)) 90%, #000 10%);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+/* Override base index.css (flex-end + column-reverse) */
+.chat-view-widget .cybervinci-codex-input-card.theia-ChatInput-Editor-Box {
+  justify-content: flex-start;
+  min-height: unset;
+}
+
+.chat-view-widget .theia-ChatInput-Editor-Box.cybervinci-codex-input-card:has(.monaco-editor.focused) {
+  border-color: color-mix(in srgb, var(--theia-focusBorder) 55%, transparent);
+}
+
+/* Agent suggestion chips — inside the card, top row */
+.chat-view-widget .cybervinci-codex-input-card .chat-agent-suggestions {
+  padding: 0;
+  margin: 0 0 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Pasted / inline image thumbnails — Codex-style strip above editor */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-PendingImages {
+  padding: 0 0 8px;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-PendingImage {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  border-color: color-mix(in srgb, var(--theia-foreground) 11%, transparent);
+  background: color-mix(in srgb, var(--theia-input-background, var(--theia-editor-background)) 88%, #000 12%);
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-PendingImage-remove {
+  width: 16px;
+  height: 16px;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  background: color-mix(in srgb, var(--theia-sideBar-background) 75%, #000 25%);
+  border: 1px solid color-mix(in srgb, var(--theia-foreground) 18%, transparent);
+}
+
+.chat-view-widget .cybervinci-codex-input-card .chat-agent-suggestion {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theia-foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--theia-toolbar-hoverBackground) 30%, transparent);
+}
+
+/* Text area — top-aligned, min 2 lines */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor {
+  flex-direction: column;
+  min-height: 48px;
+  flex: 0 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor-Placeholder {
+  top: 0;
+  left: 2px;
+  right: 8px;
+  align-items: flex-start;
+  line-height: 20px;
+  color: color-mix(in srgb, var(--theia-descriptionForeground) 70%, transparent);
+  font-size: 13px;
+  padding-top: 0;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor .monaco-editor,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor .monaco-editor .monaco-editor-background,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor .monaco-editor .margin {
+  background: transparent !important;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor .monaco-editor .margin,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor .monaco-editor .monaco-editor-background,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-Editor .monaco-editor .inputarea.ime-input {
+  padding-left: 2px !important;
+}
+
+/* Bottom toolbar — grid prevents send/reasoning overlap */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  width: 100%;
+  height: auto;
+  min-height: 34px;
+  padding: 2px 0 0;
+  padding-left: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left {
+  order: unset;
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right {
+  order: unset;
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 0;
+  flex-shrink: 0;
+  justify-self: end;
+}
+
+/* Reasoning pill lives on the right (before send), like Codex model selector */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right .theia-ChatInput-ReasoningSelector.theia-select-component {
+  max-width: 88px;
+  flex-shrink: 0;
+}
+
+/* Circular + (attach) */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > .option:first-child {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--theia-foreground) 16%, transparent);
+  background: transparent;
+  justify-content: center;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > .option:first-child .codicon {
+  font-size: 0;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > .option:first-child .codicon::after {
+  content: "+";
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1;
+  font-family: var(--theia-ui-font-family);
+  color: var(--theia-foreground);
+}
+
+/* Agent @ label — compact */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .option.reverse span:first-child {
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+/* Mode / reasoning pills — shrink before overlapping send */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-ModeSelector.theia-select-component,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-ReasoningSelector.theia-select-component {
+  height: 28px;
+  max-width: 96px;
+  min-width: 0;
+  flex-shrink: 1;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theia-foreground) 12%, transparent);
+  background: transparent;
+  font-size: 11px;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-ModeSelector .theia-select-component-label,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-ReasoningSelector .theia-select-component-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Capabilities/tools — hide on very narrow sidebars */
+@container (max-width: 300px) {
+  .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .option .codicon-tools {
+    display: none;
+  }
+
+  .chat-view-widget .cybervinci-codex-input-card .theia-ChatInput-ReasoningSelector.theia-select-component {
+    max-width: 72px;
+  }
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .option .codicon-tools {
+  opacity: 0.5;
+}
+
+/* Circular send — always pinned right, never overlaps */
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--theia-foreground) 82%, #fff 18%);
+  color: var(--theia-editor-background);
+  justify-content: center;
+  margin-left: 0;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child:hover:not(.disabled) {
+  background: var(--theia-foreground);
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child.disabled {
+  opacity: 0.35;
+  background: color-mix(in srgb, var(--theia-foreground) 30%, transparent);
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child .codicon-send::before {
+  content: "\ea76";
+  color: inherit;
+}
+
+/* Token usage badge — keep compact */
+.chat-view-widget .cybervinci-codex-input-card .token-usage-badge {
+  flex-shrink: 0;
+}
+
+/* Chat messages — cleaner */
+.chat-view-widget .theia-ChatNode {
+  padding: 14px 16px 8px;
+  border-bottom-color: color-mix(in srgb, var(--theia-sideBarSectionHeader-border) 50%, transparent);
+}

@@ -1,0 +1,51 @@
+{
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "[typescript]": {
+    "editor.tabSize": 4
+  },
+  "[json]": {
+    "editor.tabSize": 2
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "clang-format.language.typescript.enable": false,
+  "[markdown]": {
+    "editor.defaultFormatter": "davidanson.vscode-markdownlint"
+  },
+  "markdownlint.config": {
+    "MD032": false, // don't require blank line around lists 
+    "MD033": false, // allow inline html
+    "MD041": false // don't require h1 in first line
+  },
+  "ai-features.AiEnable.enableAI": true,
+  "ai-features.agentMode.enabled": true,
+  "ai-features.chat.bypassModelRequirement": true,
+  "ai-features.chat.defaultChatAgent": "OpenCoder",
+  "security.workspace.trust.enabled": false,
+  "security.workspace.trust.emptyWindow": true,
+  "ai-features.agentSettings": {
+    "OpenCoder": {
+      "languageModelRequirements": [
+        {
+          "purpose": "chat",
+          "identifier": "codex-provider"
+        }
+      ]
+    },
+    "OpenPencil": {
+      "languageModelRequirements": [
+        {
+          "purpose": "openpencil-design",
+          "identifier": "codex-provider"
+        },
+        {
+          "purpose": "chat",
+          "identifier": "codex-provider"
+        }
+      ]
+    }
+  },
+}

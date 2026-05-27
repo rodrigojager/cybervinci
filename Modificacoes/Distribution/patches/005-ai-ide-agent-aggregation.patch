@@ -1,0 +1,47 @@
+diff --git a/packages/ai-ide/src/browser/frontend-module.ts b/packages/ai-ide/src/browser/frontend-module.ts
+index 1b2f891..3ee0e24 100644
+--- a/packages/ai-ide/src/browser/frontend-module.ts
++++ b/packages/ai-ide/src/browser/frontend-module.ts
+@@ -21,6 +21,7 @@ import { ChatAgent, ChatAgentRecommendationService } from '@theia/ai-chat/lib/co
+ import { Agent, AIVariableContribution, bindToolProvider } from '@theia/ai-core/lib/common';
+ import { ArchitectAgent } from './architect-agent';
+ import { CoderAgent } from './coder-agent';
++import { OpenCoderAgent } from './open-coder-agent';
+ import { SummarizeSessionCommandContribution } from './summarize-session-command-contribution';
+ import {
+     FileContentFunction,
+@@ -125,6 +126,7 @@ import { ExploreAgent } from './explore-agent';
+ import { CodeReviewerAgent } from './code-reviewer-agent';
+ import { CodeReviewCapabilityContribution } from './code-review-capability-contribution';
+ import { PRReviewAgent } from './review/pr-review-agent';
++import { AICapabilitiesConfigurationWidget } from './ai-configuration/capabilities-configuration-widget';
+ 
+ export default new ContainerModule((bind, _unbind, _isBound, rebind) => {
+     bind(PreferenceContribution).toConstantValue({ schema: aiIdePreferenceSchema });
+@@ -148,6 +150,10 @@ export default new ContainerModule((bind, _unbind, _isBound, rebind) => {
+     bind(Agent).toService(CoderAgent);
+     bind(ChatAgent).toService(CoderAgent);
+ 
++    bind(OpenCoderAgent).toSelf().inSingletonScope();
++    bind(Agent).toService(OpenCoderAgent);
++    bind(ChatAgent).toService(OpenCoderAgent);
++
+     bind(ProjectInfoAgent).toSelf().inSingletonScope();
+     bind(Agent).toService(ProjectInfoAgent);
+     bind(ChatAgent).toService(ProjectInfoAgent);
+@@ -257,6 +263,14 @@ export default new ContainerModule((bind, _unbind, _isBound, rebind) => {
+         }))
+         .inSingletonScope();
+ 
++    bind(AICapabilitiesConfigurationWidget).toSelf();
++    bind(WidgetFactory)
++        .toDynamicValue(ctx => ({
++            id: AICapabilitiesConfigurationWidget.ID,
++            createWidget: () => ctx.container.get(AICapabilitiesConfigurationWidget)
++        }))
++        .inSingletonScope();
++
+     bind(ModelAliasesConfigurationWidget).toSelf();
+     bind(WidgetFactory)
+         .toDynamicValue(ctx => ({
+

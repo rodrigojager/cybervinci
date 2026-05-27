@@ -1,0 +1,37 @@
+{
+  "extends": "../../configs/base.tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "lib"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../codex-provider"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../branding"
+    },
+    {
+      "path": "../editor"
+    },
+    {
+      "path": "../filesystem"
+    },
+    {
+      "path": "../monaco"
+    },
+    {
+      "path": "../output"
+    },
+    {
+      "path": "../workspace"
+    }
+  ]
+}

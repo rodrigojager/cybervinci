@@ -1,0 +1,837 @@
+diff --git a/packages/core/src/browser/color-application-contribution.ts b/packages/core/src/browser/color-application-contribution.ts
+index 91cb427..f55de23 100644
+--- a/packages/core/src/browser/color-application-contribution.ts
++++ b/packages/core/src/browser/color-application-contribution.ts
+@@ -100,6 +100,7 @@ export class ColorApplicationContribution implements FrontendApplicationContribu
+     }
+ 
+     protected updateThemeBackground(): void {
++        window.localStorage.setItem('theme.type', this.themeService.getCurrentTheme().type);
+         const color = this.colors.getCurrentColor('editor.background');
+         if (color) {
+             window.localStorage.setItem(DEFAULT_BACKGROUND_COLOR_STORAGE_KEY, color);
+
+diff --git a/packages/core/src/browser/decorations-service.ts b/packages/core/src/browser/decorations-service.ts
+index 508c4c7..6c5586b 100644
+--- a/packages/core/src/browser/decorations-service.ts
++++ b/packages/core/src/browser/decorations-service.ts
+@@ -148,10 +148,6 @@ class DecorationProviderWrapper {
+             const request = new DecorationDataRequest(source, Promise.resolve(dataOrThenable).then(data => {
+                 if (this.data.get(uri) === request) {
+                     this.keepItem(uri, data);
+-                    // Notify subscribers that a lazily-fetched decoration is now
+-                    // available so renderers can re-query. Without this, decorations
+-                    // dropped by event truncation never reach the UI.
+-                    this.onDidChangeDecorationsEmitter.fire(this.decorations);
+                 }
+             }).catch(err => {
+                 if (!(err instanceof Error && err.name === 'Canceled' && err.message === 'Canceled') && this.data.get(uri) === request) {
+
+diff --git a/packages/core/src/browser/frontend-application-module.ts b/packages/core/src/browser/frontend-application-module.ts
+index 3211cfa..dbc6b0b 100644
+--- a/packages/core/src/browser/frontend-application-module.ts
++++ b/packages/core/src/browser/frontend-application-module.ts
+@@ -374,7 +374,7 @@ export const frontendApplicationModule = new ContainerModule((bind, _unbind, _is
+     }).inSingletonScope();
+ 
+     bind(AboutDialog).toSelf().inSingletonScope();
+-    bind(AboutDialogProps).toConstantValue({ title: 'Theia' });
++    bind(AboutDialogProps).toConstantValue({ title: 'CyberVinci' });
+ 
+     bind(EnvVariablesServer).toDynamicValue(ctx => {
+         const connection = ctx.container.get(WebSocketConnectionProvider);
+
+diff --git a/packages/core/src/browser/frontend-application.ts b/packages/core/src/browser/frontend-application.ts
+index 6bb6709..a49f9ca 100644
+--- a/packages/core/src/browser/frontend-application.ts
++++ b/packages/core/src/browser/frontend-application.ts
+@@ -77,6 +77,7 @@ export class FrontendApplication {
+     async start(): Promise<void> {
+         const startup = this.backendStopwatch.start('frontend');
+         this.settlementContext = new MeasurementContext(this.stopwatch, 'Frontend', TIMER_WARNING_THRESHOLD);
++        this.updateViewportHeight();
+ 
+         await this.measure('startContributions', () => this.startContributions(), 'Start frontend contributions', false);
+         this.stateService.state = 'started_contributions';
+@@ -128,7 +129,15 @@ export class FrontendApplication {
+             this.layoutRestorer.storeLayout(this);
+             this.stopContributions();
+         });
+-        window.addEventListener('resize', () => this.shell.update());
++        const updateShellLayout = () => window.requestAnimationFrame(() => {
++            this.updateViewportHeight();
++            this.shell.update();
++        });
++        window.addEventListener('resize', updateShellLayout);
++        window.addEventListener('orientationchange', updateShellLayout);
++        window.addEventListener('pageshow', updateShellLayout);
++        window.visualViewport?.addEventListener('resize', updateShellLayout);
++        window.visualViewport?.addEventListener('scroll', updateShellLayout);
+ 
+         this.keybindings.registerEventListeners(window);
+ 
+@@ -155,6 +164,15 @@ export class FrontendApplication {
+ 
+     }
+ 
++    protected updateViewportHeight(): void {
++        const viewportHeights = [
++            window.innerHeight,
++            window.visualViewport?.height
++        ].filter((height): height is number => typeof height === 'number' && height > 0);
++        const viewportHeight = Math.floor(Math.min(...viewportHeights));
++        document.documentElement.style.setProperty('--theia-viewport-height', `${viewportHeight}px`);
++    }
++
+     /**
+      * Attach the application shell to the host element. If a startup indicator is present, the shell is
+      * inserted before that indicator so it is not visible yet.
+
+diff --git a/packages/core/src/browser/messaging/service-connection-provider.ts b/packages/core/src/browser/messaging/service-connection-provider.ts
+index 0ed613b..f531d7b 100644
+--- a/packages/core/src/browser/messaging/service-connection-provider.ts
++++ b/packages/core/src/browser/messaging/service-connection-provider.ts
+@@ -128,6 +128,8 @@ export class ServiceConnectionProvider {
+             if (reconnect) {
+                 this.channelHandlers.set(path, handler);
+             }
++        }).catch(error => {
++            console.warn(`Failed to open service channel '${path}': ${error instanceof Error ? error.message : String(error)}`);
+         });
+ 
+     }
+
+diff --git a/packages/core/src/browser/preload/preload-module.ts b/packages/core/src/browser/preload/preload-module.ts
+index 41a4e45..60ade87 100644
+--- a/packages/core/src/browser/preload/preload-module.ts
++++ b/packages/core/src/browser/preload/preload-module.ts
+@@ -24,6 +24,7 @@ import { LocalizationServer, LocalizationServerPath } from '../../common/i18n/lo
+ import { ServiceConnectionProvider } from '../messaging/service-connection-provider';
+ import { OSBackendProvider, OSBackendProviderPath } from '../../common/os';
+ import { TextReplacementContribution } from './text-replacement-contribution';
++import { CyberVinciIconPreloadContribution } from './cybervinci-icon-preload-contribution';
+ 
+ export default new ContainerModule(bind => {
+     bind(Preloader).toSelf().inSingletonScope();
+@@ -44,4 +45,6 @@ export default new ContainerModule(bind => {
+     bind(PreloadContribution).toService(OSPreloadContribution);
+     bind(ThemePreloadContribution).toSelf().inSingletonScope();
+     bind(PreloadContribution).toService(ThemePreloadContribution);
++    bind(CyberVinciIconPreloadContribution).toSelf().inSingletonScope();
++    bind(PreloadContribution).toService(CyberVinciIconPreloadContribution);
+ });
+
+diff --git a/packages/core/src/browser/preload/theme-preload-contribution.ts b/packages/core/src/browser/preload/theme-preload-contribution.ts
+index 3a4f430..a0ed2fa 100644
+--- a/packages/core/src/browser/preload/theme-preload-contribution.ts
++++ b/packages/core/src/browser/preload/theme-preload-contribution.ts
+@@ -26,6 +26,27 @@ export class ThemePreloadContribution implements PreloadContribution {
+         const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+         const value = window.localStorage.getItem(DEFAULT_BACKGROUND_COLOR_STORAGE_KEY) || DefaultTheme.defaultBackgroundColor(dark);
+         document.documentElement.style.setProperty('--theia-editor-background', value);
++        const storedTheme = window.localStorage.getItem('theme');
++        const storedThemeType = window.localStorage.getItem('theme.type') || this.getBuiltinThemeType(storedTheme);
++        if (storedThemeType) {
++            document.body.classList.remove('theia-light', 'theia-dark', 'theia-hc', 'theia-hcLight');
++            document.body.classList.add(`theia-${storedThemeType}`);
++        }
++    }
++
++    protected getBuiltinThemeType(themeId: string | null): string | undefined {
++        switch (themeId) {
++            case 'dark':
++                return 'dark';
++            case 'light':
++                return 'light';
++            case 'hc-theia':
++                return 'hc';
++            case 'hc-theia-light':
++                return 'hcLight';
++            default:
++                return undefined;
++        }
+     }
+ 
+ }
+
+diff --git a/packages/core/src/browser/style/index.css b/packages/core/src/browser/style/index.css
+index 1a0e299..e8c6d49 100644
+--- a/packages/core/src/browser/style/index.css
++++ b/packages/core/src/browser/style/index.css
+@@ -107,7 +107,8 @@
+ html,
+ body {
+     overflow: hidden;
+-    height: 100vh;
++    height: 100dvh;
++    height: var(--theia-viewport-height, 100dvh);
+ }
+ 
+ body {
+@@ -188,7 +189,8 @@ blockquote {
+     right: 0;
+     bottom: 0;
+     background: var(--theia-editor-background);
+-    height: 100%;
++    height: 100dvh;
++    height: var(--theia-viewport-height, 100dvh);
+ }
+ 
+ .theia-preload {
+@@ -199,7 +201,8 @@ blockquote {
+     bottom: 0;
+     z-index: 50000;
+     background: var(--theia-editor-background);
+-    background-size: 60px 60px;
++    background-image: url("../icons/cybervinci/dourado-ciano-e-branco.png");
++    background-size: 230px 263px;
+     background-repeat: no-repeat;
+     background-attachment: fixed;
+     background-position: center;
+@@ -210,10 +213,7 @@ blockquote {
+ }
+ 
+ .theia-preload::after {
+-    animation: 1s theia-preload-rotate infinite;
+-  color: #777; /* color works on both light and dark themes */
+-  content: "\eb19"; /* codicon-load */
+-    font: normal normal normal 72px/1 codicon;
++    content: "";
+ }
+ 
+ @keyframes theia-preload-rotate {
+@@ -234,6 +234,56 @@ blockquote {
+     height: 18px;
+     margin: 5px;
+     margin-left: 8px;
++    background-image: url("../icons/cybervinci/dourado-ciano-e-branco.png");
++    background-repeat: no-repeat;
++    background-position: center;
++    background-size: contain;
++}
++
++.cybervinci-icon-picker {
++    display: inline-block;
++    width: var(--theia-icon-size);
++    height: var(--theia-icon-size);
++    min-width: var(--theia-icon-size);
++    background-repeat: no-repeat;
++    background-position: center;
++    background-size: contain;
++}
++
++body.cybervinci-app-icon-azul-e-branco .theia-icon,
++body.cybervinci-app-icon-azul-e-branco .theia-preload,
++.cybervinci-icon-azul-e-branco {
++    background-image: url("../icons/cybervinci/azul-e-branco.png");
++}
++
++body.cybervinci-app-icon-branco-e-laranja .theia-icon,
++body.cybervinci-app-icon-branco-e-laranja .theia-preload,
++.cybervinci-icon-branco-e-laranja {
++    background-image: url("../icons/cybervinci/branco-e-laranja.png");
++}
++
++body.cybervinci-app-icon-branco .theia-icon,
++body.cybervinci-app-icon-branco .theia-preload,
++.cybervinci-icon-branco {
++    background-image: url("../icons/cybervinci/branco.png");
++}
++
++body.cybervinci-app-icon-dourado-ciano-e-branco .theia-icon,
++body.cybervinci-app-icon-dourado-ciano-e-branco .theia-preload,
++.cybervinci-icon-dourado-ciano-e-branco {
++    background-image: url("../icons/cybervinci/dourado-ciano-e-branco.png");
++}
++
++body.cybervinci-app-icon-roxo-e-branco .theia-icon,
++body.cybervinci-app-icon-roxo-e-branco .theia-preload,
++.cybervinci-icon-roxo-e-branco {
++    background-image: url("../icons/cybervinci/roxo-e-branco.png");
++}
++
++body.cybervinci-app-icon-verde-e-branco .theia-icon,
++body.cybervinci-app-icon-verde-e-branco .theia-preload,
++.cybervinci-icon-verde-e-branco {
++    background-image: url("../icons/cybervinci/verde-e-branco.png");
+ }
+ 
+ .theia-mod-disabled,
+
+diff --git a/packages/core/src/common/menu/menu-model-registry.ts b/packages/core/src/common/menu/menu-model-registry.ts
+index b4660d3..d521284 100644
+--- a/packages/core/src/common/menu/menu-model-registry.ts
++++ b/packages/core/src/common/menu/menu-model-registry.ts
+@@ -184,7 +184,7 @@ export class MenuModelRegistry {
+ 
+         const parent = this.root.getOrCreate(menuPath, 0, menuPath.length - 1);
+         const existing = parent.children.find(node => node.id === menuPath[menuPath.length - 1]);
+-        if (Group.is(existing)) {
++        if (CompoundMenuNode.is(existing)) {
+             parent.removeNode(existing);
+             const newMenu = this.menuNodeFactory.createSubmenu(menuPath[menuPath.length - 1], label, contextKeyOverlay, sortString, icon, when);
+             newMenu.addNode(...existing.children);
+
+diff --git a/packages/core/src/common/message-rpc/channel.ts b/packages/core/src/common/message-rpc/channel.ts
+index 184a6cb..5a85916 100644
+--- a/packages/core/src/common/message-rpc/channel.ts
++++ b/packages/core/src/common/message-rpc/channel.ts
+@@ -183,10 +183,20 @@ export class ChannelMultiplexer implements Disposable {
+         if (!this.toDispose.disposed) {
+             this.toDispose.push(Disposable.create(() => {
+                 const reason = event?.reason ?? 'Multiplexer main channel has been closed from the remote side!';
+-                this.pendingOpen.forEach(pending => pending.reject(new Error(reason)));
++                this.pendingOpen.forEach(pending => {
++                    try {
++                        pending.reject(new Error(reason));
++                    } catch {
++                        // Ignore errors from synchronous rejection observers.
++                    }
++                });
+                 this.pendingOpen.clear();
+                 this.openChannels.forEach(channel => {
+-                    channel.onCloseEmitter.fire(event ?? { reason });
++                    try {
++                        channel.onCloseEmitter.fire(event ?? { reason });
++                    } catch (error) {
++                        console.warn(`Channel close listener failed for ${channel.id}:`, error);
++                    }
+                 });
+ 
+                 this.openChannels.clear();
+
+diff --git a/packages/core/src/common/message-rpc/rpc-protocol.ts b/packages/core/src/common/message-rpc/rpc-protocol.ts
+index 90c2458..eab15ab 100644
+--- a/packages/core/src/common/message-rpc/rpc-protocol.ts
++++ b/packages/core/src/common/message-rpc/rpc-protocol.ts
+@@ -79,11 +79,23 @@ export class RpcProtocol {
+         this.decoder = options.decoder ?? new MsgPackMessageDecoder();
+         this.toDispose.push(this.onNotificationEmitter);
+         channel.onClose(event => {
+-            this.pendingRequests.forEach(pending => pending.reject(new Error(event.reason)));
++            const reason = event?.reason ?? 'Connection closed';
++            this.pendingRequests.forEach(pending => {
++                try {
++                    pending.promise.catch(() => undefined);
++                    pending.reject(Object.assign(new Error(reason), { connectionClosed: true }));
++                } catch (error) {
++                    console.warn('Failed to reject pending RPC request on close:', error);
++                }
++            });
+             this.pendingRequests.clear();
+             this.pendingRequestCancellationEventListeners.forEach(disposable => disposable.dispose());
+             this.pendingRequestCancellationEventListeners.clear();
+-            this.toDispose.dispose();
++            try {
++                this.toDispose.dispose();
++            } catch (error) {
++                console.warn('Failed to dispose RPC protocol on close:', error);
++            }
+         });
+         this.toDispose.push(channel.onMessage(readBuffer => this.handleMessage(this.decoder.parse(readBuffer()))));
+         this.mode = options.mode ?? 'default';
+
+diff --git a/packages/core/src/electron-main/electron-main-application.ts b/packages/core/src/electron-main/electron-main-application.ts
+index 9d8e6b4..df06f3c 100644
+--- a/packages/core/src/electron-main/electron-main-application.ts
++++ b/packages/core/src/electron-main/electron-main-application.ts
+@@ -20,6 +20,8 @@ import {
+     nativeTheme, shell, dialog
+ } from '../../electron-shared/electron';
+ import * as path from 'path';
++import { homedir } from 'os';
++import { pathToFileURL } from 'url';
+ import { Argv } from 'yargs';
+ import { AddressInfo } from 'net';
+ import { promises as fs } from 'fs';
+@@ -45,12 +47,24 @@ import { StopReason } from '../common/frontend-application-state';
+ import { dynamicRequire } from '../node/dynamic-require';
+ import { ThemeMode } from '../common/theme';
+ import { backendGlobal } from '../node/backend-global';
++import { BackendApplicationPath } from '../node/backend-application';
++import { BackendApplicationConfigProvider } from '../node/backend-application-config-provider';
+ 
+ export { ElectronMainApplicationGlobals };
+ 
+ const createYargs: (argv?: string[], cwd?: string) => Argv = require('yargs/yargs');
+ 
+ const ELECTRON_TIMER_WARNING_THRESHOLD = 50;
++const CYBERVINCI_ICON_PREFERENCE = 'workbench.cyberVinciIcon';
++const DEFAULT_CYBERVINCI_ICON = 'dourado-ciano-e-branco';
++const CYBERVINCI_SPLASH_ICONS = new Set([
++    'azul-e-branco',
++    'branco-e-laranja',
++    'branco',
++    'dourado-ciano-e-branco',
++    'roxo-e-branco',
++    'verde-e-branco'
++]);
+ 
+ /**
+  * Options passed to the main/default command handler.
+@@ -388,7 +402,12 @@ export class ElectronMainApplication {
+             });
+         }
+ 
+-        splashScreenWindow.loadFile(path.resolve(this.globals.THEIA_APP_PROJECT_PATH, splashScreenOptions.content!).toString());
++        const splashScreenContent = path.resolve(this.globals.THEIA_APP_PROJECT_PATH, splashScreenOptions.content!).toString();
++        splashScreenWindow.loadFile(splashScreenContent, {
++            query: {
++                iconUrl: await this.resolveCyberVinciSplashIconUrl()
++            }
++        });
+ 
+         // close splash screen and show main window once frontend is ready or a timeout is hit
+         const cancelTokenSource = new CancellationTokenSource();
+@@ -411,6 +430,52 @@ export class ElectronMainApplication {
+         return splashScreenWindow;
+     }
+ 
++    protected async resolveCyberVinciSplashIconUrl(): Promise<string> {
++        const preferredIcon = await this.readCyberVinciIconPreference();
++        const iconId = preferredIcon && CYBERVINCI_SPLASH_ICONS.has(preferredIcon) ? preferredIcon : DEFAULT_CYBERVINCI_ICON;
++        const iconPath = path.resolve(this.globals.THEIA_APP_PROJECT_PATH, 'resources', 'cybervinci-icons', `${iconId}.png`);
++        const fallbackIconPath = path.resolve(this.globals.THEIA_APP_PROJECT_PATH, 'resources', 'cybervinci-splash.png');
++        return pathToFileURL(existsSync(iconPath) ? iconPath : fallbackIconPath).toString();
++    }
++
++    protected async readCyberVinciIconPreference(): Promise<string | undefined> {
++        try {
++            const settingsPath = path.join(this.getConfigDirPath(), 'settings.json');
++            const settings = this.parseSettings(await fs.readFile(settingsPath, 'utf8'));
++            const preferredIcon = settings?.[CYBERVINCI_ICON_PREFERENCE];
++            return typeof preferredIcon === 'string' ? preferredIcon : undefined;
++        } catch {
++            return undefined;
++        }
++    }
++
++    protected parseSettings(raw: string): Record<string, unknown> | undefined {
++        try {
++            return JSON.parse(raw);
++        } catch {
++            const withoutComments = raw
++                .replace(/\/\*[\s\S]*?\*\//g, '')
++                .replace(/^\s*\/\/.*$/gm, '')
++                .replace(/,\s*([}\]])/g, '$1');
++            return JSON.parse(withoutComments);
++        }
++    }
++
++    protected getConfigDirPath(): string {
++        if (process.env.THEIA_CONFIG_DIR) {
++            return process.env.THEIA_CONFIG_DIR;
++        }
++        const dataFolderPath = path.join(BackendApplicationPath, 'data');
++        if (existsSync(dataFolderPath)) {
++            return path.join(dataFolderPath, 'user-data');
++        }
++        try {
++            return path.join(homedir(), BackendApplicationConfigProvider.get().configurationFolder);
++        } catch {
++            return path.join(homedir(), '.theia');
++        }
++    }
++
+     protected isShowSplashScreen(): boolean {
+         return !process.env.THEIA_NO_SPLASH && typeof this.config.electron.splashScreenOptions === 'object' && !!this.config.electron.splashScreenOptions.content;
+     }
+
+diff --git a/packages/core/src/node/backend-application-module.ts b/packages/core/src/node/backend-application-module.ts
+index 6e5b0c3..7f444ee 100644
+--- a/packages/core/src/node/backend-application-module.ts
++++ b/packages/core/src/node/backend-application-module.ts
+@@ -34,10 +34,7 @@ import {
+     PreferenceProviderProvider,
+     PreferenceProvider
+ } from '../common';
+-import {
+-    BackendApplication, BackendApplicationContribution, BackendApplicationCliContribution,
+-    BackendApplicationServer, BackendApplicationPath, RootContainer
+-} from './backend-application';
++import { BackendApplication, BackendApplicationContribution, BackendApplicationCliContribution, BackendApplicationServer, BackendApplicationPath } from './backend-application';
+ import { CliManager, CliContribution } from './cli';
+ import { IPCConnectionProvider } from './messaging';
+ import { ApplicationServerImpl } from './application-server';
+@@ -90,13 +87,6 @@ export const backendApplicationModule = new ContainerModule(bind => {
+     bind(CliContribution).toService(BackendApplicationCliContribution);
+ 
+     bind(BackendApplication).toSelf().inSingletonScope();
+-    bind(RootContainer).toDynamicValue(({ container }) => {
+-        let root = container;
+-        while (root.parent) {
+-            root = root.parent;
+-        }
+-        return root;
+-    }).inSingletonScope();
+     bindRootContributionProvider(bind, BackendApplicationContribution);
+     // Bind the BackendApplicationServer as a BackendApplicationContribution
+     // and fallback to an empty contribution if never bound.
+
+diff --git a/packages/core/src/node/backend-application.ts b/packages/core/src/node/backend-application.ts
+index 255de33..fd8bc09 100644
+--- a/packages/core/src/node/backend-application.ts
++++ b/packages/core/src/node/backend-application.ts
+@@ -21,10 +21,10 @@ import * as https from 'https';
+ import * as express from 'express';
+ import * as yargs from 'yargs';
+ import * as fs from 'fs-extra';
+-import { inject, named, injectable, type interfaces, postConstruct } from 'inversify';
++import { inject, named, injectable, postConstruct } from 'inversify';
+ import { ContributionProvider, LogLevel, MaybePromise, MeasurementContext, Stopwatch } from '../common';
+ import { CliContribution } from './cli';
+-import { Deferred, timeoutReject } from '../common/promise-util';
++import { Deferred } from '../common/promise-util';
+ import { environment } from '../common/index';
+ import { AddressInfo } from 'net';
+ import { ProcessUtils } from './process-utils';
+@@ -35,19 +35,12 @@ import { ProcessUtils } from './process-utils';
+  */
+ export const BackendApplicationPath = process.env.THEIA_APP_PROJECT_PATH || process.cwd();
+ 
+-/**
+- * Private injection token for the backend's root Inversify {@link Container}.
+- */
+-export const RootContainer = Symbol('RootContainer');
+-
+ export type DnsResultOrder = 'ipv4first' | 'verbatim' | 'nodeDefault';
+ 
+ const APP_PROJECT_PATH = 'app-project-path';
+ 
+ const TIMER_WARNING_THRESHOLD = 50;
+ 
+-const SHUTDOWN_TIMEOUT_MS = 5000;
+-
+ const DEFAULT_PORT = environment.electron.is() ? 0 : 3000;
+ const DEFAULT_HOST = 'localhost';
+ const DEFAULT_SSL = false;
+@@ -110,23 +103,12 @@ export interface BackendApplicationContribution {
+     onStart?(server: http.Server | https.Server): MaybePromise<void>;
+ 
+     /**
+-     * Called when the backend application shuts down.
+-     *
+-     * When shutdown is initiated via `SIGINT`/`SIGTERM`, contributions are dispatched
+-     * in parallel and any returned promise is awaited up to `SHUTDOWN_TIMEOUT_MS`
+-     * milliseconds while injected services from the root container are still
+-     * resolvable.
+-     *
+-     * On synchronous-exit fallback paths (uncaught exceptions, server bind failures,
+-     * or normal process exit), the hook is invoked synchronously and any returned
+-     * promise is discarded. Implementations should be resilient to either path.
+-     *
+-     * Contributions must be independent of one another during stop because they are
+-     * dispatched in parallel.
++     * Called when the backend application shuts down. Contributions must perform only synchronous operations.
++     * Any kind of additional asynchronous work queued in the event loop will be ignored and abandoned.
+      *
+      * @param app the express application.
+      */
+-    onStop?(app?: express.Application): MaybePromise<void>;
++    onStop?(app?: express.Application): void;
+ }
+ 
+ @injectable()
+@@ -180,14 +162,8 @@ export class BackendApplication {
+     @inject(Stopwatch)
+     protected readonly stopwatch: Stopwatch;
+ 
+-    @inject(RootContainer)
+-    protected readonly rootContainer: interfaces.Container;
+-
+     private _configured: Promise<void>;
+ 
+-    private stoppedContributions = false;
+-    private shuttingDown = false;
+-
+     private settlementContext?: MeasurementContext<BackendApplicationContribution>;
+ 
+     constructor(
+@@ -203,15 +179,18 @@ export class BackendApplication {
+         process.on('SIGPIPE', () => {
+             console.error(new Error('Unexpected SIGPIPE'));
+         });
+-
++        /**
++         * Kill the current process tree on exit.
++         */
++        function signalHandler(signal: NodeJS.Signals): never {
++            process.exit(1);
++        }
+         // Handles normal process termination.
+         process.on('exit', () => this.onStop());
+-
+-        // Handles `Ctrl+C` and `kill pid`. Delegates to gracefulShutdown so that
+-        // root-scoped singletons get their @preDestroy hooks invoked before exit.
+-        const onSignal = () => { this.gracefulShutdown().catch(err => console.error(err)); };
+-        process.on('SIGINT', onSignal);
+-        process.on('SIGTERM', onSignal);
++        // Handles `Ctrl+C`.
++        process.on('SIGINT', signalHandler);
++        // Handles `kill pid`.
++        process.on('SIGTERM', signalHandler);
+     }
+ 
+     protected async initialize(): Promise<void> {
+@@ -323,7 +302,7 @@ export class BackendApplication {
+             // address should be defined at this point
+             const address = server.address()!;
+             const url = typeof address === 'string' ? address : this.getHttpUrl(address, this.cliParams.ssl);
+-            console.info(`Theia app listening on ${url}.`);
++            console.info(`CyberVinci app listening on ${url}.`);
+             deferred.resolve(server);
+         });
+ 
+@@ -353,82 +332,18 @@ export class BackendApplication {
+             : `${scheme}://${address}:${port}`;
+     }
+ 
+-    /**
+-     * Performs an asynchronous shutdown of the backend in two phases:
+-     *
+-     * 1. Contributions' {@link BackendApplicationContribution.onStop onStop} hooks are
+-     *    dispatched in parallel and awaited so that they can still resolve services
+-     *    from the root Inversify container while it is bound.
+-     * 2. All services in the root container are unbound, running their `@preDestroy`
+-     *    hooks.
+-     *
+-     * Each phase has its own {@link SHUTDOWN_TIMEOUT_MS} budget to avoid hanging on a
+-     * misbehaving hook. Late-resolving promises from a timed-out phase may still
+-     * settle in the background and could log noisily or interact with a partly
+-     * unbound container; this is accepted because the process is exiting.
+-     *
+-     * Idempotent: a second invocation is a no-op. Exits the process with code 1 so
+-     * that the `process.on('exit')` handler runs for fallback cleanup such as
+-     * {@link ProcessUtils.terminateProcessTree}; the exit handler does not re-invoke
+-     * contribution `onStop()` hooks that this method already dispatched.
+-     */
+-    protected async gracefulShutdown(): Promise<void> {
+-        if (this.shuttingDown) {
+-            return;
+-        }
+-        this.shuttingDown = true;
+-
+-        try {
+-            await Promise.race([
+-                this.stopContributions(),
+-                timeoutReject<void>(SHUTDOWN_TIMEOUT_MS, `Stopping backend contributions timed out after ${SHUTDOWN_TIMEOUT_MS}ms`)
+-            ]);
+-        } catch (err) {
+-            const message = err instanceof Error ? err.message : String(err);
+-            console.warn(`Backend contributions cleanup failed: ${message}`);
+-        }
+-
+-        try {
+-            await Promise.race([
+-                this.rootContainer.unbindAllAsync(),
+-                timeoutReject<void>(SHUTDOWN_TIMEOUT_MS, `Container unbind timed out after ${SHUTDOWN_TIMEOUT_MS}ms`)
+-            ]);
+-        } catch (err) {
+-            const message = err instanceof Error ? err.message : String(err);
+-            console.warn(`Backend root container cleanup failed: ${message}`);
+-        }
+-
+-        process.exit(1);
+-    }
+-
+-    protected async stopContributions(): Promise<void> {
+-        if (this.stoppedContributions) {
+-            return;
+-        }
+-        this.stoppedContributions = true;
++    protected onStop(): void {
+         console.info('>>> Stopping backend contributions...');
+-        // The `async` wrapper converts a synchronous throw inside a non-async
+-        // contribution's `onStop` into a rejected promise so the per-contribution
+-        // try/catch can handle it; otherwise `Promise.all` would abort.
+-        await Promise.all(this.contributionsProvider.getContributions().map(async contrib => {
++        for (const contrib of this.contributionsProvider.getContributions()) {
+             if (contrib.onStop) {
+                 try {
+-                    await contrib.onStop(this.app);
++                    contrib.onStop(this.app);
+                 } catch (error) {
+                     console.error('Could not stop contribution', error);
+                 }
+             }
+-        }));
++        }
+         console.info('<<< All backend contributions have been stopped.');
+-    }
+-
+-    protected onStop(): void {
+-        // Deliberate fire-and-forget of an async `stopContributions`()` call.
+-        // It invokes each contribution's `onStop` synchronously up to its
+-        // first `await`, so any synchronous cleanup runs before
+-        // `terminateProcessTree`. Any returned promises are abandoned because
+-        // the `'exit'` event does not yield back to the event loop.
+-        this.stopContributions();
+         this.processUtils.terminateProcessTree(process.pid);
+     }
+ 
+
+diff --git a/packages/core/src/node/logger-cli-contribution.spec.ts b/packages/core/src/node/logger-cli-contribution.spec.ts
+index 1514fd2..b6dad96 100644
+--- a/packages/core/src/node/logger-cli-contribution.spec.ts
++++ b/packages/core/src/node/logger-cli-contribution.spec.ts
+@@ -67,7 +67,7 @@ describe('log-level-cli-contribution', () => {
+     });
+ 
+     it('should use --log-level flag', async () => {
+-        const args: yargs.Arguments = await yargs.parse(['--log-level=debug']);
++        const args: yargs.Arguments = yargs.parse(['--log-level=debug']);
+         await cli.setArguments(args);
+ 
+         expect(cli.defaultLogLevel).eq(LogLevel.DEBUG);
+@@ -85,7 +85,7 @@ describe('log-level-cli-contribution', () => {
+         fs.fsyncSync(file.fd);
+         fs.closeSync(file.fd);
+ 
+-        const args: yargs.Arguments = await yargs.parse(['--log-config', file.path]);
++        const args: yargs.Arguments = yargs.parse(['--log-config', file.path]);
+         await cli.setArguments(args);
+ 
+         expect(cli.defaultLogLevel).eq(LogLevel.INFO);
+@@ -96,7 +96,7 @@ describe('log-level-cli-contribution', () => {
+     });
+ 
+     it('should use info as default log level', async () => {
+-        const args: yargs.Arguments = await yargs.parse([]);
++        const args: yargs.Arguments = yargs.parse([]);
+         await cli.setArguments(args);
+ 
+         expect(cli.defaultLogLevel).eq(LogLevel.INFO);
+@@ -113,7 +113,7 @@ describe('log-level-cli-contribution', () => {
+             }
+         }));
+ 
+-        const args: yargs.Arguments = await yargs.parse(['--log-config', file.path]);
++        const args: yargs.Arguments = yargs.parse(['--log-config', file.path]);
+         await cli.setArguments(args);
+         sinon.assert.calledWithMatch(consoleErrorSpy, 'Unknown default log level in');
+     });
+@@ -128,13 +128,13 @@ describe('log-level-cli-contribution', () => {
+             }
+         }));
+ 
+-        const args: yargs.Arguments = await yargs.parse(['--log-config', file.path]);
++        const args: yargs.Arguments = yargs.parse(['--log-config', file.path]);
+         await cli.setArguments(args);
+         sinon.assert.calledWithMatch(consoleErrorSpy, 'Unknown log level for logger hello in');
+     });
+ 
+     it('should reject nonexistent config files', async () => {
+-        const args: yargs.Arguments = await yargs.parse(['--log-config', '/tmp/cacaca']);
++        const args: yargs.Arguments = yargs.parse(['--log-config', '/tmp/cacaca']);
+         await cli.setArguments(args);
+         sinon.assert.calledWithMatch(consoleErrorSpy, 'no such file or directory');
+     });
+@@ -150,7 +150,7 @@ describe('log-level-cli-contribution', () => {
+         });
+         fs.writeFileSync(file.fd, '{' + text);
+ 
+-        const args: yargs.Arguments = await yargs.parse(['--log-config', file.path]);
++        const args: yargs.Arguments = yargs.parse(['--log-config', file.path]);
+         await cli.setArguments(args);
+         sinon.assert.calledWithMatch(consoleErrorSpy, 'Error reading log config file');
+     });
+@@ -175,7 +175,7 @@ describe('log-level-cli-contribution', () => {
+             fs.fsyncSync(file.fd);
+             fs.closeSync(file.fd);
+ 
+-            const args: yargs.Arguments = await yargs.parse(['--log-config', file.path]);
++            const args: yargs.Arguments = yargs.parse(['--log-config', file.path]);
+             await cli.setArguments(args);
+         }
+ 
+@@ -224,7 +224,7 @@ describe('log-level-cli-contribution', () => {
+         }));
+         fs.fsyncSync(file.fd);
+ 
+-        const args: yargs.Arguments = await yargs.parse(['--log-config', file.path]);
++        const args: yargs.Arguments = yargs.parse(['--log-config', file.path]);
+         await cli.setArguments(args);
+ 
+         expect(cli.defaultLogLevel).eq(LogLevel.INFO);
+
+diff --git a/packages/core/src/node/messaging/binary-message-pipe.ts b/packages/core/src/node/messaging/binary-message-pipe.ts
+index 5669b36..af56912 100644
+--- a/packages/core/src/node/messaging/binary-message-pipe.ts
++++ b/packages/core/src/node/messaging/binary-message-pipe.ts
+@@ -57,27 +57,29 @@ export class BinaryMessagePipe implements Disposable {
+     }
+ 
+     protected handleNewMessage(chunk: Uint8Array): void {
+-        if (chunk.byteLength < this.messageStartByteLength) {
++        const messageData = this.cachedMessageData.partialMessageStart ? Buffer.concat([this.cachedMessageData.partialMessageStart, chunk]) : chunk;
++        if (messageData.byteLength < this.messageStartByteLength) {
+             // The chunk only contains a part of the encoded message start
+-            this.cachedMessageData.partialMessageStart = chunk;
++            this.cachedMessageData.partialMessageStart = messageData;
+             return;
+         }
++        this.cachedMessageData.partialMessageStart = undefined;
+ 
+-        const messageLength = this.readMessageStart(chunk);
++        const messageLength = this.readMessageStart(messageData);
+ 
+-        if (chunk.length - this.messageStartByteLength > messageLength) {
++        if (messageData.length - this.messageStartByteLength > messageLength) {
+             // The initial chunk contains more than one binary message => Fire `onMessage` for first message and handle remaining content
+-            const firstMessage = chunk.slice(this.messageStartByteLength, this.messageStartByteLength + messageLength);
++            const firstMessage = messageData.slice(this.messageStartByteLength, this.messageStartByteLength + messageLength);
+             this.onMessageEmitter.fire(firstMessage);
+-            this.handleNewMessage(chunk.slice(this.messageStartByteLength + messageLength));
++            this.handleNewMessage(messageData.slice(this.messageStartByteLength + messageLength));
+ 
+-        } else if (chunk.length - this.messageStartByteLength === messageLength) {
++        } else if (messageData.length - this.messageStartByteLength === messageLength) {
+             // The initial chunk contains exactly one complete message. => Directly fire the `onMessage` event.
+-            this.onMessageEmitter.fire(chunk.slice(this.messageStartByteLength));
++            this.onMessageEmitter.fire(messageData.slice(this.messageStartByteLength));
+         } else {
+             // The initial chunk contains only part of the message content => Cache message data
+-            this.cachedMessageData.chunks = [chunk.slice(this.messageStartByteLength)];
+-            this.cachedMessageData.missingBytes = messageLength - chunk.byteLength + this.messageStartByteLength;
++            this.cachedMessageData.chunks = [messageData.slice(this.messageStartByteLength)];
++            this.cachedMessageData.missingBytes = messageLength - messageData.byteLength + this.messageStartByteLength;
+         }
+     }
+ 
+@@ -137,14 +139,11 @@ export class BinaryMessagePipe implements Disposable {
+      * @throws An error if the message start can not be read successfully.
+      */
+     protected readMessageStart(chunk: Uint8Array): number {
+-        const messageData = this.cachedMessageData.partialMessageStart ? Buffer.concat([this.cachedMessageData.partialMessageStart, chunk]) : chunk;
+-        this.cachedMessageData.partialMessageStart = undefined;
+-
+-        const reader = new Uint8ArrayReadBuffer(messageData);
++        const reader = new Uint8ArrayReadBuffer(chunk);
+         const identifier = reader.readString();
+ 
+         if (identifier !== BinaryMessagePipe.MESSAGE_START_IDENTIFIER) {
+-            throw new Error(`Could not read message start. The start identifier should be '${BinaryMessagePipe.MESSAGE_START_IDENTIFIER}' but was '${identifier}`);
++            throw new Error(`Could not read message start. The start identifier should be '${BinaryMessagePipe.MESSAGE_START_IDENTIFIER}' but was '${identifier}'`);
+         }
+         const length = reader.readUint32();
+         return length;
+
+diff --git a/packages/core/src/node/messaging/websocket-frontend-connection-service.ts b/packages/core/src/node/messaging/websocket-frontend-connection-service.ts
+index 47daa69..1c890fd 100644
+--- a/packages/core/src/node/messaging/websocket-frontend-connection-service.ts
++++ b/packages/core/src/node/messaging/websocket-frontend-connection-service.ts
+@@ -190,7 +190,12 @@ export class ReconnectableSocketChannel extends AbstractChannel {
+             if (this.socket?.connected) {
+                 this.socket.send(data);
+             } else {
+-                this.socketBuffer.buffer(data);
++                try {
++                    this.socketBuffer.buffer(data);
++                } catch (error) {
++                    this.socketBuffer.drain();
++                    console.warn(`Dropping message for disconnected socket: ${error instanceof Error ? error.message : String(error)}`);
++                }
+             }
+         });
+         return writeBuffer;
+

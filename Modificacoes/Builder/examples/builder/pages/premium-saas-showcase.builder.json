@@ -1,0 +1,370 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "premium-saas-showcase",
+    "name": "Premium SaaS Showcase",
+    "description": "Polished Builder page example for validating Mantine rendering, theme tokens, properties and blocks.",
+    "createdBy": "CyberVinci UI Builder Extension",
+    "createdAt": "2026-05-21T00:00:00.000Z",
+    "updatedAt": "2026-05-21T00:00:00.000Z",
+    "tags": [
+      "showcase",
+      "mantine",
+      "builder"
+    ]
+  },
+  "page": {
+    "id": "premium-saas-showcase",
+    "title": "Northstar OS",
+    "route": "/examples/northstar",
+    "layout": "marketing"
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "teal",
+    "radius": "lg",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "spacing": {
+      "xs": 6,
+      "sm": 10,
+      "md": 18,
+      "lg": 28,
+      "xl": 44
+    },
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#f7fafc",
+      "heroSurface": "#e6fffb",
+      "textPrimary": "#0f172a",
+      "textMuted": "#475569",
+      "brandAccent": "#0f766e"
+    }
+  },
+  "actions": {
+    "startTrial": {
+      "type": "navigate",
+      "params": {
+        "to": "/signup"
+      }
+    },
+    "bookDemo": {
+      "type": "openModal",
+      "params": {
+        "modalId": "demo-request"
+      }
+    }
+  },
+  "dataSources": {
+    "showcaseMetrics": {
+      "type": "static",
+      "description": "Static numbers used by the showcase cards.",
+      "config": {
+        "data": {
+          "activation": "41%",
+          "payback": "5.8 mo",
+          "forecast": "$3.2M"
+        }
+      }
+    }
+  },
+  "tree": {
+    "id": "northstar-root",
+    "type": "Page",
+    "props": {
+      "title": "Northstar OS",
+      "description": "Commercial planning workspace for revenue teams.",
+      "background": "#f8fafc"
+    },
+    "children": [
+      {
+        "id": "northstar-hero",
+        "type": "HeroSection",
+        "props": {
+          "eyebrow": "Revenue planning without spreadsheet drift",
+          "title": "Run forecasts, scenarios and board updates from one operating model",
+          "subtitle": "Northstar OS gives finance, sales and success teams a shared planning surface with governed assumptions, live targets and polished executive views.",
+          "imageSrc": "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80",
+          "primaryActionLabel": "Start trial",
+          "secondaryActionLabel": "Book demo",
+          "align": "left"
+        },
+        "style": {
+          "css": {
+            "background": "linear-gradient(135deg, #ecfeff 0%, #ffffff 48%, #f0fdf4 100%)",
+            "minHeight": "560px",
+            "padding": "56px 32px"
+          }
+        },
+        "slots": {
+          "actions": [
+            {
+              "id": "northstar-hero-start",
+              "type": "Button",
+              "props": {
+                "children": "Start trial",
+                "variant": "filled",
+                "size": "lg",
+                "color": "teal"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "startTrial"
+                }
+              }
+            },
+            {
+              "id": "northstar-hero-demo",
+              "type": "Button",
+              "props": {
+                "children": "Book demo",
+                "variant": "outline",
+                "size": "lg",
+                "color": "teal"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "bookDemo"
+                }
+              }
+            }
+          ],
+          "media": [
+            {
+              "id": "northstar-hero-card",
+              "type": "Box",
+              "props": {
+                "padding": "lg",
+                "background": "#ffffff"
+              },
+              "style": {
+                "css": {
+                  "border": "1px solid #dbe7ef",
+                  "borderRadius": "22px",
+                  "boxShadow": "0 24px 60px rgba(15, 23, 42, 0.14)"
+                }
+              },
+              "children": [
+                {
+                  "id": "northstar-hero-card-badge",
+                  "type": "Badge",
+                  "props": {
+                    "children": "Q3 forecast",
+                    "variant": "light",
+                    "color": "teal",
+                    "size": "lg"
+                  }
+                },
+                {
+                  "id": "northstar-hero-card-title",
+                  "type": "Title",
+                  "props": {
+                    "children": "$3.2M committed pipeline",
+                    "order": 2,
+                    "color": "#0f172a"
+                  }
+                },
+                {
+                  "id": "northstar-hero-card-copy",
+                  "type": "Text",
+                  "props": {
+                    "children": "Scenario confidence increased after AE capacity and expansion assumptions were reconciled.",
+                    "size": "md",
+                    "color": "#475569"
+                  }
+                },
+                {
+                  "id": "northstar-hero-card-metrics",
+                  "type": "MetricGrid",
+                  "props": {
+                    "columns": 3,
+                    "spacing": "sm"
+                  },
+                  "children": [
+                    {
+                      "id": "northstar-card-metric-one",
+                      "type": "MetricCard",
+                      "props": {
+                        "label": "Activation",
+                        "value": "41%",
+                        "trend": "up",
+                        "trendLabel": "+6%",
+                        "color": "green"
+                      }
+                    },
+                    {
+                      "id": "northstar-card-metric-two",
+                      "type": "MetricCard",
+                      "props": {
+                        "label": "Payback",
+                        "value": "5.8 mo",
+                        "trend": "down",
+                        "trendLabel": "-0.7",
+                        "color": "blue"
+                      }
+                    },
+                    {
+                      "id": "northstar-card-metric-three",
+                      "type": "MetricCard",
+                      "props": {
+                        "label": "Coverage",
+                        "value": "3.4x",
+                        "trend": "up",
+                        "trendLabel": "healthy",
+                        "color": "teal"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "northstar-features-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "background": "#ffffff"
+        },
+        "children": [
+          {
+            "id": "northstar-features-container",
+            "type": "Container",
+            "props": {
+              "size": "xl"
+            },
+            "children": [
+              {
+                "id": "northstar-features",
+                "type": "FeatureGrid",
+                "props": {
+                  "title": "A page composed from editable Builder components",
+                  "description": "This example exercises marketing, dashboard, layout, color and style editing paths in the builder.",
+                  "columns": 3,
+                  "features": [
+                    {
+                      "title": "Real Mantine preview",
+                      "description": "Renderer adapters receive actual Mantine components, but the saved file remains Builder JSON."
+                    },
+                    {
+                      "title": "RJSF property forms",
+                      "description": "Component props are edited from registry JSON Schema and validated back into the selected node."
+                    },
+                    {
+                      "title": "Theme and style layers",
+                      "description": "Global theme tokens and selected-node CSS can be edited without changing the component registry."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "northstar-pricing-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "background": "#f8fafc"
+        },
+        "children": [
+          {
+            "id": "northstar-pricing",
+            "type": "PricingSection",
+            "props": {
+              "title": "Plans for teams that need planning discipline",
+              "description": "Use this section to validate array/object editors in the RJSF property inspector.",
+              "plans": [
+                {
+                  "name": "Studio",
+                  "price": "$49",
+                  "description": "For small teams validating their first operating model.",
+                  "features": [
+                    "Scenario boards",
+                    "Weekly pipeline review",
+                    "Static exports"
+                  ],
+                  "ctaLabel": "Start Studio"
+                },
+                {
+                  "name": "Scale",
+                  "price": "$149",
+                  "description": "For cross-functional revenue planning.",
+                  "features": [
+                    "Shared assumptions",
+                    "Forecast approvals",
+                    "Executive dashboards"
+                  ],
+                  "ctaLabel": "Choose Scale"
+                },
+                {
+                  "name": "Enterprise",
+                  "price": "Custom",
+                  "description": "For governed planning across business units.",
+                  "features": [
+                    "Role-based controls",
+                    "Audit trails",
+                    "Dedicated onboarding"
+                  ],
+                  "ctaLabel": "Contact sales"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "northstar-cta",
+        "type": "CTASection",
+        "props": {
+          "title": "Validate the full builder workflow on a complete page",
+          "description": "Open this file in CyberVinci, switch between Components, Blocks, Layers, Properties and Theme, then export the result.",
+          "primaryActionLabel": "Start trial",
+          "secondaryActionLabel": "Book demo",
+          "align": "center"
+        },
+        "style": {
+          "css": {
+            "background": "#0f766e",
+            "color": "#ffffff",
+            "padding": "56px 24px"
+          }
+        },
+        "slots": {
+          "actions": [
+            {
+              "id": "northstar-cta-start",
+              "type": "Button",
+              "props": {
+                "children": "Start trial",
+                "variant": "white",
+                "color": "teal"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "startTrial"
+                }
+              }
+            },
+            {
+              "id": "northstar-cta-demo",
+              "type": "Button",
+              "props": {
+                "children": "Book demo",
+                "variant": "outline",
+                "color": "white"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "bookDemo"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

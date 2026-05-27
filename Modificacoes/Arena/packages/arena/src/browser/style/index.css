@@ -1,0 +1,353 @@
+.arena {
+    height: 100%;
+    overflow: auto;
+    padding: 16px;
+    color: var(--theia-foreground);
+    background: var(--theia-editor-background);
+}
+
+.arena-header,
+.arena-section-title,
+.arena-candidate-header,
+.arena-actions,
+.arena-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.arena-header,
+.arena-section-title {
+    justify-content: space-between;
+}
+
+.arena h2,
+.arena h3,
+.arena h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.arena-setup,
+.arena-generated-c,
+.arena-results {
+    margin-top: 16px;
+}
+
+.arena label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.arena label span {
+    font-size: var(--theia-ui-font-size1);
+    color: var(--theia-descriptionForeground);
+}
+
+.arena-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.arena-agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.arena-settings-grid {
+    align-items: end;
+}
+
+.arena-agent-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    padding: 12px;
+    background: var(--theia-editorWidget-background);
+}
+
+.arena-agent-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.arena-agent-title > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.arena-agent-title strong {
+    font-size: var(--theia-ui-font-size2);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.arena-agent-title span,
+.arena-source-meta {
+    font-size: var(--theia-ui-font-size1);
+    color: var(--theia-descriptionForeground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.arena-segmented {
+    display: inline-flex;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.arena-segmented button {
+    border: 0;
+    border-radius: 0;
+    padding: 3px 8px;
+    background: var(--theia-button-secondaryBackground);
+    color: var(--theia-button-secondaryForeground);
+}
+
+.arena-segmented button.active {
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+}
+
+.arena-source-meta {
+    display: block;
+}
+
+.arena-agent-text {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.arena-agent-textarea {
+    min-height: 180px;
+    resize: vertical;
+    font-family: var(--theia-code-font-family);
+}
+
+.arena-checkbox {
+    flex-direction: row !important;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.arena-actions,
+.arena-footer {
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.arena-validation {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 6px 8px;
+    border: 1px solid var(--theia-inputValidation-warningBorder);
+    background: var(--theia-inputValidation-warningBackground);
+    color: var(--theia-inputValidation-warningForeground);
+}
+
+.arena button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.arena-generated-c pre,
+.arena-tab-content pre {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow: auto;
+    max-height: 360px;
+}
+
+.arena-markdown-preview {
+    overflow: auto;
+    max-height: 360px;
+}
+
+.arena-markdown-preview h1,
+.arena-markdown-preview h2,
+.arena-markdown-preview h3 {
+    margin-top: 0.8em;
+    margin-bottom: 0.35em;
+}
+
+.arena-markdown-preview p {
+    margin: 0 0 0.7em;
+}
+
+.arena-markdown-preview pre {
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editor-background);
+}
+
+.arena-generated-c,
+.arena-candidate {
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.arena-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.arena-compare-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.arena-compare-toolbar > span {
+    font-size: var(--theia-ui-font-size1);
+    color: var(--theia-descriptionForeground);
+}
+
+.arena-candidate.winner {
+    border-color: var(--theia-focusBorder);
+}
+
+.arena-candidate-header {
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.arena-candidate-header > div:first-child {
+    min-width: 0;
+}
+
+.arena-candidate-header h4 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.arena-candidate-header span {
+    font-size: var(--theia-ui-font-size1);
+    color: var(--theia-descriptionForeground);
+}
+
+.arena-candidate-badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.arena-badge,
+.arena-run-status {
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: var(--theia-ui-font-size0);
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--theia-descriptionForeground);
+}
+
+.arena-badge.winner {
+    border-color: var(--theia-focusBorder);
+    color: var(--theia-focusBorder);
+}
+
+.arena-badge.warning {
+    border-color: var(--theia-inputValidation-warningBorder);
+    color: var(--theia-inputValidation-warningForeground);
+}
+
+.arena-run-status.succeeded {
+    color: var(--theia-testing-iconPassed);
+}
+
+.arena-run-status.failed {
+    color: var(--theia-testing-iconFailed);
+}
+
+.arena-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+.arena-tabs button {
+    border: 1px solid var(--theia-button-border, transparent);
+    background: var(--theia-button-secondaryBackground);
+    color: var(--theia-button-secondaryForeground);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.arena-tabs button.active {
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+}
+
+.arena-tab-content {
+    min-height: 220px;
+    border: 1px solid var(--theia-panel-border);
+    padding: 8px;
+    background: var(--theia-editorWidget-background);
+}
+
+.arena-choose {
+    margin-top: 10px;
+}
+
+.arena-webpage-preview {
+    width: 100%;
+    min-height: 280px;
+    border: 0;
+    background: white;
+}
+
+.arena-status {
+    text-transform: uppercase;
+    font-size: var(--theia-ui-font-size0);
+    color: var(--theia-descriptionForeground);
+}
+
+@media (max-width: 700px) {
+    .arena {
+        padding: 10px;
+    }
+
+    .arena-agents-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .arena-agent-title,
+    .arena-candidate-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .arena-candidate-badges {
+        justify-content: flex-start;
+    }
+}

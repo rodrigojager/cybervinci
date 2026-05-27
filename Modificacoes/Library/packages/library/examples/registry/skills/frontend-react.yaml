@@ -1,0 +1,19 @@
+---
+id: skill-nextjs
+name: Next.js Assistant
+applies_to:
+  - package: next
+    files:
+      - package.json
+preferred_docs:
+  - package: nextjs
+    version_source: project_package_json
+  - package: react
+    version_source: project_package_json
+rules:
+  - never_use_latest_if_project_version_exists
+  - always_cite_doc_version
+  - warn_when_docs_are_outdated
+---
+
+Consult local pinned Next.js and React documentation before suggesting APIs. Prefer the workspace lockfile over latest documentation.

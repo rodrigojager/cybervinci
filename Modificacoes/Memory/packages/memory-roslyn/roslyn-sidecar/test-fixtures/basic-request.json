@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "requestId": "sample.cs:fixture",
+  "languageId": "csharp",
+  "workspacePath": ".",
+  "file": {
+    "id": "file_sample_cs",
+    "relativePath": "src/Sample.cs",
+    "fileName": "Sample.cs",
+    "extension": ".cs",
+    "languageId": "csharp",
+    "sizeBytes": 641,
+    "contentHash": "fixture",
+    "isIgnored": false,
+    "isGenerated": false,
+    "isBinary": false,
+    "isSensitive": false
+  },
+  "content": "using System;\nusing Xunit;\n\nnamespace Demo.App;\n\npublic interface IRepository\n{\n    string GetName();\n}\n\npublic sealed class Greeter\n{\n    private readonly IRepository repository;\n\n    public Greeter(IRepository repository)\n    {\n        this.repository = repository;\n    }\n\n    public string SayHello()\n    {\n        return Format(repository.GetName());\n    }\n\n    private static string Format(string name) => $\"Hello {name}\";\n}\n\npublic sealed class GreeterTests\n{\n    [Fact]\n    public void SayHelloIncludesName()\n    {\n        Console.WriteLine(\"ok\");\n    }\n}\n"
+}

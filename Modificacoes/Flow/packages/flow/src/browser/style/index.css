@@ -1,0 +1,1498 @@
+.flow-widget {
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+}
+
+.flow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 860px;
+    height: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.flow__header,
+.flow__main,
+.flow__ops {
+    display: grid;
+    gap: 10px;
+}
+
+.flow__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.flow__header h2,
+.flow__header span,
+.flow__kanban-column h3,
+.flow__events h3,
+.flow__panel h3,
+.flow__run-observability h3,
+.flow__state-editor h4,
+.flow__run-list h4,
+.flow__json-block h4,
+.flow__event-summary h4,
+.flow__context-pack h4,
+.flow__audit-summary h4 {
+    margin: 0;
+}
+
+.flow__header h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.flow__header span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__actions {
+    display: flex;
+    gap: 6px;
+}
+
+.flow__runtime-status {
+    margin-top: 8px;
+    display: grid;
+    gap: 6px;
+}
+
+.flow__runtime-status-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__runtime-status-grid--capabilities {
+    max-width: 920px;
+}
+
+.flow__status-pill {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    gap: 6px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__status-pill span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__status-pill strong {
+    color: inherit;
+}
+
+.flow__status-pill--external,
+.flow__status-pill--available {
+    border-color: var(--theia-charts-blue);
+    color: var(--theia-charts-blue);
+}
+
+.flow__status-pill--simulated {
+    border-color: var(--theia-charts-yellow);
+    color: var(--theia-charts-yellow);
+}
+
+.flow__status-pill--mock {
+    border-color: var(--theia-charts-orange);
+    color: var(--theia-charts-orange);
+}
+
+.flow__status-pill--fallback-error {
+    border-color: var(--theia-warn-foreground);
+    color: var(--theia-warn-foreground);
+}
+
+.flow__status-pill--capability-missing,
+.flow__status-pill--missing,
+.flow__status-pill--blocked {
+    border-color: var(--theia-errorForeground);
+    color: var(--theia-errorForeground);
+}
+
+.flow__runtime-status-warning {
+    width: fit-content;
+    max-width: min(920px, 100%);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    background: var(--theia-editorWidget-background);
+    border-color: var(--theia-errorForeground);
+    color: var(--theia-errorForeground);
+}
+
+.flow button {
+    border: 1px solid var(--theia-button-border, transparent);
+    border-radius: 4px;
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    min-height: 28px;
+    padding: 0 10px;
+}
+
+.flow button:disabled {
+    opacity: 0.5;
+}
+
+.flow__actions button {
+    width: 32px;
+    padding: 0;
+}
+
+.flow__prompt input {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    padding: 0 10px;
+}
+
+.flow__agent-library {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 10px;
+}
+
+.flow__agent-library-header,
+.flow__agent-library-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow__agent-library-header h3 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.flow__agent-library-header span,
+.flow__agent-library-item time,
+.flow__agent-library-list p {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__agent-library-header button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__agent-library-search {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    padding: 0 8px;
+}
+
+.flow__agent-library-search input {
+    min-width: 0;
+    height: 30px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+}
+
+.flow__agent-library-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px;
+    max-height: 180px;
+    overflow: auto;
+}
+
+.flow__agent-library-item {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    padding: 6px;
+}
+
+.flow__agent-library-open {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    background: transparent !important;
+    color: var(--theia-editor-foreground) !important;
+    border-color: transparent !important;
+    text-align: left;
+}
+
+.flow__agent-library-open span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__agent-library-item time {
+    font-size: 11px;
+}
+
+.flow__agent-library-item div {
+    display: flex;
+    gap: 4px;
+}
+
+.flow__agent-library-item div button {
+    width: 28px;
+    min-height: 24px;
+    padding: 0;
+}
+
+.flow__error,
+.flow__validation {
+    display: flex;
+    gap: 8px;
+    border-left: 3px solid var(--theia-errorForeground);
+    background: var(--theia-inputValidation-errorBackground);
+    padding: 8px 10px;
+}
+
+.flow__main {
+    grid-template-columns: minmax(520px, 1fr) 320px;
+    min-height: 400px;
+}
+
+.flow__canvas-pane,
+.flow__inspector,
+.flow__kanban,
+.flow__run-observability,
+.flow__events {
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+}
+
+.flow__canvas-pane {
+    overflow: hidden;
+}
+
+.flow__flow {
+    position: relative;
+    height: 100%;
+    min-height: 400px;
+    background:
+        linear-gradient(var(--theia-panel-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--theia-panel-border) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-color: var(--theia-editor-background);
+}
+
+.flow__flow:focus {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: -1px;
+}
+
+.flow__flow-toolbar {
+    position: absolute;
+    z-index: 4;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    padding: 4px;
+}
+
+.flow__flow-toolbar button {
+    width: 28px;
+    min-height: 24px;
+    padding: 0;
+}
+
+.flow__flow-toolbar span {
+    min-width: 42px;
+    text-align: center;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__flow-palette {
+    position: absolute;
+    z-index: 4;
+    top: 48px;
+    left: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(92px, 1fr));
+    gap: 4px;
+    max-width: 220px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    padding: 6px;
+}
+
+.flow__flow-palette button {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-height: 26px;
+    padding: 3px 6px;
+    text-align: left;
+    cursor: grab;
+}
+
+.flow__flow-palette button:active {
+    cursor: grabbing;
+}
+
+.flow__flow-palette span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-viewport {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+}
+
+.flow__flow-viewport:active {
+    cursor: grabbing;
+}
+
+.flow__flow-world {
+    position: relative;
+    transform-origin: 0 0;
+}
+
+.flow__flow-edges {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.flow__flow-edge {
+    pointer-events: stroke;
+}
+
+.flow__flow-edge line {
+    stroke: var(--theia-descriptionForeground);
+    stroke-width: 1.5;
+}
+
+.flow__flow-edge marker path {
+    fill: var(--theia-descriptionForeground);
+}
+
+.flow__flow-edge text {
+    fill: var(--theia-descriptionForeground);
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.flow__flow-edge--selected line {
+    stroke: var(--theia-focusBorder);
+    stroke-width: 2.5;
+}
+
+.flow__flow-edge--error line,
+.flow__flow-edge--error marker path {
+    stroke: var(--theia-errorForeground);
+    fill: var(--theia-errorForeground);
+}
+
+.flow__flow-edge--warning line,
+.flow__flow-edge--warning marker path {
+    stroke: var(--theia-charts-yellow);
+    fill: var(--theia-charts-yellow);
+}
+
+.flow__flow-edge:focus {
+    outline: none;
+}
+
+.flow__flow-edge:focus line {
+    stroke: var(--theia-focusBorder);
+    stroke-width: 2.5;
+}
+
+.flow__flow-edge-guard {
+    fill: var(--theia-charts-yellow) !important;
+}
+
+.flow__flow-issue-marker {
+    fill: var(--theia-errorForeground) !important;
+    font-weight: 700;
+}
+
+.flow__flow-node {
+    position: absolute;
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-editor-foreground);
+    padding: 10px 14px;
+    text-align: left;
+    cursor: grab;
+    user-select: none;
+}
+
+.flow__flow-node:active {
+    cursor: grabbing;
+}
+
+.flow__flow-node--running {
+    border-color: var(--theia-progressBar-background);
+    border-width: 2px;
+}
+
+.flow__flow-node--review,
+.flow__flow-node--waiting {
+    border-color: var(--theia-charts-yellow);
+    border-width: 2px;
+}
+
+.flow__flow-node--done {
+    border-color: var(--theia-charts-green);
+    border-width: 2px;
+}
+
+.flow__flow-node--failed {
+    border-color: var(--theia-errorForeground);
+    border-width: 2px;
+}
+
+.flow__flow-node--selected {
+    box-shadow: 0 0 0 2px var(--theia-focusBorder);
+}
+
+.flow__flow-node--connecting {
+    box-shadow: 0 0 0 2px var(--theia-charts-yellow);
+}
+
+.flow__flow-node--error {
+    border-color: var(--theia-errorForeground);
+    border-width: 2px;
+}
+
+.flow__flow-node--warning {
+    border-color: var(--theia-charts-yellow);
+    border-width: 2px;
+}
+
+.flow__flow-node-issue {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 50%;
+    background: var(--theia-errorForeground);
+    color: var(--theia-editor-background) !important;
+    font-weight: 700;
+}
+
+.flow__flow-node strong,
+.flow__flow-node span,
+.flow__flow-node small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-node strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__flow-node span,
+.flow__flow-node small {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__flow-node-connector {
+    position: absolute;
+    right: -13px;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    min-height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    cursor: crosshair;
+    transform: translateY(-50%);
+}
+
+.flow__flow-node-connector:hover,
+.flow__flow-node-connector:focus {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: 1px;
+}
+
+.flow__flow-minimap {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 3;
+    width: 150px;
+    height: 94px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-minimap-node {
+    position: absolute;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-input-background);
+}
+
+.flow__flow-minimap-viewport {
+    position: absolute;
+    border: 1px solid var(--theia-focusBorder);
+    background: color-mix(in srgb, var(--theia-focusBorder) 16%, transparent);
+    pointer-events: none;
+}
+
+.flow__flow-minimap-node--running {
+    border-color: var(--theia-progressBar-background);
+}
+
+.flow__flow-minimap-node--review,
+.flow__flow-minimap-node--waiting {
+    border-color: var(--theia-charts-yellow);
+}
+
+.flow__flow-minimap-node--done {
+    border-color: var(--theia-charts-green);
+}
+
+.flow__flow-minimap-node--failed {
+    border-color: var(--theia-errorForeground);
+}
+
+.flow__panel {
+    padding: 12px;
+}
+
+.flow__panel h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.flow__panel pre {
+    max-height: 180px;
+    overflow: auto;
+    background: var(--theia-textCodeBlock-background);
+    padding: 8px;
+}
+
+.flow__state-editor,
+.flow__transition-editor,
+.flow__branch-editor,
+.flow__agent-markdown,
+.flow__run-list,
+.flow__json-block,
+.flow__event-summary,
+.flow__context-pack,
+.flow__audit-summary,
+.flow__final-report-summary,
+.flow__second-run-suggestion {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.flow__section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.flow__section-heading button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 24px;
+}
+
+.flow__second-run-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.flow__state-editor h4,
+.flow__transition-editor h4,
+.flow__branch-editor h4,
+.flow__agent-markdown h4,
+.flow__run-list h4,
+.flow__json-block h4,
+.flow__event-summary h4,
+.flow__context-pack h4,
+.flow__audit-summary h4,
+.flow__final-report-summary h4,
+.flow__second-run-suggestion h4 {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.flow__state-editor label,
+.flow__transition-editor label {
+    display: grid;
+    gap: 4px;
+}
+
+.flow__final-report-summary > p {
+    margin: 0;
+}
+
+.flow__report-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+}
+
+.flow__state-editor label span,
+.flow__transition-editor label span {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__state-editor input,
+.flow__state-editor textarea,
+.flow__transition-editor input,
+.flow__transition-editor select,
+.flow__transition-editor textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    padding: 5px 7px;
+    font-family: var(--theia-ui-font-family);
+    font-size: 12px;
+}
+
+.flow__agent-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px;
+    gap: 6px;
+}
+
+.flow__agent-field button {
+    width: 32px;
+    padding: 0;
+}
+
+.flow__agent-markdown {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__agent-markdown code,
+.flow__agent-markdown p {
+    overflow-wrap: anywhere;
+}
+
+.flow__agent-markdown p {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__state-editor textarea,
+.flow__transition-editor textarea {
+    resize: vertical;
+}
+
+.flow__branch-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__branch-list,
+.flow__branch-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__branch-list span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-descriptionForeground);
+    padding: 4px 6px;
+    font-size: 12px;
+}
+
+.flow__branch-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 26px;
+}
+
+.flow__editor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.flow__inline-validation {
+    display: grid;
+    gap: 4px;
+    border-left: 3px solid var(--theia-inputValidation-warningBorder, var(--theia-charts-yellow));
+    background: var(--theia-inputValidation-warningBackground);
+    padding: 6px 8px;
+}
+
+.flow__inline-validation--error {
+    border-left-color: var(--theia-errorForeground);
+    background: var(--theia-inputValidation-errorBackground);
+}
+
+.flow__workflow-json {
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 10px;
+}
+
+.flow__workflow-json-header,
+.flow__workflow-json-selection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow__workflow-json-header h3 {
+    margin: 0;
+    font-size: 13px;
+}
+
+.flow__workflow-json-header span,
+.flow__workflow-json-selection span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__workflow-json-header button {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__workflow-json-selection code,
+.flow__workflow-json-issue code {
+    color: var(--theia-textLink-foreground);
+}
+
+.flow__workflow-json-issues {
+    display: grid;
+    gap: 4px;
+    max-height: 130px;
+    overflow: auto;
+}
+
+.flow__workflow-json-issue {
+    display: grid;
+    grid-template-columns: minmax(90px, 160px) minmax(0, 1fr);
+    gap: 8px;
+    min-height: 28px;
+    padding: 4px 8px;
+    text-align: left;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__workflow-json-issue--error {
+    border-left: 3px solid var(--theia-errorForeground);
+}
+
+.flow__workflow-json-issue--warning {
+    border-left: 3px solid var(--theia-charts-yellow);
+}
+
+.flow__workflow-json-issue span {
+    overflow-wrap: anywhere;
+}
+
+.flow__workflow-json textarea {
+    min-height: 220px;
+    resize: vertical;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    font-family: var(--theia-ui-font-family);
+    font-size: 12px;
+    line-height: 1.45;
+    padding: 8px;
+    tab-size: 2;
+}
+
+.flow__save-preview {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--theia-focusBorder);
+    background: var(--theia-editorWidget-background);
+    padding: 10px;
+}
+
+.flow__save-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.flow__save-preview-header h3,
+.flow__save-preview-group h4 {
+    margin: 0;
+}
+
+.flow__save-preview-header h3 {
+    font-size: 14px;
+}
+
+.flow__save-preview-header span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__save-preview-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.flow__save-preview-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__save-preview-group {
+    display: grid;
+    gap: 4px;
+}
+
+.flow__save-preview-group h4 {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.flow__save-preview-item {
+    display: grid;
+    grid-template-columns: 72px minmax(120px, 220px) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    border-left: 3px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 5px 8px;
+}
+
+.flow__save-preview-item--added {
+    border-left-color: var(--theia-charts-green);
+}
+
+.flow__save-preview-item--removed {
+    border-left-color: var(--theia-errorForeground);
+}
+
+.flow__save-preview-item--changed {
+    border-left-color: var(--theia-charts-yellow);
+}
+
+.flow__save-preview-item code,
+.flow__save-preview-item span {
+    overflow-wrap: anywhere;
+}
+
+.flow__run-list article {
+    display: grid;
+    gap: 3px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.flow__run-list article:last-child {
+    border-bottom: 0;
+}
+
+.flow__memory-review,
+.flow__effect-review,
+.flow__second-run-suggestion,
+.flow__memory-candidate {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__second-run-suggestion p,
+.flow__second-run-suggestion summary {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__second-run-suggestion pre {
+    margin: 6px 0 0;
+    max-height: 160px;
+    overflow: auto;
+    white-space: pre-wrap;
+    background: var(--theia-textCodeBlock-background);
+    padding: 8px;
+}
+
+.flow__memory-candidate {
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__memory-candidate--written {
+    border-left: 3px solid var(--theia-charts-green);
+}
+
+.flow__memory-candidate--rejected {
+    border-left: 3px solid var(--theia-errorForeground);
+}
+
+.flow__memory-candidate header,
+.flow__memory-controls,
+.flow__memory-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.flow__memory-candidate header {
+    justify-content: space-between;
+}
+
+.flow__memory-candidate header span,
+.flow__memory-candidate p {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__memory-candidate textarea,
+.flow__memory-controls input,
+.flow__memory-controls select {
+    min-width: 0;
+}
+
+.flow__memory-candidate textarea {
+    width: 100%;
+    resize: vertical;
+}
+
+.flow__memory-controls {
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.flow__memory-controls label {
+    display: grid;
+    gap: 3px;
+    min-width: 140px;
+    flex: 1 1 140px;
+}
+
+.flow__memory-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.flow__effect-card {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-left: 3px solid var(--theia-descriptionForeground);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__effect-card--applied,
+.flow__effect-card--approved {
+    border-left-color: var(--theia-charts-green);
+}
+
+.flow__effect-card--blocked,
+.flow__effect-card--failed,
+.flow__effect-card--rejected {
+    border-left-color: var(--theia-errorForeground);
+}
+
+.flow__effect-card--proposed {
+    border-left-color: var(--theia-charts-yellow);
+}
+
+.flow__effect-card header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.flow__effect-card header div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__effect-card header span,
+.flow__effect-card header code,
+.flow__effect-blocked {
+    overflow-wrap: anywhere;
+}
+
+.flow__effect-card header span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__effect-card header code {
+    font-size: 11px;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__effect-metadata {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px 10px;
+}
+
+.flow__effect-blocked {
+    margin: 0;
+    color: var(--theia-errorForeground);
+}
+
+.flow__effect-card textarea {
+    width: 100%;
+    min-width: 0;
+    resize: vertical;
+}
+
+.flow__effect-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.flow__artifact-browser {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__artifact-selector {
+    display: grid;
+    gap: 4px;
+    max-height: 150px;
+    overflow: auto;
+}
+
+.flow__artifact-selector-item {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) minmax(78px, auto);
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 5px 7px;
+    text-align: left;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__artifact-selector-item--selected {
+    border-color: var(--theia-focusBorder);
+}
+
+.flow__artifact-selector-item span,
+.flow__artifact-selector-item small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__artifact-selector-item small {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__artifact-viewer {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 8px;
+}
+
+.flow__artifact-viewer header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.flow__artifact-viewer header div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__artifact-viewer header span {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__artifact-markdown,
+.flow__artifact-contract,
+.flow__artifact-issues {
+    display: grid;
+    gap: 6px;
+}
+
+.flow__artifact-markdown h5 {
+    margin: 2px 0;
+    font-size: 13px;
+}
+
+.flow__artifact-markdown p,
+.flow__artifact-markdown li,
+.flow__artifact-contract p,
+.flow__artifact-contract li,
+.flow__artifact-issues span,
+.flow__artifact-issues small,
+.flow__artifact-image span {
+    overflow-wrap: anywhere;
+}
+
+.flow__artifact-markdown ul,
+.flow__artifact-contract ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.flow__artifact-json pre,
+.flow__artifact-markdown pre,
+.flow__artifact-patch,
+.flow__artifact-log {
+    max-height: 260px;
+    overflow: auto;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+    font-family: var(--theia-editor-font-family);
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+
+.flow__artifact-patch {
+    display: grid;
+}
+
+.flow__artifact-patch-added {
+    color: var(--theia-gitDecoration-addedResourceForeground);
+}
+
+.flow__artifact-patch-removed {
+    color: var(--theia-gitDecoration-deletedResourceForeground);
+}
+
+.flow__artifact-patch-hunk {
+    color: var(--theia-textLink-foreground);
+}
+
+.flow__artifact-issues article {
+    display: grid;
+    gap: 3px;
+    border-left: 3px solid var(--theia-charts-yellow);
+    padding: 4px 7px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__artifact-issues small,
+.flow__artifact-image span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__artifact-image {
+    display: grid;
+    gap: 6px;
+}
+
+.flow__artifact-image img {
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editor-background);
+}
+
+.flow__artifact-image-error {
+    margin: 0;
+    color: var(--theia-errorForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__artifact-image-meta {
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.flow__run-list strong,
+.flow__run-list span,
+.flow__run-list p,
+.flow__link-button,
+.flow__link-button strong,
+.flow__event-summary p,
+.flow__run-observability p {
+    overflow-wrap: anywhere;
+}
+
+.flow__link-button {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--theia-textLink-foreground);
+    text-align: left;
+    cursor: pointer;
+}
+
+.flow__link-button:hover strong {
+    text-decoration: underline;
+}
+
+.flow__run-list span,
+.flow__run-list p,
+.flow__event-summary p,
+.flow__run-observability p {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__kv {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.flow__kv span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__kv strong {
+    overflow-wrap: anywhere;
+}
+
+.flow__gate {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+}
+
+.flow__gate small {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__gate-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__ops {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr) minmax(320px, 0.75fr);
+    min-height: 230px;
+}
+
+.flow__kanban {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(128px, 1fr));
+    gap: 8px;
+    overflow: auto;
+    padding: 8px;
+}
+
+.flow__kanban-column {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-height: 160px;
+}
+
+.flow__kanban-column h3 {
+    font-size: 12px;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__workload {
+    display: grid;
+    gap: 3px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+    padding: 8px;
+}
+
+.flow__workload strong,
+.flow__workload span,
+.flow__workload small {
+    overflow-wrap: anywhere;
+}
+
+.flow__workload small {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__workload-artifacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+.flow__workload-artifacts button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.flow__workload-artifacts span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__events {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+    overflow: auto;
+}
+
+.flow__run-observability {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 8px;
+    overflow: auto;
+}
+
+.flow__run-observability h3 {
+    font-size: 14px;
+}
+
+.flow__events h3 {
+    font-size: 14px;
+}
+
+.flow__events-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow__events-header span {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__event-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)) 32px;
+    gap: 6px;
+    align-items: end;
+}
+
+.flow__event-filters label {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.flow__event-filters label span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__event-filters select {
+    min-width: 0;
+    height: 26px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+}
+
+.flow__event-filters button {
+    width: 32px;
+    min-height: 26px;
+    padding: 0;
+}
+
+.flow__events article {
+    display: grid;
+    grid-template-columns: 70px 150px minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.flow__events time,
+.flow__events strong {
+    color: var(--theia-descriptionForeground);
+}
