@@ -1,0 +1,195 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic "Explorer" [ref=e56]
+            - button "More Actions..." [ref=e61] [cursor=pointer]: 
+          - generic [ref=e62]:
+            - text:      
+            - tabpanel " Explorer" [ref=e63]:
+              - generic [ref=e65]:
+                - generic [ref=e67] [cursor=pointer]:
+                  - generic [ref=e68]: 
+                  - generic "Open Editors" [ref=e69]
+                  - text:  
+                - generic [ref=e71]:
+                  - generic [ref=e72] [cursor=pointer]:
+                    - generic [ref=e73]: 
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy" [ref=e74]: cloud-ws-5fflzy
+                    - text:     
+                  - generic [ref=e80]:
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\.theia" [ref=e82]:
+                      - generic [ref=e83]:
+                        - generic [ref=e84]: 
+                        - generic [ref=e85]: 
+                        - generic [ref=e86]: .theia
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\ai-real-design.op" [ref=e88]:
+                      - generic [ref=e89]:
+                        - generic [ref=e90]: 
+                        - generic [ref=e91]: ai-real-design.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\ai-real-design.openpencil-ai-preview.json" [ref=e93]:
+                      - generic [ref=e94]:
+                        - generic [ref=e95]: 
+                        - generic [ref=e96]: ai-real-design.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\canvas-acceptance.op" [ref=e98]:
+                      - generic [ref=e99]:
+                        - generic [ref=e100]: 
+                        - generic [ref=e101]: canvas-acceptance.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\design.op" [ref=e103]:
+                      - generic [ref=e104]:
+                        - generic [ref=e105]: 
+                        - generic [ref=e106]: design.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\design.openpencil-ai-preview.json" [ref=e108]:
+                      - generic [ref=e109]:
+                        - generic [ref=e110]: 
+                        - generic [ref=e111]: design.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\mercado.op" [ref=e113]:
+                      - generic [ref=e114]:
+                        - generic [ref=e115]: 
+                        - generic [ref=e116]: mercado.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\new-ui-page.builder.json" [ref=e118]:
+                      - generic [ref=e119]:
+                        - generic [ref=e120]: 
+                        - generic [ref=e121]: new-ui-page.builder.json
+            - text:                                                
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - tablist [ref=e127] [cursor=pointer]:
+            - listitem [ref=e128]:
+              - generic [ref=e130]: Welcome
+              - generic "Close" [ref=e131]: 
+            - listitem [ref=e132]:
+              - generic [ref=e133]:
+                - generic [ref=e134]: 
+                - generic [ref=e135]: ai-real-design.op
+              - generic "Close" [ref=e136]
+          - tabpanel [ref=e137]:
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - generic [ref=e142]:
+                  - heading "CyberVinci" [level=1] [ref=e143]
+                  - paragraph [ref=e144]: An AI-first agentic IDE for professional work.
+                  - paragraph [ref=e145]: Coordinate multiple artificial intelligence agents as a professional agency inside your development environment, from exploration and planning to implementation, review, and delivery.
+                - separator [ref=e146]
+                - generic [ref=e149]:
+                  - heading " AI Agency Workspace" [level=3] [ref=e150]:
+                    - generic [ref=e151]: 
+                    - text: AI Agency Workspace
+                  - paragraph [ref=e152]: Use specialized agents for coding, shell work, repository operations, tests, research, and review while keeping the whole workflow inside the IDE.
+                  - button "Open CyberVinci Chat" [ref=e154] [cursor=pointer]
+                  - button "New Arena A/B Test" [ref=e156] [cursor=pointer]
+                  - button "Open Documentation Manager" [ref=e158] [cursor=pointer]
+                - generic [ref=e161]:
+                  - heading " Start" [level=3] [ref=e162]:
+                    - generic [ref=e163]: 
+                    - text: Start
+                  - button "New File..." [ref=e165] [cursor=pointer]
+                  - button "Open" [ref=e167] [cursor=pointer]
+                  - button "Open Workspace" [ref=e168] [cursor=pointer]
+                - generic [ref=e171]:
+                  - heading " Recent" [level=3] [ref=e172]:
+                    - generic [ref=e173]: 
+                    - text: Recent
+                  - generic [ref=e174]:
+                    - button "cloud-ws-5fflzy" [ref=e175] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy
+                  - generic [ref=e176]:
+                    - button "cloud-ws-i3SNDm" [ref=e177] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-i3SNDm
+                  - generic [ref=e178]:
+                    - button "cloud-ws-mHoQKw" [ref=e179] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-mHoQKw
+                  - generic [ref=e180]:
+                    - button "cloud-ws-Each5R" [ref=e181] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-Each5R
+                  - generic [ref=e182]:
+                    - button "cloud-ws-GSR6Rf" [ref=e183] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-GSR6Rf
+                  - button "More..." [ref=e185] [cursor=pointer]
+                - generic [ref=e188]:
+                  - heading " Settings" [level=3] [ref=e189]:
+                    - generic [ref=e190]: 
+                    - text: Settings
+                  - button "Open Settings" [ref=e192] [cursor=pointer]
+                  - button "Open Keyboard Shortcuts" [ref=e194] [cursor=pointer]
+                - generic [ref=e197]:
+                  - heading " Help" [level=3] [ref=e198]:
+                    - generic [ref=e199]: 
+                    - text: Help
+                  - button "Open AI Agency Chat" [ref=e201] [cursor=pointer]
+                  - button "Open Settings" [ref=e203] [cursor=pointer]
+                  - button "Open Keyboard Shortcuts" [ref=e205] [cursor=pointer]
+                - paragraph [ref=e210]: "Version: 1.71.0"
+              - generic [ref=e212]:
+                - checkbox "Show welcome page on startup" [checked] [ref=e213]
+                - generic [ref=e214]: Show welcome page on startup
+          - text:        
+        - text:           
+      - generic [ref=e215]:
+        - tablist [ref=e220] [cursor=pointer]:
+          - listitem [ref=e221]:
+            - generic [ref=e223]: 
+          - listitem [ref=e224]:
+            - generic [ref=e226]: 
+          - listitem [ref=e227]
+        - generic:      +   
+    - generic [ref=e230]:
+      - generic [ref=e231]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e232]:
+          - generic [ref=e233]: 
+          - generic [ref=e234]: "0"
+          - generic [ref=e235]: 
+          - generic [ref=e236]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e237]:
+          - generic [ref=e238]: 
+          - generic [ref=e239]: Collaborate
+      - generic [ref=e240]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e241]:
+          - generic [ref=e242]: 
+          - generic [ref=e243]: Sign in to GitHub Copilot
+        - generic "No Notifications" [ref=e244]:
+          - generic [ref=e245]: 
+        - button "Toggle Bottom Panel" [ref=e246]:
+          - generic [ref=e247]: 
+  - generic:
+    - generic:  
+  - generic [ref=e248]:
+    - alert
+    - alert

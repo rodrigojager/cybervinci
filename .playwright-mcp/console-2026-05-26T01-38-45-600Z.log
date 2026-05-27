@@ -1,0 +1,65 @@
+[    1797ms] [INFO] sending initial connect on hU8aCKwl6utBbOUeAAAV @ http://localhost:3000/bundle.js:67846
+[    1799ms] [INFO] initial connect received on hU8aCKwl6utBbOUeAAAV @ http://localhost:3000/bundle.js:67841
+[    1889ms] [WARNING] Could not find translation key for default value: "White" @ http://localhost:3000/bundle.js:56469
+[    1914ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:3000/bundle.js:235627
+[    1927ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://localhost:3000/bundle.js:56469
+[    1940ms] [WARNING] Could not find translation key for default value: "White" @ http://localhost:3000/bundle.js:56469
+[    2088ms] [WARNING] Could not find translation key for default value: "Low" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "Medium" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "High" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "Low" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "Medium" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "High" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "Low" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "Medium" @ http://localhost:3000/bundle.js:56469
+[    2090ms] [WARNING] Could not find translation key for default value: "High" @ http://localhost:3000/bundle.js:56469
+[    2442ms] [WARNING] Could not find translation key for default value: "Author" @ http://localhost:3000/bundle.js:56469
+[    2512ms] [WARNING] 2026-05-26T01:38:48.111Z root WARN Could not find translation key for default value: "Author" @ http://localhost:3000/bundle.js:192090
+[    3006ms] [WARNING] 2026-05-26T01:38:48.606Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 554.6 ms [2.990 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    3064ms] [WARNING] 2026-05-26T01:38:48.664Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://localhost:3000/bundle.js:192090
+[    3115ms] [INFO] 2026-05-26T01:38:48.715Z root INFO Detected keyboard layout from browser API: US (PC) @ http://localhost:3000/bundle.js:192090
+[    3185ms] [INFO] 2026-05-26T01:38:48.784Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://localhost:3000/bundle.js:192090
+[    3202ms] [INFO] 2026-05-26T01:38:48.801Z root INFO [7232b6a3-f2f2-445e-aa31-7a7f21645c50] Waiting for backend deployment: 8.9 ms [3.186 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    3211ms] [INFO] 2026-05-26T01:38:48.811Z root INFO Start frontend contributions: 811.1 ms [3.190 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    3212ms] [INFO] 2026-05-26T01:38:48.811Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://localhost:3000/bundle.js:192090
+[    3214ms] [INFO] 2026-05-26T01:38:48.813Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://localhost:3000/bundle.js:192090
+[    3214ms] [INFO] 2026-05-26T01:38:48.813Z root INFO >>> Restoring the layout state... @ http://localhost:3000/bundle.js:192090
+[    3215ms] [INFO] 2026-05-26T01:38:48.814Z root INFO <<< Nothing to restore. @ http://localhost:3000/bundle.js:192090
+[    3566ms] [WARNING] 2026-05-26T01:38:49.166Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://localhost:3000/bundle.js:192090
+[    3567ms] [WARNING] 2026-05-26T01:38:49.166Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://localhost:3000/bundle.js:192090
+[    3575ms] [INFO] 2026-05-26T01:38:49.174Z root INFO [7232b6a3-f2f2-445e-aa31-7a7f21645c50] Loading plugin contributions @ http://localhost:3000/bundle.js:192090
+[    3898ms] [WARNING] 2026-05-26T01:38:49.497Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 654.5 ms [3.882 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    3935ms] [INFO] 2026-05-26T01:38:49.534Z root INFO Initialize the workbench layout: 718.1 ms [3.916 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    3936ms] [INFO] 2026-05-26T01:38:49.535Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://localhost:3000/bundle.js:192090
+[    4749ms] [INFO] 2026-05-26T01:38:50.348Z root INFO Replace loading indicator with ready workbench UI (animation): 805.1 ms [4.732 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    4749ms] [INFO] 2026-05-26T01:38:50.349Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://localhost:3000/bundle.js:192090
+[    4749ms] [INFO] 2026-05-26T01:38:50.349Z root INFO All frontend contributions settled: 2353.5 ms [4.732 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    6761ms] [WARNING] 2026-05-26T01:38:52.361Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://localhost:3000/bundle.js:192090
+[  182592ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-400.woff2:0
+[  182592ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-500.woff2:0
+[  182592ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-600.woff2:0
+[  182592ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-400.woff2:0
+[  182593ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-700.woff2:0
+[  182593ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-500.woff2:0
+[  182593ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-600.woff2:0
+[  182593ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-700.woff2:0
+[  182595ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-400.woff2:0
+[  182595ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-700.woff2:0
+[  182595ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-latin-400.woff2:0
+[  182595ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-latin-700.woff2:0
+[  182604ms] [WARNING] 2026-05-26T01:41:48.204Z root WARN [FontManager] Native font access failed: User activation is required. @ http://localhost:3000/bundle.js:192090
+[  563860ms] [INFO] 2026-05-26T01:48:09.459Z root INFO [CanvasAI][frontend] prompt-submit {uri: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/ai-real-design.op, promptLength: 172, selectionCount: 0} @ http://localhost:3000/bundle.js:192090
+[  563860ms] [INFO] 2026-05-26T01:48:09.459Z root INFO [CanvasAI][frontend] provider-start {providerId: openpencil.cybervinci-backend-codex, providerLabel: CyberVinci Codex backend, providerIndex: 0, providersCount: 2, priority: 200} @ http://localhost:3000/bundle.js:192090
+[  619723ms] [INFO] 2026-05-26T01:49:05.322Z root INFO [CanvasAI][frontend] provider-result {providerId: openpencil.cybervinci-backend-codex, providerLabel: CyberVinci Codex backend, providerIndex: 0, providersCount: 2, priority: 200} @ http://localhost:3000/bundle.js:192090
+[  619723ms] [INFO] 2026-05-26T01:49:05.322Z root INFO [CanvasAI][frontend] provider-accepted {providerId: openpencil.cybervinci-backend-codex, providerLabel: CyberVinci Codex backend, providerIndex: 0, providersCount: 2, priority: 200} @ http://localhost:3000/bundle.js:192090
+[  619723ms] [INFO] 2026-05-26T01:49:05.323Z root INFO [CanvasAI][frontend] provider-result {source: provider, providerId: openpencil.cybervinci-backend-codex, providerLabel: CyberVinci Codex backend, operationsCount: 35, diagnosticsCount: 1} @ http://localhost:3000/bundle.js:192090
+[  620094ms] [INFO] 2026-05-26T01:49:05.693Z root INFO [CanvasAI][frontend] preview-created {artifact: ai-real-design.openpencil-ai-preview.json, changed: true, valid: true, operationsCount: 35, diagnosticsCount: 1} @ http://localhost:3000/bundle.js:192090
+[  620094ms] [INFO] 2026-05-26T01:49:05.694Z root INFO [CanvasAI][frontend] apply-start {uri: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/ai-real-design.op, operationsCount: 35, selectionCount: 0} @ http://localhost:3000/bundle.js:192090
+[  621302ms] [INFO] 2026-05-26T01:49:06.901Z root INFO [CanvasAI][frontend] applied {applied: 35, total: 35, selectionCount: 1} @ http://localhost:3000/bundle.js:192090
+[ 1012780ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zgyk1aly:0
+[ 1017649ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zh2b3o2o:0
+[ 1023081ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zh6i5596:0
+[ 1030683ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zhcd5js7:0
+[ 1043002ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zhlvwk5g:0
+[ 1055335ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zhve3kmm:0
+[ 1067674ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:3000/socket.io/?EIO=4&transport=polling&t=zi4woncv:0

@@ -1,0 +1,4744 @@
+diff --git a/.github/workflows/set-milestone-on-pr.yml b/.github/workflows/set-milestone-on-pr.yml
+index e64c797..0d6dd0d 100644
+--- a/.github/workflows/set-milestone-on-pr.yml
++++ b/.github/workflows/set-milestone-on-pr.yml
+@@ -19,64 +19,42 @@ on:
+     branches: [master]
+     types: [closed]
+ 
+-permissions:
+-  issues: write
+-  pull-requests: write
+-
+ jobs:
+   set-milestone:
+     if: github.event.pull_request.merged == true
+     runs-on: ubuntu-22.04
+     steps:
++      - name: Checkout code
++        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+       - id: compute-milestone
++        run: |
++          export THEIA_CORE_VERSION=$(node -p "require(\"./packages/core/package.json\").version")
++          echo "MILESTONE_NUMBER=$(npx -q semver@7 --increment minor $THEIA_CORE_VERSION)" >> $GITHUB_ENV
++      - id: set
+         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+         with:
+-          result-encoding: string
++          github-token: ${{secrets.GITHUB_TOKEN}}
+           script: |
+-            const { data: file } = await github.rest.repos.getContent({
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              path: 'packages/core/package.json',
+-              ref: context.payload.pull_request.merge_commit_sha,
+-            });
+-            const pkg = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
+-
+-            // No checkout = no project-local .npmrc, so npx resolves against the
+-            // real registry. Same trust boundary as the publish workflow.
+-            const { execFileSync } = require('child_process');
+-            return execFileSync(
+-              'npx', ['-q', 'semver@7.7.2', '--increment', 'minor', pkg.version],
+-              { encoding: 'utf8' }
+-            ).trim();
++            // get milestone
++            const milestone = process.env.MILESTONE_NUMBER
++            console.log(`Using milestone with name ${milestone}`)
++            // check if milestone exists ?
++            const issuesGetMilestonesParams = context.repo
+ 
+-      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+-        with:
+-          script: |
+-            const milestone = ${{ toJSON(steps.compute-milestone.outputs.result) }};
+-            console.log(`Using milestone with name ${milestone}`);
++            // search if milestone is already defined
++            const response = await github.rest.issues.listMilestones(issuesGetMilestonesParams)
++            let githubMilestone = response.data.find(milestoneResponse => milestoneResponse.title === milestone)
+ 
+-            const milestones = await github.paginate(github.rest.issues.listMilestones, {
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              state: 'open',
+-              per_page: 100,
+-            });
+-            let githubMilestone = milestones.find(ms => ms.title === milestone);
++            // not defined, create it
+             if (!githubMilestone) {
+-              const { data: created } = await github.rest.issues.createMilestone({
+-                owner: context.repo.owner,
+-                repo: context.repo.repo,
+-                title: milestone,
+-              });
+-              githubMilestone = created;
++              const issuesCreateMilestoneParams = { owner: context.repo.owner, repo:context.repo.repo, title: milestone }
++              const createMilestoneResponse = await github.rest.issues.createMilestone(issuesCreateMilestoneParams)
++              githubMilestone = createMilestoneResponse.data
+             }
+-            await github.graphql(`
+-              mutation($pullRequestId: ID!, $milestoneId: ID!) {
+-                updatePullRequest(input: { pullRequestId: $pullRequestId, milestoneId: $milestoneId }) {
+-                  pullRequest { number }
+-                }
+-              }
+-            `, {
+-              pullRequestId: context.payload.pull_request.node_id,
+-              milestoneId: githubMilestone.node_id,
+-            });
++
++            // Grab the milestone number
++            const milestoneNumber = githubMilestone.number
++
++            // sets the milestone from the number
++            const issuesUpdateParams = { owner: context.repo.owner, repo: context.repo.repo, milestone: milestoneNumber, issue_number: context.issue.number }
++            await github.rest.issues.update(issuesUpdateParams)
+
+diff --git a/.gitignore b/.gitignore
+index d1b0006..d091c96 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -40,3 +40,7 @@ license-check-summary.txt*
+ .playwright-mcp/*
+ /.theia/chatSessions
+ .tmp.cfg
++
++# Disabled bundled plugin binaries exceed GitHub's normal file-size limit.
++/plugins.disabled/OpenAI.chatgpt/extension/bin/
++.cargo-home/
+
+diff --git a/.vscode/launch.json b/.vscode/launch.json
+index ec565c3..7ad078e 100644
+--- a/.vscode/launch.json
++++ b/.vscode/launch.json
+@@ -36,6 +36,7 @@
+         "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+       },
+       "cwd": "${workspaceFolder}/examples/electron",
++      "protocol": "inspector",
+       "args": [
+         ".",
+         "--log-level=debug",
+@@ -111,6 +112,7 @@
+       "name": "Attach to Plugin Host",
+       "port": 9339,
+       "timeout": 60000,
++      "stopOnEntry": false,
+       "smartStep": true,
+       "sourceMaps": true,
+       "internalConsoleOptions": "openOnSessionStart",
+@@ -122,6 +124,7 @@
+     {
+       "type": "node",
+       "request": "launch",
++      "protocol": "inspector",
+       "name": "Run Mocha Tests",
+       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+       "args": [
+@@ -131,6 +134,9 @@
+         "${workspaceFolder}/configs/mocharc.yml",
+         "**/${fileBasenameNoExtension}.js"
+       ],
++      "env": {
++        "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json"
++      },
+       "sourceMaps": true,
+       "smartStep": true,
+       "internalConsoleOptions": "openOnSessionStart",
+@@ -140,13 +146,38 @@
+       "name": "Launch Browser Frontend",
+       "type": "chrome",
+       "request": "launch",
+-      "url": "http://localhost:3000/"
++      "url": "http://localhost:3000/",
++      "webRoot": "${workspaceFolder}/examples/browser"
+     },
+     {
+       "type": "chrome",
+       "request": "attach",
+       "name": "Attach to Electron Frontend",
+-      "port": 9222
++      "port": 9222,
++      "webRoot": "${workspaceFolder}/examples/electron"
++    },
++    {
++      "name": "Launch VS Code Tests",
++      "type": "node",
++      "request": "launch",
++      "args": [
++        "${workspaceFolder}/examples/browser/lib/backend/main.js",
++        "${workspaceFolder}/plugins/vscode-api-tests/testWorkspace",
++        "--port",
++        "3030",
++        "--hostname",
++        "0.0.0.0",
++        "--extensionTestsPath=${workspaceFolder}/plugins/vscode-api-tests/out/singlefolder-tests",
++        "--hosted-plugin-inspect=9339"
++      ],
++      "env": {
++        "THEIA_DEFAULT_PLUGINS": "local-dir:${workspaceFolder}/plugins"
++      },
++      "stopOnEntry": false,
++      "sourceMaps": true,
++      "outFiles": [
++        "${workspaceFolder}/../.js"
++      ]
+     }
+   ],
+   "compounds": [
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 23e82cb..3ab4d3c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,7 +10,6 @@
+ 
+ - [ai-chat] the `'*'` magic key inside `ai-features.chat.toolConfirmation` is no longer honored; migrate to the new `ai-features.chat.defaultToolConfirmation` preference [#17452](https://github.com/eclipse-theia/theia/pull/17452)
+ - [native-webpack-plugin] The `@theia/native-webpack-plugin` package has been renamed to `@theia/bundle-plugin` [#14414](https://github.com/eclipse-theia/theia/pull/14414).
+-- [core] `BackendApplicationContribution.onStop()` is now dispatched from `gracefulShutdown()` before the root Inversify container is unbound, instead of from `process.on('exit')`. Hooks are dispatched in parallel and may now return `Promise<void>` to participate in the (timeout-bounded) asynchronous shutdown; existing synchronous implementations remain valid. Contributions that somehow relied on a particular synchronous cross-contribution ordering will observe different behaviour (the new parallel contract matches `initialize`/`configure`). The synchronous `process.on('exit')` fallback still runs `onStop` for code paths that bypass `gracefulShutdown` and continues to discard any returned promise. [#17477](https://github.com/eclipse-theia/theia/pull/17477)
+ 
+ ## 1.71.0 - 4/30/2026
+ 
+
+diff --git a/doc/Migration.md b/doc/Migration.md
+index e834b7b..f03fcd9 100644
+--- a/doc/Migration.md
++++ b/doc/Migration.md
+@@ -17,19 +17,6 @@ In case you have added your own bundling instructions to the `webpack.config.js`
+ 
+ Note that as a part of this change, the `@theia/native-webpack-plugin` dependency has been renamed to `@theia/bundle-plugin`.
+ 
+-The generated ESBuild configuration includes a `sourceMapPathsPlugin` that rewrites the `sources` field of emitted source maps to absolute `file://` URLs. This makes browser and Node debug launch configurations work without any custom `webRoot` or `sourceMapPathOverrides`: a minimal Chrome launch like
+-
+-```json
+-{
+-    "name": "Launch Browser Frontend",
+-    "type": "chrome",
+-    "request": "launch",
+-    "url": "http://localhost:3000/"
+-}
+-```
+-
+-is sufficient to bind breakpoints in the original sources. If you have a customized `esbuild.mjs` that is not automatically regenerated (because the `gen-esbuild` import was removed), either regenerate it (delete `esbuild.mjs` and rerun `theia build`) or manually add `sourceMapPathsPlugin()` from `@theia/bundle-plugin` to the `plugins` array of each build target. The plugin is a no-op when source maps are disabled (production builds).
+-
+ _Builtin Extension Pack_:
+ 
+ If you are using the [`eclipse-theia.builtin-extension-pack@1.79.0`](https://open-vsx.org/extension/eclipse-theia/builtin-extension-pack) extension pack you may need to include the [`ms-vscode.js-debug`](https://open-vsx.org/extension/ms-vscode/js-debug) and [`ms-vscode.js-debug-companion`](https://open-vsx.org/extension/ms-vscode/js-debug-companion) plugins for JavaScript debug support.
+
+diff --git a/doc/Publishing.md b/doc/Publishing.md
+index aff19bd..9abee74 100644
+--- a/doc/Publishing.md
++++ b/doc/Publishing.md
+@@ -602,8 +602,9 @@ Perform a `npm upgrade` on the repository after the release to update the `packa
+ 
+ To perform the upgrade:
+ 
+-- Run `npm upgrade --save` at the root of the repository. Besides updating the `package-lock.json`, it will align dependency version ranges in all `package.json` files (root and sub-packages) to match the resolved versions in package-lock.json. This ensures that adopters with existing lockfiles are forced to pull at least the minimum compatible version, rather than staying on an older locked version (that may be incompatible with the updated code if the upgrade required code changes).
++- Run `npm upgrade` at the root of the repository.
+ - Fix any compilation errors, typing errors, and failing tests.
++- Align dependency version ranges in all `package.json` files (root and sub-packages) to match the resolved versions in package-lock.json, especially if the upgrade required code changes. This ensures that adopters with existing lockfiles are forced to pull at least the minimum compatible version, rather than staying on an older locked version that may be incompatible with the updated code.
+ - Open a PR with the changes ([example](https://github.com/eclipse-theia/theia/pull/15688)).
+ - Run the license check review locally
+ - Wait for the "IP Check" to complete ([example](https://gitlab.eclipse.org/eclipsefdn/emo-team/iplab/-/issues/9377)).
+
+diff --git a/examples/api-samples/src/browser/menu/sample-menu-contribution.ts b/examples/api-samples/src/browser/menu/sample-menu-contribution.ts
+index f46769e..b8475a7 100644
+--- a/examples/api-samples/src/browser/menu/sample-menu-contribution.ts
++++ b/examples/api-samples/src/browser/menu/sample-menu-contribution.ts
+@@ -331,5 +331,4 @@ export class PlaceholderMenuNode implements CommandMenu {
+ 
+ export const bindSampleMenu = (bind: interfaces.Bind) => {
+     bind(CommandContribution).to(SampleCommandContribution).inSingletonScope();
+-    bind(MenuContribution).to(SampleMenuContribution).inSingletonScope();
+ };
+
+diff --git a/examples/api-samples/src/browser/monaco-editor-preferences/monaco-editor-preference-extractor.ts b/examples/api-samples/src/browser/monaco-editor-preferences/monaco-editor-preference-extractor.ts
+index f0ec6b6..0510c4d 100644
+--- a/examples/api-samples/src/browser/monaco-editor-preferences/monaco-editor-preference-extractor.ts
++++ b/examples/api-samples/src/browser/monaco-editor-preferences/monaco-editor-preference-extractor.ts
+@@ -109,7 +109,7 @@ export class MonacoEditorPreferenceSchemaExtractor implements CommandContributio
+             execute: async () => {
+                 const roots = this.workspaceService.tryGetRoots();
+                 if (roots.length !== 1 || !(roots[0].resource.path.toString() ?? '').includes('theia')) {
+-                    this.messageService.warn('This command should only be executed in the Theia workspace.');
++                    this.messageService.warn('This command should only be executed in the CyberVinci workspace.');
+                 }
+                 const theiaRoot = roots[0];
+                 const fileToWrite = theiaRoot.resource.resolve('packages/editor/src/common/editor-generated-preference-schema.ts');
+
+diff --git a/examples/browser-only/package.json b/examples/browser-only/package.json
+index 34fc6a2..b68a4fe 100644
+--- a/examples/browser-only/package.json
++++ b/examples/browser-only/package.json
+@@ -7,7 +7,7 @@
+     "target": "browser-only",
+     "frontend": {
+       "config": {
+-        "applicationName": "Theia Browser-Only Example",
++        "applicationName": "CyberVinci",
+         "preferences": {
+           "files.enableTrash": false
+         }
+
+diff --git a/examples/browser/package.json b/examples/browser/package.json
+index acdae40..6243aff 100644
+--- a/examples/browser/package.json
++++ b/examples/browser/package.json
+@@ -6,10 +6,11 @@
+   "theia": {
+     "frontend": {
+       "config": {
+-        "applicationName": "Theia Browser Example",
++        "applicationName": "CyberVinci",
+         "preferences": {
+           "files.enableTrash": false,
+-          "security.workspace.trust.enabled": false
++          "security.workspace.trust.enabled": false,
++          "workbench.cyberVinciIcon": "dourado-ciano-e-branco"
+         },
+         "reloadOnReconnect": true
+       }
+@@ -22,15 +23,21 @@
+   },
+   "theiaPluginsDir": "../../plugins",
+   "dependencies": {
++    "@cybervinci/codex": "^1.71.0",
++    "@cybervinci/builder": "1.71.0",
++    "@cybervinci/openpencil-extension": "1.71.0",
++    "@cybervinci/flow": "1.71.0",
+     "@theia/ai-anthropic": "1.71.0",
+     "@theia/ai-chat": "1.71.0",
+     "@theia/ai-chat-ui": "1.71.0",
+     "@theia/ai-claude-code": "1.71.0",
+     "@theia/ai-code-completion": "1.71.0",
+     "@theia/ai-codex": "1.71.0",
++    "@cybervinci/codex-provider": "1.71.0",
+     "@theia/ai-copilot": "1.71.0",
+     "@theia/ai-core": "1.71.0",
+     "@theia/ai-core-ui": "1.71.0",
++    "@cybervinci/library": "1.71.0",
+     "@theia/ai-editor": "1.71.0",
+     "@theia/ai-google": "1.71.0",
+     "@theia/ai-history": "1.71.0",
+@@ -52,6 +59,8 @@
+     "@theia/collaboration": "1.71.0",
+     "@theia/console": "1.71.0",
+     "@theia/core": "1.71.0",
++    "@cybervinci/ai-output-cleaner": "1.71.0",
++    "@cybervinci/branding": "1.71.0",
+     "@theia/debug": "1.71.0",
+     "@theia/dev-container": "1.71.0",
+     "@theia/editor": "1.71.0",
+@@ -78,6 +87,9 @@
+     "@theia/preferences": "1.71.0",
+     "@theia/preview": "1.71.0",
+     "@theia/process": "1.71.0",
++    "@cybervinci/memory": "1.71.0",
++    "@cybervinci/memory-roslyn": "1.71.0",
++    "@cybervinci/arena": "1.71.0",
+     "@theia/property-view": "1.71.0",
+     "@theia/remote": "1.71.0",
+     "@theia/scanoss": "1.71.0",
+
+diff --git a/examples/browser/tsconfig.json b/examples/browser/tsconfig.json
+index 3729b3a..66def1f 100644
+--- a/examples/browser/tsconfig.json
++++ b/examples/browser/tsconfig.json
+@@ -8,6 +8,9 @@
+     {
+       "path": "../../dev-packages/cli"
+     },
++    {
++      "path": "../../packages/flow"
++    },
+     {
+       "path": "../../packages/ai-anthropic"
+     },
+@@ -26,6 +29,9 @@
+     {
+       "path": "../../packages/ai-codex"
+     },
++    {
++      "path": "../../packages/codex-provider"
++    },
+     {
+       "path": "../../packages/ai-copilot"
+     },
+@@ -35,6 +41,9 @@
+     {
+       "path": "../../packages/ai-core-ui"
+     },
++    {
++      "path": "../../packages/library"
++    },
+     {
+       "path": "../../packages/ai-editor"
+     },
+@@ -92,6 +101,18 @@
+     {
+       "path": "../../packages/core"
+     },
++    {
++      "path": "../../packages/builder"
++    },
++    {
++      "path": "../../packages/ai-output-cleaner"
++    },
++    {
++      "path": "../../packages/codex"
++    },
++    {
++      "path": "../../packages/branding"
++    },
+     {
+       "path": "../../packages/debug"
+     },
+@@ -140,6 +161,9 @@
+     {
+       "path": "../../packages/notebook"
+     },
++    {
++      "path": "../../packages/openpencil-cybervinci-extension"
++    },
+     {
+       "path": "../../packages/outline-view"
+     },
+@@ -170,6 +194,15 @@
+     {
+       "path": "../../packages/process"
+     },
++    {
++      "path": "../../packages/memory"
++    },
++    {
++      "path": "../../packages/memory-roslyn"
++    },
++    {
++      "path": "../../packages/arena"
++    },
+     {
+       "path": "../../packages/property-view"
+     },
+
+diff --git a/examples/electron/package.json b/examples/electron/package.json
+index cbe16e7..e3340be 100644
+--- a/examples/electron/package.json
++++ b/examples/electron/package.json
+@@ -1,7 +1,7 @@
+ {
+   "private": true,
+   "name": "@theia/example-electron",
+-  "productName": "Theia Electron Example",
++  "productName": "CyberVinci",
+   "version": "1.71.0",
+   "main": "lib/backend/electron-main.js",
+   "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+@@ -9,12 +9,16 @@
+     "target": "electron",
+     "frontend": {
+       "config": {
+-        "applicationName": "Theia Electron Example",
++        "applicationName": "CyberVinci",
+         "reloadOnReconnect": true,
++        "preferences": {
++          "workbench.cyberVinciIcon": "dourado-ciano-e-branco"
++        },
+         "electron": {
+           "splashScreenOptions": {
+-            "content": "resources/theia-logo.svg",
+-            "height": 90
++            "content": "resources/cybervinci-splash.html",
++            "width": 300,
++            "height": 320
+           }
+         }
+       }
+@@ -26,15 +30,19 @@
+     }
+   },
+   "dependencies": {
++    "@cybervinci/builder": "1.71.0",
++    "@cybervinci/codex": "1.71.0",
+     "@theia/ai-anthropic": "1.71.0",
+     "@theia/ai-chat": "1.71.0",
+     "@theia/ai-chat-ui": "1.71.0",
+     "@theia/ai-claude-code": "1.71.0",
+     "@theia/ai-code-completion": "1.71.0",
+     "@theia/ai-codex": "1.71.0",
++    "@cybervinci/codex-provider": "1.71.0",
+     "@theia/ai-copilot": "1.71.0",
+     "@theia/ai-core": "1.71.0",
+     "@theia/ai-core-ui": "1.71.0",
++    "@cybervinci/library": "1.71.0",
+     "@theia/ai-editor": "1.71.0",
+     "@theia/ai-google": "1.71.0",
+     "@theia/ai-history": "1.71.0",
+@@ -49,6 +57,7 @@
+     "@theia/ai-scanoss": "1.71.0",
+     "@theia/ai-terminal": "1.71.0",
+     "@theia/ai-vercel-ai": "1.71.0",
++    "@cybervinci/flow": "1.71.0",
+     "@theia/api-provider-sample": "1.71.0",
+     "@theia/api-samples": "1.71.0",
+     "@theia/bulk-edit": "1.71.0",
+@@ -56,6 +65,8 @@
+     "@theia/collaboration": "1.71.0",
+     "@theia/console": "1.71.0",
+     "@theia/core": "1.71.0",
++    "@cybervinci/branding": "1.71.0",
++    "@cybervinci/ai-output-cleaner": "1.71.0",
+     "@theia/debug": "1.71.0",
+     "@theia/dev-container": "1.71.0",
+     "@theia/editor": "1.71.0",
+@@ -73,6 +84,7 @@
+     "@theia/mini-browser": "1.71.0",
+     "@theia/monaco": "1.71.0",
+     "@theia/navigator": "1.71.0",
++    "@cybervinci/openpencil-extension": "1.71.0",
+     "@theia/outline-view": "1.71.0",
+     "@theia/output": "1.71.0",
+     "@theia/plugin-dev": "1.71.0",
+@@ -80,8 +92,11 @@
+     "@theia/plugin-ext-headless": "1.71.0",
+     "@theia/plugin-ext-vscode": "1.71.0",
+     "@theia/preferences": "1.71.0",
++    "@cybervinci/arena": "1.71.0",
+     "@theia/preview": "1.71.0",
+     "@theia/process": "1.71.0",
++    "@cybervinci/memory": "1.71.0",
++    "@cybervinci/memory-roslyn": "1.71.0",
+     "@theia/property-view": "1.71.0",
+     "@theia/remote": "1.71.0",
+     "@theia/remote-wsl": "1.71.0",
+diff --git a/examples/electron/test/basic-example.espec.ts b/examples/electron/test/basic-example.espec.ts
+index 0b1195e..b2e8761 100644
+--- a/examples/electron/test/basic-example.espec.ts
++++ b/examples/electron/test/basic-example.espec.ts
+@@ -81,6 +81,6 @@ describe('basic-example-spec', function (): void {
+         await mainWindow.loadURL(url);
+ 
+         const title = mainWindow.webContents.getTitle();
+-        expect(title).to.include('Theia Electron Example');
++        expect(title).to.include('CyberVinci');
+     });
+ });
+
+diff --git a/examples/electron/tsconfig.json b/examples/electron/tsconfig.json
+index ebe36c1..123a12a 100644
+--- a/examples/electron/tsconfig.json
++++ b/examples/electron/tsconfig.json
+@@ -11,6 +11,9 @@
+     {
+       "path": "../../dev-packages/cli"
+     },
++    {
++      "path": "../../packages/flow"
++    },
+     {
+       "path": "../../packages/ai-anthropic"
+     },
+@@ -29,6 +32,9 @@
+     {
+       "path": "../../packages/ai-codex"
+     },
++    {
++      "path": "../../packages/codex-provider"
++    },
+     {
+       "path": "../../packages/ai-copilot"
+     },
+@@ -38,6 +44,9 @@
+     {
+       "path": "../../packages/ai-core-ui"
+     },
++    {
++      "path": "../../packages/library"
++    },
+     {
+       "path": "../../packages/ai-editor"
+     },
+@@ -95,6 +104,18 @@
+     {
+       "path": "../../packages/core"
+     },
++    {
++      "path": "../../packages/builder"
++    },
++    {
++      "path": "../../packages/ai-output-cleaner"
++    },
++    {
++      "path": "../../packages/codex"
++    },
++    {
++      "path": "../../packages/branding"
++    },
+     {
+       "path": "../../packages/debug"
+     },
+@@ -143,6 +164,9 @@
+     {
+       "path": "../../packages/navigator"
+     },
++    {
++      "path": "../../packages/openpencil-cybervinci-extension"
++    },
+     {
+       "path": "../../packages/outline-view"
+     },
+@@ -170,6 +194,15 @@
+     {
+       "path": "../../packages/process"
+     },
++    {
++      "path": "../../packages/memory"
++    },
++    {
++      "path": "../../packages/memory-roslyn"
++    },
++    {
++      "path": "../../packages/arena"
++    },
+     {
+       "path": "../../packages/property-view"
+     },
+
+diff --git a/examples/playwright/configs/playwright.config.ts b/examples/playwright/configs/playwright.config.ts
+index 782315c..8589112 100644
+--- a/examples/playwright/configs/playwright.config.ts
++++ b/examples/playwright/configs/playwright.config.ts
+@@ -22,21 +22,21 @@ const config: PlaywrightTestConfig = {
+     workers: 1,
+     fullyParallel: false,
+     // Timeout for each test in milliseconds.
+-    timeout: 60 * 1000,
++    timeout: 120 * 1000,
+     use: {
+         baseURL: 'http://localhost:3000',
+         browserName: 'chromium',
+         permissions: ['clipboard-read'],
+         screenshot: 'only-on-failure'
+     },
+-    preserveOutput: 'failures-only',
++    preserveOutput: 'always',
+     reporter: [
+         ['list'],
+         ['allure-playwright']
+     ],
+     // Reuse Theia backend on port 3000 or start instance before executing the tests
+     webServer: {
+-        command: 'npm run theia:start',
++        command: 'node ./scripts/start-flow-e2e.js',
+         port: 3000,
+         reuseExistingServer: true
+     }
+
+diff --git a/examples/playwright/src/theia-workspace.ts b/examples/playwright/src/theia-workspace.ts
+index db95a8b..c0bd96c 100644
+--- a/examples/playwright/src/theia-workspace.ts
++++ b/examples/playwright/src/theia-workspace.ts
+@@ -84,7 +84,26 @@ export class TheiaWorkspace {
+     }
+ 
+     remove(): void {
+-        fs.removeSync(this.workspacePath);
++        for (let attempt = 0; attempt < 5; attempt++) {
++            try {
++                fs.removeSync(this.workspacePath);
++                return;
++            } catch (error) {
++                const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : '';
++                if (!['EBUSY', 'ENOTEMPTY', 'EPERM'].includes(code)) {
++                    throw error;
++                }
++                if (attempt === 4) {
++                    console.warn(`Could not remove temporary workspace ${this.workspacePath}: ${code}`);
++                    return;
++                }
++                this.sleep(250);
++            }
++        }
++    }
++
++    protected sleep(milliseconds: number): void {
++        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+     }
+ 
+ }
+
+diff --git a/package-lock.json b/package-lock.json
+index 6cdca51..abeca3d 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -61,7 +61,7 @@
+         "tslint": "^5.12.0",
+         "typedoc": "0.28.13",
+         "typescript": "~5.9.3",
+-        "yargs": "^17.7.2"
++        "yargs": "^15.3.1"
+       },
+       "engines": {
+         "node": ">=22"
+@@ -90,6 +90,7 @@
+         "esbuild": "^0.24.0",
+         "esbuild-plugin-copy": "^2.1.1",
+         "esbuild-plugins-node-modules-polyfill": "^1.6.7",
++        "find-git-repositories": "^0.2.2",
+         "fs-extra": "^4.0.3",
+         "http-server": "^14.1.1",
+         "ignore-loader": "^0.1.2",
+@@ -108,7 +109,7 @@
+         "webpack": "^5.106.2",
+         "webpack-cli": "4.7.0",
+         "worker-loader": "^3.0.8",
+-        "yargs": "^17.7.2"
++        "yargs": "^15.4.1"
+       },
+       "devDependencies": {
+         "@theia/ext-scripts": "1.71.0"
+@@ -208,7 +209,7 @@
+         "puppeteer-to-istanbul": "1.4.0",
+         "temp": "^0.9.4",
+         "tslib": "^2.8.1",
+-        "yargs": "^17.7.2"
++        "yargs": "^15.4.1"
+       },
+       "bin": {
+         "theia": "bin/theia.js",
+@@ -335,7 +336,7 @@
+         "mustache": "^4.2.0",
+         "semver": "^7.7.4",
+         "tslib": "^2.8.1",
+-        "yargs": "^17.7.2"
++        "yargs": "^15.4.1"
+       },
+       "bin": {
+         "theia-re-exports": "bin/theia-re-exports.js"
+@@ -344,11 +345,10 @@
+         "@types/chai": "^4.3.0",
+         "@types/mocha": "^10.0.10",
+         "@types/mustache": "^4.2.6",
+-        "@types/yargs": "^17",
+         "typescript": "~5.9.3"
+       },
+       "engines": {
+-        "node": ">= 12"
++        "node": ">=22"
+       }
+     },
+     "dev-packages/private-test-setup": {
+@@ -364,6 +364,20 @@
+         "undici": "^7.25.0"
+       }
+     },
++    "examples/agency-visual-studio-host": {
++      "name": "@theia/example-agency-visual-studio-host",
++      "version": "0.0.0",
++      "engines": {
++        "node": ">=22"
++      }
++    },
++    "examples/agency-vscode-host": {
++      "name": "@theia/example-agency-vscode-host",
++      "version": "0.0.0",
++      "engines": {
++        "node": ">=22"
++      }
++    },
+     "examples/api-provider-sample": {
+       "name": "@theia/api-provider-sample",
+       "version": "1.71.0",
+@@ -429,15 +443,113 @@
+       "version": "1.71.0",
+       "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+       "dependencies": {
++        "@cybervinci/codex": "^1.71.0",
++        "@cybervinci/builder": "1.71.0",
++        "@cybervinci/openpencil-extension": "1.71.0",
++        "@cybervinci/flow": "1.71.0",
++        "@theia/ai-anthropic": "1.71.0",
++        "@theia/ai-chat": "1.71.0",
++        "@theia/ai-chat-ui": "1.71.0",
++        "@theia/ai-claude-code": "1.71.0",
++        "@theia/ai-code-completion": "1.71.0",
++        "@theia/ai-codex": "1.71.0",
++        "@cybervinci/codex-provider": "1.71.0",
++        "@theia/ai-copilot": "1.71.0",
++        "@theia/ai-core": "1.71.0",
++        "@theia/ai-core-ui": "1.71.0",
++        "@cybervinci/library": "1.71.0",
++        "@theia/ai-editor": "1.71.0",
++        "@theia/ai-google": "1.71.0",
++        "@theia/ai-history": "1.71.0",
++        "@theia/ai-huggingface": "1.71.0",
++        "@theia/ai-ide": "1.71.0",
++        "@theia/ai-llamafile": "1.71.0",
++        "@theia/ai-mcp": "1.71.0",
++        "@theia/ai-mcp-server": "1.71.0",
++        "@theia/ai-mcp-ui": "1.71.0",
++        "@theia/ai-ollama": "1.71.0",
++        "@theia/ai-openai": "1.71.0",
++        "@theia/ai-scanoss": "1.71.0",
++        "@theia/ai-terminal": "1.71.0",
++        "@theia/ai-vercel-ai": "1.71.0",
++        "@theia/api-provider-sample": "1.71.0",
++        "@theia/api-samples": "1.71.0",
++        "@theia/bulk-edit": "1.71.0",
++        "@theia/callhierarchy": "1.71.0",
++        "@theia/collaboration": "1.71.0",
++        "@theia/console": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/ai-output-cleaner": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/debug": "1.71.0",
++        "@theia/dev-container": "1.71.0",
++        "@theia/editor": "1.71.0",
++        "@theia/editor-preview": "1.71.0",
++        "@theia/file-search": "1.71.0",
++        "@theia/filesystem": "1.71.0",
++        "@theia/getting-started": "1.71.0",
++        "@theia/keymaps": "1.71.0",
++        "@theia/markers": "1.71.0",
++        "@theia/memory-inspector": "1.71.0",
++        "@theia/messages": "1.71.0",
++        "@theia/metrics": "1.71.0",
++        "@theia/mini-browser": "1.71.0",
++        "@theia/monaco": "1.71.0",
++        "@theia/navigator": "1.71.0",
++        "@theia/notebook": "1.71.0",
++        "@theia/outline-view": "1.71.0",
++        "@theia/output": "1.71.0",
++        "@theia/plugin-dev": "1.71.0",
++        "@theia/plugin-ext": "1.71.0",
++        "@theia/plugin-ext-headless": "1.71.0",
++        "@theia/plugin-ext-vscode": "1.71.0",
++        "@theia/plugin-metrics": "1.71.0",
++        "@theia/preferences": "1.71.0",
++        "@theia/preview": "1.71.0",
++        "@theia/process": "1.71.0",
++        "@cybervinci/memory": "1.71.0",
++        "@cybervinci/memory-roslyn": "1.71.0",
++        "@cybervinci/arena": "1.71.0",
++        "@theia/property-view": "1.71.0",
++        "@theia/remote": "1.71.0",
++        "@theia/scanoss": "1.71.0",
++        "@theia/scm": "1.71.0",
++        "@theia/scm-extra": "1.71.0",
++        "@theia/search-in-workspace": "1.71.0",
++        "@theia/secondary-window": "1.71.0",
++        "@theia/task": "1.71.0",
++        "@theia/terminal": "1.71.0",
++        "@theia/terminal-manager": "1.71.0",
++        "@theia/test": "1.71.0",
++        "@theia/timeline": "1.71.0",
++        "@theia/toolbar": "1.71.0",
++        "@theia/typehierarchy": "1.71.0",
++        "@theia/userstorage": "1.71.0",
++        "@theia/variable-resolver": "1.71.0",
++        "@theia/vsx-registry": "1.71.0",
++        "@theia/workspace": "1.71.0"
++      },
++      "devDependencies": {
++        "@theia/cli": "1.71.0"
++      }
++    },
++    "examples/browser-no-flow-20260520-233937": {
++      "name": "@theia/example-browser-no-flow-smoke",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/openpencil-extension": "1.71.0",
+         "@theia/ai-anthropic": "1.71.0",
+         "@theia/ai-chat": "1.71.0",
+         "@theia/ai-chat-ui": "1.71.0",
+         "@theia/ai-claude-code": "1.71.0",
+         "@theia/ai-code-completion": "1.71.0",
+         "@theia/ai-codex": "1.71.0",
++        "@cybervinci/codex-provider": "1.71.0",
+         "@theia/ai-copilot": "1.71.0",
+         "@theia/ai-core": "1.71.0",
+         "@theia/ai-core-ui": "1.71.0",
++        "@cybervinci/library": "1.71.0",
+         "@theia/ai-editor": "1.71.0",
+         "@theia/ai-google": "1.71.0",
+         "@theia/ai-history": "1.71.0",
+@@ -459,6 +571,8 @@
+         "@theia/collaboration": "1.71.0",
+         "@theia/console": "1.71.0",
+         "@theia/core": "1.71.0",
++        "@cybervinci/ai-output-cleaner": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
+         "@theia/debug": "1.71.0",
+         "@theia/dev-container": "1.71.0",
+         "@theia/editor": "1.71.0",
+@@ -485,6 +599,9 @@
+         "@theia/preferences": "1.71.0",
+         "@theia/preview": "1.71.0",
+         "@theia/process": "1.71.0",
++        "@cybervinci/memory": "1.71.0",
++        "@cybervinci/memory-roslyn": "1.71.0",
++        "@cybervinci/arena": "1.71.0",
+         "@theia/property-view": "1.71.0",
+         "@theia/remote": "1.71.0",
+         "@theia/scanoss": "1.71.0",
+@@ -576,15 +693,21 @@
+       "version": "1.71.0",
+       "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+       "dependencies": {
++        "@cybervinci/codex": "1.71.0",
++        "@cybervinci/builder": "1.71.0",
++        "@cybervinci/openpencil-extension": "1.71.0",
++        "@cybervinci/flow": "1.71.0",
+         "@theia/ai-anthropic": "1.71.0",
+         "@theia/ai-chat": "1.71.0",
+         "@theia/ai-chat-ui": "1.71.0",
+         "@theia/ai-claude-code": "1.71.0",
+         "@theia/ai-code-completion": "1.71.0",
+         "@theia/ai-codex": "1.71.0",
++        "@cybervinci/codex-provider": "1.71.0",
+         "@theia/ai-copilot": "1.71.0",
+         "@theia/ai-core": "1.71.0",
+         "@theia/ai-core-ui": "1.71.0",
++        "@cybervinci/library": "1.71.0",
+         "@theia/ai-editor": "1.71.0",
+         "@theia/ai-google": "1.71.0",
+         "@theia/ai-history": "1.71.0",
+@@ -606,6 +729,8 @@
+         "@theia/collaboration": "1.71.0",
+         "@theia/console": "1.71.0",
+         "@theia/core": "1.71.0",
++        "@cybervinci/ai-output-cleaner": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
+         "@theia/debug": "1.71.0",
+         "@theia/dev-container": "1.71.0",
+         "@theia/editor": "1.71.0",
+@@ -632,6 +757,9 @@
+         "@theia/preferences": "1.71.0",
+         "@theia/preview": "1.71.0",
+         "@theia/process": "1.71.0",
++        "@cybervinci/memory": "1.71.0",
++        "@cybervinci/memory-roslyn": "1.71.0",
++        "@cybervinci/arena": "1.71.0",
+         "@theia/property-view": "1.71.0",
+         "@theia/remote": "1.71.0",
+         "@theia/remote-wsl": "1.71.0",
+@@ -2550,6 +2678,50 @@
+       "integrity": "sha512-wMue2Sy4GAVTk6Ic4tJVcnfdau+gx2EnG7S+uAEe+TWJFqE4YoWN4/H8MSLj4eYJKxGg26lZwboEniNiNwZQ6Q==",
+       "license": "Apache-2.0"
+     },
++    "node_modules/@cybervinci/codex": {
++      "resolved": "packages/codex",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-ai": {
++      "resolved": "packages/builder-ai",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder": {
++      "resolved": "packages/builder",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-editor-puck": {
++      "resolved": "packages/builder-editor-puck",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-export-html": {
++      "resolved": "packages/builder-export-html",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-export-react": {
++      "resolved": "packages/builder-export-react",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-property-panel-rjsf": {
++      "resolved": "packages/builder-property-panel-rjsf",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-registry": {
++      "resolved": "packages/builder-registry",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-renderer-mantine": {
++      "resolved": "packages/builder-renderer-mantine",
++      "link": true
++    },
++    "node_modules/@cybervinci/builder-schema": {
++      "resolved": "packages/builder-schema",
++      "link": true
++    },
++    "node_modules/@cybervinci/openpencil-extension": {
++      "resolved": "packages/openpencil-cybervinci-extension",
++      "link": true
++    },
+     "node_modules/@discoveryjs/json-ext": {
+       "version": "0.5.7",
+       "resolved": "https://registry.npmjs.org/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz",
+@@ -3269,6 +3441,59 @@
+         "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+       }
+     },
++    "node_modules/@floating-ui/core": {
++      "version": "1.7.5",
++      "resolved": "https://registry.npmjs.org/@floating-ui/core/-/core-1.7.5.tgz",
++      "integrity": "sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/utils": "^0.2.11"
++      }
++    },
++    "node_modules/@floating-ui/dom": {
++      "version": "1.7.6",
++      "resolved": "https://registry.npmjs.org/@floating-ui/dom/-/dom-1.7.6.tgz",
++      "integrity": "sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/core": "^1.7.5",
++        "@floating-ui/utils": "^0.2.11"
++      }
++    },
++    "node_modules/@floating-ui/react": {
++      "version": "0.26.28",
++      "resolved": "https://registry.npmjs.org/@floating-ui/react/-/react-0.26.28.tgz",
++      "integrity": "sha512-yORQuuAtVpiRjpMhdc0wJj06b9JFjrYF4qp96j++v2NBpbi6SEGF7donUJ3TMieerQ6qVkAv1tgr7L4r5roTqw==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/react-dom": "^2.1.2",
++        "@floating-ui/utils": "^0.2.8",
++        "tabbable": "^6.0.0"
++      },
++      "peerDependencies": {
++        "react": ">=16.8.0",
++        "react-dom": ">=16.8.0"
++      }
++    },
++    "node_modules/@floating-ui/react-dom": {
++      "version": "2.1.8",
++      "resolved": "https://registry.npmjs.org/@floating-ui/react-dom/-/react-dom-2.1.8.tgz",
++      "integrity": "sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/dom": "^1.7.6"
++      },
++      "peerDependencies": {
++        "react": ">=16.8.0",
++        "react-dom": ">=16.8.0"
++      }
++    },
++    "node_modules/@floating-ui/utils": {
++      "version": "0.2.11",
++      "resolved": "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.11.tgz",
++      "integrity": "sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==",
++      "license": "MIT"
++    },
+     "node_modules/@gar/promise-retry": {
+       "version": "1.0.3",
+       "resolved": "https://registry.npmjs.org/@gar/promise-retry/-/promise-retry-1.0.3.tgz",
+@@ -3348,6 +3573,24 @@
+         "node": ">=6"
+       }
+     },
++    "node_modules/@grpc/grpc-js/node_modules/yargs": {
++      "version": "17.7.2",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
++      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
++      "license": "MIT",
++      "dependencies": {
++        "cliui": "^8.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "require-directory": "^2.1.1",
++        "string-width": "^4.2.3",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^21.1.1"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/@grpc/proto-loader": {
+       "version": "0.7.15",
+       "resolved": "https://registry.npmjs.org/@grpc/proto-loader/-/proto-loader-0.7.15.tgz",
+@@ -3366,6 +3609,24 @@
+         "node": ">=6"
+       }
+     },
++    "node_modules/@grpc/proto-loader/node_modules/yargs": {
++      "version": "17.7.2",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
++      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
++      "license": "MIT",
++      "dependencies": {
++        "cliui": "^8.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "require-directory": "^2.1.1",
++        "string-width": "^4.2.3",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^21.1.1"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/@hono/node-server": {
+       "version": "1.19.14",
+       "resolved": "https://registry.npmjs.org/@hono/node-server/-/node-server-1.19.14.tgz",
+@@ -4294,6 +4555,46 @@
+         "node": ">= 12.13.0"
+       }
+     },
++    "node_modules/@mantine/core": {
++      "version": "7.17.8",
++      "resolved": "https://registry.npmjs.org/@mantine/core/-/core-7.17.8.tgz",
++      "integrity": "sha512-42sfdLZSCpsCYmLCjSuntuPcDg3PLbakSmmYfz5Auea8gZYLr+8SS5k647doVu0BRAecqYOytkX2QC5/u/8VHw==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/react": "^0.26.28",
++        "clsx": "^2.1.1",
++        "react-number-format": "^5.4.3",
++        "react-remove-scroll": "^2.6.2",
++        "react-textarea-autosize": "8.5.9",
++        "type-fest": "^4.27.0"
++      },
++      "peerDependencies": {
++        "@mantine/hooks": "7.17.8",
++        "react": "^18.x || ^19.x",
++        "react-dom": "^18.x || ^19.x"
++      }
++    },
++    "node_modules/@mantine/core/node_modules/type-fest": {
++      "version": "4.41.0",
++      "resolved": "https://registry.npmjs.org/type-fest/-/type-fest-4.41.0.tgz",
++      "integrity": "sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==",
++      "license": "(MIT OR CC0-1.0)",
++      "engines": {
++        "node": ">=16"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/@mantine/hooks": {
++      "version": "7.17.8",
++      "resolved": "https://registry.npmjs.org/@mantine/hooks/-/hooks-7.17.8.tgz",
++      "integrity": "sha512-96qygbkTjRhdkzd5HDU8fMziemN/h758/EwrFu7TlWrEP10Vw076u+Ap/sG6OT4RGPZYYoHrTlT+mkCZblWHuw==",
++      "license": "MIT",
++      "peerDependencies": {
++        "react": "^18.x || ^19.x"
++      }
++    },
+     "node_modules/@modelcontextprotocol/sdk": {
+       "version": "1.29.0",
+       "resolved": "https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.29.0.tgz",
+@@ -5605,9 +5906,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -5622,9 +5920,6 @@
+         "arm64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -5639,9 +5934,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -5656,9 +5948,6 @@
+         "x64"
+       ],
+       "dev": true,
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6007,9 +6296,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6030,9 +6316,6 @@
+       "cpu": [
+         "arm"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6053,9 +6336,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6076,9 +6356,6 @@
+       "cpu": [
+         "arm64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6099,9 +6376,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "glibc"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6122,9 +6396,6 @@
+       "cpu": [
+         "x64"
+       ],
+-      "libc": [
+-        "musl"
+-      ],
+       "license": "MIT",
+       "optional": true,
+       "os": [
+@@ -6288,18 +6559,17 @@
+       "license": "BSD-3-Clause"
+     },
+     "node_modules/@puppeteer/browsers": {
+-      "version": "2.3.1",
+-      "resolved": "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-2.3.1.tgz",
+-      "integrity": "sha512-uK7o3hHkK+naEobMSJ+2ySYyXtQkBxIH8Gn4MK9ciePjNV+Pf+PgY/W7iPzn2MTjl3stcYB5AlcTmPYw7AXDwA==",
++      "version": "2.13.0",
++      "resolved": "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-2.13.0.tgz",
++      "integrity": "sha512-46BZJYJjc/WwmKjsvDFykHtXrtomsCIrwYQPOP7VfMJoZY2bsDF9oROBABR3paDjDcmkUye1Pb1BqdcdiipaWA==",
+       "license": "Apache-2.0",
+       "dependencies": {
+-        "debug": "^4.3.6",
++        "debug": "^4.4.3",
+         "extract-zip": "^2.0.1",
+         "progress": "^2.0.3",
+-        "proxy-agent": "^6.4.0",
+-        "semver": "^7.6.3",
+-        "tar-fs": "^3.0.6",
+-        "unbzip2-stream": "^1.4.3",
++        "proxy-agent": "^6.5.0",
++        "semver": "^7.7.4",
++        "tar-fs": "^3.1.1",
+         "yargs": "^17.7.2"
+       },
+       "bin": {
+@@ -6309,29 +6579,885 @@
+         "node": ">=18"
+       }
+     },
+-    "node_modules/@rtsao/scc": {
+-      "version": "1.1.0",
+-      "resolved": "https://registry.npmjs.org/@rtsao/scc/-/scc-1.1.0.tgz",
+-      "integrity": "sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==",
+-      "dev": true,
+-      "license": "MIT"
+-    },
+-    "node_modules/@shikijs/engine-oniguruma": {
+-      "version": "3.23.0",
+-      "resolved": "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-3.23.0.tgz",
+-      "integrity": "sha512-1nWINwKXxKKLqPibT5f4pAFLej9oZzQTsby8942OTlsJzOBZ0MWKiwzMsd+jhzu8YPCHAswGnnN1YtQfirL35g==",
+-      "dev": true,
++    "node_modules/@puppeteer/browsers/node_modules/yargs": {
++      "version": "17.7.2",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
++      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
+       "license": "MIT",
+       "dependencies": {
+-        "@shikijs/types": "3.23.0",
+-        "@shikijs/vscode-textmate": "^10.0.2"
++        "cliui": "^8.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "require-directory": "^2.1.1",
++        "string-width": "^4.2.3",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^21.1.1"
++      },
++      "engines": {
++        "node": ">=12"
+       }
+     },
+-    "node_modules/@shikijs/langs": {
+-      "version": "3.23.0",
+-      "resolved": "https://registry.npmjs.org/@shikijs/langs/-/langs-3.23.0.tgz",
+-      "integrity": "sha512-2Ep4W3Re5aB1/62RSYQInK9mM3HsLeB91cHqznAJMuylqjzNVAVCMnNWRHFtcNHXsoNRayP9z1qj4Sq3nMqYXg==",
+-      "dev": true,
++    "node_modules/@radix-ui/number": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/number/-/number-1.1.1.tgz",
++      "integrity": "sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==",
++      "license": "MIT"
++    },
++    "node_modules/@radix-ui/primitive": {
++      "version": "1.1.3",
++      "resolved": "https://registry.npmjs.org/@radix-ui/primitive/-/primitive-1.1.3.tgz",
++      "integrity": "sha512-JTF99U/6XIjCBo0wqkU5sK10glYe27MRRsfwoiq5zzOEZLHU3A3KCMa5X/azekYRCJ0HlwI0crAXS/5dEHTzDg==",
++      "license": "MIT"
++    },
++    "node_modules/@radix-ui/react-arrow": {
++      "version": "1.1.7",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-arrow/-/react-arrow-1.1.7.tgz",
++      "integrity": "sha512-F+M1tLhO+mlQaOWspE8Wstg+z6PwxwRd8oQ8IXceWz92kfAmalTRf0EjrouQeo7QssEPfCn05B4Ihs1K9WQ/7w==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-collection": {
++      "version": "1.1.7",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-collection/-/react-collection-1.1.7.tgz",
++      "integrity": "sha512-Fh9rGN0MoI4ZFUNyfFVNU4y9LUz93u9/0K+yLgA2bwRojxM8JU1DyvvMBabnZPBgMWREAJvU2jjVzq+LrFUglw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-slot": "1.2.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-compose-refs": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-compose-refs/-/react-compose-refs-1.1.2.tgz",
++      "integrity": "sha512-z4eqJvfiNnFMHIIvXP3CY57y2WJs5g2v3X0zm9mEJkrkNv4rDxu+sg9Jh8EkXyeqBkB7SOcboo9dMVqhyrACIg==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-context": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-context/-/react-context-1.1.2.tgz",
++      "integrity": "sha512-jCi/QKUM2r1Ju5a3J64TH2A5SpKAgh0LpknyqdQ4m6DCV0xJ2HG1xARRwNGPQfi1SLdLWZ1OJz6F4OMBBNiGJA==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-direction": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-direction/-/react-direction-1.1.1.tgz",
++      "integrity": "sha512-1UEWRX6jnOA2y4H5WczZ44gOOjTEmlqv1uNW4GAJEO5+bauCBhv8snY65Iw5/VOS/ghKN9gr2KjnLKxrsvoMVw==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-dismissable-layer": {
++      "version": "1.1.11",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-dismissable-layer/-/react-dismissable-layer-1.1.11.tgz",
++      "integrity": "sha512-Nqcp+t5cTB8BinFkZgXiMJniQH0PsUt2k51FUhbdfeKvc4ACcG2uQniY/8+h1Yv6Kza4Q7lD7PQV0z0oicE0Mg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-callback-ref": "1.1.1",
++        "@radix-ui/react-use-escape-keydown": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-focus-guards": {
++      "version": "1.1.3",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-focus-guards/-/react-focus-guards-1.1.3.tgz",
++      "integrity": "sha512-0rFg/Rj2Q62NCm62jZw0QX7a3sz6QCQU0LpZdNrJX8byRGaGVTqbrW9jAoIAHyMQqsNpeZ81YgSizOt5WXq0Pw==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-focus-scope": {
++      "version": "1.1.7",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-focus-scope/-/react-focus-scope-1.1.7.tgz",
++      "integrity": "sha512-t2ODlkXBQyn7jkl6TNaw/MtVEVvIGelJDCG41Okq/KwUsJBwQ4XVZsHAVUkK4mBv3ewiAS3PGuUWuY2BoK4ZUw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-callback-ref": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-id": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-id/-/react-id-1.1.1.tgz",
++      "integrity": "sha512-kGkGegYIdQsOb4XjsfM97rXsiHaBwco+hFI66oO4s9LU+PLAC5oJ7khdOVFxkhsmlbpUqDAvXw11CluXP+jkHg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-use-layout-effect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-popover": {
++      "version": "1.1.15",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-popover/-/react-popover-1.1.15.tgz",
++      "integrity": "sha512-kr0X2+6Yy/vJzLYJUPCZEc8SfQcf+1COFoAqauJm74umQhta9M7lNJHP7QQS3vkvcGLQUbWpMzwrXYwrYztHKA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-dismissable-layer": "1.1.11",
++        "@radix-ui/react-focus-guards": "1.1.3",
++        "@radix-ui/react-focus-scope": "1.1.7",
++        "@radix-ui/react-id": "1.1.1",
++        "@radix-ui/react-popper": "1.2.8",
++        "@radix-ui/react-portal": "1.1.9",
++        "@radix-ui/react-presence": "1.1.5",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-slot": "1.2.3",
++        "@radix-ui/react-use-controllable-state": "1.2.2",
++        "aria-hidden": "^1.2.4",
++        "react-remove-scroll": "^2.6.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-popper": {
++      "version": "1.2.8",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-popper/-/react-popper-1.2.8.tgz",
++      "integrity": "sha512-0NJQ4LFFUuWkE7Oxf0htBKS6zLkkjBH+hM1uk7Ng705ReR8m/uelduy1DBo0PyBXPKVnBA6YBlU94MBGXrSBCw==",
++      "license": "MIT",
++      "dependencies": {
++        "@floating-ui/react-dom": "^2.0.0",
++        "@radix-ui/react-arrow": "1.1.7",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-callback-ref": "1.1.1",
++        "@radix-ui/react-use-layout-effect": "1.1.1",
++        "@radix-ui/react-use-rect": "1.1.1",
++        "@radix-ui/react-use-size": "1.1.1",
++        "@radix-ui/rect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-portal": {
++      "version": "1.1.9",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-portal/-/react-portal-1.1.9.tgz",
++      "integrity": "sha512-bpIxvq03if6UNwXZ+HTK71JLh4APvnXntDc6XOX8UVq4XQOVl7lwok0AvIl+b8zgCw3fSaVTZMpAPPagXbKmHQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-layout-effect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-presence": {
++      "version": "1.1.5",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-presence/-/react-presence-1.1.5.tgz",
++      "integrity": "sha512-/jfEwNDdQVBCNvjkGit4h6pMOzq8bHkopq458dPt2lMjx+eBQUohZNG9A7DtO/O5ukSbxuaNGXMjHicgwy6rQQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-use-layout-effect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-primitive": {
++      "version": "2.1.3",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.3.tgz",
++      "integrity": "sha512-m9gTwRkhy2lvCPe6QJp4d3G1TYEUHn/FzJUtq9MjH46an1wJU+GdoGC5VLof8RX8Ft/DlpshApkhswDLZzHIcQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-slot": "1.2.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-select": {
++      "version": "2.2.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-select/-/react-select-2.2.6.tgz",
++      "integrity": "sha512-I30RydO+bnn2PQztvo25tswPH+wFBjehVGtmagkU78yMdwTwVf12wnAOF+AeP8S2N8xD+5UPbGhkUfPyvT+mwQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/number": "1.1.1",
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-collection": "1.1.7",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-direction": "1.1.1",
++        "@radix-ui/react-dismissable-layer": "1.1.11",
++        "@radix-ui/react-focus-guards": "1.1.3",
++        "@radix-ui/react-focus-scope": "1.1.7",
++        "@radix-ui/react-id": "1.1.1",
++        "@radix-ui/react-popper": "1.2.8",
++        "@radix-ui/react-portal": "1.1.9",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-slot": "1.2.3",
++        "@radix-ui/react-use-callback-ref": "1.1.1",
++        "@radix-ui/react-use-controllable-state": "1.2.2",
++        "@radix-ui/react-use-layout-effect": "1.1.1",
++        "@radix-ui/react-use-previous": "1.1.1",
++        "@radix-ui/react-visually-hidden": "1.2.3",
++        "aria-hidden": "^1.2.4",
++        "react-remove-scroll": "^2.6.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-separator": {
++      "version": "1.1.8",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-separator/-/react-separator-1.1.8.tgz",
++      "integrity": "sha512-sDvqVY4itsKwwSMEe0jtKgfTh+72Sy3gPmQpjqcQneqQ4PFmr/1I0YA+2/puilhggCe2gJcx5EBAYFkWkdpa5g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.4"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-separator/node_modules/@radix-ui/react-primitive": {
++      "version": "2.1.4",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-primitive/-/react-primitive-2.1.4.tgz",
++      "integrity": "sha512-9hQc4+GNVtJAIEPEqlYqW5RiYdrr8ea5XQ0ZOnD6fgru+83kqT15mq2OCcbe8KnjRZl5vF3ks69AKz3kh1jrhg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-slot": "1.2.4"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-separator/node_modules/@radix-ui/react-slot": {
++      "version": "1.2.4",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.2.4.tgz",
++      "integrity": "sha512-Jl+bCv8HxKnlTLVrcDE8zTMJ09R9/ukw4qBs/oZClOfoQk/cOTbDn+NceXfV7j09YPVQUryJPHurafcSg6EVKA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-slider": {
++      "version": "1.3.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slider/-/react-slider-1.3.6.tgz",
++      "integrity": "sha512-JPYb1GuM1bxfjMRlNLE+BcmBC8onfCi60Blk7OBqi2MLTFdS+8401U4uFjnwkOr49BLmXxLC6JHkvAsx5OJvHw==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/number": "1.1.1",
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-collection": "1.1.7",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-direction": "1.1.1",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-controllable-state": "1.2.2",
++        "@radix-ui/react-use-layout-effect": "1.1.1",
++        "@radix-ui/react-use-previous": "1.1.1",
++        "@radix-ui/react-use-size": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-slot": {
++      "version": "1.2.3",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-slot/-/react-slot-1.2.3.tgz",
++      "integrity": "sha512-aeNmHnBxbi2St0au6VBVC7JXFlhLlOnvIIlePNniyUNAClzmtAUEY8/pBiK3iHjufOlwA+c20/8jngo7xcrg8A==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-compose-refs": "1.1.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-switch": {
++      "version": "1.2.6",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-switch/-/react-switch-1.2.6.tgz",
++      "integrity": "sha512-bByzr1+ep1zk4VubeEVViV592vu2lHE2BZY5OnzehZqOOgogN80+mNtCqPkhn2gklJqOpxWgPoYTSnhBCqpOXQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-controllable-state": "1.2.2",
++        "@radix-ui/react-use-previous": "1.1.1",
++        "@radix-ui/react-use-size": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-toggle": {
++      "version": "1.1.10",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-toggle/-/react-toggle-1.1.10.tgz",
++      "integrity": "sha512-lS1odchhFTeZv3xwHH31YPObmJn8gOg7Lq12inrr0+BH/l3Tsq32VfjqH1oh80ARM3mlkfMic15n0kg4sD1poQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-use-controllable-state": "1.2.2"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-tooltip": {
++      "version": "1.2.8",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-tooltip/-/react-tooltip-1.2.8.tgz",
++      "integrity": "sha512-tY7sVt1yL9ozIxvmbtN5qtmH2krXcBCfjEiCgKGLqunJHvgvZG2Pcl2oQ3kbcZARb1BGEHdkLzcYGO8ynVlieg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/primitive": "1.1.3",
++        "@radix-ui/react-compose-refs": "1.1.2",
++        "@radix-ui/react-context": "1.1.2",
++        "@radix-ui/react-dismissable-layer": "1.1.11",
++        "@radix-ui/react-id": "1.1.1",
++        "@radix-ui/react-popper": "1.2.8",
++        "@radix-ui/react-portal": "1.1.9",
++        "@radix-ui/react-presence": "1.1.5",
++        "@radix-ui/react-primitive": "2.1.3",
++        "@radix-ui/react-slot": "1.2.3",
++        "@radix-ui/react-use-controllable-state": "1.2.2",
++        "@radix-ui/react-visually-hidden": "1.2.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-callback-ref": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-callback-ref/-/react-use-callback-ref-1.1.1.tgz",
++      "integrity": "sha512-FkBMwD+qbGQeMu1cOHnuGB6x4yzPjho8ap5WtbEJ26umhgqVXbhekKUQO+hZEL1vU92a3wHwdp0HAcqAUF5iDg==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-controllable-state": {
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-controllable-state/-/react-use-controllable-state-1.2.2.tgz",
++      "integrity": "sha512-BjasUjixPFdS+NKkypcyyN5Pmg83Olst0+c6vGov0diwTEo6mgdqVR6hxcEgFuh4QrAs7Rc+9KuGJ9TVCj0Zzg==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-use-effect-event": "0.0.2",
++        "@radix-ui/react-use-layout-effect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-effect-event": {
++      "version": "0.0.2",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-effect-event/-/react-use-effect-event-0.0.2.tgz",
++      "integrity": "sha512-Qp8WbZOBe+blgpuUT+lw2xheLP8q0oatc9UpmiemEICxGvFLYmHm9QowVZGHtJlGbS6A6yJ3iViad/2cVjnOiA==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-use-layout-effect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-escape-keydown": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-escape-keydown/-/react-use-escape-keydown-1.1.1.tgz",
++      "integrity": "sha512-Il0+boE7w/XebUHyBjroE+DbByORGR9KKmITzbR7MyQ4akpORYP/ZmbhAr0DG7RmmBqoOnZdy2QlvajJ2QA59g==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-use-callback-ref": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-layout-effect": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-layout-effect/-/react-use-layout-effect-1.1.1.tgz",
++      "integrity": "sha512-RbJRS4UWQFkzHTTwVymMTUv8EqYhOp8dOOviLj2ugtTiXRaRQS7GLGxZTLL1jWhMeoSCf5zmcZkqTl9IiYfXcQ==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-previous": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-previous/-/react-use-previous-1.1.1.tgz",
++      "integrity": "sha512-2dHfToCj/pzca2Ck724OZ5L0EVrr3eHRNsG/b3xQJLA2hZpVCS99bLAX+hm1IHXDEnzU6by5z/5MIY794/a8NQ==",
++      "license": "MIT",
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-rect": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-rect/-/react-use-rect-1.1.1.tgz",
++      "integrity": "sha512-QTYuDesS0VtuHNNvMh+CjlKJ4LJickCMUAqjlE3+j8w+RlRpwyX3apEQKGFzbZGdo7XNG1tXa+bQqIE7HIXT2w==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/rect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-use-size": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-use-size/-/react-use-size-1.1.1.tgz",
++      "integrity": "sha512-ewrXRDTAqAXlkl6t/fkXWNAhFX9I+CkKlw6zjEwk86RSPKwZr3xpBRso655aqYafwtnbpHLj6toFzmd6xdVptQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-use-layout-effect": "1.1.1"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/react-visually-hidden": {
++      "version": "1.2.3",
++      "resolved": "https://registry.npmjs.org/@radix-ui/react-visually-hidden/-/react-visually-hidden-1.2.3.tgz",
++      "integrity": "sha512-pzJq12tEaaIhqjbzpCuv/OypJY/BPavOofm+dbab+MHLajy277+1lLm6JFcGgF5eskJ6mquGirhXY2GD/8u8Ug==",
++      "license": "MIT",
++      "dependencies": {
++        "@radix-ui/react-primitive": "2.1.3"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "@types/react-dom": "*",
++        "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
++        "react-dom": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@radix-ui/rect": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@radix-ui/rect/-/rect-1.1.1.tgz",
++      "integrity": "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==",
++      "license": "MIT"
++    },
++    "node_modules/@rjsf/core": {
++      "version": "5.24.13",
++      "resolved": "https://registry.npmjs.org/@rjsf/core/-/core-5.24.13.tgz",
++      "integrity": "sha512-ONTr14s7LFIjx2VRFLuOpagL76sM/HPy6/OhdBfq6UukINmTIs6+aFN0GgcR0aXQHFDXQ7f/fel0o/SO05Htdg==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "lodash": "^4.17.21",
++        "lodash-es": "^4.17.21",
++        "markdown-to-jsx": "^7.4.1",
++        "prop-types": "^15.8.1"
++      },
++      "engines": {
++        "node": ">=14"
++      },
++      "peerDependencies": {
++        "@rjsf/utils": "^5.24.x",
++        "react": "^16.14.0 || >=17"
++      }
++    },
++    "node_modules/@rjsf/utils": {
++      "version": "5.24.13",
++      "resolved": "https://registry.npmjs.org/@rjsf/utils/-/utils-5.24.13.tgz",
++      "integrity": "sha512-rNF8tDxIwTtXzz5O/U23QU73nlhgQNYJ+Sv5BAwQOIyhIE2Z3S5tUiSVMwZHt0julkv/Ryfwi+qsD4FiE5rOuw==",
++      "license": "Apache-2.0",
++      "peer": true,
++      "dependencies": {
++        "json-schema-merge-allof": "^0.8.1",
++        "jsonpointer": "^5.0.1",
++        "lodash": "^4.17.21",
++        "lodash-es": "^4.17.21",
++        "react-is": "^18.2.0"
++      },
++      "engines": {
++        "node": ">=14"
++      },
++      "peerDependencies": {
++        "react": "^16.14.0 || >=17"
++      }
++    },
++    "node_modules/@rjsf/validator-ajv8": {
++      "version": "5.24.13",
++      "resolved": "https://registry.npmjs.org/@rjsf/validator-ajv8/-/validator-ajv8-5.24.13.tgz",
++      "integrity": "sha512-oWHP7YK581M8I5cF1t+UXFavnv+bhcqjtL1a7MG/Kaffi0EwhgcYjODrD8SsnrhncsEYMqSECr4ZOEoirnEUWw==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "ajv": "^8.12.0",
++        "ajv-formats": "^2.1.1",
++        "lodash": "^4.17.21",
++        "lodash-es": "^4.17.21"
++      },
++      "engines": {
++        "node": ">=14"
++      },
++      "peerDependencies": {
++        "@rjsf/utils": "^5.24.x"
++      }
++    },
++    "node_modules/@rjsf/validator-ajv8/node_modules/ajv": {
++      "version": "8.20.0",
++      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
++      "integrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
++      "license": "MIT",
++      "dependencies": {
++        "fast-deep-equal": "^3.1.3",
++        "fast-uri": "^3.0.1",
++        "json-schema-traverse": "^1.0.0",
++        "require-from-string": "^2.0.2"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/epoberezkin"
++      }
++    },
++    "node_modules/@rjsf/validator-ajv8/node_modules/ajv-formats": {
++      "version": "2.1.1",
++      "resolved": "https://registry.npmjs.org/ajv-formats/-/ajv-formats-2.1.1.tgz",
++      "integrity": "sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==",
++      "license": "MIT",
++      "dependencies": {
++        "ajv": "^8.0.0"
++      },
++      "peerDependencies": {
++        "ajv": "^8.0.0"
++      },
++      "peerDependenciesMeta": {
++        "ajv": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@rjsf/validator-ajv8/node_modules/json-schema-traverse": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz",
++      "integrity": "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==",
++      "license": "MIT"
++    },
++    "node_modules/@rtsao/scc": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/@rtsao/scc/-/scc-1.1.0.tgz",
++      "integrity": "sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/@shikijs/engine-oniguruma": {
++      "version": "3.23.0",
++      "resolved": "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-3.23.0.tgz",
++      "integrity": "sha512-1nWINwKXxKKLqPibT5f4pAFLej9oZzQTsby8942OTlsJzOBZ0MWKiwzMsd+jhzu8YPCHAswGnnN1YtQfirL35g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@shikijs/types": "3.23.0",
++        "@shikijs/vscode-textmate": "^10.0.2"
++      }
++    },
++    "node_modules/@shikijs/langs": {
++      "version": "3.23.0",
++      "resolved": "https://registry.npmjs.org/@shikijs/langs/-/langs-3.23.0.tgz",
++      "integrity": "sha512-2Ep4W3Re5aB1/62RSYQInK9mM3HsLeB91cHqznAJMuylqjzNVAVCMnNWRHFtcNHXsoNRayP9z1qj4Sq3nMqYXg==",
++      "dev": true,
+       "license": "MIT",
+       "dependencies": {
+         "@shikijs/types": "3.23.0"
+@@ -6752,6 +7878,97 @@
+         "node": ">=10"
+       }
+     },
++    "node_modules/@testing-library/dom": {
++      "version": "10.4.1",
++      "resolved": "https://registry.npmjs.org/@testing-library/dom/-/dom-10.4.1.tgz",
++      "integrity": "sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "@babel/code-frame": "^7.10.4",
++        "@babel/runtime": "^7.12.5",
++        "@types/aria-query": "^5.0.1",
++        "aria-query": "5.3.0",
++        "dom-accessibility-api": "^0.5.9",
++        "lz-string": "^1.5.0",
++        "picocolors": "1.1.1",
++        "pretty-format": "^27.0.2"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/@testing-library/dom/node_modules/ansi-styles": {
++      "version": "5.2.0",
++      "resolved": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-5.2.0.tgz",
++      "integrity": "sha512-Cxwpt2SfTzTtXcfOlzGEee8O+c+MmUgGrNiBcXnuWxuFJHe6a5Hz7qwhwe5OgaSYI0IJvkLqWX1ASG+cJOkEiA==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true,
++      "engines": {
++        "node": ">=10"
++      },
++      "funding": {
++        "url": "https://github.com/chalk/ansi-styles?sponsor=1"
++      }
++    },
++    "node_modules/@testing-library/dom/node_modules/pretty-format": {
++      "version": "27.5.1",
++      "resolved": "https://registry.npmjs.org/pretty-format/-/pretty-format-27.5.1.tgz",
++      "integrity": "sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "ansi-regex": "^5.0.1",
++        "ansi-styles": "^5.0.0",
++        "react-is": "^17.0.1"
++      },
++      "engines": {
++        "node": "^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0"
++      }
++    },
++    "node_modules/@testing-library/dom/node_modules/react-is": {
++      "version": "17.0.2",
++      "resolved": "https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz",
++      "integrity": "sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true
++    },
++    "node_modules/@testing-library/react": {
++      "version": "16.3.2",
++      "resolved": "https://registry.npmjs.org/@testing-library/react/-/react-16.3.2.tgz",
++      "integrity": "sha512-XU5/SytQM+ykqMnAnvB2umaJNIOsLF3PVv//1Ew4CTcpz0/BRyy/af40qqrt7SjKpDdT1saBMc42CUok5gaw+g==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@babel/runtime": "^7.12.5"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@testing-library/dom": "^10.0.0",
++        "@types/react": "^18.0.0 || ^19.0.0",
++        "@types/react-dom": "^18.0.0 || ^19.0.0",
++        "react": "^18.0.0 || ^19.0.0",
++        "react-dom": "^18.0.0 || ^19.0.0"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "@types/react-dom": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@cybervinci/flow": {
++      "resolved": "packages/flow",
++      "link": true
++    },
+     "node_modules/@theia/ai-anthropic": {
+       "resolved": "packages/ai-anthropic",
+       "link": true
+@@ -6776,6 +7993,10 @@
+       "resolved": "packages/ai-codex",
+       "link": true
+     },
++    "node_modules/@cybervinci/codex-provider": {
++      "resolved": "packages/codex-provider",
++      "link": true
++    },
+     "node_modules/@theia/ai-copilot": {
+       "resolved": "packages/ai-copilot",
+       "link": true
+@@ -6788,6 +8009,10 @@
+       "resolved": "packages/ai-core-ui",
+       "link": true
+     },
++    "node_modules/@cybervinci/library": {
++      "resolved": "packages/library",
++      "link": true
++    },
+     "node_modules/@theia/ai-editor": {
+       "resolved": "packages/ai-editor",
+       "link": true
+@@ -6892,6 +8117,14 @@
+       "resolved": "packages/core",
+       "link": true
+     },
++    "node_modules/@cybervinci/ai-output-cleaner": {
++      "resolved": "packages/ai-output-cleaner",
++      "link": true
++    },
++    "node_modules/@cybervinci/branding": {
++      "resolved": "packages/branding",
++      "link": true
++    },
+     "node_modules/@theia/debug": {
+       "resolved": "packages/debug",
+       "link": true
+@@ -6916,10 +8149,22 @@
+       "resolved": "dev-packages/private-eslint-plugin",
+       "link": true
+     },
++    "node_modules/@theia/example-agency-visual-studio-host": {
++      "resolved": "examples/agency-visual-studio-host",
++      "link": true
++    },
++    "node_modules/@theia/example-agency-vscode-host": {
++      "resolved": "examples/agency-vscode-host",
++      "link": true
++    },
+     "node_modules/@theia/example-browser": {
+       "resolved": "examples/browser",
+       "link": true
+     },
++    "node_modules/@theia/example-browser-no-flow-smoke": {
++      "resolved": "examples/browser-no-flow-20260520-233937",
++      "link": true
++    },
+     "node_modules/@theia/example-browser-only": {
+       "resolved": "examples/browser-only",
+       "link": true
+@@ -7059,8 +8304,20 @@
+       "resolved": "packages/preview",
+       "link": true
+     },
+-    "node_modules/@theia/process": {
+-      "resolved": "packages/process",
++    "node_modules/@theia/process": {
++      "resolved": "packages/process",
++      "link": true
++    },
++    "node_modules/@cybervinci/memory": {
++      "resolved": "packages/memory",
++      "link": true
++    },
++    "node_modules/@cybervinci/memory-roslyn": {
++      "resolved": "packages/memory-roslyn",
++      "link": true
++    },
++    "node_modules/@cybervinci/arena": {
++      "resolved": "packages/arena",
+       "link": true
+     },
+     "node_modules/@theia/property-view": {
+@@ -7210,6 +8467,14 @@
+         "@types/readdir-glob": "*"
+       }
+     },
++    "node_modules/@types/aria-query": {
++      "version": "5.0.4",
++      "resolved": "https://registry.npmjs.org/@types/aria-query/-/aria-query-5.0.4.tgz",
++      "integrity": "sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/@types/bent": {
+       "version": "7.3.8",
+       "resolved": "https://registry.npmjs.org/@types/bent/-/bent-7.3.8.tgz",
+@@ -7700,6 +8965,13 @@
+       "integrity": "sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==",
+       "license": "MIT"
+     },
++    "node_modules/@types/rbush": {
++      "version": "4.0.0",
++      "resolved": "https://registry.npmjs.org/@types/rbush/-/rbush-4.0.0.tgz",
++      "integrity": "sha512-+N+2H39P8X+Hy1I5mC6awlTX54k3FhiUmvt7HWzGJZvF+syUAAxP/stwppS8JE84YHqFgRMv6fCy31202CMFxQ==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@types/react": {
+       "version": "18.3.28",
+       "resolved": "https://registry.npmjs.org/@types/react/-/react-18.3.28.tgz",
+@@ -7885,6 +9157,13 @@
+       "integrity": "sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==",
+       "license": "MIT"
+     },
++    "node_modules/@types/uzip": {
++      "version": "0.20201231.2",
++      "resolved": "https://registry.npmjs.org/@types/uzip/-/uzip-0.20201231.2.tgz",
++      "integrity": "sha512-l8n/uaJDoxv2hMMWKCaq6l/umbCZjq6CMr8z2wuteB7lKoIwHrIlMZ3AwAuc+olmOK1AobfvK1PPfr5wl7lkWQ==",
++      "dev": true,
++      "license": "MIT"
++    },
+     "node_modules/@types/vscode": {
+       "version": "1.118.0",
+       "resolved": "https://registry.npmjs.org/@types/vscode/-/vscode-1.118.0.tgz",
+@@ -7915,9 +9194,9 @@
+       }
+     },
+     "node_modules/@types/yargs": {
+-      "version": "17.0.35",
+-      "resolved": "https://registry.npmjs.org/@types/yargs/-/yargs-17.0.35.tgz",
+-      "integrity": "sha512-qUHkeCyQFxMXg79wQfTtfndEC+N9ZZg76HJftDJp+qH2tV7Gj4OJi7l+PiWwJ+pWtW8GwSmqsDj/oymhrTWXjg==",
++      "version": "15.0.20",
++      "resolved": "https://registry.npmjs.org/@types/yargs/-/yargs-15.0.20.tgz",
++      "integrity": "sha512-KIkX+/GgfFitlASYCGoSF+T4XRXhOubJLhkLVtSfsRTe9jWMmuM2g28zQ41BtPTG7TRBb2xHW+LCNVE9QR/vsg==",
+       "license": "MIT",
+       "dependencies": {
+         "@types/yargs-parser": "*"
+@@ -9111,6 +10390,12 @@
+         "@xtuc/long": "4.2.2"
+       }
+     },
++    "node_modules/@webgpu/types": {
++      "version": "0.1.21",
++      "resolved": "https://registry.npmjs.org/@webgpu/types/-/types-0.1.21.tgz",
++      "integrity": "sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==",
++      "license": "BSD-3-Clause"
++    },
+     "node_modules/@webpack-cli/configtest": {
+       "version": "1.2.0",
+       "resolved": "https://registry.npmjs.org/@webpack-cli/configtest/-/configtest-1.2.0.tgz",
+@@ -9178,6 +10463,34 @@
+         "js-yaml": "bin/js-yaml.js"
+       }
+     },
++    "node_modules/@zseven-w/pen-codegen": {
++      "resolved": "vendor/openpencil/packages/pen-codegen",
++      "link": true
++    },
++    "node_modules/@zseven-w/pen-core": {
++      "resolved": "vendor/openpencil/packages/pen-core",
++      "link": true
++    },
++    "node_modules/@zseven-w/pen-engine": {
++      "resolved": "vendor/openpencil/packages/pen-engine",
++      "link": true
++    },
++    "node_modules/@zseven-w/pen-figma": {
++      "resolved": "vendor/openpencil/packages/pen-figma",
++      "link": true
++    },
++    "node_modules/@zseven-w/pen-react": {
++      "resolved": "vendor/openpencil/packages/pen-react",
++      "link": true
++    },
++    "node_modules/@zseven-w/pen-renderer": {
++      "resolved": "vendor/openpencil/packages/pen-renderer",
++      "link": true
++    },
++    "node_modules/@zseven-w/pen-types": {
++      "resolved": "vendor/openpencil/packages/pen-types",
++      "link": true
++    },
+     "node_modules/abab": {
+       "version": "2.0.6",
+       "resolved": "https://registry.npmjs.org/abab/-/abab-2.0.6.tgz",
+@@ -9644,6 +10957,29 @@
+       "integrity": "sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==",
+       "license": "Python-2.0"
+     },
++    "node_modules/aria-hidden": {
++      "version": "1.2.6",
++      "resolved": "https://registry.npmjs.org/aria-hidden/-/aria-hidden-1.2.6.tgz",
++      "integrity": "sha512-ik3ZgC9dY/lYVVM++OISsaYDeg1tb0VtP5uL3ouh1koGOaUMDPpbFIei4JkFimWUFPn90sbMNMXQAIVOlnYKJA==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=10"
++      }
++    },
++    "node_modules/aria-query": {
++      "version": "5.3.0",
++      "resolved": "https://registry.npmjs.org/aria-query/-/aria-query-5.3.0.tgz",
++      "integrity": "sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "peer": true,
++      "dependencies": {
++        "dequal": "^2.0.3"
++      }
++    },
+     "node_modules/array-buffer-byte-length": {
+       "version": "1.0.2",
+       "resolved": "https://registry.npmjs.org/array-buffer-byte-length/-/array-buffer-byte-length-1.0.2.tgz",
+@@ -11022,6 +12358,15 @@
+       ],
+       "license": "CC-BY-4.0"
+     },
++    "node_modules/canvaskit-wasm": {
++      "version": "0.40.0",
++      "resolved": "https://registry.npmjs.org/canvaskit-wasm/-/canvaskit-wasm-0.40.0.tgz",
++      "integrity": "sha512-Od2o+ZmoEw9PBdN/yCGvzfu0WVqlufBPEWNG452wY7E9aT8RBE+ChpZF526doOlg7zumO4iCS+RAeht4P0Gbpw==",
++      "license": "BSD-3-Clause",
++      "dependencies": {
++        "@webgpu/types": "0.1.21"
++      }
++    },
+     "node_modules/caseless": {
+       "version": "0.12.0",
+       "resolved": "https://registry.npmjs.org/caseless/-/caseless-0.12.0.tgz",
+@@ -11263,6 +12608,18 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/class-variance-authority": {
++      "version": "0.7.1",
++      "resolved": "https://registry.npmjs.org/class-variance-authority/-/class-variance-authority-0.7.1.tgz",
++      "integrity": "sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==",
++      "license": "Apache-2.0",
++      "dependencies": {
++        "clsx": "^2.1.1"
++      },
++      "funding": {
++        "url": "https://polar.sh/cva"
++      }
++    },
+     "node_modules/clean-stack": {
+       "version": "2.2.0",
+       "resolved": "https://registry.npmjs.org/clean-stack/-/clean-stack-2.2.0.tgz",
+@@ -11407,6 +12764,15 @@
+         "node": ">=4"
+       }
+     },
++    "node_modules/clsx": {
++      "version": "2.1.1",
++      "resolved": "https://registry.npmjs.org/clsx/-/clsx-2.1.1.tgz",
++      "integrity": "sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
+     "node_modules/cmd-shim": {
+       "version": "6.0.3",
+       "resolved": "https://registry.npmjs.org/cmd-shim/-/cmd-shim-6.0.3.tgz",
+@@ -11645,6 +13011,29 @@
+         "url": "https://opencollective.com/webpack"
+       }
+     },
++    "node_modules/compute-gcd": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/compute-gcd/-/compute-gcd-1.2.1.tgz",
++      "integrity": "sha512-TwMbxBNz0l71+8Sc4czv13h4kEqnchV9igQZBi6QUaz09dnz13juGnnaWWJTRsP3brxOoxeB4SA2WELLw1hCtg==",
++      "peer": true,
++      "dependencies": {
++        "validate.io-array": "^1.0.3",
++        "validate.io-function": "^1.0.2",
++        "validate.io-integer-array": "^1.0.0"
++      }
++    },
++    "node_modules/compute-lcm": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/compute-lcm/-/compute-lcm-1.1.2.tgz",
++      "integrity": "sha512-OFNPdQAXnQhDSKioX8/XYT6sdUlXwpeMjfd6ApxMJfyZ4GxmLR1xvMERctlYhlHwIiz6CSpBc2+qYKjHGZw4TQ==",
++      "peer": true,
++      "dependencies": {
++        "compute-gcd": "^1.2.1",
++        "validate.io-array": "^1.0.3",
++        "validate.io-function": "^1.0.2",
++        "validate.io-integer-array": "^1.0.0"
++      }
++    },
+     "node_modules/concat-map": {
+       "version": "0.0.1",
+       "resolved": "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz",
+@@ -13046,6 +14435,12 @@
+       "license": "MIT",
+       "optional": true
+     },
++    "node_modules/detect-node-es": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/detect-node-es/-/detect-node-es-1.1.0.tgz",
++      "integrity": "sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==",
++      "license": "MIT"
++    },
+     "node_modules/devtools-protocol": {
+       "version": "0.0.1312386",
+       "resolved": "https://registry.npmjs.org/devtools-protocol/-/devtools-protocol-0.0.1312386.tgz",
+@@ -13173,6 +14568,14 @@
+         "node": ">=6.0.0"
+       }
+     },
++    "node_modules/dom-accessibility-api": {
++      "version": "0.5.16",
++      "resolved": "https://registry.npmjs.org/dom-accessibility-api/-/dom-accessibility-api-0.5.16.tgz",
++      "integrity": "sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true
++    },
+     "node_modules/dom-serializer": {
+       "version": "2.0.0",
+       "resolved": "https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz",
+@@ -13808,6 +15211,25 @@
+         "url": "https://github.com/chalk/wrap-ansi?sponsor=1"
+       }
+     },
++    "node_modules/electron-mocha/node_modules/yargs": {
++      "version": "17.7.2",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
++      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cliui": "^8.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "require-directory": "^2.1.1",
++        "string-width": "^4.2.3",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^21.1.1"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/electron-store": {
+       "version": "8.2.0",
+       "resolved": "https://registry.npmjs.org/electron-store/-/electron-store-8.2.0.tgz",
+@@ -15544,6 +16966,16 @@
+         "semver": "bin/semver.js"
+       }
+     },
++    "node_modules/find-git-repositories": {
++      "version": "0.2.2",
++      "resolved": "https://registry.npmjs.org/find-git-repositories/-/find-git-repositories-0.2.2.tgz",
++      "integrity": "sha512-Za6U8AHjCFAuetB0f1y0JE/OMd+sNOHCakSjEKpVDRfYN+q4xjQ0ooNJCTINo1o+nDfh3vJQx63Llf5aZPiwVg==",
++      "hasInstallScript": true,
++      "license": "MIT",
++      "dependencies": {
++        "node-addon-api": "*"
++      }
++    },
+     "node_modules/find-up": {
+       "version": "5.0.0",
+       "resolved": "https://registry.npmjs.org/find-up/-/find-up-5.0.0.tgz",
+@@ -15923,6 +17355,12 @@
+         "node": ">= 0.6.0"
+       }
+     },
++    "node_modules/fzstd": {
++      "version": "0.1.1",
++      "resolved": "https://registry.npmjs.org/fzstd/-/fzstd-0.1.1.tgz",
++      "integrity": "sha512-dkuVSOKKwh3eas5VkJy1AW1vFpet8TA/fGmVA5krThl8YcOVE/8ZIoEA1+U1vEn5ckxxhLirSdY837azmbaNHA==",
++      "license": "MIT"
++    },
+     "node_modules/gaxios": {
+       "version": "7.1.4",
+       "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.1.4.tgz",
+@@ -16034,6 +17472,15 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/get-nonce": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/get-nonce/-/get-nonce-1.0.1.tgz",
++      "integrity": "sha512-FJhYRoDaiatfEkUK8HKlicmu/3SGFD51q3itKDGoSTysQJBnfOcxU5GxnhE1E6soB76MbT0MBtnKJuXyAx+96Q==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=6"
++      }
++    },
+     "node_modules/get-package-type": {
+       "version": "0.1.0",
+       "resolved": "https://registry.npmjs.org/get-package-type/-/get-package-type-0.1.0.tgz",
+@@ -18388,6 +19835,31 @@
+       "integrity": "sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==",
+       "license": "(AFL-2.1 OR BSD-3-Clause)"
+     },
++    "node_modules/json-schema-compare": {
++      "version": "0.2.2",
++      "resolved": "https://registry.npmjs.org/json-schema-compare/-/json-schema-compare-0.2.2.tgz",
++      "integrity": "sha512-c4WYmDKyJXhs7WWvAWm3uIYnfyWFoIp+JEoX34rctVvEkMYCPGhXtvmFFXiffBbxfZsvQ0RNnV5H7GvDF5HCqQ==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "lodash": "^4.17.4"
++      }
++    },
++    "node_modules/json-schema-merge-allof": {
++      "version": "0.8.1",
++      "resolved": "https://registry.npmjs.org/json-schema-merge-allof/-/json-schema-merge-allof-0.8.1.tgz",
++      "integrity": "sha512-CTUKmIlPJbsWfzRRnOXz+0MjIqvnleIXwFTzz+t9T86HnYX/Rozria6ZVGLktAU9e+NygNljveP+yxqtQp/Q4w==",
++      "license": "MIT",
++      "peer": true,
++      "dependencies": {
++        "compute-lcm": "^1.1.2",
++        "json-schema-compare": "^0.2.2",
++        "lodash": "^4.17.20"
++      },
++      "engines": {
++        "node": ">=12.0.0"
++      }
++    },
+     "node_modules/json-schema-to-ts": {
+       "version": "3.1.1",
+       "resolved": "https://registry.npmjs.org/json-schema-to-ts/-/json-schema-to-ts-3.1.1.tgz",
+@@ -18534,6 +20006,16 @@
+       ],
+       "license": "MIT"
+     },
++    "node_modules/jsonpointer": {
++      "version": "5.0.1",
++      "resolved": "https://registry.npmjs.org/jsonpointer/-/jsonpointer-5.0.1.tgz",
++      "integrity": "sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==",
++      "license": "MIT",
++      "peer": true,
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/JSONStream": {
+       "version": "1.3.5",
+       "resolved": "https://registry.npmjs.org/JSONStream/-/JSONStream-1.3.5.tgz",
+@@ -18673,6 +20155,15 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/kiwi-schema": {
++      "version": "0.5.0",
++      "resolved": "https://registry.npmjs.org/kiwi-schema/-/kiwi-schema-0.5.0.tgz",
++      "integrity": "sha512-X+FpfU0yTEtc6aTHS7VwbOpvQwRt70+pXXWRI5fd6CvWhe7pSVC854TVo4Zo0x5/wwcWj+/9KUlXpdcP0dY9AA==",
++      "license": "MIT",
++      "bin": {
++        "kiwic": "cli.js"
++      }
++    },
+     "node_modules/klaw-sync": {
+       "version": "6.0.0",
+       "resolved": "https://registry.npmjs.org/klaw-sync/-/klaw-sync-6.0.0.tgz",
+@@ -18893,6 +20384,25 @@
+         "node": ">=10"
+       }
+     },
++    "node_modules/lerna/node_modules/yargs": {
++      "version": "17.7.2",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
++      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cliui": "^8.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "require-directory": "^2.1.1",
++        "string-width": "^4.2.3",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^21.1.1"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/less": {
+       "version": "3.13.1",
+       "resolved": "https://registry.npmjs.org/less/-/less-3.13.1.tgz",
+@@ -19160,7 +20670,12 @@
+       "version": "4.18.1",
+       "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz",
+       "integrity": "sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==",
+-      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/lodash-es": {
++      "version": "4.18.1",
++      "resolved": "https://registry.npmjs.org/lodash-es/-/lodash-es-4.18.1.tgz",
++      "integrity": "sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==",
+       "license": "MIT"
+     },
+     "node_modules/lodash.camelcase": {
+@@ -19387,6 +20902,15 @@
+         "node": ">=10"
+       }
+     },
++    "node_modules/lucide-react": {
++      "version": "0.511.0",
++      "resolved": "https://registry.npmjs.org/lucide-react/-/lucide-react-0.511.0.tgz",
++      "integrity": "sha512-VK5a2ydJ7xm8GvBeKLS9mu1pVK6ucef9780JVUjw6bAjJL/QXnd4Y0p7SPeOUMC27YhzNCZvm5d/QX0Tp3rc0w==",
++      "license": "ISC",
++      "peerDependencies": {
++        "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0"
++      }
++    },
+     "node_modules/lunr": {
+       "version": "2.3.9",
+       "resolved": "https://registry.npmjs.org/lunr/-/lunr-2.3.9.tgz",
+@@ -19403,6 +20927,17 @@
+         "node": ">=12"
+       }
+     },
++    "node_modules/lz-string": {
++      "version": "1.5.0",
++      "resolved": "https://registry.npmjs.org/lz-string/-/lz-string-1.5.0.tgz",
++      "integrity": "sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==",
++      "dev": true,
++      "license": "MIT",
++      "peer": true,
++      "bin": {
++        "lz-string": "bin/bin.js"
++      }
++    },
+     "node_modules/macaddress": {
+       "version": "0.5.4",
+       "resolved": "https://registry.npmjs.org/macaddress/-/macaddress-0.5.4.tgz",
+@@ -19515,6 +21050,23 @@
+       "integrity": "sha512-+rUD93bXHubA4arpEZO3q80so0qgoFJEKRkRbjKX8RTdca89v2kfyF+xR3i2sQTwql9tpPZPOQN5B+PunspXRg==",
+       "license": "MIT"
+     },
++    "node_modules/markdown-to-jsx": {
++      "version": "7.7.17",
++      "resolved": "https://registry.npmjs.org/markdown-to-jsx/-/markdown-to-jsx-7.7.17.tgz",
++      "integrity": "sha512-7mG/1feQ0TX5I7YyMZVDgCC/y2I3CiEhIRQIhyov9nGBP5eoVrOXXHuL5ZP8GRfxVZKRiXWJgwXkb9It+nQZfQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 10"
++      },
++      "peerDependencies": {
++        "react": ">= 0.14.0"
++      },
++      "peerDependenciesMeta": {
++        "react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/marked": {
+       "version": "14.0.0",
+       "resolved": "https://registry.npmjs.org/marked/-/marked-14.0.0.tgz",
+@@ -21885,6 +23437,25 @@
+         "url": "https://github.com/chalk/wrap-ansi?sponsor=1"
+       }
+     },
++    "node_modules/nx/node_modules/yargs": {
++      "version": "17.7.2",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
++      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cliui": "^8.0.1",
++        "escalade": "^3.1.1",
++        "get-caller-file": "^2.0.5",
++        "require-directory": "^2.1.1",
++        "string-width": "^4.2.3",
++        "y18n": "^5.0.5",
++        "yargs-parser": "^21.1.1"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/nyc": {
+       "version": "17.1.0",
+       "resolved": "https://registry.npmjs.org/nyc/-/nyc-17.1.0.tgz",
+@@ -21927,18 +23498,6 @@
+         "node": ">=18"
+       }
+     },
+-    "node_modules/nyc/node_modules/cliui": {
+-      "version": "6.0.0",
+-      "resolved": "https://registry.npmjs.org/cliui/-/cliui-6.0.0.tgz",
+-      "integrity": "sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==",
+-      "dev": true,
+-      "license": "ISC",
+-      "dependencies": {
+-        "string-width": "^4.2.0",
+-        "strip-ansi": "^6.0.0",
+-        "wrap-ansi": "^6.2.0"
+-      }
+-    },
+     "node_modules/nyc/node_modules/convert-source-map": {
+       "version": "1.9.0",
+       "resolved": "https://registry.npmjs.org/convert-source-map/-/convert-source-map-1.9.0.tgz",
+@@ -22054,75 +23613,18 @@
+       "bin": {
+         "rimraf": "bin.js"
+       },
+-      "funding": {
+-        "url": "https://github.com/sponsors/isaacs"
+-      }
+-    },
+-    "node_modules/nyc/node_modules/semver": {
+-      "version": "6.3.1",
+-      "resolved": "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz",
+-      "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",
+-      "dev": true,
+-      "license": "ISC",
+-      "bin": {
+-        "semver": "bin/semver.js"
+-      }
+-    },
+-    "node_modules/nyc/node_modules/strip-ansi": {
+-      "version": "6.0.1",
+-      "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
+-      "integrity": "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "ansi-regex": "^5.0.1"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/nyc/node_modules/y18n": {
+-      "version": "4.0.3",
+-      "resolved": "https://registry.npmjs.org/y18n/-/y18n-4.0.3.tgz",
+-      "integrity": "sha512-JKhqTOwSrqNA1NY5lSztJ1GrBiUodLMmIZuLiDaMRJ+itFd+ABVE8XBjOvIWL+rSqNDC74LCSFmlb/U4UZ4hJQ==",
+-      "dev": true,
+-      "license": "ISC"
+-    },
+-    "node_modules/nyc/node_modules/yargs": {
+-      "version": "15.4.1",
+-      "resolved": "https://registry.npmjs.org/yargs/-/yargs-15.4.1.tgz",
+-      "integrity": "sha512-aePbxDmcYW++PaqBsJ+HYUFwCdv4LVvdnhBy78E57PIor8/OVvhMrADFFEDh8DHDFRv/O9i3lPhsENjO7QX0+A==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "cliui": "^6.0.0",
+-        "decamelize": "^1.2.0",
+-        "find-up": "^4.1.0",
+-        "get-caller-file": "^2.0.1",
+-        "require-directory": "^2.1.1",
+-        "require-main-filename": "^2.0.0",
+-        "set-blocking": "^2.0.0",
+-        "string-width": "^4.2.0",
+-        "which-module": "^2.0.0",
+-        "y18n": "^4.0.0",
+-        "yargs-parser": "^18.1.2"
+-      },
+-      "engines": {
+-        "node": ">=8"
++      "funding": {
++        "url": "https://github.com/sponsors/isaacs"
+       }
+     },
+-    "node_modules/nyc/node_modules/yargs-parser": {
+-      "version": "18.1.3",
+-      "resolved": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-18.1.3.tgz",
+-      "integrity": "sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==",
++    "node_modules/nyc/node_modules/semver": {
++      "version": "6.3.1",
++      "resolved": "https://registry.npmjs.org/semver/-/semver-6.3.1.tgz",
++      "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",
+       "dev": true,
+       "license": "ISC",
+-      "dependencies": {
+-        "camelcase": "^5.0.0",
+-        "decamelize": "^1.2.0"
+-      },
+-      "engines": {
+-        "node": ">=6"
++      "bin": {
++        "semver": "bin/semver.js"
+       }
+     },
+     "node_modules/object-assign": {
+@@ -22929,6 +24431,18 @@
+       "integrity": "sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==",
+       "license": "MIT"
+     },
++    "node_modules/paper": {
++      "version": "0.12.18",
++      "resolved": "https://registry.npmjs.org/paper/-/paper-0.12.18.tgz",
++      "integrity": "sha512-ZSLIEejQTJZuYHhSSqAf4jXOnii0kPhCJGAnYAANtdS72aNwXJ9cP95tZHgq1tnNpvEwgQhggy+4OarviqTCGw==",
++      "license": "MIT",
++      "workspaces": [
++        "packages/*"
++      ],
++      "engines": {
++        "node": ">=8.0.0"
++      }
++    },
+     "node_modules/parent-module": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz",
+@@ -23613,18 +25127,6 @@
+       "resolved": "sample-plugins/sample-namespace/plugin-b",
+       "link": true
+     },
+-    "node_modules/plugin-browser": {
+-      "resolved": "sample-plugins/sample-namespace/plugin-browser",
+-      "link": true
+-    },
+-    "node_modules/plugin-esm": {
+-      "resolved": "sample-plugins/sample-namespace/plugin-esm",
+-      "link": true
+-    },
+-    "node_modules/plugin-esm-mjs": {
+-      "resolved": "sample-plugins/sample-namespace/plugin-esm-mjs",
+-      "link": true
+-    },
+     "node_modules/plugin-gotd": {
+       "resolved": "sample-plugins/sample-namespace/plugin-gotd",
+       "link": true
+@@ -24295,17 +25797,6 @@
+         "yargs": "^15.3.1"
+       }
+     },
+-    "node_modules/puppeteer-to-istanbul/node_modules/cliui": {
+-      "version": "6.0.0",
+-      "resolved": "https://registry.npmjs.org/cliui/-/cliui-6.0.0.tgz",
+-      "integrity": "sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==",
+-      "license": "ISC",
+-      "dependencies": {
+-        "string-width": "^4.2.0",
+-        "strip-ansi": "^6.0.0",
+-        "wrap-ansi": "^6.2.0"
+-      }
+-    },
+     "node_modules/puppeteer-to-istanbul/node_modules/clone": {
+       "version": "2.1.2",
+       "resolved": "https://registry.npmjs.org/clone/-/clone-2.1.2.tgz",
+@@ -24315,31 +25806,6 @@
+         "node": ">=0.8"
+       }
+     },
+-    "node_modules/puppeteer-to-istanbul/node_modules/find-up": {
+-      "version": "4.1.0",
+-      "resolved": "https://registry.npmjs.org/find-up/-/find-up-4.1.0.tgz",
+-      "integrity": "sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "locate-path": "^5.0.0",
+-        "path-exists": "^4.0.0"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/puppeteer-to-istanbul/node_modules/locate-path": {
+-      "version": "5.0.0",
+-      "resolved": "https://registry.npmjs.org/locate-path/-/locate-path-5.0.0.tgz",
+-      "integrity": "sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "p-locate": "^4.1.0"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+     "node_modules/puppeteer-to-istanbul/node_modules/mkdirp": {
+       "version": "1.0.4",
+       "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-1.0.4.tgz",
+@@ -24352,86 +25818,6 @@
+         "node": ">=10"
+       }
+     },
+-    "node_modules/puppeteer-to-istanbul/node_modules/p-limit": {
+-      "version": "2.3.0",
+-      "resolved": "https://registry.npmjs.org/p-limit/-/p-limit-2.3.0.tgz",
+-      "integrity": "sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "p-try": "^2.0.0"
+-      },
+-      "engines": {
+-        "node": ">=6"
+-      },
+-      "funding": {
+-        "url": "https://github.com/sponsors/sindresorhus"
+-      }
+-    },
+-    "node_modules/puppeteer-to-istanbul/node_modules/p-locate": {
+-      "version": "4.1.0",
+-      "resolved": "https://registry.npmjs.org/p-locate/-/p-locate-4.1.0.tgz",
+-      "integrity": "sha512-R79ZZ/0wAxKGu3oYMlz8jy/kbhsNrS7SKZ7PxEHBgJ5+F2mtFW2fK2cOtBh1cHYkQsbzFV7I+EoRKe6Yt0oK7A==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "p-limit": "^2.2.0"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/puppeteer-to-istanbul/node_modules/strip-ansi": {
+-      "version": "6.0.1",
+-      "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
+-      "integrity": "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "ansi-regex": "^5.0.1"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/puppeteer-to-istanbul/node_modules/y18n": {
+-      "version": "4.0.3",
+-      "resolved": "https://registry.npmjs.org/y18n/-/y18n-4.0.3.tgz",
+-      "integrity": "sha512-JKhqTOwSrqNA1NY5lSztJ1GrBiUodLMmIZuLiDaMRJ+itFd+ABVE8XBjOvIWL+rSqNDC74LCSFmlb/U4UZ4hJQ==",
+-      "license": "ISC"
+-    },
+-    "node_modules/puppeteer-to-istanbul/node_modules/yargs": {
+-      "version": "15.4.1",
+-      "resolved": "https://registry.npmjs.org/yargs/-/yargs-15.4.1.tgz",
+-      "integrity": "sha512-aePbxDmcYW++PaqBsJ+HYUFwCdv4LVvdnhBy78E57PIor8/OVvhMrADFFEDh8DHDFRv/O9i3lPhsENjO7QX0+A==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "cliui": "^6.0.0",
+-        "decamelize": "^1.2.0",
+-        "find-up": "^4.1.0",
+-        "get-caller-file": "^2.0.1",
+-        "require-directory": "^2.1.1",
+-        "require-main-filename": "^2.0.0",
+-        "set-blocking": "^2.0.0",
+-        "string-width": "^4.2.0",
+-        "which-module": "^2.0.0",
+-        "y18n": "^4.0.0",
+-        "yargs-parser": "^18.1.2"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/puppeteer-to-istanbul/node_modules/yargs-parser": {
+-      "version": "18.1.3",
+-      "resolved": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-18.1.3.tgz",
+-      "integrity": "sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==",
+-      "license": "ISC",
+-      "dependencies": {
+-        "camelcase": "^5.0.0",
+-        "decamelize": "^1.2.0"
+-      },
+-      "engines": {
+-        "node": ">=6"
+-      }
+-    },
+     "node_modules/qs": {
+       "version": "6.15.1",
+       "resolved": "https://registry.npmjs.org/qs/-/qs-6.15.1.tgz",
+@@ -24500,6 +25886,12 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/quickselect": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/quickselect/-/quickselect-3.0.0.tgz",
++      "integrity": "sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==",
++      "license": "ISC"
++    },
+     "node_modules/randombytes": {
+       "version": "2.1.0",
+       "resolved": "https://registry.npmjs.org/randombytes/-/randombytes-2.1.0.tgz",
+@@ -24545,6 +25937,15 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/rbush": {
++      "version": "4.0.1",
++      "resolved": "https://registry.npmjs.org/rbush/-/rbush-4.0.1.tgz",
++      "integrity": "sha512-IP0UpfeWQujYC8Jg162rMNc01Rf0gWMMAb2Uxus/Q0qOFw4lCcq6ZnQEZwUoJqWyUGJ9th7JjwI4yIWo+uvoAQ==",
++      "license": "MIT",
++      "dependencies": {
++        "quickselect": "^3.0.0"
++      }
++    },
+     "node_modules/rc": {
+       "version": "1.2.8",
+       "resolved": "https://registry.npmjs.org/rc/-/rc-1.2.8.tgz",
+@@ -24598,9 +25999,18 @@
+       "version": "18.3.1",
+       "resolved": "https://registry.npmjs.org/react-is/-/react-is-18.3.1.tgz",
+       "integrity": "sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==",
+-      "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/react-number-format": {
++      "version": "5.4.5",
++      "resolved": "https://registry.npmjs.org/react-number-format/-/react-number-format-5.4.5.tgz",
++      "integrity": "sha512-y8O2yHHj3w0aE9XO8d2BCcUOOdQTRSVq+WIuMlLVucAm5XNjJAy+BoOJiuQMldVYVOKTMyvVNfnbl2Oqp+YxGw==",
++      "license": "MIT",
++      "peerDependencies": {
++        "react": "^0.14 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
++        "react-dom": "^0.14 || ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
++      }
++    },
+     "node_modules/react-perfect-scrollbar": {
+       "version": "1.5.8",
+       "resolved": "https://registry.npmjs.org/react-perfect-scrollbar/-/react-perfect-scrollbar-1.5.8.tgz",
+@@ -24615,6 +26025,75 @@
+         "react-dom": ">=16.3.3"
+       }
+     },
++    "node_modules/react-remove-scroll": {
++      "version": "2.7.2",
++      "resolved": "https://registry.npmjs.org/react-remove-scroll/-/react-remove-scroll-2.7.2.tgz",
++      "integrity": "sha512-Iqb9NjCCTt6Hf+vOdNIZGdTiH1QSqr27H/Ek9sv/a97gfueI/5h1s3yRi1nngzMUaOOToin5dI1dXKdXiF+u0Q==",
++      "license": "MIT",
++      "dependencies": {
++        "react-remove-scroll-bar": "^2.3.7",
++        "react-style-singleton": "^2.2.3",
++        "tslib": "^2.1.0",
++        "use-callback-ref": "^1.3.3",
++        "use-sidecar": "^1.1.3"
++      },
++      "engines": {
++        "node": ">=10"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/react-remove-scroll-bar": {
++      "version": "2.3.8",
++      "resolved": "https://registry.npmjs.org/react-remove-scroll-bar/-/react-remove-scroll-bar-2.3.8.tgz",
++      "integrity": "sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==",
++      "license": "MIT",
++      "dependencies": {
++        "react-style-singleton": "^2.2.2",
++        "tslib": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=10"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/react-style-singleton": {
++      "version": "2.2.3",
++      "resolved": "https://registry.npmjs.org/react-style-singleton/-/react-style-singleton-2.2.3.tgz",
++      "integrity": "sha512-b6jSvxvVnyptAiLjbkWLE/lOnR4lfTtDAl+eUC7RZy+QQWc6wRzIV2CE6xBuMmDxc2qIihtDCZD5NPOFl7fRBQ==",
++      "license": "MIT",
++      "dependencies": {
++        "get-nonce": "^1.0.0",
++        "tslib": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=10"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/react-textarea-autosize": {
+       "version": "8.5.9",
+       "resolved": "https://registry.npmjs.org/react-textarea-autosize/-/react-textarea-autosize-8.5.9.tgz",
+@@ -27539,6 +29018,22 @@
+         "node": ">=0.10.0"
+       }
+     },
++    "node_modules/tabbable": {
++      "version": "6.4.0",
++      "resolved": "https://registry.npmjs.org/tabbable/-/tabbable-6.4.0.tgz",
++      "integrity": "sha512-05PUHKSNE8ou2dwIxTngl4EzcnsCDZGJ/iCLtDflR/SHB/ny14rXc+qU5P4mG9JkusiV7EivzY9Mhm55AzAvCg==",
++      "license": "MIT"
++    },
++    "node_modules/tailwind-merge": {
++      "version": "3.6.0",
++      "resolved": "https://registry.npmjs.org/tailwind-merge/-/tailwind-merge-3.6.0.tgz",
++      "integrity": "sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==",
++      "license": "MIT",
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/dcastil"
++      }
++    },
+     "node_modules/tapable": {
+       "version": "2.3.3",
+       "resolved": "https://registry.npmjs.org/tapable/-/tapable-2.3.3.tgz",
+@@ -29158,6 +30653,27 @@
+       "integrity": "sha512-H/A06tKD7sS1O1X2SshBVeA5FLycRpjqiBeqGKmBwBDBy28EnRjORxTNe269KSSr5un5qyWi1iL61wLxpd+ZOg==",
+       "license": "MIT"
+     },
++    "node_modules/use-callback-ref": {
++      "version": "1.3.3",
++      "resolved": "https://registry.npmjs.org/use-callback-ref/-/use-callback-ref-1.3.3.tgz",
++      "integrity": "sha512-jQL3lRnocaFtu3V00JToYz/4QkNWswxijDaCVNZRiRTO3HQDLsdu1ZtmIUvV4yPp+rvWm5j0y0TG/S61cuijTg==",
++      "license": "MIT",
++      "dependencies": {
++        "tslib": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=10"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/use-composed-ref": {
+       "version": "1.4.0",
+       "resolved": "https://registry.npmjs.org/use-composed-ref/-/use-composed-ref-1.4.0.tgz",
+@@ -29203,6 +30719,28 @@
+         }
+       }
+     },
++    "node_modules/use-sidecar": {
++      "version": "1.1.3",
++      "resolved": "https://registry.npmjs.org/use-sidecar/-/use-sidecar-1.1.3.tgz",
++      "integrity": "sha512-Fedw0aZvkhynoPYlA5WXrMCAMm+nSWdZt6lzJQ7Ok8S6Q+VsHmHpRWndVRJ8Be0ZbkfPc5LRYH+5XrzXcEeLRQ==",
++      "license": "MIT",
++      "dependencies": {
++        "detect-node-es": "^1.1.0",
++        "tslib": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=10"
++      },
++      "peerDependencies": {
++        "@types/react": "*",
++        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        }
++      }
++    },
+     "node_modules/use-sync-external-store": {
+       "version": "1.6.0",
+       "resolved": "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz",
+@@ -29260,6 +30798,12 @@
+         "uuid": "dist/bin/uuid"
+       }
+     },
++    "node_modules/uzip": {
++      "version": "0.20201231.0",
++      "resolved": "https://registry.npmjs.org/uzip/-/uzip-0.20201231.0.tgz",
++      "integrity": "sha512-OZeJfZP+R0z9D6TmBgLq2LHzSSptGMGDGigGiEe0pr8UBe/7fdflgHlHBNDASTXB5jnFuxHpNaJywSg8YFeGng==",
++      "license": "MIT"
++    },
+     "node_modules/v8-compile-cache": {
+       "version": "2.4.0",
+       "resolved": "https://registry.npmjs.org/v8-compile-cache/-/v8-compile-cache-2.4.0.tgz",
+@@ -29308,6 +30852,44 @@
+         "node": "^18.17.0 || >=20.5.0"
+       }
+     },
++    "node_modules/validate.io-array": {
++      "version": "1.0.6",
++      "resolved": "https://registry.npmjs.org/validate.io-array/-/validate.io-array-1.0.6.tgz",
++      "integrity": "sha512-DeOy7CnPEziggrOO5CZhVKJw6S3Yi7e9e65R1Nl/RTN1vTQKnzjfvks0/8kQ40FP/dsjRAOd4hxmJ7uLa6vxkg==",
++      "license": "MIT",
++      "peer": true
++    },
++    "node_modules/validate.io-function": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/validate.io-function/-/validate.io-function-1.0.2.tgz",
++      "integrity": "sha512-LlFybRJEriSuBnUhQyG5bwglhh50EpTL2ul23MPIuR1odjO7XaMLFV8vHGwp7AZciFxtYOeiSCT5st+XSPONiQ==",
++      "peer": true
++    },
++    "node_modules/validate.io-integer": {
++      "version": "1.0.5",
++      "resolved": "https://registry.npmjs.org/validate.io-integer/-/validate.io-integer-1.0.5.tgz",
++      "integrity": "sha512-22izsYSLojN/P6bppBqhgUDjCkr5RY2jd+N2a3DCAUey8ydvrZ/OkGvFPR7qfOpwR2LC5p4Ngzxz36g5Vgr/hQ==",
++      "peer": true,
++      "dependencies": {
++        "validate.io-number": "^1.0.3"
++      }
++    },
++    "node_modules/validate.io-integer-array": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/validate.io-integer-array/-/validate.io-integer-array-1.0.0.tgz",
++      "integrity": "sha512-mTrMk/1ytQHtCY0oNO3dztafHYyGU88KL+jRxWuzfOmQb+4qqnWmI+gykvGp8usKZOM0H7keJHEbRaFiYA0VrA==",
++      "peer": true,
++      "dependencies": {
++        "validate.io-array": "^1.0.3",
++        "validate.io-integer": "^1.0.4"
++      }
++    },
++    "node_modules/validate.io-number": {
++      "version": "1.0.3",
++      "resolved": "https://registry.npmjs.org/validate.io-number/-/validate.io-number-1.0.3.tgz",
++      "integrity": "sha512-kRAyotcbNaSYoDnXvb4MHg/0a1egJdLwS6oJ38TJY7aw9n93Fl/3blIXdyYvPOp55CNxywooG/3BcrwNrBpcSg==",
++      "peer": true
++    },
+     "node_modules/vary": {
+       "version": "1.1.2",
+       "resolved": "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz",
+@@ -30256,23 +31838,27 @@
+       "engines": {
+         "node": ">= 14.6"
+       }
+-    },
+-    "node_modules/yargs": {
+-      "version": "17.7.2",
+-      "resolved": "https://registry.npmjs.org/yargs/-/yargs-17.7.2.tgz",
+-      "integrity": "sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==",
++    },
++    "node_modules/yargs": {
++      "version": "15.4.1",
++      "resolved": "https://registry.npmjs.org/yargs/-/yargs-15.4.1.tgz",
++      "integrity": "sha512-aePbxDmcYW++PaqBsJ+HYUFwCdv4LVvdnhBy78E57PIor8/OVvhMrADFFEDh8DHDFRv/O9i3lPhsENjO7QX0+A==",
+       "license": "MIT",
+       "dependencies": {
+-        "cliui": "^8.0.1",
+-        "escalade": "^3.1.1",
+-        "get-caller-file": "^2.0.5",
++        "cliui": "^6.0.0",
++        "decamelize": "^1.2.0",
++        "find-up": "^4.1.0",
++        "get-caller-file": "^2.0.1",
+         "require-directory": "^2.1.1",
+-        "string-width": "^4.2.3",
+-        "y18n": "^5.0.5",
+-        "yargs-parser": "^21.1.1"
++        "require-main-filename": "^2.0.0",
++        "set-blocking": "^2.0.0",
++        "string-width": "^4.2.0",
++        "which-module": "^2.0.0",
++        "y18n": "^4.0.0",
++        "yargs-parser": "^18.1.2"
+       },
+       "engines": {
+-        "node": ">=12"
++        "node": ">=8"
+       }
+     },
+     "node_modules/yargs-parser": {
+@@ -30332,6 +31918,100 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/yargs/node_modules/cliui": {
++      "version": "6.0.0",
++      "resolved": "https://registry.npmjs.org/cliui/-/cliui-6.0.0.tgz",
++      "integrity": "sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==",
++      "license": "ISC",
++      "dependencies": {
++        "string-width": "^4.2.0",
++        "strip-ansi": "^6.0.0",
++        "wrap-ansi": "^6.2.0"
++      }
++    },
++    "node_modules/yargs/node_modules/find-up": {
++      "version": "4.1.0",
++      "resolved": "https://registry.npmjs.org/find-up/-/find-up-4.1.0.tgz",
++      "integrity": "sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw==",
++      "license": "MIT",
++      "dependencies": {
++        "locate-path": "^5.0.0",
++        "path-exists": "^4.0.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/yargs/node_modules/locate-path": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/locate-path/-/locate-path-5.0.0.tgz",
++      "integrity": "sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==",
++      "license": "MIT",
++      "dependencies": {
++        "p-locate": "^4.1.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/yargs/node_modules/p-limit": {
++      "version": "2.3.0",
++      "resolved": "https://registry.npmjs.org/p-limit/-/p-limit-2.3.0.tgz",
++      "integrity": "sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==",
++      "license": "MIT",
++      "dependencies": {
++        "p-try": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/yargs/node_modules/p-locate": {
++      "version": "4.1.0",
++      "resolved": "https://registry.npmjs.org/p-locate/-/p-locate-4.1.0.tgz",
++      "integrity": "sha512-R79ZZ/0wAxKGu3oYMlz8jy/kbhsNrS7SKZ7PxEHBgJ5+F2mtFW2fK2cOtBh1cHYkQsbzFV7I+EoRKe6Yt0oK7A==",
++      "license": "MIT",
++      "dependencies": {
++        "p-limit": "^2.2.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/yargs/node_modules/strip-ansi": {
++      "version": "6.0.1",
++      "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
++      "integrity": "sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==",
++      "license": "MIT",
++      "dependencies": {
++        "ansi-regex": "^5.0.1"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/yargs/node_modules/y18n": {
++      "version": "4.0.3",
++      "resolved": "https://registry.npmjs.org/y18n/-/y18n-4.0.3.tgz",
++      "integrity": "sha512-JKhqTOwSrqNA1NY5lSztJ1GrBiUodLMmIZuLiDaMRJ+itFd+ABVE8XBjOvIWL+rSqNDC74LCSFmlb/U4UZ4hJQ==",
++      "license": "ISC"
++    },
++    "node_modules/yargs/node_modules/yargs-parser": {
++      "version": "18.1.3",
++      "resolved": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-18.1.3.tgz",
++      "integrity": "sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==",
++      "license": "ISC",
++      "dependencies": {
++        "camelcase": "^5.0.0",
++        "decamelize": "^1.2.0"
++      },
++      "engines": {
++        "node": ">=6"
++      }
++    },
+     "node_modules/yauzl": {
+       "version": "2.10.0",
+       "resolved": "https://registry.npmjs.org/yauzl/-/yauzl-2.10.0.tgz",
+@@ -30447,6 +32127,53 @@
+         "zod": "^3.25.28 || ^4"
+       }
+     },
++    "node_modules/zustand": {
++      "version": "5.0.13",
++      "resolved": "https://registry.npmjs.org/zustand/-/zustand-5.0.13.tgz",
++      "integrity": "sha512-efI2tVaVQPqtOh114loML/Z80Y4NP3yc+Ff0fYiZJPauNeWZeIp/bRFD7I9bfmCOYBh/PHxlglQ9+wvlwnPikQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=12.20.0"
++      },
++      "peerDependencies": {
++        "@types/react": ">=18.0.0",
++        "immer": ">=9.0.6",
++        "react": ">=18.0.0",
++        "use-sync-external-store": ">=1.2.0"
++      },
++      "peerDependenciesMeta": {
++        "@types/react": {
++          "optional": true
++        },
++        "immer": {
++          "optional": true
++        },
++        "react": {
++          "optional": true
++        },
++        "use-sync-external-store": {
++          "optional": true
++        }
++      }
++    },
++    "packages/flow": {
++      "name": "@cybervinci/flow",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/codex-provider": "1.71.0",
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@cybervinci/memory": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "js-yaml": "^4.1.1",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
+     "packages/ai-anthropic": {
+       "name": "@theia/ai-anthropic",
+       "version": "1.71.0",
+@@ -30582,6 +32309,23 @@
+         "@theia/ext-scripts": "1.71.0"
+       }
+     },
++    "packages/codex-provider": {
++      "name": "@cybervinci/codex-provider",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/ai-chat": "1.71.0",
++        "@theia/ai-chat-ui": "1.71.0",
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@theia/output": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
+     "packages/ai-copilot": {
+       "name": "@theia/ai-copilot",
+       "version": "1.71.0",
+@@ -30637,21 +32381,148 @@
+         "tslib": "^2.8.1",
+         "undici": "^7.25.0"
+       },
+-      "devDependencies": {
+-        "@theia/ext-scripts": "1.71.0"
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/ai-core-ui": {
++      "name": "@theia/ai-core-ui",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/library": {
++      "name": "@cybervinci/library",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/ai-core": "1.71.0",
++        "@theia/ai-mcp-server": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "adm-zip": "^0.5.16",
++        "ajv": "^6.15.0",
++        "js-yaml": "^4.1.1",
++        "tar": "^6.2.1",
++        "tslib": "^2.8.1",
++        "zod": "^4.4.3"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/library/node_modules/chownr": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/chownr/-/chownr-2.0.0.tgz",
++      "integrity": "sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=10"
++      }
++    },
++    "packages/library/node_modules/fs-minipass": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/fs-minipass/-/fs-minipass-2.1.0.tgz",
++      "integrity": "sha512-V/JgOLFCS+R6Vcq0slCuaeWEdNC3ouDlJMNIsacH2VtALiu9mV4LPrHc5cDl8k5aw6J8jwgWWpiTo5RYhmIzvg==",
++      "license": "ISC",
++      "dependencies": {
++        "minipass": "^3.0.0"
++      },
++      "engines": {
++        "node": ">= 8"
++      }
++    },
++    "packages/library/node_modules/fs-minipass/node_modules/minipass": {
++      "version": "3.3.6",
++      "resolved": "https://registry.npmjs.org/minipass/-/minipass-3.3.6.tgz",
++      "integrity": "sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw==",
++      "license": "ISC",
++      "dependencies": {
++        "yallist": "^4.0.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "packages/library/node_modules/minipass": {
++      "version": "5.0.0",
++      "resolved": "https://registry.npmjs.org/minipass/-/minipass-5.0.0.tgz",
++      "integrity": "sha512-3FnjYuehv9k6ovOEbyOswadCDPX1piCfhV8ncmYtHOjuPwylVWsghTLo7rabjC3Rx5xD4HDx8Wm1xnMF7S5qFQ==",
++      "license": "ISC",
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "packages/library/node_modules/minizlib": {
++      "version": "2.1.2",
++      "resolved": "https://registry.npmjs.org/minizlib/-/minizlib-2.1.2.tgz",
++      "integrity": "sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg==",
++      "license": "MIT",
++      "dependencies": {
++        "minipass": "^3.0.0",
++        "yallist": "^4.0.0"
++      },
++      "engines": {
++        "node": ">= 8"
++      }
++    },
++    "packages/library/node_modules/minizlib/node_modules/minipass": {
++      "version": "3.3.6",
++      "resolved": "https://registry.npmjs.org/minipass/-/minipass-3.3.6.tgz",
++      "integrity": "sha512-DxiNidxSEK+tHG6zOIklvNOwm3hvCrbUrdtzY74U6HKTJxvIDfOUL5W5P2Ghd3DTkhhKPYGqeNUIh5qcM4YBfw==",
++      "license": "ISC",
++      "dependencies": {
++        "yallist": "^4.0.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "packages/library/node_modules/mkdirp": {
++      "version": "1.0.4",
++      "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-1.0.4.tgz",
++      "integrity": "sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==",
++      "license": "MIT",
++      "bin": {
++        "mkdirp": "bin/cmd.js"
++      },
++      "engines": {
++        "node": ">=10"
+       }
+     },
+-    "packages/ai-core-ui": {
+-      "name": "@theia/ai-core-ui",
+-      "version": "1.71.0",
+-      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++    "packages/library/node_modules/tar": {
++      "version": "6.2.1",
++      "resolved": "https://registry.npmjs.org/tar/-/tar-6.2.1.tgz",
++      "integrity": "sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==",
++      "deprecated": "Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me",
++      "license": "ISC",
+       "dependencies": {
+-        "@theia/ai-core": "1.71.0",
+-        "@theia/core": "1.71.0",
+-        "tslib": "^2.8.1"
++        "chownr": "^2.0.0",
++        "fs-minipass": "^2.0.0",
++        "minipass": "^5.0.0",
++        "minizlib": "^2.1.1",
++        "mkdirp": "^1.0.3",
++        "yallist": "^4.0.0"
+       },
+-      "devDependencies": {
+-        "@theia/ext-scripts": "1.71.0"
++      "engines": {
++        "node": ">=10"
++      }
++    },
++    "packages/library/node_modules/zod": {
++      "version": "4.4.3",
++      "resolved": "https://registry.npmjs.org/zod/-/zod-4.4.3.tgz",
++      "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/colinhacks"
+       }
+     },
+     "packages/ai-editor": {
+@@ -30723,6 +32594,7 @@
+       "dependencies": {
+         "@theia/ai-chat": "1.71.0",
+         "@theia/ai-chat-ui": "1.71.0",
++        "@cybervinci/codex-provider": "1.71.0",
+         "@theia/ai-core": "1.71.0",
+         "@theia/ai-mcp": "1.71.0",
+         "@theia/ai-terminal": "1.71.0",
+@@ -30751,27 +32623,6 @@
+         "@theia/test": "1.71.0"
+       }
+     },
+-    "packages/ai-ide/node_modules/@puppeteer/browsers": {
+-      "version": "2.13.0",
+-      "resolved": "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-2.13.0.tgz",
+-      "integrity": "sha512-46BZJYJjc/WwmKjsvDFykHtXrtomsCIrwYQPOP7VfMJoZY2bsDF9oROBABR3paDjDcmkUye1Pb1BqdcdiipaWA==",
+-      "license": "Apache-2.0",
+-      "dependencies": {
+-        "debug": "^4.4.3",
+-        "extract-zip": "^2.0.1",
+-        "progress": "^2.0.3",
+-        "proxy-agent": "^6.5.0",
+-        "semver": "^7.7.4",
+-        "tar-fs": "^3.1.1",
+-        "yargs": "^17.7.2"
+-      },
+-      "bin": {
+-        "browsers": "lib/cjs/main-cli.js"
+-      },
+-      "engines": {
+-        "node": ">=18"
+-      }
+-    },
+     "packages/ai-ide/node_modules/chromium-bidi": {
+       "version": "14.0.0",
+       "resolved": "https://registry.npmjs.org/chromium-bidi/-/chromium-bidi-14.0.0.tgz",
+@@ -31041,111 +32892,292 @@
+         "@theia/ext-scripts": "1.71.0"
+       }
+     },
+-    "packages/console": {
+-      "name": "@theia/console",
++    "packages/console": {
++      "name": "@theia/console",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/core": "1.71.0",
++        "@theia/editor": "1.71.0",
++        "@theia/monaco": "1.71.0",
++        "@theia/monaco-editor-core": "1.108.201",
++        "anser": "^2.3.5",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/core": {
++      "name": "@theia/core",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@babel/runtime": "^7.29.2",
++        "@lumino/algorithm": "^2.0.4",
++        "@lumino/commands": "^2.3.3",
++        "@lumino/coreutils": "^2.2.2",
++        "@lumino/domutils": "^2.0.4",
++        "@lumino/dragdrop": "^2.1.8",
++        "@lumino/messaging": "^2.0.4",
++        "@lumino/properties": "^2.0.4",
++        "@lumino/signaling": "^2.1.5",
++        "@lumino/virtualdom": "^2.0.4",
++        "@lumino/widgets": "2.7.5",
++        "@parcel/watcher": "^2.5.6",
++        "@theia/application-package": "1.71.0",
++        "@theia/request": "1.71.0",
++        "@types/body-parser": "^1.19.6",
++        "@types/express": "^4.17.25",
++        "@types/fs-extra": "^4.0.15",
++        "@types/lodash.debounce": "4.0.3",
++        "@types/lodash.throttle": "^4.1.9",
++        "@types/markdown-it": "^14.1.2",
++        "@types/markdown-it-emoji": "^3.0.1",
++        "@types/react": "^18.3.28",
++        "@types/react-dom": "^18.3.7",
++        "@types/route-parser": "^0.1.7",
++        "@types/safer-buffer": "^2.1.3",
++        "@types/uuid": "^9.0.8",
++        "@types/ws": "^8.18.1",
++        "@types/yargs": "^15",
++        "@vscode/codicons": "0.0.45",
++        "ajv": "^6.15.0",
++        "async-mutex": "^0.4.1",
++        "body-parser": "^1.20.5",
++        "cookie": "^1.1.1",
++        "dompurify": "^3.4.2",
++        "drivelist": "^12.0.2",
++        "express": "^4.22.1",
++        "fast-json-stable-stringify": "^2.1.0",
++        "file-icons-js": "~1.0.3",
++        "font-awesome": "^4.7.0",
++        "fs-extra": "^4.0.3",
++        "fuzzy": "^0.1.3",
++        "http-proxy-agent": "^5.0.0",
++        "https-proxy-agent": "^5.0.1",
++        "iconv-lite": "^0.6.3",
++        "inversify": "^6.2.2",
++        "jschardet": "^2.3.0",
++        "keytar": "7.9.0",
++        "lodash.debounce": "^4.0.8",
++        "lodash.throttle": "^4.1.1",
++        "markdown-it": "^14.1.1",
++        "markdown-it-anchor": "^9.2.0",
++        "markdown-it-emoji": "^3.0.0",
++        "msgpackr": "^1.11.12",
++        "p-debounce": "^2.1.0",
++        "perfect-scrollbar": "1.5.5",
++        "react": "^18.3.1",
++        "react-dom": "^18.3.1",
++        "react-tooltip": "^4.5.1",
++        "react-virtuoso": "^2.19.1",
++        "reflect-metadata": "^0.2.2",
++        "route-parser": "^0.0.5",
++        "safer-buffer": "^2.1.2",
++        "socket.io": "^4.8.3",
++        "socket.io-client": "^4.8.3",
++        "tslib": "^2.8.1",
++        "uuid": "^9.0.1",
++        "vscode-languageserver-protocol": "3.17.5",
++        "vscode-uri": "3.0.8",
++        "ws": "^8.20.0",
++        "yargs": "^15.4.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0",
++        "@theia/re-exports": "1.71.0",
++        "minimist": "^1.2.8",
++        "nodejs-file-downloader": "4.13.0"
++      },
++      "peerDependencies": {
++        "@theia/electron": "*"
++      },
++      "peerDependenciesMeta": {
++        "@theia/electron": {
++          "optional": true
++        }
++      }
++    },
++    "packages/builder-ai": {
++      "name": "@cybervinci/builder-ai",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder": {
++      "name": "@cybervinci/builder",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-ai": "1.71.0",
++        "@cybervinci/builder-editor-puck": "1.71.0",
++        "@cybervinci/builder-export-html": "1.71.0",
++        "@cybervinci/builder-export-react": "1.71.0",
++        "@cybervinci/builder-property-panel-rjsf": "1.71.0",
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-renderer-mantine": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "@mantine/core": "^7.17.8",
++        "@mantine/hooks": "^7.17.8",
++        "@rjsf/core": "^5.24.13",
++        "@rjsf/validator-ajv8": "^5.24.13",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/filesystem": "1.71.0",
++        "@theia/monaco": "1.71.0",
++        "@theia/monaco-editor-core": "1.108.201",
++        "@theia/workspace": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder-editor-puck": {
++      "name": "@cybervinci/builder-editor-puck",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder-export-html": {
++      "name": "@cybervinci/builder-export-html",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder-export-react": {
++      "name": "@cybervinci/builder-export-react",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder-property-panel-rjsf": {
++      "name": "@cybervinci/builder-property-panel-rjsf",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "@theia/core": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      },
++      "peerDependencies": {
++        "@rjsf/core": "^5.24.12",
++        "@rjsf/validator-ajv8": "^5.24.12"
++      }
++    },
++    "packages/builder-registry": {
++      "name": "@cybervinci/builder-registry",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-schema": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder-renderer-mantine": {
++      "name": "@cybervinci/builder-renderer-mantine",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@cybervinci/builder-registry": "1.71.0",
++        "@cybervinci/builder-schema": "1.71.0",
++        "react": "^18.3.1",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/builder-schema": {
++      "name": "@cybervinci/builder-schema",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/ai-output-cleaner": {
++      "name": "@cybervinci/ai-output-cleaner",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@theia/filesystem": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/codex": {
++      "name": "@cybervinci/codex",
+       "version": "1.71.0",
+       "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+       "dependencies": {
++        "@cybervinci/codex-provider": "1.71.0",
+         "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
+         "@theia/editor": "1.71.0",
++        "@theia/filesystem": "1.71.0",
+         "@theia/monaco": "1.71.0",
+-        "@theia/monaco-editor-core": "1.108.201",
+-        "anser": "^2.3.5",
++        "@theia/output": "1.71.0",
++        "@theia/workspace": "1.71.0",
+         "tslib": "^2.8.1"
+       },
+       "devDependencies": {
+         "@theia/ext-scripts": "1.71.0"
+       }
+     },
+-    "packages/core": {
+-      "name": "@theia/core",
++    "packages/branding": {
++      "name": "@cybervinci/branding",
+       "version": "1.71.0",
+       "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+       "dependencies": {
+-        "@babel/runtime": "^7.29.2",
+-        "@lumino/algorithm": "^2.0.4",
+-        "@lumino/commands": "^2.3.3",
+-        "@lumino/coreutils": "^2.2.2",
+-        "@lumino/domutils": "^2.0.4",
+-        "@lumino/dragdrop": "^2.1.8",
+-        "@lumino/messaging": "^2.0.4",
+-        "@lumino/properties": "^2.0.4",
+-        "@lumino/signaling": "^2.1.5",
+-        "@lumino/virtualdom": "^2.0.4",
+-        "@lumino/widgets": "2.7.5",
+-        "@parcel/watcher": "^2.5.6",
+-        "@theia/application-package": "1.71.0",
+-        "@theia/request": "1.71.0",
+-        "@types/body-parser": "^1.19.6",
+-        "@types/express": "^4.17.25",
+-        "@types/fs-extra": "^4.0.15",
+-        "@types/lodash.debounce": "4.0.3",
+-        "@types/lodash.throttle": "^4.1.9",
+-        "@types/markdown-it": "^14.1.2",
+-        "@types/markdown-it-emoji": "^3.0.1",
+-        "@types/react": "^18.3.28",
+-        "@types/react-dom": "^18.3.7",
+-        "@types/route-parser": "^0.1.7",
+-        "@types/safer-buffer": "^2.1.3",
+-        "@types/uuid": "^9.0.8",
+-        "@types/ws": "^8.18.1",
+-        "@types/yargs": "^17",
+-        "@vscode/codicons": "0.0.45",
+-        "ajv": "^6.15.0",
+-        "async-mutex": "^0.4.1",
+-        "body-parser": "^1.20.5",
+-        "cookie": "^1.1.1",
+-        "dompurify": "^3.4.2",
+-        "drivelist": "^12.0.2",
+-        "express": "^4.22.1",
+-        "fast-json-stable-stringify": "^2.1.0",
+-        "file-icons-js": "~1.0.3",
+-        "font-awesome": "^4.7.0",
+-        "fs-extra": "^4.0.3",
+-        "fuzzy": "^0.1.3",
+-        "http-proxy-agent": "^5.0.0",
+-        "https-proxy-agent": "^5.0.1",
+-        "iconv-lite": "^0.6.3",
+-        "inversify": "^6.2.2",
+-        "jschardet": "^2.3.0",
+-        "keytar": "7.9.0",
+-        "lodash.debounce": "^4.0.8",
+-        "lodash.throttle": "^4.1.1",
+-        "markdown-it": "^14.1.1",
+-        "markdown-it-anchor": "^9.2.0",
+-        "markdown-it-emoji": "^3.0.0",
+-        "msgpackr": "^1.11.12",
+-        "p-debounce": "^2.1.0",
+-        "perfect-scrollbar": "1.5.5",
+-        "react": "^18.3.1",
+-        "react-dom": "^18.3.1",
+-        "react-tooltip": "^4.5.1",
+-        "react-virtuoso": "^2.19.1",
+-        "reflect-metadata": "^0.2.2",
+-        "route-parser": "^0.0.5",
+-        "safer-buffer": "^2.1.2",
+-        "socket.io": "^4.8.3",
+-        "socket.io-client": "^4.8.3",
+-        "tslib": "^2.8.1",
+-        "uuid": "^9.0.1",
+-        "vscode-languageserver-protocol": "3.17.5",
+-        "vscode-uri": "3.0.8",
+-        "ws": "^8.20.0",
+-        "yargs": "^17.7.2"
++        "@theia/core": "1.71.0",
++        "tslib": "^2.8.1"
+       },
+       "devDependencies": {
+-        "@theia/ext-scripts": "1.71.0",
+-        "@theia/re-exports": "1.71.0",
+-        "minimist": "^1.2.8",
+-        "nodejs-file-downloader": "4.13.0"
+-      },
+-      "peerDependencies": {
+-        "@theia/electron": "*"
+-      },
+-      "peerDependenciesMeta": {
+-        "@theia/electron": {
+-          "optional": true
+-        }
++        "@theia/ext-scripts": "1.71.0"
+       }
+     },
+     "packages/debug": {
+@@ -31324,6 +33356,7 @@
+       "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+       "dependencies": {
+         "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
+         "@theia/editor": "1.71.0",
+         "@theia/filesystem": "1.71.0",
+         "@theia/keymaps": "1.71.0",
+@@ -31501,6 +33534,73 @@
+         "@types/mdurl": "*"
+       }
+     },
++    "packages/openpencil-cybervinci-extension": {
++      "name": "@cybervinci/openpencil-extension",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@radix-ui/react-popover": "^1.1.0",
++        "@radix-ui/react-select": "^2.2.0",
++        "@radix-ui/react-separator": "^1.1.0",
++        "@radix-ui/react-slider": "^1.3.0",
++        "@radix-ui/react-switch": "^1.2.0",
++        "@radix-ui/react-toggle": "^1.1.0",
++        "@radix-ui/react-tooltip": "^1.2.0",
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/editor": "1.71.0",
++        "@theia/filesystem": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "@zseven-w/pen-codegen": "file:../../vendor/openpencil/packages/pen-codegen",
++        "@zseven-w/pen-core": "file:../../vendor/openpencil/packages/pen-core",
++        "@zseven-w/pen-engine": "file:../../vendor/openpencil/packages/pen-engine",
++        "@zseven-w/pen-figma": "file:../../vendor/openpencil/packages/pen-figma",
++        "@zseven-w/pen-react": "file:../../vendor/openpencil/packages/pen-react",
++        "@zseven-w/pen-renderer": "file:../../vendor/openpencil/packages/pen-renderer",
++        "@zseven-w/pen-types": "file:../../vendor/openpencil/packages/pen-types",
++        "canvaskit-wasm": "^0.40.0",
++        "lucide-react": "^0.511.0"
++      },
++      "devDependencies": {
++        "@theia/cli": "1.71.0",
++        "@theia/test": "1.71.0"
++      }
++    },
++    "packages/openpencil-theia-extension": {
++      "name": "@theia/openpencil-theia-extension",
++      "version": "1.71.0",
++      "extraneous": true,
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@radix-ui/react-popover": "^1.1.0",
++        "@radix-ui/react-select": "^2.2.0",
++        "@radix-ui/react-separator": "^1.1.0",
++        "@radix-ui/react-slider": "^1.3.0",
++        "@radix-ui/react-switch": "^1.2.0",
++        "@radix-ui/react-toggle": "^1.1.0",
++        "@radix-ui/react-tooltip": "^1.2.0",
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/editor": "1.71.0",
++        "@theia/filesystem": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "@zseven-w/pen-codegen": "file:../../vendor/openpencil/packages/pen-codegen",
++        "@zseven-w/pen-core": "file:../../vendor/openpencil/packages/pen-core",
++        "@zseven-w/pen-engine": "file:../../vendor/openpencil/packages/pen-engine",
++        "@zseven-w/pen-figma": "file:../../vendor/openpencil/packages/pen-figma",
++        "@zseven-w/pen-react": "file:../../vendor/openpencil/packages/pen-react",
++        "@zseven-w/pen-renderer": "file:../../vendor/openpencil/packages/pen-renderer",
++        "@zseven-w/pen-types": "file:../../vendor/openpencil/packages/pen-types",
++        "canvaskit-wasm": "^0.40.0",
++        "lucide-react": "^0.511.0"
++      },
++      "devDependencies": {
++        "@theia/cli": "1.71.0",
++        "@theia/test": "1.71.0"
++      }
++    },
+     "packages/outline-view": {
+       "name": "@theia/outline-view",
+       "version": "1.71.0",
+@@ -31781,6 +33881,67 @@
+         "@theia/ext-scripts": "1.71.0"
+       }
+     },
++    "packages/memory": {
++      "name": "@cybervinci/memory",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/ai-chat": "1.71.0",
++        "@theia/ai-core": "1.71.0",
++        "@cybervinci/library": "1.71.0",
++        "@theia/ai-mcp-server": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/filesystem": "1.71.0",
++        "@theia/task": "1.71.0",
++        "@theia/terminal": "1.71.0",
++        "@theia/test": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "ignore": "^6.0.2",
++        "tslib": "^2.8.1",
++        "zod": "^4.4.3"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/memory-roslyn": {
++      "name": "@cybervinci/memory-roslyn",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/core": "1.71.0",
++        "@cybervinci/memory": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
++    "packages/memory/node_modules/zod": {
++      "version": "4.4.3",
++      "resolved": "https://registry.npmjs.org/zod/-/zod-4.4.3.tgz",
++      "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/colinhacks"
++      }
++    },
++    "packages/arena": {
++      "name": "@cybervinci/arena",
++      "version": "1.71.0",
++      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++      "dependencies": {
++        "@theia/ai-core": "1.71.0",
++        "@theia/core": "1.71.0",
++        "@cybervinci/branding": "1.71.0",
++        "@theia/workspace": "1.71.0",
++        "tslib": "^2.8.1"
++      },
++      "devDependencies": {
++        "@theia/ext-scripts": "1.71.0"
++      }
++    },
+     "packages/property-view": {
+       "name": "@theia/property-view",
+       "version": "1.71.0",
+@@ -32167,44 +34328,169 @@
+         "vscode": "^1.51.0"
+       }
+     },
+-    "sample-plugins/sample-namespace/plugin-browser": {
++    "sample-plugins/sample-namespace/plugin-gotd": {
+       "version": "1.71.0",
+       "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+       "devDependencies": {
+-        "@types/vscode": "^1.118.0"
++        "@theia/api-provider-sample": "1.71.0"
+       },
+       "engines": {
+-        "vscode": "^1.118.0"
++        "vscode": "^1.84.0"
+       }
+     },
+-    "sample-plugins/sample-namespace/plugin-esm": {
+-      "version": "1.71.0",
+-      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++    "vendor/openpencil/packages/pen-codegen": {
++      "name": "@zseven-w/pen-codegen",
++      "version": "0.6.0",
++      "dependencies": {
++        "@zseven-w/pen-core": "file:../pen-core",
++        "@zseven-w/pen-types": "file:../pen-types"
++      },
+       "devDependencies": {
+-        "@types/vscode": "^1.118.0"
++        "typescript": "^5.7.2"
++      }
++    },
++    "vendor/openpencil/packages/pen-core": {
++      "name": "@zseven-w/pen-core",
++      "version": "0.7.5",
++      "license": "MIT",
++      "dependencies": {
++        "@zseven-w/pen-types": "file:../pen-types",
++        "nanoid": "^5.1.6",
++        "paper": "^0.12.18"
++      },
++      "devDependencies": {
++        "typescript": "^5.7.2"
++      }
++    },
++    "vendor/openpencil/packages/pen-core/node_modules/nanoid": {
++      "version": "5.1.11",
++      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-5.1.11.tgz",
++      "integrity": "sha512-v+KEsUv2ps74PaSKv0gHTxTCgMXOIfBEbaqa6w6ISIGC7ZsvHN4N9oJ8d4cmf0n5oTzQz2SLmThbQWhjd/8eKg==",
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "bin": {
++        "nanoid": "bin/nanoid.js"
+       },
+       "engines": {
+-        "vscode": "^1.51.0"
++        "node": "^18 || >=20"
+       }
+     },
+-    "sample-plugins/sample-namespace/plugin-esm-mjs": {
+-      "version": "1.71.0",
+-      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++    "vendor/openpencil/packages/pen-engine": {
++      "name": "@zseven-w/pen-engine",
++      "version": "0.7.5",
++      "license": "MIT",
++      "dependencies": {
++        "@zseven-w/pen-core": "file:../pen-core",
++        "@zseven-w/pen-figma": "file:../pen-figma",
++        "@zseven-w/pen-renderer": "file:../pen-renderer",
++        "@zseven-w/pen-types": "file:../pen-types",
++        "nanoid": "^5.1.6"
++      },
+       "devDependencies": {
+-        "@types/vscode": "^1.118.0"
++        "canvaskit-wasm": "^0.40.0",
++        "typescript": "^5.7.2"
++      },
++      "peerDependencies": {
++        "canvaskit-wasm": "^0.40.0"
++      },
++      "peerDependenciesMeta": {
++        "canvaskit-wasm": {
++          "optional": true
++        }
++      }
++    },
++    "vendor/openpencil/packages/pen-engine/node_modules/nanoid": {
++      "version": "5.1.11",
++      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-5.1.11.tgz",
++      "integrity": "sha512-v+KEsUv2ps74PaSKv0gHTxTCgMXOIfBEbaqa6w6ISIGC7ZsvHN4N9oJ8d4cmf0n5oTzQz2SLmThbQWhjd/8eKg==",
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "bin": {
++        "nanoid": "bin/nanoid.js"
+       },
+       "engines": {
+-        "vscode": "^1.51.0"
++        "node": "^18 || >=20"
+       }
+     },
+-    "sample-plugins/sample-namespace/plugin-gotd": {
+-      "version": "1.71.0",
+-      "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
++    "vendor/openpencil/packages/pen-figma": {
++      "name": "@zseven-w/pen-figma",
++      "version": "0.7.5",
++      "license": "MIT",
++      "dependencies": {
++        "@zseven-w/pen-types": "file:../pen-types",
++        "fzstd": "^0.1.1",
++        "kiwi-schema": "^0.5.0",
++        "uzip": "^0.20201231.0"
++      },
+       "devDependencies": {
+-        "@theia/api-provider-sample": "1.71.0"
++        "@types/uzip": "^0.20201231.2",
++        "typescript": "^5.7.2"
++      }
++    },
++    "vendor/openpencil/packages/pen-react": {
++      "name": "@zseven-w/pen-react",
++      "version": "0.7.5",
++      "license": "MIT",
++      "dependencies": {
++        "@zseven-w/pen-core": "file:../pen-core",
++        "@zseven-w/pen-engine": "file:../pen-engine",
++        "@zseven-w/pen-types": "file:../pen-types",
++        "class-variance-authority": "^0.7.0",
++        "clsx": "^2.1.0",
++        "lucide-react": "^0.511.0",
++        "tailwind-merge": "^3.4.0",
++        "zustand": "^5.0.0"
+       },
+-      "engines": {
+-        "vscode": "^1.84.0"
++      "devDependencies": {
++        "@testing-library/react": "^16.0.0",
++        "typescript": "^5.7.2"
++      },
++      "peerDependencies": {
++        "@radix-ui/react-popover": "^1.1.0",
++        "@radix-ui/react-select": "^2.2.0",
++        "@radix-ui/react-separator": "^1.1.0",
++        "@radix-ui/react-slider": "^1.3.0",
++        "@radix-ui/react-switch": "^1.2.0",
++        "@radix-ui/react-toggle": "^1.1.0",
++        "@radix-ui/react-tooltip": "^1.2.0",
++        "react": "^18.3.1 || ^19.0.0",
++        "react-dom": "^18.3.1 || ^19.0.0"
++      }
++    },
++    "vendor/openpencil/packages/pen-renderer": {
++      "name": "@zseven-w/pen-renderer",
++      "version": "0.7.5",
++      "license": "MIT",
++      "dependencies": {
++        "@zseven-w/pen-core": "file:../pen-core",
++        "@zseven-w/pen-types": "file:../pen-types",
++        "rbush": "^4.0.1"
++      },
++      "devDependencies": {
++        "@types/rbush": "^4.0.0",
++        "canvaskit-wasm": "^0.40.0",
++        "typescript": "^5.7.2"
++      },
++      "peerDependencies": {
++        "canvaskit-wasm": "^0.40.0"
++      }
++    },
++    "vendor/openpencil/packages/pen-types": {
++      "name": "@zseven-w/pen-types",
++      "version": "0.7.5",
++      "license": "MIT",
++      "devDependencies": {
++        "typescript": "^5.7.2"
+       }
+     }
+   }
+
+diff --git a/package.json b/package.json
+index 3ee5734..63c928d 100644
+--- a/package.json
++++ b/package.json
+@@ -7,7 +7,8 @@
+   },
+   "overrides": {
+     "perfect-scrollbar": "1.5.5",
+-    "@types/express": "^4.17.21"
++    "@types/express": "^4.17.21",
++    "@puppeteer/browsers": "2.13.0"
+   },
+   "devDependencies": {
+     "@eclipse-dash/nodejs-wrapper": "^0.0.1",
+@@ -56,7 +57,7 @@
+     "tslint": "^5.12.0",
+     "typedoc": "0.28.13",
+     "typescript": "~5.9.3",
+-    "yargs": "^17.7.2"
++    "yargs": "^15.3.1"
+   },
+   "scripts": {
+     "all": "npm -s install && npm run -s lint && npm run -s build",
+@@ -92,6 +93,7 @@
+     "start:electron": "cd examples/electron && npm run start",
+     "test": "npm run -s test:theia && npm run -s electron test && npm run -s browser test",
+     "test:browser": "cd examples/browser && npm run test",
++    "test:cybervinci-core-without-builder": "node scripts/check-cybervinci-core-without-builder.js",
+     "test:electron": "cd examples/electron && npm run test",
+     "test:theia": "lerna run --scope \"@theia/!(example-)*\" test --stream --concurrency=1",
+     "test:playwright": "cd examples/playwright && npm run -s ui-tests",
+@@ -122,6 +124,8 @@
+   "theiaPluginsExcludeIds": [
+     "ms-vscode.js-debug-companion",
+     "vscode.extension-editing",
++    "vscode.github",
++    "vscode.github-authentication",
+     "ms-python.vscode-pylance"
+   ]
+ }
+
+diff --git a/README.md b/README.md
+index d6be657..e8eb4ef 100644
+--- a/README.md
++++ b/README.md
+@@ -1,126 +1,61 @@
+-<br/>
+-<div id="theia-logo" align="center">
+-    <br />
+-    <img src="https://raw.githubusercontent.com/eclipse-theia/theia/master/logo/theia-logo-gray.svg?sanitize=true" alt="Theia Logo" width="300"/>
+-    <h3>Cloud & Desktop IDE Framework</h3>
+-</div>
++# CyberVinci
+ 
+-<div id="badges" align="center">
++CyberVinci e uma IDE orientada a IA para agencia profissional para engenharia, design, operacao de software e várias outras atividades.
++Este repositorio concentra o produto, os pacotes de extensao e os componentes de runtime usados na experiencia integrada.
+ 
+-  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-curved)](https://github.com/eclipse-theia/theia/labels/help%20wanted)
+-  [![Build Status](https://github.com/eclipse-theia/theia/actions/workflows/ci-cd.yml/badge.svg?branch=master)](https://github.com/eclipse-theia/theia/actions/workflows/ci-cd.yml?query=branch%3Amaster)
+-  [![Publish VS Code Built-in Extensions](https://github.com/eclipse-theia/vscode-builtin-extensions/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/eclipse-theia/vscode-builtin-extensions/actions/workflows/build.yml?query=branch%3Amaster)
+-  [![Open questions](https://img.shields.io/badge/Open-questions-blue.svg?style=flat-curved)](https://github.com/eclipse-theia/theia/discussions/categories/q-a)
+-  [![Open bugs](https://img.shields.io/badge/Open-bugs-red.svg?style=flat-curved)](https://github.com/eclipse-theia/theia/labels/bug)
++## Compatibilidade com extensões do VS Code
++O CyberVinci é um fork do Theia IDE e sendo assim já nasce compatível com diversas extensões do VS Code. A compatibilidade tende a crescer com o tempo. O Theia tem um sistema próprio de extensões que é 100% compatível com o CyberVinci.
+ 
+-Eclipse Theia is an extensible framework to develop full-fledged multi-language Cloud & Desktop IDEs and tools with state-of-the-art web technologies.
++## O que ja esta implementado
+ 
+-</div>
++### OpenPencil (editor de design nativo)
++OpenPencil e o motor/editor visual integrado ao CyberVinci para criacao e edicao de layouts, componentes e cenas visuais dentro da IDE. Pense como uma versão mais enxuta do Figma/Claude Design, integrado na IDE e com suporte a inteligencia artificial.
+ 
+-- [Website](#website)
+-- [Repositories](#repositories)
+-- [Releases](#releases)
+-- [Scope](#scope)
+-- [Roadmap](#roadmap)
+-- [Getting Started](#getting-started)
+-- [Contributing](#contributing)
+-- [Feedback](#feedback)
+-- [Documentation](#documentation)
+-- [License](#license)
+-- [Trademark](#trademark)
++Capacidades entregues:
++- Editor visual embutido com canvas, layers e painel de propriedades.
++- Edicao estrutural de documentos `.op`.
++- Selecao multipla, arraste em grupo e manipulacao direta no canvas.
++- Integracao com IA para gerar e aplicar alteracoes de design.
++- Importacao (incluindo fluxos de Figma/JSON) e exportacao em formatos suportados.
++- Runtime integrado com o fluxo de salvamento/abertura do produto.
+ 
+-<div style='margin:0 auto;width:60%;'>
++### Arena (A/B test de prompts)
++Arena permite comparar estrategias de prompt e respostas a partir de um conjunto de prompts lado a lado para voce avaliar o que trouxe o melhor resultado e poder fazer o fine tuning deles.
+ 
+-![Theia](https://raw.githubusercontent.com/eclipse-theia/theia/master/doc/images/theia-screenshot.png)
++Capacidades entregues:
++- Execucao comparativa entre variacoes de prompt.
++- Fluxo para analise de diferencas de qualidade/aderencia.
++- Base para evolucao de criterios e ranking de resultados.
+ 
+-</div>
++### Documentation Manager
++Documentation Manager centraliza documentacao versionada para consumo por humanos e agentes. Uma alternativa embarcada do Context7.
+ 
+-## Website
++Capacidades entregues:
++- Registro e organizacao de docs por contexto.
++- Estrutura para versionamento e governanca.
++- Base para consulta controlada por agentes e ferramentas da IDE.
+ 
+-[Visit the Eclipse Theia website](http://www.theia-ide.org) for more information and [the Theia documentation](http://www.theia-ide.org/docs).
++### Memory
++Memory e a camada de contexto de projeto para apoiar IA. Toda vez que a IDE precisar consultar algo no projeto, um grafo é feito e indexado correlacionando os arquivos, elementos, classes e métodos. Da próxima vez, menos tokens serão gastos e a busca será muito mais rápida. Além disso, a IDE vai aprendendo com o seu uso, ao perceber tarefas repetitivas, passa a sugerir novas skills, entre outras features.
+ 
+-## Repositories
++Capacidades entregues:
++- Superficie de comandos e UI para analise contextual.
++- Estrutura para consolidar estado, sinais e conhecimento do projeto.
++- Integracao com fluxos de assistencia da IDE.
+ 
+-This is the main repository for the Eclipse Theia project, containing the sources of the Theia Platform. Please open generic discussions, bug reports and feature requests about Theia on this repository. The Theia project also includes additional repositories, e.g. for the [artifacts building the Theia IDE](https://github.com/eclipse-theia/theia-blueprint) and the [Theia website](https://github.com/eclipse-theia/theia-website). Please also see the [overview of all Theia project repositories](https://github.com/eclipse-theia).
++## Roadmap (fonte: `mudancas-futuras/`)
+ 
+-## Releases
++Direcao consolidada nos documentos de planejamento ja versionados:
+ 
+-- [All available releases](https://github.com/eclipse-theia/theia/releases) are available on GitHub including changelogs.
+-- [Detailed release announcements](https://theia-ide.org/resources/) are linked on the Theia website.
+-- [Community Releases](https://theia-ide.org/releases/) are listed on the Theia website.
+-- [Visit the release website](https://theia-ide.org/releases/) for more information.
++- `mudancas-futuras/STATUS_IMPLEMENTACAO.md`
++- `mudancas-futuras/AI-OUTPUT-CLEANER.txt`
++- `mudancas-futuras/melhoria_do_memory.txt`
++- `mudancas-futuras/flow-plan/`
+ 
+-## Scope
+-
+-- Support building browser-based and desktop IDEs and tools
+-- Provide a highly flexible architecture for adopters
+-- Support VS Code Extension protocol
+-- Develop under vendor-neutral open-source governance
+-
+-[More details on the project goals](https://theia-ide.org/docs/project_goals/) are available on the Theia website.
+-
+-## Roadmap
+-
+-See [our roadmap](https://github.com/eclipse-theia/theia/wiki/Eclipse-Theia-Roadmap) for an overview about the current project goals and the upcoming releases.
+-
+-## Getting Started
+-
+-Here you can find guides and examples for common scenarios to adopt Theia:
+-
+-- [Get an overview of how to get started](https://theia-ide.org/#gettingstarted) on the Theia website
+-- [Develop a Theia application - your own IDE/Tool](https://theia-ide.org/docs/composing_applications/)
+-- [Learn about Theia's extension mechanisms](https://theia-ide.org/docs/extensions/)
+-- [Develop a VS Code like extension](https://theia-ide.org/docs/authoring_vscode_extensions/)
+-- [Develop a Theia extension](https://theia-ide.org/docs/authoring_extensions/)
+-- [Test a VS Code extension in Theia](https://github.com/eclipse-theia/theia/wiki/Testing-VS-Code-extensions)
+-- [Package a desktop Theia application with Electron](https://theia-ide.org/docs/blueprint_documentation/)
+-
+-## Contributing
+-
+-Read below to learn how to take part in improving Theia:
+-
+-- Fork the repository and [run the examples from source](doc/Developing.md#quick-start)
+-- Get familiar with [the development workflow](doc/Developing.md), [Coding Guidelines](doc/coding-guidelines.md), [Code of Conduct](CODE_OF_CONDUCT.md) and [sign the Eclipse contributor agreement](CONTRIBUTING.md#eclipse-contributor-agreement)
+-- Find an issue to work on and submit a pull request
+-  - First time contributing to open source? Pick a [good first issue](https://github.com/eclipse-theia/theia/labels/good%20first%20issue) to get you familiar with GitHub contributing process.
+-  - First time contributing to Theia? Pick a [beginner friendly issue](https://github.com/eclipse-theia/theia/labels/beginners) to get you familiar with codebase and our contributing process.
+-  - Want to become a Committer? Solve an issue showing that you understand Theia objectives and architecture. [Here](https://github.com/eclipse-theia/theia/labels/help%20wanted) is a good list to start. Further, have a look at our [roadmap](https://github.com/eclipse-theia/theia/wiki/Eclipse-Theia-Roadmap) to align your contributions with the current project goals.
+-- Could not find an issue? Look for bugs, typos, and missing features.
+-
+-## Feedback
+-
+-Read below how to engage with Theia community:
+-
+-- Join the discussion on [GitHub](https://github.com/eclipse-theia/theia/discussions).
+-- Ask a question, request a new feature and file a bug with [GitHub issues](https://github.com/eclipse-theia/theia/issues/new/choose).
+-- Vote on existing GitHub issues by reacting with a 👍. We regularly check issues with votes!
+-- Star the repository to show your support.
+-- Follow Theia on [X](https://x.com/theia_ide).
+-- Join the [weekly developer call](https://github.com/eclipse-theia/theia/wiki/Dev-Meetings)
+-
+-## Documentation
+-
+-- [API Documentation](https://eclipse-theia.github.io/theia/docs/next/index.html)
+-- [General Documentation](https://theia-ide.org/docs/)
+-- [VS Code API Compatibility Report](https://eclipse-theia.github.io/vscode-theia-comparator/status.html)
+-- Useful Links:
+-  - [Developing](doc/Developing.md)
+-  - [Testing](doc/Testing.md)
+-  - [Migration Guide](doc/Migration.md)
+-  - [API Integration Testing](doc/api-testing.md)
+-  - [Coding Guidelines](doc/coding-guidelines.md)
+-  - [Code Organization](doc/code-organization.md)
+-  - [Plugin and VSCode API](doc/Plugin-API.md)
+-
+-## SBOM
+-
+-To enhance supply chain security and offer users clear insight into project  components, Eclipse Theia now generates a Software Bill of Materials (SBOM) for every release. These are published to the Eclipse Foundation SBOM registry, with access instructions and usage details available in this [documentation](https://eclipse-csi.github.io/security-handbook/sbom/registry.html).
+-
+-## License
+-
+-- [Eclipse Public License 2.0](LICENSE-EPL)
+-- [一 (Secondary) GNU General Public License, version 2 with the GNU Classpath Exception](LICENSE-GPL-2.0-ONLY-CLASSPATH-EXCEPTION)
+-
+-## Trademark
+-
+-"Theia" is a **trademark of the Eclipse Foundation**. [Learn More](https://www.eclipse.org/theia)
++Frentes principais:
++- Evoluir o pipeline de AI Output Cleaner, um ferramenta que intercepta chamadas de ferramentas por IA, eliminando caracteres e informações inúteis que são repassadas para a IA, reduzindo uso de tokens.
++- Expandir Memory com mais profundidade de analise e operacao.
++- Evoluir Arena para ciclos de avaliacao mais robustos.
++- Expandir Documentation Manager para governanca/versionamento colaborativo.
++- Consolidar Flow (canvas + kanban + workflow + contratos/agentes). Pense como um N8N, mas mais simples de montar, integrado na IDE e com várias habilidades à disposição.
++- Manter arquitetura desacoplada do core para facilitar atualizacoes futuras do produto.
+\ No newline at end of file

@@ -1,0 +1,247 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic "Explorer" [ref=e56]
+            - button "More Actions..." [ref=e61] [cursor=pointer]: 
+          - generic [ref=e62]:
+            - text:      
+            - tabpanel " Explorer" [ref=e63]:
+              - generic [ref=e65]:
+                - generic [ref=e67] [cursor=pointer]:
+                  - generic [ref=e68]: 
+                  - generic "Open Editors" [ref=e69]
+                  - text:  
+                - generic [ref=e71]:
+                  - generic [ref=e72] [cursor=pointer]:
+                    - generic [ref=e73]: 
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy" [ref=e74]: cloud-ws-5fflzy
+                    - text:     
+                  - generic [ref=e80]:
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\.theia" [ref=e82]:
+                      - generic [ref=e83]:
+                        - generic [ref=e84]: 
+                        - generic [ref=e85]: 
+                        - generic [ref=e86]: .theia
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\ai-real-design.op" [ref=e88]:
+                      - generic [ref=e89]:
+                        - generic [ref=e90]: 
+                        - generic [ref=e91]: ai-real-design.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\ai-real-design.openpencil-ai-preview.json" [ref=e93]:
+                      - generic [ref=e94]:
+                        - generic [ref=e95]: 
+                        - generic [ref=e96]: ai-real-design.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\canvas-acceptance.op" [ref=e98]:
+                      - generic [ref=e99]:
+                        - generic [ref=e100]: 
+                        - generic [ref=e101]: canvas-acceptance.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\design.op" [ref=e103]:
+                      - generic [ref=e104]:
+                        - generic [ref=e105]: 
+                        - generic [ref=e106]: design.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\design.openpencil-ai-preview.json" [ref=e108]:
+                      - generic [ref=e109]:
+                        - generic [ref=e110]: 
+                        - generic [ref=e111]: design.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\mercado.op" [ref=e113]:
+                      - generic [ref=e114]:
+                        - generic [ref=e115]: 
+                        - generic [ref=e116]: mercado.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\new-ui-page.builder.json" [ref=e118]:
+                      - generic [ref=e119]:
+                        - generic [ref=e120]: 
+                        - generic [ref=e121]: new-ui-page.builder.json
+            - text:                                                
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - generic [ref=e124]:
+            - tablist [ref=e127] [cursor=pointer]:
+              - listitem [ref=e128]:
+                - generic [ref=e130]: Welcome
+                - generic "Close" [ref=e131]
+              - listitem [ref=e132]:
+                - generic [ref=e133]:
+                  - generic [ref=e134]: 
+                  - generic [ref=e135]: ai-real-design.op
+                - generic "Close" [ref=e136]: 
+            - list [ref=e265]:
+              - listitem "ai-real-design.op" [ref=e266]:
+                - generic [ref=e267]: 
+                - generic [ref=e268]: ai-real-design.op
+          - text:     
+          - tabpanel [active] [ref=e269]:
+            - generic [ref=e271]:
+              - banner [ref=e272]:
+                - generic [ref=e273]:
+                  - button "Layers panel" [ref=e274] [cursor=pointer]:
+                    - img [ref=e275]
+                  - button "File menu" [ref=e280] [cursor=pointer]:
+                    - img [ref=e281]
+                    - img [ref=e283]
+                - generic:
+                  - generic: ai-real-design.op
+                  - generic [ref=e285]: Page 1
+                - generic [ref=e287]:
+                  - generic [ref=e288]:
+                    - button " AI" [ref=e289] [cursor=pointer]:
+                      - generic [ref=e290]: 
+                      - generic [ref=e291]: AI
+                    - button " AI Edit" [disabled] [ref=e292]:
+                      - generic [ref=e293]: 
+                      - generic [ref=e294]: AI Edit
+                    - button " Text" [disabled] [ref=e295]:
+                      - generic [ref=e296]: 
+                      - generic [ref=e297]: Text
+                  - generic [ref=e298]:
+                    - button "Open Design-as-Code JSON" [ref=e299] [cursor=pointer]:
+                      - generic [ref=e300]: "{}"
+                    - button "Export Components UI kit" [ref=e301] [cursor=pointer]:
+                      - generic [ref=e302]: 
+                  - generic [ref=e303]:
+                    - button "" [ref=e304] [cursor=pointer]:
+                      - generic [ref=e305]: 
+                    - button "" [disabled] [ref=e306]:
+                      - generic [ref=e307]: 
+                    - button "" [ref=e308] [cursor=pointer]:
+                      - generic [ref=e309]: 
+                  - generic "Canvas export and code generation" [ref=e310]:
+                    - combobox "Export target" [ref=e312]:
+                      - option "HTML + CSS" [selected]
+                      - option "React + Tailwind"
+                      - option "Vue"
+                      - option "Svelte"
+                      - option "React Native"
+                      - option "Flutter"
+                      - option "SwiftUI"
+                      - option "Jetpack Compose"
+                      - option "SVG"
+                      - option "Canvas JSON"
+                      - option "Canvas Summary JSON"
+                    - combobox "Export scope" [ref=e314]:
+                      - option "Document" [selected]
+                      - option "Selection only" [disabled]
+                    - button " Export" [ref=e315] [cursor=pointer]:
+                      - generic [ref=e316]: 
+                      - generic [ref=e317]: Export
+              - generic [ref=e318]:
+                - generic [ref=e319]:
+                  - generic [ref=e321]:
+                    - generic [ref=e322]:
+                      - generic [ref=e323]: Pages
+                      - button "Add page" [ref=e324] [cursor=pointer]:
+                        - img [ref=e325]
+                    - button "Page 1" [ref=e327] [cursor=pointer]:
+                      - generic [ref=e328]: Page 1
+                  - generic [ref=e330]: Layers
+                  - generic [ref=e334] [cursor=pointer]:
+                    - button [ref=e335]:
+                      - img [ref=e336]
+                    - img [ref=e338]
+                    - generic [ref=e339]: Mobile banking login screen
+                    - button "Hide" [ref=e340]:
+                      - img [ref=e341]
+                    - button "Lock" [ref=e344]:
+                      - img [ref=e345]
+                - main [ref=e348]:
+                  - generic [ref=e349]:
+                    - button "Select" [pressed] [ref=e350] [cursor=pointer]:
+                      - img [ref=e351]
+                    - generic [ref=e354]:
+                      - button "Rectangle" [ref=e355] [cursor=pointer]:
+                        - img [ref=e356]
+                      - button "Shape options" [ref=e358] [cursor=pointer]:
+                        - img [ref=e359]
+                    - button "Text" [ref=e361] [cursor=pointer]:
+                      - img [ref=e362]
+                    - button "Frame" [ref=e364] [cursor=pointer]:
+                      - img [ref=e365]
+                    - button "Hand" [ref=e366] [cursor=pointer]:
+                      - img [ref=e367]
+                    - generic [ref=e374]:
+                      - button "Undo" [disabled] [ref=e375]:
+                        - img [ref=e376]
+                      - button "Redo" [disabled] [ref=e379]:
+                        - img [ref=e380]
+                  - generic:
+                    - generic [ref=e386]:
+                      - generic [ref=e387]: ai-real-design.op
+                      - generic [ref=e388]: Page 1
+                      - generic [ref=e389]: No selection
+                      - generic [ref=e390]: 100%
+                      - generic [ref=e391]: Saved
+                    - generic [ref=e392]:
+                      - button "Zoom out" [ref=e393] [cursor=pointer]:
+                        - img [ref=e394]
+                      - button "Reset zoom" [ref=e395] [cursor=pointer]: 100%
+                      - button "Zoom in" [ref=e396] [cursor=pointer]:
+                        - img [ref=e397]
+        - text:           
+      - generic [ref=e215]:
+        - tablist [ref=e220] [cursor=pointer]:
+          - listitem [ref=e221]:
+            - generic [ref=e223]: 
+          - listitem [ref=e224]:
+            - generic [ref=e226]: 
+          - listitem [ref=e227]
+        - generic:      +   
+    - generic [ref=e230]:
+      - generic [ref=e231]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e232]:
+          - generic [ref=e233]: 
+          - generic [ref=e234]: "0"
+          - generic [ref=e235]: 
+          - generic [ref=e236]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e237]:
+          - generic [ref=e238]: 
+          - generic [ref=e239]: Collaborate
+      - generic [ref=e240]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e241]:
+          - generic [ref=e242]: 
+          - generic [ref=e243]: Sign in to GitHub Copilot
+        - generic "No Notifications" [ref=e244]:
+          - generic [ref=e245]: 
+        - button "Toggle Bottom Panel" [ref=e246]:
+          - generic [ref=e247]: 
+  - generic:  
+  - generic:
+    - generic:  
+  - generic [ref=e248]:
+    - alert
+    - alert

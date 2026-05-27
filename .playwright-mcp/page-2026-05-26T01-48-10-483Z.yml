@@ -1,0 +1,213 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - tablist [ref=e59] [cursor=pointer]:
+              - listitem [ref=e60]:
+                - generic [ref=e62]: Welcome
+                - generic "Close" [ref=e63]
+              - listitem [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]: 
+                  - generic [ref=e322]: ai-real-design.op
+                - generic "Close" [ref=e323]: 
+            - list [ref=e326]:
+              - listitem "ai-real-design.op" [ref=e327]:
+                - generic [ref=e328]: 
+                - generic [ref=e329]: ai-real-design.op
+          - text:     
+          - tabpanel [active] [ref=e330]:
+            - generic [ref=e332]:
+              - banner [ref=e333]:
+                - generic [ref=e334]:
+                  - button "Layers panel" [ref=e335] [cursor=pointer]:
+                    - img [ref=e336]
+                  - button "File menu" [ref=e341] [cursor=pointer]:
+                    - img [ref=e342]
+                    - img [ref=e344]
+                - generic:
+                  - generic: ai-real-design.op
+                  - generic [ref=e348]: Page 1
+                - generic [ref=e350]:
+                  - generic [ref=e351]:
+                    - button " Preparing" [disabled] [ref=e510]:
+                      - generic [ref=e353]: 
+                      - generic [ref=e354]: Preparing
+                    - button " Preparing" [disabled] [ref=e511]:
+                      - generic [ref=e356]: 
+                      - generic [ref=e357]: Preparing
+                    - button " Text" [disabled] [ref=e358]:
+                      - generic [ref=e359]: 
+                      - generic [ref=e360]: Text
+                  - generic [ref=e361]:
+                    - button "Open Design-as-Code JSON" [ref=e362] [cursor=pointer]:
+                      - generic [ref=e363]: "{}"
+                    - button "Export Components UI kit" [ref=e364] [cursor=pointer]:
+                      - generic [ref=e365]: 
+                  - generic [ref=e366]:
+                    - button "" [ref=e367] [cursor=pointer]:
+                      - generic [ref=e368]: 
+                    - button "" [disabled] [ref=e369]:
+                      - generic [ref=e370]: 
+                    - button "" [ref=e371] [cursor=pointer]:
+                      - generic [ref=e372]: 
+                  - generic "Canvas export and code generation" [ref=e373]:
+                    - combobox "Export target" [ref=e375]:
+                      - option "HTML + CSS" [selected]
+                      - option "React + Tailwind"
+                      - option "Vue"
+                      - option "Svelte"
+                      - option "React Native"
+                      - option "Flutter"
+                      - option "SwiftUI"
+                      - option "Jetpack Compose"
+                      - option "SVG"
+                      - option "Canvas JSON"
+                      - option "Canvas Summary JSON"
+                    - combobox "Export scope" [ref=e377]:
+                      - option "Document" [selected]
+                      - option "Selection only" [disabled]
+                    - button " Export" [ref=e378] [cursor=pointer]:
+                      - generic [ref=e379]: 
+                      - generic [ref=e380]: Export
+              - generic [ref=e381]:
+                - generic [ref=e382]:
+                  - generic [ref=e384]:
+                    - generic [ref=e385]:
+                      - generic [ref=e386]: Pages
+                      - button "Add page" [ref=e387] [cursor=pointer]:
+                        - img [ref=e388]
+                    - button "Page 1" [ref=e390] [cursor=pointer]:
+                      - generic [ref=e391]: Page 1
+                  - generic [ref=e393]: Layers
+                  - generic [ref=e394]:
+                    - generic [ref=e397] [cursor=pointer]:
+                      - img [ref=e398]
+                      - generic [ref=e400]: Hero card
+                      - button "Hide" [ref=e401]:
+                        - img [ref=e402]
+                      - button "Lock" [ref=e405]:
+                        - img [ref=e406]
+                    - generic [ref=e411] [cursor=pointer]:
+                      - img [ref=e412]
+                      - generic [ref=e414]: Hero title
+                      - button "Hide" [ref=e415]:
+                        - img [ref=e416]
+                      - button "Lock" [ref=e419]:
+                        - img [ref=e420]
+                    - generic [ref=e425] [cursor=pointer]:
+                      - img [ref=e426]
+                      - generic [ref=e428]: Hero copy
+                      - button "Hide" [ref=e429]:
+                        - img [ref=e430]
+                      - button "Lock" [ref=e433]:
+                        - img [ref=e434]
+                - main [ref=e437]:
+                  - generic [ref=e438]:
+                    - button "Select" [pressed] [ref=e439] [cursor=pointer]:
+                      - img [ref=e440]
+                    - generic [ref=e443]:
+                      - button "Rectangle" [ref=e444] [cursor=pointer]:
+                        - img [ref=e445]
+                      - button "Shape options" [ref=e447] [cursor=pointer]:
+                        - img [ref=e448]
+                    - button "Text" [ref=e450] [cursor=pointer]:
+                      - img [ref=e451]
+                    - button "Frame" [ref=e453] [cursor=pointer]:
+                      - img [ref=e454]
+                    - button "Hand" [ref=e455] [cursor=pointer]:
+                      - img [ref=e456]
+                    - button "Undo" [disabled]:
+                      - img
+                    - button "Redo" [disabled]:
+                      - img
+                  - generic:
+                    - generic [ref=e465]:
+                      - generic [ref=e466]: ai-real-design.op
+                      - generic [ref=e467]: Page 1
+                      - generic [ref=e468]: No selection
+                      - generic [ref=e469]: 100%
+                      - generic [ref=e470]: Saved
+                    - generic [ref=e471]:
+                      - button "Zoom out" [ref=e472] [cursor=pointer]:
+                        - img [ref=e473]
+                      - button "Reset zoom" [ref=e474] [cursor=pointer]: 100%
+                      - button "Zoom in" [ref=e475] [cursor=pointer]:
+                        - img [ref=e476]
+        - text:           
+      - generic [ref=e142]:
+        - tablist [ref=e147] [cursor=pointer]:
+          - listitem [ref=e148]:
+            - generic [ref=e150]: 
+          - listitem [ref=e151]:
+            - generic [ref=e153]: 
+          - listitem [ref=e154]
+        - generic:      +   
+    - generic [ref=e157]:
+      - generic [ref=e158]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e159]:
+          - generic [ref=e160]: 
+          - generic [ref=e161]: "0"
+          - generic [ref=e162]: 
+          - generic [ref=e163]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e164]:
+          - generic [ref=e165]: 
+          - generic [ref=e166]: Collaborate
+      - generic [ref=e167]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e168]:
+          - generic [ref=e169]: 
+          - generic [ref=e170]: Sign in to GitHub Copilot
+        - generic "2 New Notifications" [ref=e512]:
+          - generic [ref=e172]: 
+          - generic [ref=e478]: "2"
+        - button "Toggle Bottom Panel" [ref=e173]:
+          - generic [ref=e174]: 
+  - generic:
+    - generic:
+      - generic [ref=e516] [cursor=pointer]:
+        - generic [ref=e517]: 
+        - generic [ref=e518]: Canvas AI is preparing changes...
+        - list
+      - text:     
+  - generic [ref=e175]:
+    - alert
+    - alert

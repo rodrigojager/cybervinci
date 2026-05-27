@@ -1,0 +1,519 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - tablist [ref=e59] [cursor=pointer]:
+              - listitem [ref=e60]:
+                - generic [ref=e62]: Welcome
+                - generic "Close" [ref=e63]
+              - listitem [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]: 
+                  - generic [ref=e322]: ai-real-design.op
+                - generic "Close" [ref=e323]: 
+            - list [ref=e326]:
+              - listitem "ai-real-design.op" [ref=e327]:
+                - generic [ref=e328]: 
+                - generic [ref=e329]: ai-real-design.op
+          - text:     
+          - tabpanel [active] [ref=e330]:
+            - generic [ref=e332]:
+              - banner [ref=e333]:
+                - generic [ref=e334]:
+                  - button "Layers panel" [ref=e335] [cursor=pointer]:
+                    - img [ref=e336]
+                  - button "File menu" [ref=e341] [cursor=pointer]:
+                    - img [ref=e342]
+                    - img [ref=e344]
+                - generic [ref=e346]:
+                  - generic: ai-real-design.op
+                  - generic [ref=e348]: Page 1
+                - generic [ref=e350]:
+                  - generic [ref=e351]:
+                    - button " AI" [ref=e521] [cursor=pointer]:
+                      - generic [ref=e353]: 
+                      - generic [ref=e354]: AI
+                    - button " AI Edit" [ref=e522] [cursor=pointer]:
+                      - generic [ref=e356]: 
+                      - generic [ref=e357]: AI Edit
+                    - button " Text" [disabled] [ref=e358]:
+                      - generic [ref=e359]: 
+                      - generic [ref=e360]: Text
+                  - generic [ref=e361]:
+                    - button "Open Design-as-Code JSON" [ref=e362] [cursor=pointer]:
+                      - generic [ref=e363]: "{}"
+                    - button "Export Components UI kit" [ref=e364] [cursor=pointer]:
+                      - generic [ref=e365]: 
+                  - generic [ref=e366]:
+                    - button "" [ref=e367] [cursor=pointer]:
+                      - generic [ref=e368]: 
+                    - button "" [ref=e369] [cursor=pointer]:
+                      - generic [ref=e370]: 
+                    - button "" [ref=e371] [cursor=pointer]:
+                      - generic [ref=e372]: 
+                  - generic "Canvas export and code generation" [ref=e373]:
+                    - combobox "Export target" [ref=e375]:
+                      - option "HTML + CSS" [selected]
+                      - option "React + Tailwind"
+                      - option "Vue"
+                      - option "Svelte"
+                      - option "React Native"
+                      - option "Flutter"
+                      - option "SwiftUI"
+                      - option "Jetpack Compose"
+                      - option "SVG"
+                      - option "Canvas JSON"
+                      - option "Canvas Summary JSON"
+                    - combobox "Export scope" [ref=e377]:
+                      - option "Document" [selected]
+                      - option "Selection only"
+                    - button " Export" [ref=e378] [cursor=pointer]:
+                      - generic [ref=e379]: 
+                      - generic [ref=e380]: Export
+              - generic [ref=e381]:
+                - generic [ref=e382]:
+                  - generic [ref=e384]:
+                    - generic [ref=e385]:
+                      - generic [ref=e386]: Pages
+                      - button "Add page" [ref=e387] [cursor=pointer]:
+                        - img [ref=e388]
+                    - button "Page 1" [ref=e390] [cursor=pointer]:
+                      - generic [ref=e391]: Page 1
+                  - generic [ref=e393]: Layers
+                  - generic [ref=e523]:
+                    - generic [ref=e525] [cursor=pointer]:
+                      - button [ref=e526]:
+                        - img [ref=e527]
+                      - img [ref=e529]
+                      - generic [ref=e530]: Mobile banking login screen
+                      - button "Hide" [ref=e531]:
+                        - img [ref=e532]
+                      - button "Lock" [ref=e535]:
+                        - img [ref=e536]
+                    - generic [ref=e541] [cursor=pointer]:
+                      - img [ref=e542]
+                      - generic [ref=e544]: Deep blue gradient layer
+                      - button "Hide" [ref=e545]:
+                        - img [ref=e546]
+                      - button "Lock" [ref=e549]:
+                        - img [ref=e550]
+                    - generic [ref=e555] [cursor=pointer]:
+                      - img [ref=e556]
+                      - generic [ref=e558]: Soft cyan upper glow
+                      - button "Hide" [ref=e559]:
+                        - img [ref=e560]
+                      - button "Lock" [ref=e563]:
+                        - img [ref=e564]
+                    - generic [ref=e569] [cursor=pointer]:
+                      - img [ref=e570]
+                      - generic [ref=e572]: Soft indigo lower glow
+                      - button "Hide" [ref=e573]:
+                        - img [ref=e574]
+                      - button "Lock" [ref=e577]:
+                        - img [ref=e578]
+                    - generic [ref=e583] [cursor=pointer]:
+                      - img [ref=e584]
+                      - generic [ref=e586]: Status bar time
+                      - button "Hide" [ref=e587]:
+                        - img [ref=e588]
+                      - button "Lock" [ref=e591]:
+                        - img [ref=e592]
+                    - generic [ref=e597] [cursor=pointer]:
+                      - img [ref=e598]
+                      - generic [ref=e600]: Status signal
+                      - button "Hide" [ref=e601]:
+                        - img [ref=e602]
+                      - button "Lock" [ref=e605]:
+                        - img [ref=e606]
+                    - generic [ref=e611] [cursor=pointer]:
+                      - img [ref=e612]
+                      - generic [ref=e614]: Status wifi dot
+                      - button "Hide" [ref=e615]:
+                        - img [ref=e616]
+                      - button "Lock" [ref=e619]:
+                        - img [ref=e620]
+                    - generic [ref=e625] [cursor=pointer]:
+                      - img [ref=e626]
+                      - generic [ref=e628]: Status battery
+                      - button "Hide" [ref=e629]:
+                        - img [ref=e630]
+                      - button "Lock" [ref=e633]:
+                        - img [ref=e634]
+                    - generic [ref=e639] [cursor=pointer]:
+                      - img [ref=e640]
+                      - generic [ref=e642]: Bank logo mark
+                      - button "Hide" [ref=e643]:
+                        - img [ref=e644]
+                      - button "Lock" [ref=e647]:
+                        - img [ref=e648]
+                    - generic [ref=e653] [cursor=pointer]:
+                      - img [ref=e654]
+                      - generic [ref=e656]: Bank logo icon base
+                      - button "Hide" [ref=e657]:
+                        - img [ref=e658]
+                      - button "Lock" [ref=e661]:
+                        - img [ref=e662]
+                    - generic [ref=e667] [cursor=pointer]:
+                      - img [ref=e668]
+                      - generic [ref=e670]: Bank logo column one
+                      - button "Hide" [ref=e671]:
+                        - img [ref=e672]
+                      - button "Lock" [ref=e675]:
+                        - img [ref=e676]
+                    - generic [ref=e681] [cursor=pointer]:
+                      - img [ref=e682]
+                      - generic [ref=e684]: Bank logo column two
+                      - button "Hide" [ref=e685]:
+                        - img [ref=e686]
+                      - button "Lock" [ref=e689]:
+                        - img [ref=e690]
+                    - generic [ref=e695] [cursor=pointer]:
+                      - img [ref=e696]
+                      - generic [ref=e698]: Bank logo column three
+                      - button "Hide" [ref=e699]:
+                        - img [ref=e700]
+                      - button "Lock" [ref=e703]:
+                        - img [ref=e704]
+                    - generic [ref=e709] [cursor=pointer]:
+                      - img [ref=e710]
+                      - generic [ref=e712]: CyberVinci Bank title
+                      - button "Hide" [ref=e713]:
+                        - img [ref=e714]
+                      - button "Lock" [ref=e717]:
+                        - img [ref=e718]
+                    - generic [ref=e723] [cursor=pointer]:
+                      - img [ref=e724]
+                      - generic [ref=e726]: Secure access subtitle
+                      - button "Hide" [ref=e727]:
+                        - img [ref=e728]
+                      - button "Lock" [ref=e731]:
+                        - img [ref=e732]
+                    - generic [ref=e737] [cursor=pointer]:
+                      - img [ref=e738]
+                      - generic [ref=e740]: Login form panel
+                      - button "Hide" [ref=e741]:
+                        - img [ref=e742]
+                      - button "Lock" [ref=e745]:
+                        - img [ref=e746]
+                    - generic [ref=e751] [cursor=pointer]:
+                      - img [ref=e752]
+                      - generic [ref=e754]: Email input field
+                      - button "Hide" [ref=e755]:
+                        - img [ref=e756]
+                      - button "Lock" [ref=e759]:
+                        - img [ref=e760]
+                    - generic [ref=e765] [cursor=pointer]:
+                      - img [ref=e766]
+                      - generic [ref=e768]: Email icon
+                      - button "Hide" [ref=e769]:
+                        - img [ref=e770]
+                      - button "Lock" [ref=e773]:
+                        - img [ref=e774]
+                    - generic [ref=e779] [cursor=pointer]:
+                      - img [ref=e780]
+                      - generic [ref=e782]: Email placeholder
+                      - button "Hide" [ref=e783]:
+                        - img [ref=e784]
+                      - button "Lock" [ref=e787]:
+                        - img [ref=e788]
+                    - generic [ref=e793] [cursor=pointer]:
+                      - img [ref=e794]
+                      - generic [ref=e796]: Password input field
+                      - button "Hide" [ref=e797]:
+                        - img [ref=e798]
+                      - button "Lock" [ref=e801]:
+                        - img [ref=e802]
+                    - generic [ref=e807] [cursor=pointer]:
+                      - img [ref=e808]
+                      - generic [ref=e810]: Password lock icon body
+                      - button "Hide" [ref=e811]:
+                        - img [ref=e812]
+                      - button "Lock" [ref=e815]:
+                        - img [ref=e816]
+                    - generic [ref=e821] [cursor=pointer]:
+                      - img [ref=e822]
+                      - generic [ref=e824]: Password lock icon loop
+                      - button "Hide" [ref=e825]:
+                        - img [ref=e826]
+                      - button "Lock" [ref=e829]:
+                        - img [ref=e830]
+                    - generic [ref=e835] [cursor=pointer]:
+                      - img [ref=e836]
+                      - generic [ref=e838]: Password placeholder
+                      - button "Hide" [ref=e839]:
+                        - img [ref=e840]
+                      - button "Lock" [ref=e843]:
+                        - img [ref=e844]
+                    - generic [ref=e849] [cursor=pointer]:
+                      - img [ref=e850]
+                      - generic [ref=e852]: Password visibility icon
+                      - button "Hide" [ref=e853]:
+                        - img [ref=e854]
+                      - button "Lock" [ref=e857]:
+                        - img [ref=e858]
+                    - generic [ref=e863] [cursor=pointer]:
+                      - img [ref=e864]
+                      - generic [ref=e866]: Password visibility dot
+                      - button "Hide" [ref=e867]:
+                        - img [ref=e868]
+                      - button "Lock" [ref=e871]:
+                        - img [ref=e872]
+                    - generic [ref=e877] [cursor=pointer]:
+                      - img [ref=e878]
+                      - generic [ref=e880]: Primary Sign In button
+                      - button "Hide" [ref=e881]:
+                        - img [ref=e882]
+                      - button "Lock" [ref=e885]:
+                        - img [ref=e886]
+                    - generic [ref=e891] [cursor=pointer]:
+                      - img [ref=e892]
+                      - generic [ref=e894]: Sign In button label
+                      - button "Hide" [ref=e895]:
+                        - img [ref=e896]
+                      - button "Lock" [ref=e899]:
+                        - img [ref=e900]
+                    - generic [ref=e905] [cursor=pointer]:
+                      - img [ref=e906]
+                      - generic [ref=e908]: Forgot password link
+                      - button "Hide" [ref=e909]:
+                        - img [ref=e910]
+                      - button "Lock" [ref=e913]:
+                        - img [ref=e914]
+                    - generic [ref=e919] [cursor=pointer]:
+                      - img [ref=e920]
+                      - generic [ref=e922]: Security cue container
+                      - button "Hide" [ref=e923]:
+                        - img [ref=e924]
+                      - button "Lock" [ref=e927]:
+                        - img [ref=e928]
+                    - generic [ref=e933] [cursor=pointer]:
+                      - img [ref=e934]
+                      - generic [ref=e936]: Security cue shield dot
+                      - button "Hide" [ref=e937]:
+                        - img [ref=e938]
+                      - button "Lock" [ref=e941]:
+                        - img [ref=e942]
+                    - generic [ref=e947] [cursor=pointer]:
+                      - img [ref=e948]
+                      - generic [ref=e950]: Security cue text
+                      - button "Hide" [ref=e951]:
+                        - img [ref=e952]
+                      - button "Lock" [ref=e955]:
+                        - img [ref=e956]
+                    - generic [ref=e961] [cursor=pointer]:
+                      - img [ref=e962]
+                      - generic [ref=e964]: Home indicator
+                      - button "Hide" [ref=e965]:
+                        - img [ref=e966]
+                      - button "Lock" [ref=e969]:
+                        - img [ref=e970]
+                - main [ref=e437]:
+                  - generic [ref=e438]:
+                    - button "Select" [pressed] [ref=e439] [cursor=pointer]:
+                      - img [ref=e440]
+                    - generic [ref=e443]:
+                      - button "Rectangle" [ref=e444] [cursor=pointer]:
+                        - img [ref=e445]
+                      - button "Shape options" [ref=e447] [cursor=pointer]:
+                        - img [ref=e448]
+                    - button "Text" [ref=e450] [cursor=pointer]:
+                      - img [ref=e451]
+                    - button "Frame" [ref=e453] [cursor=pointer]:
+                      - img [ref=e454]
+                    - button "Hand" [ref=e455] [cursor=pointer]:
+                      - img [ref=e456]
+                    - button "Undo" [disabled]:
+                      - img
+                    - button "Redo" [disabled]:
+                      - img
+                  - generic:
+                    - generic "home-indicator" [ref=e973]:
+                      - generic [ref=e466]: ai-real-design.op
+                      - generic [ref=e467]: Page 1
+                      - generic [ref=e468]: "1 selected: Home indicator"
+                      - generic [ref=e974]: X 128 Y 814 / W 134 H 5
+                      - generic [ref=e469]: 100%
+                      - generic [ref=e470]: Saved
+                    - generic [ref=e471]:
+                      - button "Zoom out" [ref=e472] [cursor=pointer]:
+                        - img [ref=e473]
+                      - button "Reset zoom" [ref=e474] [cursor=pointer]: 100%
+                      - button "Zoom in" [ref=e475] [cursor=pointer]:
+                        - img [ref=e476]
+                - generic [ref=e975]:
+                  - generic [ref=e977]: Home indicator
+                  - generic [ref=e978]:
+                    - button "Create Component" [ref=e980] [cursor=pointer]:
+                      - img [ref=e981]
+                      - text: Create Component
+                    - generic [ref=e987]:
+                      - text: Position
+                      - generic [ref=e988]:
+                        - generic [ref=e989]:
+                          - generic [ref=e990]: X
+                          - textbox [ref=e991]: "128"
+                        - generic [ref=e992]:
+                          - generic [ref=e993]: "Y"
+                          - textbox [ref=e994]: "814"
+                        - generic [ref=e995]:
+                          - img [ref=e997]
+                          - textbox [ref=e1000]: "0"
+                          - generic [ref=e1001]: °
+                        - generic [ref=e1002]:
+                          - generic [ref=e1003]: R
+                          - textbox [ref=e1004]: "3"
+                    - generic [ref=e1007]:
+                      - text: Flex Layout
+                      - generic [ref=e1008]:
+                        - button "Freedom" [ref=e1009] [cursor=pointer]:
+                          - img [ref=e1010]
+                        - button "Vertical" [ref=e1015] [cursor=pointer]:
+                          - img [ref=e1016]
+                        - button "Horizontal" [ref=e1018] [cursor=pointer]:
+                          - img [ref=e1019]
+                      - generic [ref=e1021]:
+                        - generic [ref=e1022]: Dimensions
+                        - generic [ref=e1023]:
+                          - generic [ref=e1024]:
+                            - generic [ref=e1025]: W
+                            - textbox [ref=e1026]: "134"
+                          - generic [ref=e1027]:
+                            - generic [ref=e1028]: H
+                            - textbox [ref=e1029]: "5"
+                      - generic [ref=e1030]:
+                        - generic [ref=e1031]:
+                          - generic [ref=e1032] [cursor=pointer]:
+                            - checkbox "Fill Width" [ref=e1033]
+                            - generic [ref=e1034]: Fill Width
+                          - generic [ref=e1035] [cursor=pointer]:
+                            - checkbox "Fill Height" [ref=e1036]
+                            - generic [ref=e1037]: Fill Height
+                          - generic [ref=e1038] [cursor=pointer]:
+                            - checkbox "Hug Width" [ref=e1039]
+                            - generic [ref=e1040]: Hug Width
+                          - generic [ref=e1041] [cursor=pointer]:
+                            - checkbox "Hug Height" [ref=e1042]
+                            - generic [ref=e1043]: Hug Height
+                        - generic [ref=e1044] [cursor=pointer]:
+                          - checkbox "Clip Content" [ref=e1045]
+                          - generic [ref=e1046]: Clip Content
+                    - generic [ref=e1049]:
+                      - generic [ref=e1051]: Layer
+                      - generic [ref=e1055]:
+                        - generic [ref=e1056]: Opacity
+                        - textbox [ref=e1057]: "100"
+                        - generic [ref=e1058]: "%"
+                    - generic [ref=e1061]:
+                      - generic [ref=e1062]:
+                        - generic [ref=e1063]: Fill
+                        - button [ref=e1065] [cursor=pointer]:
+                          - img [ref=e1066]
+                      - generic [ref=e1067]:
+                        - combobox [ref=e1069]:
+                          - option "Solid" [selected]
+                          - option "Linear Gradient"
+                          - option "Radial Gradient"
+                          - option "Image"
+                        - generic [ref=e1070]:
+                          - textbox [ref=e1071]: "72"
+                          - generic [ref=e1072]: "%"
+                        - button [ref=e1073] [cursor=pointer]:
+                          - img [ref=e1074]
+                      - generic [ref=e1080]:
+                        - textbox [ref=e1082] [cursor=pointer]: "#ffffff"
+                        - textbox "#000000" [ref=e1083]: "#FFFFFF"
+                    - generic [ref=e1086]:
+                      - generic [ref=e1088]: Stroke
+                      - generic [ref=e1089]:
+                        - generic [ref=e1092]:
+                          - textbox [ref=e1094] [cursor=pointer]: "#374151"
+                          - textbox "#000000" [ref=e1095]: "#374151"
+                        - textbox [ref=e1097]: "0"
+                    - generic [ref=e1102]:
+                      - generic [ref=e1103]: Effects
+                      - button [ref=e1105] [cursor=pointer]:
+                        - img [ref=e1106]
+                    - generic [ref=e1109]:
+                      - generic [ref=e1111]: Export
+                      - generic [ref=e1112]:
+                        - combobox [ref=e1113]:
+                          - option "1x" [selected]
+                          - option "2x"
+                          - option "3x"
+                        - combobox [ref=e1114]:
+                          - option "PNG" [selected]
+                          - option "JPEG"
+                          - option "WEBP"
+                      - button "Export Layer" [ref=e1115] [cursor=pointer]
+        - text:           
+      - generic [ref=e142]:
+        - tablist [ref=e147] [cursor=pointer]:
+          - listitem [ref=e148]:
+            - generic [ref=e150]: 
+          - listitem [ref=e151]:
+            - generic [ref=e153]: 
+          - listitem [ref=e154]
+        - generic:      +   
+    - generic [ref=e157]:
+      - generic [ref=e158]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e159]:
+          - generic [ref=e160]: 
+          - generic [ref=e161]: "0"
+          - generic [ref=e162]: 
+          - generic [ref=e163]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e164]:
+          - generic [ref=e165]: 
+          - generic [ref=e166]: Collaborate
+      - generic [ref=e167]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e168]:
+          - generic [ref=e169]: 
+          - generic [ref=e170]: Sign in to GitHub Copilot
+        - generic "2 New Notifications" [ref=e512]:
+          - generic [ref=e172]: 
+          - generic [ref=e478]: "2"
+        - button "Toggle Bottom Panel" [ref=e173]:
+          - generic [ref=e174]: 
+  - generic:
+    - generic:      
+  - generic [ref=e175]:
+    - alert
+    - alert

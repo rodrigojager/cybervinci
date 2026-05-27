@@ -1,0 +1,15 @@
+{
+  "package_id": "react",
+  "version": "18.2.0",
+  "source_type": "git",
+  "source_url": "https://github.com/reactjs/react.dev",
+  "source_ref": "18.2.0",
+  "artifact": {
+    "type": "json_index"
+  },
+  "stats": {
+    "document_count": 1,
+    "section_count": 3,
+    "token_count": 360
+  }
+}

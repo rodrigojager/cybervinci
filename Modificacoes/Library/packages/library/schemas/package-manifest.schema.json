@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theia-ide.org/schemas/library/package-manifest.schema.json",
+  "type": "object",
+  "required": ["id", "name", "sources", "license"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "ecosystem": { "type": "string" },
+    "package_name": { "type": "string" },
+    "package_manager": { "type": "string" },
+    "homepage": { "type": "string" },
+    "repository": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "versioning": {
+      "type": "object",
+      "properties": {
+        "strategy": { "enum": ["git_tags", "fixed", "package_manager", "manual"] },
+        "tag_pattern": { "type": "string" }
+      }
+    },
+    "license": {
+      "type": "object",
+      "required": ["redistribution_allowed"],
+      "properties": {
+        "content_license": { "type": "string" },
+        "redistribution_allowed": {
+          "oneOf": [
+            { "type": "boolean" },
+            { "const": "unknown" }
+          ]
+        }
+      }
+    },
+    "update_policy": {
+      "type": "object",
+      "properties": {
+        "check_interval": { "enum": ["manual", "daily", "weekly", "monthly"] },
+        "compare": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["type", "url"],
+      "properties": {
+        "type": {
+          "enum": [
+            "git",
+            "llms_txt",
+            "sitemap",
+            "website",
+            "local_folder",
+            "artifact",
+            "single_url",
+            "npm",
+            "nuget",
+            "pip",
+            "maven",
+            "openapi",
+            "swagger",
+            "confluence",
+            "notion",
+            "markdown_zip"
+          ]
+        },
+        "url": { "type": "string" },
+        "docs_path": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "include": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "content_selectors": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "max_documents": { "type": "number" },
+        "execute_javascript": { "const": false },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

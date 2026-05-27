@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@theia/example-flow-visual-studio-host",
+  "version": "0.0.0",
+  "description": "Conceptual Visual Studio host adapter for Flow Kernel protocol",
+  "type": "commonjs",
+  "scripts": {
+    "demo": "node ./src/flow-visual-studio-host.js",
+    "smoke": "node ./src/flow-visual-studio-host.js --workflow ../../flow-kernel/examples/linear.json --input \"Smoke run from the Visual Studio host adapter example.\" --max-steps 20"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

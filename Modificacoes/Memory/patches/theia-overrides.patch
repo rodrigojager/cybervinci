@@ -1,0 +1,1722 @@
+diff --git a/packages/ai-chat/src/browser/file-chat-variable-contribution.ts b/packages/ai-chat/src/browser/file-chat-variable-contribution.ts
+index 0d01f9d..2d26508 100644
+--- a/packages/ai-chat/src/browser/file-chat-variable-contribution.ts
++++ b/packages/ai-chat/src/browser/file-chat-variable-contribution.ts
+@@ -17,11 +17,12 @@
+ import { AIVariableContext, AIVariableResolutionRequest, PromptText } from '@theia/ai-core';
+ import { AIVariableCompletionContext, AIVariableDropResult, FrontendVariableContribution, FrontendVariableService } from '@theia/ai-core/lib/browser';
+ import { FILE_VARIABLE } from '@theia/ai-core/lib/browser/file-variable-contribution';
+-import { CancellationToken, ILogger, nls, QuickInputService, QuickPickItemOrSeparator, URI } from '@theia/core';
++import { CancellationToken, ILogger, nls, ProgressService, QuickInputService, QuickPickItemOrSeparator, URI } from '@theia/core';
+ import { inject, injectable } from '@theia/core/shared/inversify';
+ import * as monaco from '@theia/monaco-editor-core';
+ import { FileQuickPickItem, QuickFileSelectService } from '@theia/file-search/lib/browser/quick-file-select-service';
+ import { WorkspaceService } from '@theia/workspace/lib/browser';
++import { FileDialogService, OpenFileDialogProps } from '@theia/filesystem/lib/browser';
+ import { FileService } from '@theia/filesystem/lib/browser/file-service';
+ import { VARIABLE_ADD_CONTEXT_COMMAND } from './ai-chat-frontend-contribution';
+ import { IMAGE_CONTEXT_VARIABLE, ImageContextVariable } from '../common/image-context-variable';
+@@ -35,7 +36,12 @@ interface ClipboardQuickPickItem extends QuickPickItem {
+     isClipboardOption: true;
+ }
+ 
+-type ImagePickerItem = FileQuickPickItem | ClipboardQuickPickItem;
++interface BrowseQuickPickItem extends QuickPickItem {
++    isBrowseOption: true;
++}
++
++type ImagePickerItem = FileQuickPickItem | ClipboardQuickPickItem | BrowseQuickPickItem;
++type FilePickerItem = FileQuickPickItem | BrowseQuickPickItem;
+ 
+ @injectable()
+ export class FileChatVariableContribution implements FrontendVariableContribution {
+@@ -63,6 +69,12 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+     @inject(NavigationLocationService)
+     protected readonly navigationLocationService: NavigationLocationService;
+ 
++    @inject(FileDialogService)
++    protected readonly fileDialogService: FileDialogService;
++
++    @inject(ProgressService)
++    protected readonly progressService: ProgressService;
++
+     registerVariables(service: FrontendVariableService): void {
+         service.registerArgumentPicker(FILE_VARIABLE, this.triggerArgumentPicker.bind(this));
+         service.registerArgumentPicker(IMAGE_CONTEXT_VARIABLE, this.imageArgumentPicker.bind(this));
+@@ -72,10 +84,11 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+ 
+     protected async triggerArgumentPicker(): Promise<string | undefined> {
+         const quickPick = this.quickInputService.createQuickPick();
+-        quickPick.items = await this.quickFileSelectService.getPicks();
++        quickPick.placeholder = nls.localize('theia/ai/chat/filePickerPlaceholder', 'Search by name or browse for a file');
++        quickPick.items = await this.buildFilePickerItems('');
+ 
+         const updateItems = async (value: string) => {
+-            quickPick.items = await this.quickFileSelectService.getPicks(value, CancellationToken.None);
++            quickPick.items = await this.buildFilePickerItems(value);
+         };
+ 
+         const onChangeListener = quickPick.onDidChangeValue(updateItems);
+@@ -85,7 +98,18 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+             quickPick.onDispose(onChangeListener.dispose);
+             quickPick.onDidAccept(async () => {
+                 const selectedItem = quickPick.selectedItems[0];
+-                if (selectedItem && FileQuickPickItem.is(selectedItem)) {
++                if (!selectedItem) {
++                    return;
++                }
++
++                if ('isBrowseOption' in selectedItem) {
++                    quickPick.dispose();
++                    const uri = await this.browseForFile();
++                    resolve(uri ? await this.wsService.getWorkspaceRelativePath(uri) : undefined);
++                    return;
++                }
++
++                if (FileQuickPickItem.is(selectedItem)) {
+                     quickPick.dispose();
+                     resolve(await this.wsService.getWorkspaceRelativePath(selectedItem.uri));
+                 }
+@@ -93,6 +117,46 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+         });
+     }
+ 
++    protected async buildFilePickerItems(filter: string): Promise<(FilePickerItem | QuickPickItemOrSeparator)[]> {
++        const result: (FilePickerItem | QuickPickItemOrSeparator)[] = [
++            {
++                label: nls.localize('theia/ai/chat/browseForFile', 'Browse for File...'),
++                iconClasses: codiconArray('folder-opened'),
++                description: nls.localize('theia/ai/chat/browseForFileDescription', 'Open the file picker'),
++                alwaysShow: true,
++                isBrowseOption: true
++            }
++        ];
++
++        const picks = await this.quickFileSelectService.getPicks(filter, CancellationToken.None);
++        if (picks.length > 0) {
++            result.push(...picks);
++        }
++
++        return result;
++    }
++
++    protected async browseForFile(imagesOnly = false): Promise<URI | undefined> {
++        const roots = this.wsService.tryGetRoots();
++        const props: OpenFileDialogProps = {
++            title: imagesOnly
++                ? nls.localize('theia/ai/chat/selectImage', 'Select Image')
++                : nls.localize('theia/ai/chat/selectFile', 'Select File'),
++            canSelectFiles: true,
++            canSelectFolders: false,
++        };
++        if (imagesOnly) {
++            props.filters = {
++                Images: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'svg', 'webp']
++            };
++        }
++        return this.progressService.withProgress(
++            nls.localize('theia/ai/chat/openingFilePicker', 'Opening file picker...'),
++            'notification',
++            () => this.fileDialogService.showOpenDialog(props, roots[0])
++        );
++    }
++
+     protected async imageArgumentPicker(): Promise<string | undefined> {
+         const quickPick = this.quickInputService.createQuickPick();
+         quickPick.placeholder = nls.localize('theia/ai/chat/imagePickerPlaceholder', 'Select an image file or search by name');
+@@ -112,6 +176,13 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+             quickPick.onDidAccept(async () => {
+                 const selectedItem = quickPick.selectedItems[0];
+ 
++                if (selectedItem && 'isBrowseOption' in selectedItem) {
++                    quickPick.dispose();
++                    const uri = await this.browseForFile(true);
++                    resolve(uri ? await this.createImageArgStringFromUri(uri) : undefined);
++                    return;
++                }
++
+                 // Handle clipboard option
+                 if (selectedItem && 'isClipboardOption' in selectedItem) {
+                     quickPick.dispose();
+@@ -122,20 +193,7 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+ 
+                 if (selectedItem && FileQuickPickItem.is(selectedItem)) {
+                     quickPick.dispose();
+-                    const filePath = await this.wsService.getWorkspaceRelativePath(selectedItem.uri);
+-                    const fileName = selectedItem.uri.displayName;
+-                    const base64Data = await fileToBase64(selectedItem.uri, this.fileService, this.logger);
+-                    const mimeType = getMimeTypeFromExtension(selectedItem.uri.path.toString());
+-
+-                    // Create the argument string in the required format
+-                    const imageVarArgs: ImageContextVariable = {
+-                        name: fileName,
+-                        wsRelativePath: filePath,
+-                        data: base64Data,
+-                        mimeType: mimeType
+-                    };
+-
+-                    resolve(ImageContextVariable.createArgString(imageVarArgs));
++                    resolve(await this.createImageArgStringFromUri(selectedItem.uri));
+                 }
+             });
+         });
+@@ -165,6 +223,14 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+             }
+         }
+ 
++        result.push({
++            label: nls.localize('theia/ai/chat/browseForImage', 'Browse for Image...'),
++            iconClasses: codiconArray('folder-opened'),
++            description: nls.localize('theia/ai/chat/browseForFileDescription', 'Open the file picker'),
++            alwaysShow: true,
++            isBrowseOption: true
++        });
++
+         // Add clipboard option
+         result.push(
+             { type: 'separator', label: nls.localize('theia/ai/chat/clipboardSeparator', 'clipboard') },
+@@ -180,6 +246,20 @@ export class FileChatVariableContribution implements FrontendVariableContributio
+         return result;
+     }
+ 
++    protected async createImageArgStringFromUri(uri: URI): Promise<string | undefined> {
++        const filePath = await this.wsService.getWorkspaceRelativePath(uri);
++        const fileName = uri.displayName;
++        const base64Data = await fileToBase64(uri, this.fileService, this.logger);
++        const mimeType = getMimeTypeFromExtension(uri.path.toString());
++        const imageVarArgs: ImageContextVariable = {
++            name: fileName,
++            wsRelativePath: filePath,
++            data: base64Data,
++            mimeType: mimeType
++        };
++        return ImageContextVariable.createArgString(imageVarArgs);
++    }
++
+     /**
+      * Get quick pick items for recently opened image files.
+      */
+
+diff --git a/packages/ai-core/src/browser/skill-service.spec.ts b/packages/ai-core/src/browser/skill-service.spec.ts
+index bedd2cb..beb9d08 100644
+--- a/packages/ai-core/src/browser/skill-service.spec.ts
++++ b/packages/ai-core/src/browser/skill-service.spec.ts
+@@ -24,7 +24,7 @@ import { expect } from 'chai';
+ import * as sinon from 'sinon';
+ import { parseSkillFile, combineSkillDirectories } from '../common/skill';
+ import { Path } from '@theia/core/lib/common/path';
+-import { Disposable, Emitter, ILogger, Logger, URI } from '@theia/core';
++import { Disposable, Emitter, ILogger, Logger, PreferenceScope, URI } from '@theia/core';
+ import { FileChangesEvent } from '@theia/filesystem/lib/common/files';
+ import { DefaultSkillService } from './skill-service';
+ 
+@@ -284,6 +284,7 @@ description: Skill with no content
+         let workspaceServiceMock: any;
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         let preferencesMock: any;
++        let preferenceServiceMock: { set: sinon.SinonStub };
+         let fileChangesEmitter: Emitter<FileChangesEvent>;
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         let preferenceChangedEmitter: Emitter<any>;
+@@ -291,6 +292,7 @@ description: Skill with no content
+         function createService(): DefaultSkillService {
+             const service = new DefaultSkillService();
+             (service as unknown as { preferences: unknown }).preferences = preferencesMock;
++            (service as unknown as { preferenceService: unknown }).preferenceService = preferenceServiceMock;
+             (service as unknown as { fileService: unknown }).fileService = fileServiceMock;
+             const loggerMock: ILogger = sinon.createStubInstance(Logger);
+             loggerMock.warn = loggerWarnSpy;
+@@ -329,8 +331,12 @@ description: Skill with no content
+ 
+             preferencesMock = {
+                 'ai-features.skills.skillDirectories': [],
++                'ai-features.skills.disabledSkills': [],
+                 onPreferenceChanged: preferenceChangedEmitter.event
+             };
++            preferenceServiceMock = {
++                set: sinon.stub().resolves()
++            };
+         });
+ 
+         afterEach(() => {
+@@ -477,5 +483,42 @@ Test skill content`
+             expect(skills).to.have.length(1);
+             expect(skills[0].name).to.equal('test-skill');
+         });
++
++        it('filters disabled skills from normal lookup while keeping them available for management', () => {
++            const service = createService();
++            const enabledSkill = { name: 'enabled-skill', description: 'Enabled', location: '/skills/enabled/SKILL.md' };
++            const disabledSkill = { name: 'disabled-skill', description: 'Disabled', location: '/skills/disabled/SKILL.md' };
++
++            (service as unknown as { skills: Map<string, unknown> }).skills = new Map([
++                [enabledSkill.name, enabledSkill],
++                [disabledSkill.name, disabledSkill]
++            ]);
++            (service as unknown as { disabledSkills: Set<string> }).disabledSkills = new Set([disabledSkill.name]);
++
++            expect(service.getSkills().map(skill => skill.name)).to.deep.equal([enabledSkill.name]);
++            expect(service.getSkill(enabledSkill.name)?.name).to.equal(enabledSkill.name);
++            expect(service.getSkill(disabledSkill.name)).to.be.undefined;
++            expect(service.getAllSkills().map(skill => skill.name)).to.deep.equal([enabledSkill.name, disabledSkill.name]);
++        });
++
++        it('persists skill enablement changes', async () => {
++            const service = createService();
++
++            await service.disableSkill('review-skill');
++            expect(service.isEnabled('review-skill')).to.equal(false);
++            expect(preferenceServiceMock.set.calledWith(
++                'ai-features.skills.disabledSkills',
++                ['review-skill'],
++                PreferenceScope.User
++            )).to.equal(true);
++
++            await service.enableSkill('review-skill');
++            expect(service.isEnabled('review-skill')).to.equal(true);
++            expect(preferenceServiceMock.set.calledWith(
++                'ai-features.skills.disabledSkills',
++                [],
++                PreferenceScope.User
++            )).to.equal(true);
++        });
+     });
+ });
+
+diff --git a/packages/ai-core/src/browser/skill-service.ts b/packages/ai-core/src/browser/skill-service.ts
+index 6fdcd63..d24ffb7 100644
+--- a/packages/ai-core/src/browser/skill-service.ts
++++ b/packages/ai-core/src/browser/skill-service.ts
+@@ -16,13 +16,13 @@
+ 
+ import { inject, injectable, named, postConstruct } from '@theia/core/shared/inversify';
+ import { Deferred } from '@theia/core/lib/common/promise-util';
+-import { DisposableCollection, Emitter, Event, ILogger, URI } from '@theia/core';
++import { DisposableCollection, Emitter, Event, ILogger, PreferenceScope, PreferenceService, URI } from '@theia/core';
+ import { Path } from '@theia/core/lib/common/path';
+ import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
+ import { FileService } from '@theia/filesystem/lib/browser/file-service';
+ import { FileChangesEvent, FileChangeType } from '@theia/filesystem/lib/common/files';
+ import { WorkspaceService } from '@theia/workspace/lib/browser';
+-import { AICorePreferences, PREFERENCE_NAME_SKILL_DIRECTORIES } from '../common/ai-core-preferences';
++import { AICorePreferences, PREFERENCE_NAME_DISABLED_SKILLS, PREFERENCE_NAME_SKILL_DIRECTORIES } from '../common/ai-core-preferences';
+ import { Skill, SkillDescription, SKILL_FILE_NAME, validateSkillDescription, parseSkillFile } from '../common/skill';
+ 
+ /** Debounce delay for coalescing rapid file system events */
+@@ -30,12 +30,24 @@ const UPDATE_DEBOUNCE_MS = 50;
+ 
+ export const SkillService = Symbol('SkillService');
+ export interface SkillService {
+-    /** Get all discovered skills */
++    /** Get all enabled discovered skills */
+     getSkills(): Skill[];
+ 
+-    /** Get a skill by name */
++    /** Get an enabled skill by name */
+     getSkill(name: string): Skill | undefined;
+ 
++    /** Get all discovered skills, including disabled ones */
++    getAllSkills(): Skill[];
++
++    /** Enable a skill by name */
++    enableSkill(name: string): Promise<void>;
++
++    /** Disable a skill by name */
++    disableSkill(name: string): Promise<void>;
++
++    /** Query whether this skill is currently enabled */
++    isEnabled(name: string): boolean;
++
+     /** Event fired when skills change */
+     readonly onSkillsChanged: Event<void>;
+ 
+@@ -48,6 +60,9 @@ export class DefaultSkillService implements SkillService {
+     @inject(AICorePreferences)
+     protected readonly preferences: AICorePreferences;
+ 
++    @inject(PreferenceService)
++    protected readonly preferenceService: PreferenceService;
++
+     @inject(FileService)
+     protected readonly fileService: FileService;
+ 
+@@ -62,6 +77,7 @@ export class DefaultSkillService implements SkillService {
+     protected readonly workspaceService: WorkspaceService;
+ 
+     protected skills = new Map<string, Skill>();
++    protected disabledSkills = new Set<string>();
+     protected toDispose = new DisposableCollection();
+     protected watchedDirectories = new Set<string>();
+     protected parentWatchers = new Map<string, string>();
+@@ -79,6 +95,7 @@ export class DefaultSkillService implements SkillService {
+ 
+     @postConstruct()
+     protected init(): void {
++        this.loadDisabledSkills();
+         this.fileService.onDidFilesChange(async (event: FileChangesEvent) => {
+             for (const change of event.changes) {
+                 if (change.type === FileChangeType.ADDED) {
+@@ -134,6 +151,9 @@ export class DefaultSkillService implements SkillService {
+                         }
+                         this.lastSkillDirectoriesValue = currentValue;
+                         this.scheduleUpdate();
++                    } else if (event.preferenceName === PREFERENCE_NAME_DISABLED_SKILLS) {
++                        this.loadDisabledSkills();
++                        this.onSkillsChangedEmitter.fire();
+                     }
+                 });
+ 
+@@ -145,11 +165,40 @@ export class DefaultSkillService implements SkillService {
+     }
+ 
+     getSkills(): Skill[] {
+-        return Array.from(this.skills.values());
++        return Array.from(this.skills.values()).filter(skill => this.isEnabled(skill.name));
+     }
+ 
+     getSkill(name: string): Skill | undefined {
+-        return this.skills.get(name);
++        return this.isEnabled(name) ? this.skills.get(name) : undefined;
++    }
++
++    getAllSkills(): Skill[] {
++        return Array.from(this.skills.values());
++    }
++
++    async enableSkill(name: string): Promise<void> {
++        this.disabledSkills.delete(name);
++        await this.persistDisabledSkills();
++        this.onSkillsChangedEmitter.fire();
++    }
++
++    async disableSkill(name: string): Promise<void> {
++        this.disabledSkills.add(name);
++        await this.persistDisabledSkills();
++        this.onSkillsChangedEmitter.fire();
++    }
++
++    isEnabled(name: string): boolean {
++        return !this.disabledSkills.has(name);
++    }
++
++    protected loadDisabledSkills(): void {
++        this.disabledSkills = new Set(this.preferences[PREFERENCE_NAME_DISABLED_SKILLS] ?? []);
++    }
++
++    protected async persistDisabledSkills(): Promise<void> {
++        const disabledSkills = Array.from(this.disabledSkills).sort((a, b) => a.localeCompare(b));
++        await this.preferenceService.set(PREFERENCE_NAME_DISABLED_SKILLS, disabledSkills, PreferenceScope.User);
+     }
+ 
+     protected scheduleUpdate(): void {
+
+diff --git a/packages/ai-core/src/browser/skills-variable-contribution.spec.ts b/packages/ai-core/src/browser/skills-variable-contribution.spec.ts
+index 68e1acd..4af44dd 100644
+--- a/packages/ai-core/src/browser/skills-variable-contribution.spec.ts
++++ b/packages/ai-core/src/browser/skills-variable-contribution.spec.ts
+@@ -52,6 +52,10 @@ describe('SkillsVariableContribution', () => {
+         skillService = {
+             getSkills: sinon.stub(),
+             getSkill: sinon.stub(),
++            getAllSkills: sinon.stub(),
++            enableSkill: sinon.stub(),
++            disableSkill: sinon.stub(),
++            isEnabled: sinon.stub(),
+             onSkillsChanged: sinon.stub() as unknown as typeof skillService.onSkillsChanged,
+             ready: sinon.stub() as unknown as typeof skillService.ready
+         };
+
+diff --git a/packages/ai-core/src/browser/theia-variable-contribution.ts b/packages/ai-core/src/browser/theia-variable-contribution.ts
+index a47ee22..f501650 100644
+--- a/packages/ai-core/src/browser/theia-variable-contribution.ts
++++ b/packages/ai-core/src/browser/theia-variable-contribution.ts
+@@ -14,7 +14,6 @@
+ // SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
+ // *****************************************************************************
+ import { FrontendApplicationStateService } from '@theia/core/lib/browser/frontend-application-state';
+-import { FrontendApplicationConfigProvider } from '@theia/core/lib/browser/frontend-application-config-provider';
+ import { nls } from '@theia/core/lib/common/nls';
+ import { inject, injectable } from '@theia/core/shared/inversify';
+ import { VariableRegistry, VariableResolverService } from '@theia/variable-resolver/lib/browser';
+@@ -109,9 +108,7 @@ export class TheiaVariableContribution implements AIVariableContribution, AIVari
+                     const newName = (mapping.name && mapping.name.trim() !== '') ? mapping.name : variable.name;
+                     const newDescription = (mapping.description && mapping.description.trim() !== '') ? mapping.description
+                         : (variable.description && variable.description.trim() !== '' ? variable.description
+-                            : nls.localize('theia/ai/core/variable-contribution/builtInVariable',
+-                            '{0} Built-in Variable',
+-                            FrontendApplicationConfigProvider.get().applicationName));
++                            : nls.localize('theia/ai/core/variable-contribution/builtInVariable', 'Theia Built-in Variable'));
+ 
+                     // For multiple mappings of the same variable, add a suffix to the ID to make it unique
+                     const idSuffix = mappings.length > 1 ? `-${index}` : '';
+
+diff --git a/packages/ai-ide/src/browser/context-file-validation-service-impl.spec.ts b/packages/ai-ide/src/browser/context-file-validation-service-impl.spec.ts
+index 228ec7e..5c6c04a 100644
+--- a/packages/ai-ide/src/browser/context-file-validation-service-impl.spec.ts
++++ b/packages/ai-ide/src/browser/context-file-validation-service-impl.spec.ts
+@@ -28,8 +28,6 @@ import { FileStat } from '@theia/filesystem/lib/common/files';
+ import { ContextFileValidationService, FileValidationState } from '@theia/ai-chat/lib/browser/context-file-validation-service';
+ import { ContextFileValidationServiceImpl } from './context-file-validation-service-impl';
+ import { WorkspaceFunctionScope } from './workspace-functions';
+-import { TrustAwarePreferenceReader } from '@theia/ai-core/lib/browser/trust-aware-preference-reader';
+-import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
+ 
+ disableJSDOM();
+ 
+@@ -112,18 +110,6 @@ describe('ContextFileValidationService', () => {
+         container.bind(FileService).toConstantValue(mockFileService);
+         container.bind(WorkspaceService).toConstantValue(mockWorkspaceService);
+         container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue({
+-            get: <T>(_name: string, fallback?: T) => fallback,
+-            ready: Promise.resolve(),
+-            onDidChangeTrust: () => ({ dispose: () => { /* noop */ } })
+-        } as unknown as TrustAwarePreferenceReader);
+-        container.bind(EnvVariablesServer).toConstantValue({
+-            getHomeDirUri: async () => 'file:///home/user',
+-            getExecPath: async () => '',
+-            getVariables: async () => [],
+-            getValue: async () => undefined,
+-            getConfigDirUri: async () => 'file:///home/user/.config'
+-        } as unknown as EnvVariablesServer);
+         container.bind(WorkspaceFunctionScope).toSelf();
+         container.bind(ContextFileValidationServiceImpl).toSelf();
+         container.bind(ContextFileValidationService).toService(ContextFileValidationServiceImpl);
+
+diff --git a/packages/ai-ide/src/browser/remember-command-contribution.ts b/packages/ai-ide/src/browser/remember-command-contribution.ts
+index bcbee81..acc538e 100644
+--- a/packages/ai-ide/src/browser/remember-command-contribution.ts
++++ b/packages/ai-ide/src/browser/remember-command-contribution.ts
+@@ -21,6 +21,7 @@ import { nls } from '@theia/core';
+ import { AGENT_DELEGATION_FUNCTION_ID } from '@theia/ai-core';
+ import { ArchitectAgentId } from './architect-agent';
+ import { CoderAgentId } from './coder-agent';
++import { OpenCoderAgentId } from './open-coder-agent';
+ 
+ /**
+  * Contribution that registers the `/remember` slash command for AI chat agents.
+@@ -55,7 +56,7 @@ export class RememberCommandContribution implements FrontendApplicationContribut
+                 'theia/ai-ide/rememberCommand/argumentHint',
+                 '[topic-hint]'
+             ),
+-            commandAgents: [ArchitectAgentId, CoderAgentId]
++            commandAgents: [ArchitectAgentId, CoderAgentId, OpenCoderAgentId]
+         });
+     }
+ 
+
+diff --git a/packages/ai-ide/src/browser/workspace-functions.spec.ts b/packages/ai-ide/src/browser/workspace-functions.spec.ts
+index ac5233d..e7a655c 100644
+--- a/packages/ai-ide/src/browser/workspace-functions.spec.ts
++++ b/packages/ai-ide/src/browser/workspace-functions.spec.ts
+@@ -20,7 +20,7 @@ import { FrontendApplicationConfigProvider } from '@theia/core/lib/browser/front
+ FrontendApplicationConfigProvider.set({});
+ 
+ import { expect } from 'chai';
+-import { CancellationTokenSource, OS, PreferenceService } from '@theia/core';
++import { CancellationTokenSource, PreferenceService } from '@theia/core';
+ import {
+     GetWorkspaceDirectoryStructure,
+     FileContentFunction,
+@@ -30,9 +30,7 @@ import {
+     FindFilesByPattern
+ } from './workspace-functions';
+ import { ToolInvocationContext } from '@theia/ai-core';
+-import { TrustAwarePreferenceReader } from '@theia/ai-core/lib/browser/trust-aware-preference-reader';
+ import { Container } from '@theia/core/shared/inversify';
+-import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
+ import { FileService } from '@theia/filesystem/lib/browser/file-service';
+ import { FileOperationError, FileOperationResult } from '@theia/filesystem/lib/common/files';
+ import { URI } from '@theia/core/lib/common/uri';
+@@ -41,20 +39,6 @@ import { ProblemManager } from '@theia/markers/lib/browser';
+ import { MonacoTextModelService } from '@theia/monaco/lib/browser/monaco-text-model-service';
+ import { MonacoWorkspace } from '@theia/monaco/lib/browser/monaco-workspace';
+ 
+-const makeTrustAwareReader = (overrides: { [pref: string]: unknown } = {}): TrustAwarePreferenceReader => ({
+-    get: <T>(name: string, fallback?: T) => (name in overrides ? overrides[name] as T : fallback),
+-    ready: Promise.resolve(),
+-    onDidChangeTrust: () => ({ dispose: () => { /* noop */ } })
+-} as unknown as TrustAwarePreferenceReader);
+-
+-const makeEnvVariablesServer = (homeDirUri: string = 'file:///home/test'): EnvVariablesServer => ({
+-    getHomeDirUri: async () => homeDirUri,
+-    getExecPath: async () => '',
+-    getVariables: async () => [],
+-    getValue: async () => undefined,
+-    getConfigDirUri: async () => 'file:///home/test/.config'
+-} as unknown as EnvVariablesServer);
+-
+ disableJSDOM();
+ 
+ describe('Workspace Functions Cancellation Tests', () => {
+@@ -132,8 +116,6 @@ describe('Workspace Functions Cancellation Tests', () => {
+         container.bind(MonacoWorkspace).toConstantValue(mockMonacoWorkspace);
+         container.bind(ProblemManager).toConstantValue(mockProblemManager);
+         container.bind(MonacoTextModelService).toConstantValue(mockMonacoTextModelService);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(makeTrustAwareReader());
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer());
+         container.bind(WorkspaceFunctionScope).toSelf();
+         container.bind(GetWorkspaceDirectoryStructure).toSelf();
+         container.bind(FileContentFunction).toSelf();
+@@ -251,8 +233,6 @@ describe('FileContentFunction.getArgumentsShortLabel', () => {
+         container.bind(FileService).toConstantValue(mockFileService);
+         container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+         container.bind(MonacoWorkspace).toConstantValue(mockMonacoWorkspace);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(makeTrustAwareReader());
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer());
+         container.bind(WorkspaceFunctionScope).toSelf();
+         container.bind(FileContentFunction).toSelf();
+ 
+@@ -367,8 +347,6 @@ describe('FileContentFunction handler', () => {
+         container.bind(FileService).toConstantValue(mockFileService);
+         container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+         container.bind(MonacoWorkspace).toConstantValue(mockMonacoWorkspace);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(makeTrustAwareReader());
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer());
+         container.bind(WorkspaceFunctionScope).toSelf();
+         container.bind(FileContentFunction).toSelf();
+ 
+@@ -729,8 +707,6 @@ describe('FindFilesByPattern.getArgumentsShortLabel', () => {
+         container.bind(WorkspaceService).toConstantValue(mockWorkspaceService);
+         container.bind(FileService).toConstantValue(mockFileService);
+         container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(makeTrustAwareReader());
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer());
+         container.bind(WorkspaceFunctionScope).toSelf();
+         container.bind(FindFilesByPattern).toSelf();
+ 
+@@ -759,563 +735,3 @@ describe('FindFilesByPattern.getArgumentsShortLabel', () => {
+         expect(result).to.be.undefined;
+     });
+ });
+-
+-describe('FileContentFunction external paths', () => {
+-    let container: Container;
+-    let fileContentFunction: FileContentFunction;
+-    let allowedPaths: string[];
+-    let trustedScopeOnly: boolean;
+-
+-    let disableJSDOMInner: () => void;
+-    before(() => { disableJSDOMInner = enableJSDOM(); });
+-    after(() => { disableJSDOMInner(); });
+-
+-    beforeEach(() => {
+-        container = new Container();
+-        allowedPaths = [];
+-        trustedScopeOnly = false;
+-
+-        const mockWorkspaceService = {
+-            roots: [{ resource: new URI('file:///workspace') }]
+-        } as unknown as WorkspaceService;
+-
+-        const mockFileService = {
+-            exists: async () => true,
+-            resolve: async (uri: URI) => ({
+-                isFile: true,
+-                isDirectory: false,
+-                size: 1024,
+-                resource: uri
+-            }),
+-            read: async (uri: URI) => ({ value: `content-of-${uri.path.toString()}` }),
+-            readStream: async () => { throw new Error('not used'); }
+-        } as unknown as FileService;
+-
+-        const mockPreferenceService = {
+-            get: <T>(_path: string, defaultValue: T) => defaultValue
+-        };
+-
+-        const mockMonacoWorkspace = {
+-            getTextDocument: () => undefined
+-        } as unknown as MonacoWorkspace;
+-
+-        const trustAwareReader = {
+-            get: <T>(_name: string, fallback?: T) => (trustedScopeOnly ? fallback : (allowedPaths as unknown as T)),
+-            ready: Promise.resolve(),
+-            onDidChangeTrust: () => ({ dispose: () => { /* noop */ } })
+-        } as unknown as TrustAwarePreferenceReader;
+-
+-        container.bind(WorkspaceService).toConstantValue(mockWorkspaceService);
+-        container.bind(FileService).toConstantValue(mockFileService);
+-        container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+-        container.bind(MonacoWorkspace).toConstantValue(mockMonacoWorkspace);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(trustAwareReader);
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer('file:///home/test'));
+-        container.bind(WorkspaceFunctionScope).toSelf();
+-        container.bind(FileContentFunction).toSelf();
+-
+-        fileContentFunction = container.get(FileContentFunction);
+-    });
+-
+-    const callTool = (file: string) =>
+-        fileContentFunction.getTool().handler(JSON.stringify({ file }), undefined) as Promise<string>;
+-
+-    it('rejects absolute path outside the workspace when allow-list is empty', async () => {
+-        const result = await callTool('/etc/hosts');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-        expect(parsed.error).to.include('allowedExternalPaths');
+-    });
+-
+-    it('allows absolute path inside an allow-listed directory', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callTool('/external/configs/myapp.json');
+-        expect(result).to.equal('content-of-/external/configs/myapp.json');
+-    });
+-
+-    it('allows file:// URI inside an allow-listed directory', async () => {
+-        allowedPaths = ['file:///external/configs'];
+-        const result = await callTool('file:///external/configs/myapp.json');
+-        expect(result).to.equal('content-of-/external/configs/myapp.json');
+-    });
+-
+-    it('rejects sibling that shares the prefix but is not a child', async () => {
+-        // /external/configs-other must NOT be matched by /external/configs
+-        allowedPaths = ['/external/configs'];
+-        const result = await callTool('/external/configs-other/myapp.json');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    it('rejects path with .. traversal', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callTool('/external/configs/../secrets.txt');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('Invalid file path');
+-    });
+-
+-    it('expands ~ in allow-list entries', async () => {
+-        allowedPaths = ['~/configs'];
+-        const result = await callTool('/home/test/configs/myapp.json');
+-        expect(result).to.equal('content-of-/home/test/configs/myapp.json');
+-    });
+-
+-    it('expands ~ in tool input paths', async () => {
+-        allowedPaths = ['/home/test/configs'];
+-        const result = await callTool('~/configs/myapp.json');
+-        expect(result).to.equal('content-of-/home/test/configs/myapp.json');
+-    });
+-
+-    it('expands ~ in both allow-list entries and tool input paths', async () => {
+-        allowedPaths = ['~/configs'];
+-        const result = await callTool('~/configs/myapp.json');
+-        expect(result).to.equal('content-of-/home/test/configs/myapp.json');
+-    });
+-
+-    it('rejects ~-prefixed tool input that escapes via .. traversal', async () => {
+-        allowedPaths = ['/home/test/configs'];
+-        const result = await callTool('~/configs/../secrets.txt');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('Invalid file path');
+-    });
+-
+-    it('still allows workspace-relative paths', async () => {
+-        allowedPaths = [];
+-        const result = await callTool('src/index.ts');
+-        expect(result).to.equal('content-of-/workspace/src/index.ts');
+-    });
+-
+-    it('accepts Windows-style absolute paths in the allow-list', async () => {
+-        // Mixed: backslash separators in the entry, forward-slash in the file argument
+-        allowedPaths = ['C:\\external\\configs'];
+-        const result = await callTool('C:/external/configs/myapp.json');
+-        // The mock returns content keyed off the resolved URI's path. Both forms
+-        // normalize to the same `file:///c:/external/configs/myapp.json`.
+-        expect(result).to.match(/^content-of-/);
+-        expect(result).to.include('external/configs/myapp.json');
+-    });
+-
+-    it('accepts Windows drive paths as the tool argument', async () => {
+-        allowedPaths = ['C:/external'];
+-        const result = await callTool('C:\\external\\file.txt');
+-        expect(result).to.match(/^content-of-/);
+-        expect(result).to.include('external/file.txt');
+-    });
+-
+-    it('drops workspace-scoped allow-list values when workspace is untrusted', async () => {
+-        // simulate trust-aware reader behavior: when untrusted, only user/default scope is returned
+-        trustedScopeOnly = true;
+-        const result = await callTool('/external/configs/myapp.json');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-});
+-
+-describe('GetWorkspaceFileList / GetWorkspaceDirectoryStructure with external paths', () => {
+-    let container: Container;
+-    let allowedPaths: string[];
+-
+-    const FS_TREE: Record<string, { isDirectory: boolean; children?: string[] }> = {
+-        'file:///workspace': { isDirectory: true, children: ['file:///workspace/a.ts', 'file:///workspace/sub'] },
+-        'file:///workspace/a.ts': { isDirectory: false },
+-        'file:///workspace/sub': { isDirectory: true, children: [] },
+-        'file:///external/configs': {
+-            isDirectory: true,
+-            children: ['file:///external/configs/myapp.json', 'file:///external/configs/sub']
+-        },
+-        'file:///external/configs/myapp.json': { isDirectory: false },
+-        'file:///external/configs/sub': { isDirectory: true, children: [] }
+-    };
+-
+-    let disableJSDOMInner: () => void;
+-    before(() => { disableJSDOMInner = enableJSDOM(); });
+-    after(() => { disableJSDOMInner(); });
+-
+-    beforeEach(() => {
+-        container = new Container();
+-        allowedPaths = [];
+-
+-        const mockWorkspaceService = {
+-            roots: [{ resource: new URI('file:///workspace') }]
+-        } as unknown as WorkspaceService;
+-
+-        const mockFileService = {
+-            exists: async () => true,
+-            resolve: async (uri: URI) => {
+-                const node = FS_TREE[uri.toString()];
+-                if (!node) {
+-                    throw new Error('not found');
+-                }
+-                return {
+-                    isDirectory: node.isDirectory,
+-                    isFile: !node.isDirectory,
+-                    resource: uri,
+-                    children: node.children?.map(child => ({
+-                        isDirectory: !!FS_TREE[child]?.isDirectory,
+-                        isFile: !FS_TREE[child]?.isDirectory,
+-                        resource: new URI(child),
+-                        path: { base: child.split('/').pop() }
+-                    })) ?? []
+-                };
+-            },
+-            read: async () => ({ value: '' })
+-        } as unknown as FileService;
+-
+-        const mockPreferenceService = {
+-            get: <T>(_path: string, defaultValue: T) => defaultValue
+-        };
+-
+-        const trustAwareReader = {
+-            get: <T>(_name: string, _fallback?: T) => allowedPaths as unknown as T,
+-            ready: Promise.resolve(),
+-            onDidChangeTrust: () => ({ dispose: () => { /* noop */ } })
+-        } as unknown as TrustAwarePreferenceReader;
+-
+-        container.bind(WorkspaceService).toConstantValue(mockWorkspaceService);
+-        container.bind(FileService).toConstantValue(mockFileService);
+-        container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(trustAwareReader);
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer());
+-        container.bind(WorkspaceFunctionScope).toSelf();
+-        container.bind(GetWorkspaceFileList).toSelf();
+-        container.bind(GetWorkspaceDirectoryStructure).toSelf();
+-    });
+-
+-    it('GetWorkspaceFileList rejects absolute path outside the allow-list', async () => {
+-        const tool = container.get(GetWorkspaceFileList).getTool();
+-        const result = await tool.handler(JSON.stringify({ path: '/external/configs' }), undefined) as string;
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    it('GetWorkspaceFileList lists an allow-listed external directory', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const tool = container.get(GetWorkspaceFileList).getTool();
+-        const result = await tool.handler(JSON.stringify({ path: '/external/configs' }), undefined);
+-        expect(result).to.deep.equal(['myapp.json', 'sub/']);
+-    });
+-
+-    it('GetWorkspaceFileList still lists workspace-relative paths', async () => {
+-        const tool = container.get(GetWorkspaceFileList).getTool();
+-        const result = await tool.handler(JSON.stringify({ path: '' }), undefined);
+-        expect(result).to.deep.equal(['a.ts', 'sub/']);
+-    });
+-
+-    it('GetWorkspaceDirectoryStructure rejects external root not in the allow-list', async () => {
+-        const tool = container.get(GetWorkspaceDirectoryStructure).getTool();
+-        const result = await tool.handler(JSON.stringify({ root: '/external/configs' }), undefined) as Record<string, unknown>;
+-        expect(result.error).to.include('not allowed');
+-    });
+-
+-    it('GetWorkspaceDirectoryStructure walks an allow-listed external root', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const tool = container.get(GetWorkspaceDirectoryStructure).getTool();
+-        const result = await tool.handler(JSON.stringify({ root: '/external/configs' }), undefined);
+-        expect(result).to.deep.equal({ sub: {} });
+-    });
+-
+-    it('GetWorkspaceDirectoryStructure preserves prior workspace-only behavior when root omitted', async () => {
+-        const tool = container.get(GetWorkspaceDirectoryStructure).getTool();
+-        const result = await tool.handler('', undefined);
+-        expect(result).to.deep.equal({ sub: {} });
+-    });
+-});
+-
+-describe('FindFilesByPattern with searchRoot', () => {
+-    let container: Container;
+-    let findFilesByPattern: FindFilesByPattern;
+-    let allowedPaths: string[];
+-
+-    const FS_TREE: Record<string, { isDirectory: boolean; children?: string[] }> = {
+-        'file:///workspace': { isDirectory: true, children: ['file:///workspace/a.ts'] },
+-        'file:///workspace/a.ts': { isDirectory: false },
+-        'file:///external/configs': { isDirectory: true, children: ['file:///external/configs/myapp.json', 'file:///external/configs/other.txt'] },
+-        'file:///external/configs/myapp.json': { isDirectory: false },
+-        'file:///external/configs/other.txt': { isDirectory: false }
+-    };
+-
+-    let disableJSDOMInner: () => void;
+-    before(() => { disableJSDOMInner = enableJSDOM(); });
+-    after(() => { disableJSDOMInner(); });
+-
+-    beforeEach(() => {
+-        container = new Container();
+-        allowedPaths = [];
+-
+-        const mockWorkspaceService = {
+-            roots: [{ resource: new URI('file:///workspace') }]
+-        } as unknown as WorkspaceService;
+-
+-        const mockFileService = {
+-            exists: async () => true,
+-            resolve: async (uri: URI) => {
+-                const node = FS_TREE[uri.toString()];
+-                if (!node) {
+-                    throw new Error('not found');
+-                }
+-                return {
+-                    isDirectory: node.isDirectory,
+-                    isFile: !node.isDirectory,
+-                    resource: uri,
+-                    children: node.children?.map(child => ({
+-                        isDirectory: !!FS_TREE[child]?.isDirectory,
+-                        isFile: !FS_TREE[child]?.isDirectory,
+-                        resource: new URI(child),
+-                        path: { base: child.split('/').pop() }
+-                    })) ?? []
+-                };
+-            },
+-            read: async () => ({ value: '' })
+-        } as unknown as FileService;
+-
+-        const mockPreferenceService = {
+-            get: <T>(_path: string, defaultValue: T) => defaultValue
+-        };
+-
+-        const trustAwareReader = {
+-            get: <T>(_name: string, _fallback?: T) => allowedPaths as unknown as T,
+-            ready: Promise.resolve(),
+-            onDidChangeTrust: () => ({ dispose: () => { /* noop */ } })
+-        } as unknown as TrustAwarePreferenceReader;
+-
+-        container.bind(WorkspaceService).toConstantValue(mockWorkspaceService);
+-        container.bind(FileService).toConstantValue(mockFileService);
+-        container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(trustAwareReader);
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer());
+-        container.bind(WorkspaceFunctionScope).toSelf();
+-        container.bind(FindFilesByPattern).toSelf();
+-
+-        findFilesByPattern = container.get(FindFilesByPattern);
+-    });
+-
+-    const callTool = (args: object) =>
+-        findFilesByPattern.getTool().handler(JSON.stringify(args), undefined) as Promise<string>;
+-
+-    it('searches the workspace by default and returns relative paths', async () => {
+-        const result = await callTool({ pattern: '**/*.ts' });
+-        const parsed = JSON.parse(result);
+-        expect(parsed.files).to.deep.equal(['a.ts']);
+-    });
+-
+-    it('rejects searchRoot that is not in the allow-list', async () => {
+-        const result = await callTool({ pattern: '**/*.json', searchRoot: '/external/configs' });
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    it('searches an allow-listed external root and returns absolute paths', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callTool({ pattern: '**/*.json', searchRoot: '/external/configs' });
+-        const parsed = JSON.parse(result);
+-        expect(parsed.files).to.deep.equal(['/external/configs/myapp.json']);
+-    });
+-
+-    it('honors exclude patterns when using an external searchRoot', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callTool({
+-            pattern: '**/*',
+-            exclude: ['**/*.txt'],
+-            searchRoot: '/external/configs'
+-        });
+-        const parsed = JSON.parse(result);
+-        expect(parsed.files).to.deep.equal(['/external/configs/myapp.json']);
+-    });
+-});
+-
+-describe('WorkspaceFunctionScope path-traversal hardening', () => {
+-    let container: Container;
+-    let fileContentFunction: FileContentFunction;
+-    let allowedPaths: string[];
+-    let trustReady: Promise<void>;
+-    let trustAwareGet: <T>(name: string, fallback?: T) => T | undefined;
+-
+-    let disableJSDOMInner: () => void;
+-    before(() => { disableJSDOMInner = enableJSDOM(); });
+-    after(() => { disableJSDOMInner(); });
+-
+-    beforeEach(() => {
+-        container = new Container();
+-        allowedPaths = [];
+-        trustReady = Promise.resolve();
+-        trustAwareGet = <T>(_name: string, _fallback?: T) => allowedPaths as unknown as T;
+-
+-        const mockWorkspaceService = {
+-            roots: [{ resource: new URI('file:///workspace/project') }]
+-        } as unknown as WorkspaceService;
+-
+-        const mockFileService = {
+-            exists: async () => true,
+-            resolve: async (uri: URI) => ({
+-                isFile: true,
+-                isDirectory: false,
+-                size: 1024,
+-                resource: uri
+-            }),
+-            read: async (uri: URI) => ({ value: `content-of-${uri.path.toString()}` }),
+-            readStream: async () => { throw new Error('not used'); }
+-        } as unknown as FileService;
+-
+-        const mockPreferenceService = {
+-            get: <T>(_path: string, defaultValue: T) => defaultValue
+-        };
+-
+-        const mockMonacoWorkspace = {
+-            getTextDocument: () => undefined
+-        } as unknown as MonacoWorkspace;
+-
+-        const trustAwareReader = {
+-            get: <T>(name: string, fallback?: T) => trustAwareGet<T>(name, fallback),
+-            get ready(): Promise<void> { return trustReady; },
+-            onDidChangeTrust: () => ({ dispose: () => { /* noop */ } })
+-        } as unknown as TrustAwarePreferenceReader;
+-
+-        container.bind(WorkspaceService).toConstantValue(mockWorkspaceService);
+-        container.bind(FileService).toConstantValue(mockFileService);
+-        container.bind(PreferenceService).toConstantValue(mockPreferenceService);
+-        container.bind(MonacoWorkspace).toConstantValue(mockMonacoWorkspace);
+-        container.bind(TrustAwarePreferenceReader).toConstantValue(trustAwareReader);
+-        container.bind(EnvVariablesServer).toConstantValue(makeEnvVariablesServer('file:///home/test'));
+-        container.bind(WorkspaceFunctionScope).toSelf();
+-        container.bind(FileContentFunction).toSelf();
+-        container.bind(FileDiagnosticProvider).toSelf();
+-        const mockProblemManager = {
+-            findMarkers: () => [],
+-            onDidChangeMarkers: () => ({ dispose: () => { /* noop */ } })
+-        } as unknown as ProblemManager;
+-        container.bind(ProblemManager).toConstantValue(mockProblemManager);
+-        const mockMonacoTextModelService = {
+-            createModelReference: async () => ({
+-                object: { lineCount: 10, getText: () => '' },
+-                dispose: () => { /* noop */ }
+-            })
+-        } as unknown as MonacoTextModelService;
+-        container.bind(MonacoTextModelService).toConstantValue(mockMonacoTextModelService);
+-
+-        fileContentFunction = container.get(FileContentFunction);
+-    });
+-
+-    const callContent = (file: string) =>
+-        fileContentFunction.getTool().handler(JSON.stringify({ file }), undefined) as Promise<string>;
+-
+-    // Item 1 — URL-encoded and literal `..` in file:// URIs must be normalized
+-    // before the allow-list check; otherwise the path-component prefix admits
+-    // the traversal.
+-    it('rejects file:// URI with literal .. traversal', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callContent('file:///external/configs/../secrets.txt');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    it('rejects file:// URI with percent-encoded %2e%2e traversal', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callContent('file:///external/configs/%2e%2e/secrets.txt');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    it('rejects file:// URI with upper-case percent-encoded traversal', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callContent('file:///external/configs/%2E%2E/secrets.txt');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    // Item 4 — A filename that contains `..` as a substring but is not a
+-    // traversal segment must be accepted.
+-    it('accepts a valid filename whose name contains ".." as a substring', async () => {
+-        allowedPaths = ['/external/configs'];
+-        const result = await callContent('/external/configs/my..file.json');
+-        expect(result).to.equal('content-of-/external/configs/my..file.json');
+-    });
+-
+-    // Item 3 — Non-file allow-list entries are documented as unsupported.
+-    it('rejects http:// allow-list entry even if target path appears to match', async () => {
+-        allowedPaths = ['http://example.com/external/configs'];
+-        const result = await callContent('/external/configs/myapp.json');
+-        const parsed = JSON.parse(result);
+-        expect(parsed.error).to.include('not allowed');
+-    });
+-
+-    // Item 7 — getAllowedExternalUris must await TrustAwarePreferenceReader.ready
+-    // so that preference reads see the resolved trust state.
+-    it('awaits TrustAwarePreferenceReader.ready before reading the allow-list', async () => {
+-        let preferenceVisible = false;
+-        let resolveReady: () => void = () => { /* noop */ };
+-        trustReady = new Promise<void>(r => { resolveReady = r; });
+-        trustAwareGet = <T>(_name: string, _fallback?: T) =>
+-            (preferenceVisible ? ['/external/configs'] : []) as unknown as T;
+-
+-        const promise = callContent('/external/configs/myapp.json');
+-
+-        // Simulate trust state becoming available after a microtask: the
+-        // allow-list is only readable once `ready` resolves.
+-        await Promise.resolve();
+-        preferenceVisible = true;
+-        resolveReady();
+-
+-        const result = await promise;
+-        expect(result).to.equal('content-of-/external/configs/myapp.json');
+-    });
+-
+-    // Item 2 — On case-insensitive filesystems (Windows, macOS by default)
+-    // the allow-list match must be case-insensitive. Stub OS.backend flags
+-    // for the test and restore them afterwards.
+-    describe('case-insensitive match on case-insensitive filesystems', () => {
+-        let originalIsWindows: boolean;
+-        let originalIsOSX: boolean;
+-        beforeEach(() => {
+-            originalIsWindows = OS.backend.isWindows;
+-            originalIsOSX = OS.backend.isOSX;
+-        });
+-        afterEach(() => {
+-            OS.backend.isWindows = originalIsWindows;
+-            OS.backend.isOSX = originalIsOSX;
+-        });
+-
+-        it('admits a case-mismatched Windows target when allow-list entry is mixed-case', async () => {
+-            OS.backend.isWindows = true;
+-            OS.backend.isOSX = false;
+-            allowedPaths = ['C:\\External\\Configs'];
+-            const result = await callContent('c:/external/configs/myapp.json');
+-            // The mock returns the URI's path; both forms canonicalize to the
+-            // same file:///c:/... URI (drive letter is lowercased by URI.fromFilePath),
+-            // but the path segments differ in case.
+-            expect(result).to.match(/^content-of-/);
+-            expect(result.toLowerCase()).to.include('external/configs/myapp.json');
+-        });
+-
+-        it('admits a case-mismatched macOS target when allow-list entry is mixed-case', async () => {
+-            OS.backend.isWindows = false;
+-            OS.backend.isOSX = true;
+-            allowedPaths = ['/Users/safi/External/Configs'];
+-            const result = await callContent('/users/safi/external/configs/myapp.json');
+-            expect(result).to.match(/^content-of-/);
+-            expect(result.toLowerCase()).to.include('/users/safi/external/configs/myapp.json');
+-        });
+-
+-        it('keeps Linux case-sensitive: rejects a case-mismatched target', async () => {
+-            OS.backend.isWindows = false;
+-            OS.backend.isOSX = false;
+-            allowedPaths = ['/home/safi/External/Configs'];
+-            const result = await callContent('/home/safi/external/configs/myapp.json');
+-            const parsed = JSON.parse(result);
+-            expect(parsed.error).to.include('not allowed');
+-        });
+-    });
+-
+-    // Item 6 — `ensureWithinWorkspace` is the gate used by getFileDiagnostics
+-    // for relative path inputs. A sibling that merely shares the workspace
+-    // root's string prefix must not pass.
+-    it('FileDiagnosticProvider rejects sibling-prefix path outside the workspace', async () => {
+-        const diag = container.get(FileDiagnosticProvider);
+-        const handler = diag.getTool().handler;
+-        // Workspace root is file:///workspace/project. With a raw string-prefix
+-        // check the resolved URI file:///workspace/project-other/file.txt
+-        // would be (incorrectly) admitted.
+-        const result = await handler(JSON.stringify({ file: '../project-other/file.txt' }), undefined);
+-        const parsed = JSON.parse(result as string);
+-        expect(parsed.error).to.include('outside of the workspace');
+-    });
+-});
+
+diff --git a/packages/ai-ide/src/browser/workspace-functions.ts b/packages/ai-ide/src/browser/workspace-functions.ts
+index 42e2654..05bf165 100644
+--- a/packages/ai-ide/src/browser/workspace-functions.ts
++++ b/packages/ai-ide/src/browser/workspace-functions.ts
+@@ -14,9 +14,7 @@
+ // SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
+ // *****************************************************************************
+ import { ToolInvocationContext, ToolProvider, ToolRequest } from '@theia/ai-core';
+-import { TrustAwarePreferenceReader } from '@theia/ai-core/lib/browser/trust-aware-preference-reader';
+-import { CancellationToken, Disposable, OS, PreferenceService, URI, Path } from '@theia/core';
+-import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
++import { CancellationToken, Disposable, PreferenceService, URI, Path } from '@theia/core';
+ import { inject, injectable } from '@theia/core/shared/inversify';
+ import { FileService } from '@theia/filesystem/lib/browser/file-service';
+ import { FileStat, FileOperationError, FileOperationResult } from '@theia/filesystem/lib/common/files';
+@@ -29,12 +27,7 @@ import {
+ import { extractJsonStringField } from '@theia/ai-chat-ui/lib/browser/chat-response-renderer/toolcall-utils';
+ import ignore from 'ignore';
+ import { Minimatch } from 'minimatch';
+-import {
+-    ALLOWED_EXTERNAL_PATHS_PREF,
+-    CONSIDER_GITIGNORE_PREF,
+-    FILE_CONTENT_MAX_SIZE_KB_PREF,
+-    USER_EXCLUDE_PATTERN_PREF
+-} from '../common/workspace-preferences';
++import { CONSIDER_GITIGNORE_PREF, FILE_CONTENT_MAX_SIZE_KB_PREF, USER_EXCLUDE_PATTERN_PREF } from '../common/workspace-preferences';
+ import { MonacoWorkspace } from '@theia/monaco/lib/browser/monaco-workspace';
+ import { MonacoTextModelService } from '@theia/monaco/lib/browser/monaco-text-model-service';
+ import { ProblemManager } from '@theia/markers/lib/browser';
+@@ -53,15 +46,8 @@ export class WorkspaceFunctionScope {
+     @inject(PreferenceService)
+     protected readonly preferences: PreferenceService;
+ 
+-    @inject(TrustAwarePreferenceReader)
+-    protected readonly trustAwarePreferences: TrustAwarePreferenceReader;
+-
+-    @inject(EnvVariablesServer)
+-    protected readonly envVariablesServer: EnvVariablesServer;
+-
+     private gitignoreMatcher: ReturnType<typeof ignore> | undefined;
+     private gitignoreWatcherInitialized = false;
+-    private homeDirUri: Promise<URI | undefined> | undefined;
+ 
+     async getWorkspaceRoot(): Promise<URI> {
+         const wsRoots = await this.workspaceService.roots;
+@@ -72,152 +58,11 @@ export class WorkspaceFunctionScope {
+     }
+ 
+     ensureWithinWorkspace(targetUri: URI, workspaceRootUri: URI): void {
+-        const normalized = targetUri.normalizePath();
+-        if (workspaceRootUri.scheme !== normalized.scheme
+-            || !workspaceRootUri.isEqualOrParent(normalized, WorkspaceFunctionScope.pathCaseSensitive)) {
++        if (!targetUri.toString().startsWith(workspaceRootUri.toString())) {
+             throw new Error('Access outside of the workspace is not allowed');
+         }
+     }
+ 
+-    /**
+-     * Asserts the target URI is reachable by AI tools that honor the external
+-     * allow-list. Allowed when the URI is inside any workspace root, or when it
+-     * is covered by an entry of the `ai-features.workspaceFunctions.allowedExternalPaths`
+-     * preference. Workspace-scoped overrides of that preference are dropped when
+-     * the workspace is not trusted.
+-     *
+-     * The target URI is normalized before the check so that literal `..`
+-     * segments and percent-encoded equivalents (e.g. `%2e%2e`) are resolved
+-     * away — otherwise the path-prefix comparison would admit traversals.
+-     *
+-     * Note: symlinks within allow-listed directories are NOT canonicalized
+-     * before the check. Only allow-list directories whose contents you trust.
+-     */
+-    async ensureAccessible(targetUri: URI): Promise<void> {
+-        const normalized = targetUri.normalizePath();
+-        const caseSensitive = WorkspaceFunctionScope.pathCaseSensitive;
+-        const roots = (await this.workspaceService.roots) ?? [];
+-        for (const root of roots) {
+-            if (root.resource.scheme === normalized.scheme && root.resource.isEqualOrParent(normalized, caseSensitive)) {
+-                return;
+-            }
+-        }
+-        const allowed = await this.getAllowedExternalUris();
+-        if (allowed.some(allowedUri => allowedUri.scheme === normalized.scheme && allowedUri.isEqualOrParent(normalized, caseSensitive))) {
+-            return;
+-        }
+-        throw new Error(
+-            `Access to '${normalized.path.toString()}' is not allowed. ` +
+-            `Path is outside the workspace and not covered by the '${ALLOWED_EXTERNAL_PATHS_PREF}' preference.`
+-        );
+-    }
+-
+-    /**
+-     * Resolves the configured external allow-list to URIs. Reads via the
+-     * trust-aware preference reader so workspace-scoped overrides are dropped
+-     * when the workspace is untrusted. Awaits the reader's `ready` promise so
+-     * that the trust state is resolved before the first preference read.
+-     * Non-string entries, blanks, and entries that don't parse to a `file://`
+-     * URI are filtered out; URIs are returned in normalized form.
+-     */
+-    async getAllowedExternalUris(resourceUri?: string): Promise<URI[]> {
+-        await this.trustAwarePreferences.ready;
+-        const raw = this.trustAwarePreferences.get<string[]>(ALLOWED_EXTERNAL_PATHS_PREF, [], resourceUri) ?? [];
+-        const result: URI[] = [];
+-        for (const entry of raw) {
+-            if (typeof entry !== 'string') {
+-                continue;
+-            }
+-            const trimmed = entry.trim();
+-            if (!trimmed) {
+-                continue;
+-            }
+-            const uri = await this.toExternalUri(trimmed);
+-            if (uri && uri.scheme === 'file') {
+-                result.push(uri.normalizePath());
+-            }
+-        }
+-        return result;
+-    }
+-
+-    /**
+-     * Whether path comparisons should be case-sensitive on the current
+-     * backend. Windows and macOS default to case-insensitive file systems
+-     * (NTFS, HFS+, APFS); Linux is treated as case-sensitive. This is a
+-     * heuristic — a case-sensitive APFS volume on macOS or a case-insensitive
+-     * volume mounted on Linux will be misclassified, but querying the actual
+-     * file system would require a backend round-trip.
+-     */
+-    static get pathCaseSensitive(): boolean {
+-        return !OS.backend.isWindows && !OS.backend.isOSX;
+-    }
+-
+-    /**
+-     * Converts a user-supplied allow-list entry (absolute POSIX path, Windows
+-     * drive path, `~`-prefixed path, or `file://` URI) into a normalized URI.
+-     * Returns undefined for invalid input (relative paths, malformed URIs).
+-     */
+-    protected async toExternalUri(entry: string): Promise<URI | undefined> {
+-        if (entry.includes('://')) {
+-            try {
+-                return new URI(entry);
+-            } catch {
+-                return undefined;
+-            }
+-        }
+-        const normalized = Path.normalizePathSeparator(entry);
+-        const tilde = await this.resolveTildePath(normalized);
+-        if (tilde) {
+-            return tilde;
+-        }
+-        if (!WorkspaceFunctionScope.isAbsolutePath(normalized)) {
+-            return undefined;
+-        }
+-        return URI.fromFilePath(normalized);
+-    }
+-
+-    /**
+-     * If the given separator-normalized path is `~` or starts with `~/`,
+-     * expands the leading `~` against the user's home directory and returns
+-     * the resulting URI. Returns undefined if the path does not start with
+-     * `~` or the home directory cannot be resolved. The remainder is
+-     * resolved in URI space to avoid Windows drive-letter round-tripping
+-     * issues with `URI.fromFilePath`.
+-     */
+-    protected async resolveTildePath(normalizedPath: string): Promise<URI | undefined> {
+-        if (normalizedPath !== '~' && !normalizedPath.startsWith('~/')) {
+-            return undefined;
+-        }
+-        const home = await this.getHomeDirUri();
+-        if (!home) {
+-            return undefined;
+-        }
+-        if (normalizedPath === '~') {
+-            return home;
+-        }
+-        return home.resolve(normalizedPath.substring(2));
+-    }
+-
+-    /**
+-     * Whether an already-separator-normalized path is absolute on either
+-     * platform: POSIX `/foo`, UNC `//host/share`, or Windows drive `C:/foo`.
+-     */
+-    static isAbsolutePath(normalized: string): boolean {
+-        if (normalized.startsWith('/')) {
+-            return true;
+-        }
+-        return /^[A-Za-z]:\//.test(normalized);
+-    }
+-
+-    protected getHomeDirUri(): Promise<URI | undefined> {
+-        if (!this.homeDirUri) {
+-            this.homeDirUri = this.envVariablesServer.getHomeDirUri()
+-                .then(value => value ? new URI(value) : undefined)
+-                .catch(() => undefined);
+-        }
+-        return this.homeDirUri;
+-    }
+-
+     async resolveRelativePath(relativePath: string): Promise<URI> {
+         const workspaceRoot = await this.getWorkspaceRoot();
+         return workspaceRoot.resolve(relativePath);
+@@ -277,35 +122,19 @@ export class WorkspaceFunctionScope {
+         }
+ 
+         const normalizedPath = Path.normalizePathSeparator(pathOrUri);
++        const path = new Path(normalizedPath);
+ 
+-        // Reject `..` only when it appears as a path SEGMENT. A filename like
+-        // `my..file.json` is a legitimate name. `ensureAccessible` normalizes
+-        // URI-form inputs separately as defense-in-depth (e.g. against
+-        // percent-encoded `%2e%2e` that bypasses the string-form check).
+-        if (WorkspaceFunctionScope.hasParentSegment(normalizedPath)) {
++        if (normalizedPath.includes('..')) {
+             return undefined;
+         }
+ 
+-        const tilde = await this.resolveTildePath(normalizedPath);
+-        if (tilde) {
+-            return tilde;
+-        }
+-
+-        if (WorkspaceFunctionScope.isAbsolutePath(normalizedPath)) {
++        if (path.isAbsolute) {
+             return URI.fromFilePath(normalizedPath);
+         }
+ 
+         return this.resolveRelativePath(normalizedPath);
+     }
+ 
+-    /**
+-     * Whether the already-separator-normalized path contains `..` as a path
+-     * segment (not merely as a substring of a filename like `my..file.json`).
+-     */
+-    static hasParentSegment(normalizedPath: string): boolean {
+-        return normalizedPath.split('/').some(segment => segment === '..');
+-    }
+-
+     private async initializeGitignoreWatcher(workspaceRoot: URI): Promise<void> {
+         if (this.gitignoreWatcherInitialized) {
+             return;
+@@ -378,35 +207,16 @@ export class GetWorkspaceDirectoryStructure implements ToolProvider {
+         return {
+             id: GetWorkspaceDirectoryStructure.ID,
+             name: GetWorkspaceDirectoryStructure.ID,
+-            description: 'Retrieves the directory tree structure as a nested JSON object. ' +
+-                'By default operates on the workspace; pass `root` to inspect a directory listed in the ' +
+-                '`ai-features.workspaceFunctions.allowedExternalPaths` preference instead. ' +
++            description: 'Retrieves the complete directory tree structure of the workspace as a nested JSON object. ' +
+                 'Lists only directories (no files), excluding common non-essential directories (node_modules, hidden files, etc.). ' +
+                 'Useful for getting a high-level overview of project organization. ' +
+                 'For listing files within a specific directory, use getWorkspaceFileList instead. ' +
+                 'For finding specific files, use findFilesByPattern.',
+             parameters: {
+                 type: 'object',
+-                properties: {
+-                    root: {
+-                        type: 'string',
+-                        description: 'Optional absolute path or `file://` URI to inspect instead of the workspace. ' +
+-                            'Must be inside, or equal to, an entry of the `allowedExternalPaths` preference. ' +
+-                            'When omitted, the workspace root is used.'
+-                    }
+-                },
+-            },
+-            handler: (arg_string: string, ctx?: ToolInvocationContext) => {
+-                let root: string | undefined;
+-                if (arg_string) {
+-                    try {
+-                        root = JSON.parse(arg_string).root;
+-                    } catch {
+-                        // tolerate empty or non-JSON input — keep prior behavior
+-                    }
+-                }
+-                return this.getDirectoryStructure(root, ctx?.cancellationToken);
++                properties: {},
+             },
++            handler: (_: string, ctx?: ToolInvocationContext) => this.getDirectoryStructure(ctx?.cancellationToken),
+         };
+     }
+ 
+@@ -416,28 +226,19 @@ export class GetWorkspaceDirectoryStructure implements ToolProvider {
+     @inject(WorkspaceFunctionScope)
+     protected workspaceScope: WorkspaceFunctionScope;
+ 
+-    private async getDirectoryStructure(root?: string, cancellationToken?: CancellationToken): Promise<Record<string, unknown>> {
++    private async getDirectoryStructure(cancellationToken?: CancellationToken): Promise<Record<string, unknown>> {
+         if (cancellationToken?.isCancellationRequested) {
+             return { error: 'Operation cancelled by user' };
+         }
+ 
+-        let rootUri: URI;
++        let workspaceRoot;
+         try {
+-            if (root) {
+-                const resolved = await this.workspaceScope.resolveToUri(root);
+-                if (!resolved) {
+-                    return { error: `Invalid root: '${root}'` };
+-                }
+-                rootUri = resolved;
+-                await this.workspaceScope.ensureAccessible(rootUri);
+-            } else {
+-                rootUri = await this.workspaceScope.getWorkspaceRoot();
+-            }
++            workspaceRoot = await this.workspaceScope.getWorkspaceRoot();
+         } catch (error) {
+             return { error: error.message };
+         }
+ 
+-        return this.buildDirectoryStructure(rootUri, cancellationToken);
++        return this.buildDirectoryStructure(workspaceRoot, cancellationToken);
+     }
+ 
+     private async buildDirectoryStructure(uri: URI, cancellationToken?: CancellationToken): Promise<Record<string, unknown>> {
+@@ -474,10 +275,9 @@ export class FileContentFunction implements ToolProvider {
+         return {
+             id: FileContentFunction.ID,
+             name: FileContentFunction.ID,
+-            description: 'Returns the content of a specified file as a raw string. ' +
+-                'Relative paths resolve against the workspace root. ' +
+-                'Absolute paths and `file://` URIs are accepted only when the target is inside the workspace ' +
+-                'or covered by the `ai-features.workspaceFunctions.allowedExternalPaths` preference; otherwise an error is returned. ' +
++            description: 'Returns the content of a specified file within the workspace as a raw string. ' +
++                'The file path must be provided relative to the workspace root. Only files within ' +
++                'workspace boundaries are accessible; attempting to access files outside the workspace will return an error. ' +
+                 'If the file is currently open in an editor with unsaved changes, returns the editor\'s current content (not the saved file on disk). ' +
+                 'Binary files may not be readable and will return an error. ' +
+                 'Use this tool to read file contents before making any edits with replacement functions. ' +
+@@ -492,9 +292,8 @@ export class FileContentFunction implements ToolProvider {
+                 properties: {
+                     file: {
+                         type: 'string',
+-                        description: 'Path to the target file. May be relative to the workspace root (e.g., "src/index.ts"), ' +
+-                            'an absolute path, or a `file://` URI. Absolute / URI forms must point inside the workspace ' +
+-                            'or inside a directory listed in the `allowedExternalPaths` preference.',
++                        description: 'The relative path to the target file within the workspace (e.g., "src/index.ts", "package.json"). ' +
++                            'Must be relative to the workspace root. Absolute paths and paths outside the workspace will result in an error.',
+                     },
+                     offset: {
+                         type: 'number',
+@@ -562,12 +361,9 @@ export class FileContentFunction implements ToolProvider {
+ 
+         let targetUri: URI | undefined;
+         try {
+-            const resolved = await this.workspaceScope.resolveToUri(file);
+-            if (!resolved) {
+-                return JSON.stringify({ error: `Invalid file path: '${file}'` });
+-            }
+-            targetUri = resolved;
+-            await this.workspaceScope.ensureAccessible(targetUri);
++            const workspaceRoot = await this.workspaceScope.getWorkspaceRoot();
++            targetUri = workspaceRoot.resolve(file);
++            this.workspaceScope.ensureWithinWorkspace(targetUri, workspaceRoot);
+         } catch (error) {
+             return JSON.stringify({ error: error.message });
+         }
+@@ -756,17 +552,13 @@ export class GetWorkspaceFileList implements ToolProvider {
+                 properties: {
+                     path: {
+                         type: 'string',
+-                        description: 'Path to a directory. Relative paths resolve against the workspace root ' +
+-                            '(e.g., "src", "src/components"); use "" or "." for the workspace root. ' +
+-                            'Absolute paths and `file://` URIs are accepted only when the target is inside the workspace ' +
+-                            'or covered by the `ai-features.workspaceFunctions.allowedExternalPaths` preference.'
++                        description: 'Relative path to a directory within the workspace (e.g., "src", "src/components"). ' +
++                            'Use "" or "." to list the workspace root. Paths outside the workspace will result in an error.'
+                     }
+                 },
+                 required: ['path']
+             },
+-            description: 'Lists files and directories within a specified directory. ' +
+-                'By default operates within the workspace; absolute paths or `file://` URIs may be passed ' +
+-                'when they target a location covered by the `allowedExternalPaths` preference. ' +
++            description: 'Lists files and directories within a specified workspace directory. ' +
+                 'Returns an array of names where directories are suffixed with "/" (e.g., ["src/", "package.json", "README.md"]). ' +
+                 'Use this to explore directory structure step by step. ' +
+                 'For finding specific files by pattern, use findFilesByPattern instead. ' +
+@@ -789,28 +581,15 @@ export class GetWorkspaceFileList implements ToolProvider {
+             return JSON.stringify({ error: 'Operation cancelled by user' });
+         }
+ 
+-        let targetUri: URI;
+-        let workspaceRoot: URI;
++        let workspaceRoot;
+         try {
+             workspaceRoot = await this.workspaceScope.getWorkspaceRoot();
+         } catch (error) {
+             return JSON.stringify({ error: error.message });
+         }
+ 
+-        try {
+-            if (!path || path === '.') {
+-                targetUri = workspaceRoot;
+-            } else {
+-                const resolved = await this.workspaceScope.resolveToUri(path);
+-                if (!resolved) {
+-                    return JSON.stringify({ error: `Invalid path: '${path}'` });
+-                }
+-                targetUri = resolved;
+-                await this.workspaceScope.ensureAccessible(targetUri);
+-            }
+-        } catch (error) {
+-            return JSON.stringify({ error: error.message });
+-        }
++        const targetUri = path ? workspaceRoot.resolve(path) : workspaceRoot;
++        this.workspaceScope.ensureWithinWorkspace(targetUri, workspaceRoot);
+ 
+         try {
+             if (cancellationToken?.isCancellationRequested) {
+@@ -1022,12 +801,10 @@ export class FindFilesByPattern implements ToolProvider {
+         return {
+             id: FindFilesByPattern.ID,
+             name: FindFilesByPattern.ID,
+-            description: 'Find files matching a given glob pattern. ' +
+-                'By default searches the workspace; pass `searchRoot` to search a directory listed in the ' +
+-                '`ai-features.workspaceFunctions.allowedExternalPaths` preference instead. ' +
++            description: 'Find files in the workspace that match a given glob pattern. ' +
+                 'This function allows efficient discovery of files using patterns like \'**/*.ts\' for all TypeScript files or ' +
+                 '\'src/**/*.js\' for JavaScript files in the src directory. The function respects gitignore patterns and user exclusions, ' +
+-                'returns paths relative to the search root, and limits results to 200 files maximum. ' +
++                'returns relative paths from the workspace root, and limits results to 200 files maximum. ' +
+                 'Performance note: This traverses directories recursively which may be slow in large workspaces. ' +
+                 'For better performance, use specific subdirectory patterns (e.g., \'src/**/*.ts\' instead of \'**/*.ts\'). ' +
+                 'Use this to find files by name/extension. Do NOT use this for searching file contents - use searchInWorkspace instead.',
+@@ -1047,20 +824,13 @@ export class FindFilesByPattern implements ToolProvider {
+                         description: 'Optional glob patterns to exclude. ' +
+                             'Examples: [\'**/*.spec.ts\', \'**/node_modules/**\']. ' +
+                             'Common exclusions (node_modules, .git) are applied automatically via gitignore.'
+-                    },
+-                    searchRoot: {
+-                        type: 'string',
+-                        description: 'Optional absolute path or `file://` URI to search instead of the workspace. ' +
+-                            'Must be inside, or equal to, an entry of the `allowedExternalPaths` preference. ' +
+-                            'When set, results are returned as absolute paths so they can be passed back to getFileContent. ' +
+-                            'When omitted (default), the workspace root is searched and results are workspace-relative.'
+                     }
+                 },
+                 required: ['pattern']
+             },
+             handler: (arg_string: string, ctx?: ToolInvocationContext) => {
+                 const args = JSON.parse(arg_string);
+-                return this.findFiles(args.pattern, args.exclude, args.searchRoot, ctx?.cancellationToken);
++                return this.findFiles(args.pattern, args.exclude, ctx?.cancellationToken);
+             },
+             providerName: undefined,
+             getArgumentsShortLabel: (args: string): { label: string; hasMore: boolean } | undefined => {
+@@ -1081,39 +851,21 @@ export class FindFilesByPattern implements ToolProvider {
+         };
+     }
+ 
+-    private async findFiles(
+-        pattern: string,
+-        excludePatterns?: string[],
+-        searchRoot?: string,
+-        cancellationToken?: CancellationToken
+-    ): Promise<string> {
++    private async findFiles(pattern: string, excludePatterns?: string[], cancellationToken?: CancellationToken): Promise<string> {
+         if (cancellationToken?.isCancellationRequested) {
+             return JSON.stringify({ error: 'Operation cancelled by user' });
+         }
+ 
+-        let rootUri: URI;
+-        let isExternalRoot = false;
++        let workspaceRoot;
+         try {
+-            if (searchRoot) {
+-                const resolved = await this.workspaceScope.resolveToUri(searchRoot);
+-                if (!resolved) {
+-                    return JSON.stringify({ error: `Invalid searchRoot: '${searchRoot}'` });
+-                }
+-                rootUri = resolved;
+-                isExternalRoot = !this.workspaceScope.isInWorkspace(rootUri);
+-                await this.workspaceScope.ensureAccessible(rootUri);
+-            } else {
+-                rootUri = await this.workspaceScope.getWorkspaceRoot();
+-            }
++            workspaceRoot = await this.workspaceScope.getWorkspaceRoot();
+         } catch (error) {
+             return JSON.stringify({ error: error.message });
+         }
+ 
+         try {
+-            // Build ignore patterns from gitignore (workspace only) and user preferences
+-            const ignorePatterns = isExternalRoot
+-                ? this.preferences.get<string[]>(USER_EXCLUDE_PATTERN_PREF, [])
+-                : await this.buildIgnorePatterns(rootUri);
++            // Build ignore patterns from gitignore and user preferences
++            const ignorePatterns = await this.buildIgnorePatterns(workspaceRoot);
+ 
+             const allExcludes = [...ignorePatterns];
+             if (excludePatterns && excludePatterns.length > 0) {
+@@ -1129,7 +881,7 @@ export class FindFilesByPattern implements ToolProvider {
+             const files: string[] = [];
+             const maxResults = 200;
+ 
+-            await this.traverseDirectory(rootUri, rootUri, patternMatcher, excludeMatchers, files, maxResults, cancellationToken, isExternalRoot);
++            await this.traverseDirectory(workspaceRoot, workspaceRoot, patternMatcher, excludeMatchers, files, maxResults, cancellationToken);
+ 
+             if (cancellationToken?.isCancellationRequested) {
+                 return JSON.stringify({ error: 'Operation cancelled by user' });
+@@ -1179,13 +931,12 @@ export class FindFilesByPattern implements ToolProvider {
+ 
+     private async traverseDirectory(
+         currentUri: URI,
+-        searchRoot: URI,
++        workspaceRoot: URI,
+         patternMatcher: Minimatch,
+         excludeMatchers: Minimatch[],
+         results: string[],
+         maxResults: number,
+-        cancellationToken?: CancellationToken,
+-        emitAbsolutePaths = false
++        cancellationToken?: CancellationToken
+     ): Promise<void> {
+         if (cancellationToken?.isCancellationRequested || results.length >= maxResults) {
+             return;
+@@ -1202,7 +953,7 @@ export class FindFilesByPattern implements ToolProvider {
+                     break;
+                 }
+ 
+-                const relativePath = searchRoot.relative(child.resource)?.toString();
++                const relativePath = workspaceRoot.relative(child.resource)?.toString();
+                 if (!relativePath) {
+                     continue;
+                 }
+@@ -1215,10 +966,9 @@ export class FindFilesByPattern implements ToolProvider {
+                 }
+ 
+                 if (child.isDirectory) {
+-                    await this.traverseDirectory(child.resource, searchRoot, patternMatcher, excludeMatchers,
+-                        results, maxResults, cancellationToken, emitAbsolutePaths);
++                    await this.traverseDirectory(child.resource, workspaceRoot, patternMatcher, excludeMatchers, results, maxResults, cancellationToken);
+                 } else if (patternMatcher.match(relativePath)) {
+-                    results.push(emitAbsolutePaths ? child.resource.path.toString() : relativePath);
++                    results.push(relativePath);
+                 }
+             }
+         } catch {
+
+diff --git a/packages/ai-ide/src/common/workspace-preferences.ts b/packages/ai-ide/src/common/workspace-preferences.ts
+index 7960484..52aa84f 100644
+--- a/packages/ai-ide/src/common/workspace-preferences.ts
++++ b/packages/ai-ide/src/common/workspace-preferences.ts
+@@ -24,7 +24,6 @@ export const PROMPT_TEMPLATE_ADDITIONAL_EXTENSIONS_PREF = 'ai-features.promptTem
+ export const PROMPT_TEMPLATE_WORKSPACE_FILES_PREF = 'ai-features.promptTemplates.WorkspaceTemplateFiles';
+ export const TASK_CONTEXT_STORAGE_DIRECTORY_PREF = 'ai-features.promptTemplates.taskContextStorageDirectory';
+ export const FILE_CONTENT_MAX_SIZE_KB_PREF = 'ai-features.workspaceFunctions.fileContentMaxSizeKB';
+-export const ALLOWED_EXTERNAL_PATHS_PREF = 'ai-features.workspaceFunctions.allowedExternalPaths';
+ 
+ const CONFLICT_RESOLUTION_DESCRIPTION = 'When templates with the same ID (filename) exist in multiple locations, conflicts are resolved by priority: specific template files \
+ (highest) > workspace directories > global directories (lowest).';
+@@ -103,21 +102,6 @@ export const WorkspacePreferencesSchema: PreferenceSchema = {
+                 'When using offset and limit, only the requested range is checked against this limit.'),
+             default: 256,
+             minimum: 1
+-        },
+-        [ALLOWED_EXTERNAL_PATHS_PREF]: {
+-            type: 'array',
+-            title: nls.localize('theia/ai/workspace/allowedExternalPaths/title', 'Allowed External Paths'),
+-            description: nls.localize('theia/ai/workspace/allowedExternalPaths/description',
+-                'List of absolute paths or file URIs (directories or files) outside the workspace that AI tools may read. ' +
+-                'Supports `~` to refer to the user home directory. Empty by default; opt-in only. ' +
+-                'Honored by getFileContent, findFilesByPattern, getWorkspaceFileList, and getWorkspaceDirectoryStructure. ' +
+-                'Workspace-scoped values are ignored when the workspace is not trusted. ' +
+-                'Symbolic links inside allow-listed directories are followed and may point to files outside the allow-list; ' +
+-                'only add directories whose contents you trust.'),
+-            default: [],
+-            items: {
+-                type: 'string'
+-            }
+         }
+     }
+ };
+

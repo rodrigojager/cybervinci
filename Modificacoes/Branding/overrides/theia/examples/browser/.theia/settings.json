@@ -1,0 +1,35 @@
+{
+    "files.autoSave": "afterDelay",
+    "workbench.editor.closeOnFileDelete": true,
+    "git.autoRepositoryDetection": true,
+    "git.openRepositoryInParentFolders": "always",
+    "ai-features.AiEnable.enableAI": true,
+    "ai-features.agentMode.enabled": true,
+    "ai-features.chat.bypassModelRequirement": true,
+    "ai-features.chat.defaultChatAgent": "OpenCoder",
+    "security.workspace.trust.enabled": false,
+    "security.workspace.trust.emptyWindow": true,
+    "ai-features.agentSettings": {
+        "OpenCoder": {
+            "languageModelRequirements": [
+                {
+                    "purpose": "chat",
+                    "identifier": "codex-provider"
+                }
+            ]
+        },
+        "OpenPencil": {
+            "languageModelRequirements": [
+                {
+                    "purpose": "openpencil-design",
+                    "identifier": "codex-provider"
+                },
+                {
+                    "purpose": "chat",
+                    "identifier": "codex-provider"
+                }
+            ]
+        }
+    }
+}
+

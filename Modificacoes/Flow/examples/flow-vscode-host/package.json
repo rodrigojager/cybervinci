@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@theia/example-flow-vscode-host",
+  "version": "0.0.0",
+  "description": "Conceptual VS Code host adapter for Flow Kernel protocol",
+  "type": "commonjs",
+  "scripts": {
+    "demo": "node ./src/flow-vscode-host.js",
+    "smoke": "node ./src/flow-vscode-host.js --workflow ../../flow-kernel/examples/linear.json --input \"Smoke run from the VS Code host adapter example.\" --max-steps 20"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

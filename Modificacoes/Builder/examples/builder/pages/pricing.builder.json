@@ -1,0 +1,342 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "pricing-page-example",
+    "name": "Pricing Page Example",
+    "createdBy": "CyberVinci UI Builder Extension",
+    "createdAt": "2026-05-20T00:00:00.000Z",
+    "updatedAt": "2026-05-20T00:00:00.000Z"
+  },
+  "page": {
+    "id": "pricing-page",
+    "title": "CyberVinci UI Builder Pricing",
+    "route": "/pricing",
+    "layout": "marketing"
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "grape",
+    "radius": "md",
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#faf7ff",
+      "textPrimary": "#211827",
+      "brandAccent": "#7c3aed"
+    }
+  },
+  "actions": {
+    "chooseStarter": {
+      "type": "navigate",
+      "params": {
+        "to": "/checkout/starter"
+      }
+    },
+    "chooseTeam": {
+      "type": "navigate",
+      "params": {
+        "to": "/checkout/team"
+      }
+    },
+    "contactSales": {
+      "type": "openModal",
+      "params": {
+        "modalId": "sales-contact"
+      }
+    }
+  },
+  "tree": {
+    "id": "pricing-root",
+    "type": "Page",
+    "props": {
+      "title": "CyberVinci UI Builder Pricing",
+      "description": "Pricing page example using canonical Builder components."
+    },
+    "children": [
+      {
+        "id": "pricing-hero-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "background": "#faf7ff"
+        },
+        "children": [
+          {
+            "id": "pricing-hero-container",
+            "type": "Container",
+            "props": {
+              "size": "lg"
+            },
+            "children": [
+              {
+                "id": "pricing-hero-stack",
+                "type": "Stack",
+                "props": {
+                  "gap": "md",
+                  "align": "center"
+                },
+                "children": [
+                  {
+                    "id": "pricing-badge",
+                    "type": "Badge",
+                    "props": {
+                      "children": "Extension product",
+                      "variant": "light",
+                      "color": "grape"
+                    }
+                  },
+                  {
+                    "id": "pricing-title",
+                    "type": "Title",
+                    "props": {
+                      "order": 1,
+                      "children": "Plans for schema-first interface building",
+                      "align": "center"
+                    }
+                  },
+                  {
+                    "id": "pricing-subtitle",
+                    "type": "Text",
+                    "props": {
+                      "children": "Start with local .builder.json editing and upgrade when teams need visual collaboration, AI generation and export workflows.",
+                      "size": "lg",
+                      "align": "center"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pricing-section",
+        "type": "PricingSection",
+        "props": {
+          "title": "Choose a plan",
+          "description": "The free CyberVinci core remains separate; UI Builder features are delivered by the removable extension.",
+          "plans": [
+            {
+              "name": "Starter",
+              "price": "$0",
+              "description": "Create and preview Builder files locally.",
+              "features": [
+                "Canonical .builder.json files",
+                "Mantine preview renderer",
+                "JSON editor workflow"
+              ],
+              "ctaLabel": "Use starter"
+            },
+            {
+              "name": "Team",
+              "price": "$29",
+              "description": "Visual editing and AI-assisted page operations.",
+              "features": [
+                "Puck visual editing adapter",
+                "RJSF property panel",
+                "Validated AI page patches",
+                "Static HTML export"
+              ],
+              "ctaLabel": "Choose team",
+              "highlighted": true
+            },
+            {
+              "name": "Enterprise",
+              "price": "Custom",
+              "description": "Advanced governance, templates and deployment support.",
+              "features": [
+                "Premium component registry",
+                "Team templates",
+                "Approval workflows",
+                "Dedicated support"
+              ],
+              "ctaLabel": "Contact sales"
+            }
+          ]
+        },
+        "children": [
+          {
+            "id": "starter-plan-card",
+            "type": "Card",
+            "props": {
+              "shadow": "sm",
+              "padding": "lg",
+              "withBorder": true
+            },
+            "children": [
+              {
+                "id": "starter-plan-title",
+                "type": "Title",
+                "props": {
+                  "order": 3,
+                  "children": "Starter"
+                }
+              },
+              {
+                "id": "starter-plan-copy",
+                "type": "Text",
+                "props": {
+                  "children": "For validating the schema-first workflow without premium adapters."
+                }
+              },
+              {
+                "id": "starter-plan-cta",
+                "type": "Button",
+                "props": {
+                  "children": "Use starter",
+                  "variant": "outline",
+                  "fullWidth": true
+                },
+                "events": {
+                  "onClick": {
+                    "actionId": "chooseStarter"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "team-plan-card",
+            "type": "Card",
+            "props": {
+              "shadow": "md",
+              "padding": "lg",
+              "withBorder": true
+            },
+            "children": [
+              {
+                "id": "team-plan-title",
+                "type": "Title",
+                "props": {
+                  "order": 3,
+                  "children": "Team"
+                }
+              },
+              {
+                "id": "team-plan-copy",
+                "type": "Text",
+                "props": {
+                  "children": "For teams that need visual editing, validated AI changes and export."
+                }
+              },
+              {
+                "id": "team-plan-cta",
+                "type": "Button",
+                "props": {
+                  "children": "Choose team",
+                  "variant": "filled",
+                  "fullWidth": true
+                },
+                "events": {
+                  "onClick": {
+                    "actionId": "chooseTeam"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "enterprise-plan-card",
+            "type": "Card",
+            "props": {
+              "shadow": "sm",
+              "padding": "lg",
+              "withBorder": true
+            },
+            "children": [
+              {
+                "id": "enterprise-plan-title",
+                "type": "Title",
+                "props": {
+                  "order": 3,
+                  "children": "Enterprise"
+                }
+              },
+              {
+                "id": "enterprise-plan-copy",
+                "type": "Text",
+                "props": {
+                  "children": "For advanced governance, premium templates and managed rollout."
+                }
+              },
+              {
+                "id": "enterprise-plan-cta",
+                "type": "Button",
+                "props": {
+                  "children": "Contact sales",
+                  "variant": "light",
+                  "fullWidth": true
+                },
+                "events": {
+                  "onClick": {
+                    "actionId": "contactSales"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pricing-faq-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl"
+        },
+        "children": [
+          {
+            "id": "pricing-faq-container",
+            "type": "Container",
+            "props": {
+              "size": "md"
+            },
+            "children": [
+              {
+                "id": "pricing-faq-stack",
+                "type": "Stack",
+                "props": {
+                  "gap": "md"
+                },
+                "children": [
+                  {
+                    "id": "pricing-faq-title",
+                    "type": "Title",
+                    "props": {
+                      "order": 2,
+                      "children": "Common questions"
+                    }
+                  },
+                  {
+                    "id": "pricing-faq-core",
+                    "type": "Alert",
+                    "props": {
+                      "title": "Does this change the free core?",
+                      "children": "No. The UI Builder Extension is installed and removed separately, and the CyberVinci core must continue to work without it.",
+                      "color": "grape",
+                      "variant": "light"
+                    }
+                  },
+                  {
+                    "id": "pricing-faq-format",
+                    "type": "Alert",
+                    "props": {
+                      "title": "What gets saved?",
+                      "children": "The canonical page source is Builder Schema in .builder.json, not Puck, JSX or raw HTML.",
+                      "color": "blue",
+                      "variant": "light"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "aiHints": {
+    "intent": "Demonstrate a realistic pricing page for the removable UI Builder Extension",
+    "tone": "commercial, clear and trustworthy",
+    "audience": "teams evaluating CyberVinci UI Builder",
+    "context": "Pricing example with PricingSection, plan cards, CTAs and core separation messaging"
+  }
+}

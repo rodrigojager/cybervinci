@@ -1,0 +1,61 @@
+{
+  "name": "@zseven-w/pen-engine",
+  "version": "0.7.5",
+  "description": "Headless design engine for OpenPencil — zero framework dependencies",
+  "homepage": "https://github.com/ZSeven-W/openpencil/tree/main/packages/pen-engine",
+  "bugs": {
+    "url": "https://github.com/ZSeven-W/openpencil/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "ZSeven-W",
+    "email": "xkayshen@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZSeven-W/openpencil.git",
+    "directory": "packages/pen-engine"
+  },
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./browser": {
+      "types": "./src/browser.ts",
+      "import": "./src/browser.ts",
+      "require": "./src/browser.ts",
+      "default": "./src/browser.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zseven-w/pen-core": "file:../pen-core",
+    "@zseven-w/pen-figma": "file:../pen-figma",
+    "@zseven-w/pen-renderer": "file:../pen-renderer",
+    "@zseven-w/pen-types": "file:../pen-types",
+    "nanoid": "^5.1.6"
+  },
+  "devDependencies": {
+    "canvaskit-wasm": "^0.40.0",
+    "typescript": "^5.7.2"
+  },
+  "peerDependencies": {
+    "canvaskit-wasm": "^0.40.0"
+  },
+  "peerDependenciesMeta": {
+    "canvaskit-wasm": {
+      "optional": true
+    }
+  }
+}

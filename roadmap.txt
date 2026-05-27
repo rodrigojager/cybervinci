@@ -1,0 +1,2 @@
+- Implementar https://github.com/backnotprop/plannotator para funcionar automaticamente dentro do CyberVinci e sempre que gerar um plano, abrir o markdown para aceite ou conferencia. Dentro dessa tela precisa ter um botão para aprovar ou enviar os pedidos alterações, no caso específico que o markdown for aberto com um plano.
+- Modificar meu ralph, para estrutura de handover etc

@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "landing-page-example",
+    "name": "Landing Page Example",
+    "createdBy": "CyberVinci UI Builder Extension",
+    "createdAt": "2026-05-20T00:00:00.000Z",
+    "updatedAt": "2026-05-20T00:00:00.000Z"
+  },
+  "page": {
+    "id": "landing-page",
+    "title": "CyberVinci UI Builder",
+    "route": "/landing",
+    "layout": "marketing"
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "blue",
+    "radius": "md",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#f5f8fc",
+      "textPrimary": "#182230",
+      "brandAccent": "#2563eb"
+    }
+  },
+  "actions": {
+    "openBuilder": {
+      "type": "navigate",
+      "params": {
+        "to": "/builder"
+      }
+    },
+    "viewDocs": {
+      "type": "navigate",
+      "params": {
+        "to": "/docs/builder"
+      }
+    }
+  },
+  "tree": {
+    "id": "landing-root",
+    "type": "Page",
+    "props": {
+      "title": "CyberVinci UI Builder",
+      "description": "Build frontend pages from canonical JSON."
+    },
+    "children": [
+      {
+        "id": "landing-hero",
+        "type": "HeroSection",
+        "props": {
+          "eyebrow": "Builder Schema first",
+          "title": "Build editable frontend pages from canonical JSON",
+          "subtitle": "CyberVinci UI Builder keeps page structure independent from Mantine, Puck, RJSF, AI operations and exporters, so every editor writes back to one safe schema.",
+          "primaryActionLabel": "Start building",
+          "secondaryActionLabel": "Read schema docs",
+          "align": "left"
+        },
+        "slots": {
+          "actions": [
+            {
+              "id": "landing-primary-cta",
+              "type": "Button",
+              "props": {
+                "children": "Start building",
+                "variant": "filled",
+                "size": "lg"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "openBuilder"
+                }
+              }
+            },
+            {
+              "id": "landing-secondary-cta",
+              "type": "Button",
+              "props": {
+                "children": "Read schema docs",
+                "variant": "outline",
+                "size": "lg"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "viewDocs"
+                }
+              }
+            }
+          ],
+          "media": [
+            {
+              "id": "landing-hero-media",
+              "type": "Box",
+              "props": {
+                "padding": "lg",
+                "background": "#edf4ff"
+              },
+              "children": [
+                {
+                  "id": "landing-preview-title",
+                  "type": "Text",
+                  "props": {
+                    "children": "Preview, JSON editor, property panel and AI patches stay synchronized through Builder Schema.",
+                    "size": "lg"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "landing-features-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "background": "#f8fafc"
+        },
+        "children": [
+          {
+            "id": "landing-features",
+            "type": "FeatureGrid",
+            "props": {
+              "title": "Everything writes back to Builder",
+              "description": "Adapters can render, edit and export the page without becoming the persisted contract.",
+              "columns": 3,
+              "features": [
+                {
+                  "title": "Visual editing",
+                  "description": "Drag components through Puck while saving Builder nodes, slots and props."
+                },
+                {
+                  "title": "Generated forms",
+                  "description": "RJSF reads component JSON Schema and updates the selected node safely."
+                },
+                {
+                  "title": "Structured AI",
+                  "description": "AI returns validated JSON operations with preview before large changes apply."
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "landing-proof-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl"
+        },
+        "children": [
+          {
+            "id": "landing-proof-grid",
+            "type": "MetricGrid",
+            "props": {
+              "columns": 3,
+              "spacing": "md"
+            },
+            "children": [
+              {
+                "id": "landing-proof-components",
+                "type": "MetricCard",
+                "props": {
+                  "label": "MVP components",
+                  "value": "50+",
+                  "description": "Layout, forms, data display, marketing and dashboard blocks.",
+                  "trend": "up",
+                  "trendLabel": "registry-backed"
+                }
+              },
+              {
+                "id": "landing-proof-formats",
+                "type": "MetricCard",
+                "props": {
+                  "label": "Canonical format",
+                  "value": "1",
+                  "description": "The saved file is always .builder.json.",
+                  "trend": "neutral"
+                }
+              },
+              {
+                "id": "landing-proof-export",
+                "type": "MetricCard",
+                "props": {
+                  "label": "Initial export",
+                  "value": "HTML",
+                  "description": "Static index.html and styles.css for browser preview.",
+                  "trend": "up"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "landing-cta",
+        "type": "CTASection",
+        "props": {
+          "title": "Create the first Builder page",
+          "description": "Start from schema, refine visually, validate against the registry and export a simple static build.",
+          "primaryActionLabel": "Open builder",
+          "secondaryActionLabel": "Review docs",
+          "align": "center"
+        },
+        "slots": {
+          "actions": [
+            {
+              "id": "landing-cta-primary",
+              "type": "Button",
+              "props": {
+                "children": "Open builder",
+                "variant": "filled"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "openBuilder"
+                }
+              }
+            },
+            {
+              "id": "landing-cta-secondary",
+              "type": "Anchor",
+              "props": {
+                "children": "Review docs",
+                "href": "/docs/builder"
+              },
+              "events": {
+                "onClick": {
+                  "actionId": "viewDocs"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "aiHints": {
+    "intent": "Introduce the CyberVinci UI Builder Extension as a schema-first product",
+    "tone": "clear, technical and product-focused",
+    "audience": "frontend builders and CyberVinci extension users",
+    "context": "Realistic landing page example for the Builder Schema MVP"
+  }
+}
