@@ -1106,12 +1106,6 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         if (await this.executeStreamingAiPromptWithFeedback(widget, document, selection, prompt, requestMode, executionChoice)) {
             return;
         }
-        if (this.shouldContinueFullPageStreaming(prompt, selection, requestMode)) {
-            this.reportAiStatus(widget, undefined, this.createAiStatus('error', 'No stream', 'Canvas AI did not produce a visible streamed change quickly enough.'));
-            this.messages.warn('Canvas AI streaming did not produce visible changes quickly enough, so the full-page request was stopped before running a non-stream fallback that would leave the canvas blank. Try another provider/model or retry the request.');
-            widget.clearAiStatusSoon(5200);
-            return;
-        }
         const stages = this.createAiIncrementalStages(prompt, selection, requestMode);
         const rollbackSnapshot = widget.createAiRollbackSnapshot();
         let progress: OpenPencilProgressHandle | undefined = await this.progressService.showProgress({
