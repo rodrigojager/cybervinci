@@ -71,6 +71,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Use section padding/gap/layout for spacing; do not create spacer-only nodes named Spacer, Espaço, Space, Gap, or before/after blocks.',
                     'Product shelves must fit inside the page width and wrap into rows instead of becoming one long horizontal strip.',
                     'For desktop marketplace shelves, use 3-4 product cards per row when cards contain large price/detail text, and keep every child element inside its card bounds.',
+                    'Never include editor-shell placeholder copy in the design, including text such as "Edit this embedded .op design inside Theia."',
+                    'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions instead of giving multiple texts the full row width.',
                     'Do not include markdown, prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
                 ].join(' ')
             },
@@ -129,6 +131,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'For desktop marketplace shelves, stream cards as a 3-4 column grid when card details are large. Text, icons, images, and decorative shapes must stay inside their parent card or section.',
                     'For full homepage copy requests, keep streaming section by section until the visible page includes navigation, hero/promos, categories, several product shelves, banners, recommendations, benefits, and closing/footer content.',
                     'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header/search/navigation, large promo hero, category shortcuts, product shelves with 5-6 cards per row, promo banners between shelves, gray page background, and footer/help blocks.',
+                    'Never stream editor-shell placeholder copy into the design, including text such as "Edit this embedded .op design inside Theia."',
+                    'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions instead of giving multiple texts the full row width.',
                     'Do not restate operations that were already emitted.',
                     'When finished, emit {"type":"complete"}.',
                     'Do not include prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
@@ -194,6 +198,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'For website/homepage/e-commerce requests, preserve a fixed page width around 1200px and extend downward. Additional products or shelves go into new rows/sections below, not beyond the right edge.',
             'For full homepage copies, stream a long vertical page with many sections rather than only the above-the-fold portion.',
             'For Mercado Livre-style marketplace pages, organize content as a centered vertical marketplace feed with a yellow header, promo hero, category shortcuts, repeated product shelves, banners, recommendations, and footer/help content.',
+            'Never include CyberVinci/Theia editor placeholder text as content in the .op document.',
             'For non-auto-layout siblings, stream foreground layers before background layers so text and controls stay readable while the canvas updates.',
             'Preserve existing node IDs unless creating or explicitly replacing nodes.',
             request.mode === 'continuation'
