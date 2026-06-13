@@ -1636,6 +1636,21 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         const failureMessage = this.createPageLevelAiFailureMessage(providers, diagnostics, providerReturnedOperations);
         diagnostics.push(failureMessage);
+        const fallbackOperations = this.createValidatedDeterministicSkeletonFallbackOperations(request, context, diagnostics);
+        if (fallbackOperations.length) {
+            canvasAiFrontendDebug('deterministic-skeleton-fallback', {
+                providersCount: providers.length,
+                providerReturnedOperations,
+                operationsCount: fallbackOperations.length,
+                diagnosticsCount: diagnostics.length
+            });
+            return {
+                operations: fallbackOperations,
+                context,
+                source: 'deterministic-fallback',
+                diagnostics
+            };
+        }
         if (!providers.length) {
             diagnostics.push(
                 'Canvas AI requires a configured AI provider to generate designs.',
@@ -1851,6 +1866,27 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
         const failureMessage = this.createPageLevelAiFailureMessage(providers, diagnostics, providerReturnedOperations);
         diagnostics.push(failureMessage);
+        const fallbackOperations = this.createValidatedDeterministicSkeletonFallbackOperations(request, context, diagnostics);
+        if (fallbackOperations.length) {
+            const fallbackResult: OpenPencilAiDesignResult = {
+                operations: fallbackOperations,
+                context,
+                source: 'deterministic-fallback',
+                diagnostics
+            };
+            const appliedFallback = await apply(fallbackResult);
+            if (appliedFallback?.applied) {
+                canvasAiFrontendDebug('deterministic-skeleton-stream-fallback', {
+                    providersCount: providers.length,
+                    providerReturnedOperations,
+                    operationsCount: fallbackOperations.length,
+                    diagnosticsCount: diagnostics.length,
+                    applied: appliedFallback.applied
+                });
+                return fallbackResult;
+            }
+            diagnostics.push('Canvas AI generated a local skeleton fallback, but the Canvas editor did not apply it.');
+        }
         return {
             operations: [],
             context,
@@ -1918,6 +1954,59 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             guidance,
             details
         ].join(' ').trim();
+    }
+
+    protected createValidatedDeterministicSkeletonFallbackOperations(
+        request: OpenPencilAiDesignRequest,
+        context: OpenPencilAiSkillContext,
+        diagnostics: string[]
+    ): OpenPencilDesignOperation[] {
+        if (!this.shouldUseDeterministicSkeletonFallback(request, context)) {
+            return [];
+        }
+        const operations = this.generateDeterministicSkeletonFallbackOperations(request);
+        if (!operations.length) {
+            return [];
+        }
+        const previewDiagnostic = this.validateAiOperationsPreview(operations, request, 'Local Canvas AI skeleton fallback');
+        if (previewDiagnostic) {
+            diagnostics.push(previewDiagnostic);
+            return [];
+        }
+        diagnostics.push('Canvas AI provider did not return usable skeleton operations; generated a local visible skeleton so the canvas can continue instead of staying blank.');
+        return operations;
+    }
+
+    protected shouldUseDeterministicSkeletonFallback(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): boolean {
+        if (context.phase !== 'generation' || request.selection.length || request.mode === 'continuation' || request.mode === 'maintenance') {
+            return false;
+        }
+        return /Incremental stage\s+1\/3/i.test(request.prompt)
+            && /\b(root view frame|major visible section|container skeleton|skeleton)\b/i.test(request.prompt);
+    }
+
+    protected generateDeterministicSkeletonFallbackOperations(request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] {
+        const page = this.documents.getActivePage(request.document);
+        const root = this.isMarketplaceHomepagePrompt(request.prompt)
+            ? this.createMarketplaceSkeletonPageNode(request)
+            : this.createGenericSkeletonPageNode(request);
+        const pageHeight = Math.max(
+            this.numberValue(page.height, 620),
+            this.numberValue(root.y, 0) + this.numberValue(root.height, 720) + 40
+        );
+        return [
+            {
+                operation: 'updatePage',
+                pageId: page.id,
+                changes: {
+                    width: Math.max(this.numberValue(page.width, 900), this.numberValue(root.width, 1200)),
+                    height: pageHeight,
+                    background: '#eeeeee',
+                    children: [root]
+                }
+            },
+            { operation: 'setSelection', nodeIds: [root.id] }
+        ];
     }
 
     protected providerOperations(response: OpenPencilAiDesignProviderResponse): OpenPencilDesignOperation[] | undefined {
@@ -2721,6 +2810,252 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             return this.generateDeterministicMaintenanceOperations(request);
         }
         return this.generateDeterministicGenerationOperations(request);
+    }
+
+    protected isMarketplaceHomepagePrompt(prompt: string): boolean {
+        return /\b(mercado\s+livre|mercadolivre|marketplace|e-?commerce|loja|store|retail|ofertas?|offers?|produtos?|products?|homepage|p[aá]gina inicial|pagina inicial)\b/i.test(prompt);
+    }
+
+    protected createMarketplaceSkeletonPageNode(request: OpenPencilAiDesignRequest): OpenPencilNode {
+        const baseId = this.stableAiIdBase(request.prompt);
+        const brand = this.marketplaceBrandNameFromPrompt(request.prompt) ?? 'Mercado Controlado';
+        const pageWidth = 1200;
+        const contentX = 82;
+        const contentWidth = 1036;
+        return {
+            id: this.uniqueAiId(request.document, `${baseId}-marketplace-homepage`),
+            type: 'frame',
+            name: 'Marketplace homepage skeleton',
+            role: 'page',
+            x: 0,
+            y: 0,
+            width: pageWidth,
+            height: 1480,
+            fill: [{ type: 'solid', color: '#eeeeee' }],
+            children: [
+                this.createMarketplaceHeaderNode(request, `${baseId}-header`, brand, pageWidth),
+                this.createMarketplaceHeroNode(request, `${baseId}-hero`, brand, pageWidth),
+                this.createMarketplaceBenefitsNode(request, `${baseId}-benefits`, contentX, 330, contentWidth),
+                this.createMarketplaceCategoryNode(request, `${baseId}-categories`, contentX, 450, contentWidth),
+                this.createMarketplaceShelfNode(request, `${baseId}-offers`, 'Ofertas do dia', 550, [
+                    ['Notebook leve', 'R$ 1.899', '18% OFF'],
+                    ['Smartphone Pro', 'R$ 3.249', '12x sem juros'],
+                    ['Cadeira ergonomica', 'R$ 329', '26% OFF'],
+                    ['Headphone sem fio', 'R$ 799', 'Frete gratis']
+                ], contentX, contentWidth),
+                this.createMarketplacePromoBannerNode(request, `${baseId}-plus-banner`, contentX, 850, contentWidth, 'Mercado Controlado+', 'Frete gratis, filmes e beneficios em uma assinatura.'),
+                this.createMarketplaceShelfNode(request, `${baseId}-history`, 'Inspirado no seu historico', 990, [
+                    ['Tecnologia para casa', 'R$ 949', 'Ver recomendacoes'],
+                    ['Casa pronta para tudo', 'R$ 219', 'Explorar ofertas'],
+                    ['Games e acessorios', 'R$ 399', 'Comprar agora'],
+                    ['Moda em destaque', 'R$ 159', 'Novidades']
+                ], contentX, contentWidth),
+                this.createMarketplaceClosingNode(request, `${baseId}-closing`, contentX, 1290, contentWidth)
+            ]
+        };
+    }
+
+    protected marketplaceBrandNameFromPrompt(prompt: string): string | undefined {
+        const match = /\b(?:com\s+o\s+nome|chamado|nome|name(?:d)?)\s+["']?([A-Za-z0-9][A-Za-z0-9 ]{1,38}?)(?:["']?[\n.,;:]|$)/i.exec(prompt);
+        if (!match?.[1]) {
+            return undefined;
+        }
+        return match[1].trim().replace(/\s+/g, ' ');
+    }
+
+    protected createGenericSkeletonPageNode(request: OpenPencilAiDesignRequest): OpenPencilNode {
+        const baseId = this.stableAiIdBase(request.prompt);
+        return {
+            id: this.uniqueAiId(request.document, `${baseId}-page-skeleton`),
+            type: 'frame',
+            name: 'AI page skeleton',
+            role: 'page',
+            x: 0,
+            y: 0,
+            width: 1200,
+            height: 820,
+            fill: [{ type: 'solid', color: '#f1f5f9' }],
+            children: [
+                this.createSkeletonFrameNode(request, `${baseId}-generic-nav`, 'Page navigation skeleton', 'navigation', 0, 0, 1200, 96, '#ffffff', 0),
+                this.createTextNode(request, `${baseId}-generic-logo`, 'CyberVinci', 82, 32, 180, 28, 20, 800, '#0f172a', 'Skeleton brand'),
+                this.createSkeletonFrameNode(request, `${baseId}-generic-hero`, 'Hero section skeleton', 'hero', 82, 138, 1036, 240, '#ffffff', 18, [
+                    this.createTextNode(request, `${baseId}-generic-hero-title`, this.promptGeneratedHeadline(request.prompt), 40, 42, 540, 52, 34, 800, '#0f172a', 'Skeleton hero title'),
+                    this.createTextNode(request, `${baseId}-generic-hero-copy`, this.promptGeneratedBodyCopy(request.prompt), 40, 112, 500, 48, 16, 500, '#475569', 'Skeleton hero copy'),
+                    this.createSkeletonFrameNode(request, `${baseId}-generic-hero-visual`, 'Hero visual placeholder', 'image', 690, 36, 280, 168, '#e2e8f0', 16)
+                ]),
+                this.createSkeletonFrameNode(request, `${baseId}-generic-card-one`, 'Feature card one', 'card', 82, 420, 326, 150, '#ffffff', 14),
+                this.createSkeletonFrameNode(request, `${baseId}-generic-card-two`, 'Feature card two', 'card', 437, 420, 326, 150, '#ffffff', 14),
+                this.createSkeletonFrameNode(request, `${baseId}-generic-card-three`, 'Feature card three', 'card', 792, 420, 326, 150, '#ffffff', 14),
+                this.createSkeletonFrameNode(request, `${baseId}-generic-footer`, 'Closing section skeleton', 'section', 82, 626, 1036, 130, '#ffffff', 16)
+            ]
+        };
+    }
+
+    protected createMarketplaceHeaderNode(request: OpenPencilAiDesignRequest, idBase: string, brand: string, width: number): OpenPencilNode {
+        return this.createSkeletonFrameNode(request, idBase, 'Marketplace header', 'navigation', 0, 0, width, 118, '#fff159', 0, [
+            this.createTextNode(request, `${idBase}-brand`, brand, 84, 26, 210, 28, 22, 800, '#333333', 'Marketplace brand'),
+            this.createSkeletonFrameNode(request, `${idBase}-search`, 'Search field', 'search', 300, 20, 610, 44, '#ffffff', 6, [
+                this.createTextNode(request, `${idBase}-search-placeholder`, 'Buscar produtos, marcas e muito mais...', 20, 12, 430, 20, 14, 400, '#777777', 'Search placeholder')
+            ]),
+            this.createTextNode(request, `${idBase}-account`, 'Crie sua conta', 944, 31, 150, 22, 15, 600, '#333333', 'Account action'),
+            this.createTextNode(request, `${idBase}-location`, 'Enviar para Rodrigo', 84, 78, 170, 20, 14, 500, '#333333', 'Delivery location'),
+            this.createTextNode(request, `${idBase}-categories`, 'Categorias', 300, 78, 90, 20, 14, 500, '#333333', 'Categories link'),
+            this.createTextNode(request, `${idBase}-offers`, 'Ofertas', 420, 78, 70, 20, 14, 500, '#333333', 'Offers link'),
+            this.createTextNode(request, `${idBase}-history`, 'Historico', 518, 78, 90, 20, 14, 500, '#333333', 'History link'),
+            this.createTextNode(request, `${idBase}-market`, 'Supermercado', 640, 78, 130, 20, 14, 500, '#333333', 'Market link')
+        ]);
+    }
+
+    protected createMarketplaceHeroNode(request: OpenPencilAiDesignRequest, idBase: string, brand: string, width: number): OpenPencilNode {
+        return this.createSkeletonFrameNode(request, idBase, 'Marketplace hero promo', 'hero', 0, 118, width, 180, '#ffe600', 0, [
+            this.createTextNode(request, `${idBase}-eyebrow`, 'OFERTAS IMPERDIVEIS', 84, 36, 260, 24, 14, 800, '#263238', 'Hero eyebrow'),
+            this.createTextNode(request, `${idBase}-title`, `${brand} com precos claros`, 84, 66, 520, 46, 34, 800, '#1f2937', 'Hero title'),
+            this.createTextNode(request, `${idBase}-copy`, 'Produtos verificados, entrega rapida e pagamento seguro em um so lugar.', 84, 120, 560, 28, 16, 500, '#374151', 'Hero copy'),
+            this.createSkeletonFrameNode(request, `${idBase}-deal-one`, 'Hero deal card', 'card', 720, 32, 160, 116, '#ffffff', 10),
+            this.createSkeletonFrameNode(request, `${idBase}-deal-two`, 'Hero product card', 'card', 904, 32, 160, 116, '#ffffff', 10)
+        ]);
+    }
+
+    protected createMarketplaceBenefitsNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number): OpenPencilNode {
+        const cardWidth = Math.floor((width - 2) / 3);
+        return this.createSkeletonFrameNode(request, idBase, 'Marketplace benefits strip', 'section', x, y, width, 88, '#ffffff', 8, [
+            this.createBenefitItemNode(request, `${idBase}-payment`, 'Pague com cartao', 'Ver promocoes bancarias', 0, 0, cardWidth),
+            this.createBenefitItemNode(request, `${idBase}-pix`, 'Pix com desconto', 'Aprovacao imediata', cardWidth, 0, cardWidth),
+            this.createBenefitItemNode(request, `${idBase}-shipping`, 'Beneficios Plus', 'Frete gratis e descontos', cardWidth * 2, 0, cardWidth)
+        ]);
+    }
+
+    protected createMarketplaceCategoryNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number): OpenPencilNode {
+        const cardWidth = Math.floor((width - 30) / 4);
+        return this.createSkeletonFrameNode(request, idBase, 'Marketplace categories', 'section', x, y, width, 74, '#eeeeee', 0, [
+            this.createCategoryItemNode(request, `${idBase}-tech`, 'Tecnologia', 0, 0, cardWidth),
+            this.createCategoryItemNode(request, `${idBase}-home`, 'Casa', cardWidth + 10, 0, cardWidth),
+            this.createCategoryItemNode(request, `${idBase}-fashion`, 'Moda', (cardWidth + 10) * 2, 0, cardWidth),
+            this.createCategoryItemNode(request, `${idBase}-market`, 'Mercado', (cardWidth + 10) * 3, 0, cardWidth)
+        ]);
+    }
+
+    protected createMarketplaceShelfNode(
+        request: OpenPencilAiDesignRequest,
+        idBase: string,
+        title: string,
+        y: number,
+        products: [string, string, string][],
+        x: number,
+        width: number
+    ): OpenPencilNode {
+        const cardWidth = Math.floor((width - 42) / 4);
+        return this.createSkeletonFrameNode(request, idBase, title, 'section', x, y, width, 290, '#ffffff', 8, [
+            this.createTextNode(request, `${idBase}-title`, title, 0, 20, 360, 30, 22, 700, '#333333', `${title} title`),
+            this.createTextNode(request, `${idBase}-all`, 'Ver todas', width - 94, 24, 88, 20, 13, 600, '#3483fa', `${title} link`),
+            ...products.map(([name, price, badge], index) => this.createProductCardNode(
+                request,
+                `${idBase}-product-${index + 1}`,
+                name,
+                price,
+                badge,
+                index * (cardWidth + 14),
+                74,
+                cardWidth
+            ))
+        ]);
+    }
+
+    protected createMarketplacePromoBannerNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number, title: string, copy: string): OpenPencilNode {
+        return this.createSkeletonFrameNode(request, idBase, 'Marketplace promo banner', 'banner', x, y, width, 104, '#263238', 8, [
+            this.createTextNode(request, `${idBase}-label`, title, 28, 24, 300, 24, 16, 800, '#ffffff', 'Promo label'),
+            this.createTextNode(request, `${idBase}-copy`, copy, 28, 56, 520, 24, 14, 500, '#e5e7eb', 'Promo copy'),
+            this.createSkeletonFrameNode(request, `${idBase}-button`, 'Promo CTA', 'button', width - 184, 31, 140, 42, '#ffffff', 6, [
+                this.createTextNode(request, `${idBase}-button-label`, 'Conhecer Plus', 24, 12, 92, 18, 12, 700, '#2563eb', 'Promo CTA label')
+            ])
+        ]);
+    }
+
+    protected createMarketplaceClosingNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number): OpenPencilNode {
+        const cardWidth = Math.floor((width - 24) / 3);
+        return this.createSkeletonFrameNode(request, idBase, 'Marketplace closing services', 'footer', x, y, width, 136, '#ffffff', 8, [
+            this.createBenefitItemNode(request, `${idBase}-safe`, 'Compra protegida', 'Receba ou tenha seu dinheiro de volta.', 0, 0, cardWidth),
+            this.createBenefitItemNode(request, `${idBase}-credit`, 'Credito e parcelas', 'Facilite o pagamento com seguranca.', cardWidth + 12, 0, cardWidth),
+            this.createBenefitItemNode(request, `${idBase}-seller`, 'Venda no marketplace', 'Anuncie para milhares de compradores.', (cardWidth + 12) * 2, 0, cardWidth)
+        ]);
+    }
+
+    protected createBenefitItemNode(request: OpenPencilAiDesignRequest, idBase: string, title: string, copy: string, x: number, y: number, width: number): OpenPencilNode {
+        return this.createSkeletonFrameNode(request, idBase, title, 'card', x, y, width, 88, '#ffffff', 0, [
+            {
+                id: this.uniqueAiId(request.document, `${idBase}-icon`),
+                type: 'ellipse',
+                name: `${title} icon`,
+                role: 'icon',
+                x: 24,
+                y: 27,
+                width: 32,
+                height: 32,
+                fill: [{ type: 'solid', color: '#e0f2fe' }],
+                stroke: { color: '#3483fa', width: 2 }
+            },
+            this.createTextNode(request, `${idBase}-title`, title, 76, 22, width - 98, 22, 16, 700, '#333333', `${title} title`),
+            this.createTextNode(request, `${idBase}-copy`, copy, 76, 50, width - 98, 20, 12, 500, '#64748b', `${title} copy`)
+        ]);
+    }
+
+    protected createCategoryItemNode(request: OpenPencilAiDesignRequest, idBase: string, label: string, x: number, y: number, width: number): OpenPencilNode {
+        return this.createSkeletonFrameNode(request, idBase, `${label} category`, 'category', x, y, width, 74, '#ffffff', 6, [
+            {
+                id: this.uniqueAiId(request.document, `${idBase}-icon`),
+                type: 'ellipse',
+                name: `${label} category icon`,
+                role: 'icon',
+                x: Math.round(width / 2) - 14,
+                y: 14,
+                width: 28,
+                height: 28,
+                fill: [{ type: 'solid', color: '#eff6ff' }],
+                stroke: { color: '#3483fa', width: 2 }
+            },
+            this.createTextNode(request, `${idBase}-label`, label, 24, 48, width - 48, 18, 12, 600, '#334155', `${label} category label`)
+        ]);
+    }
+
+    protected createProductCardNode(request: OpenPencilAiDesignRequest, idBase: string, name: string, price: string, badge: string, x: number, y: number, width: number): OpenPencilNode {
+        return this.createSkeletonFrameNode(request, idBase, `${name} card`, 'product-card', x, y, width, 196, '#ffffff', 8, [
+            this.createSkeletonFrameNode(request, `${idBase}-image`, `${name} image placeholder`, 'image', 14, 14, width - 28, 76, '#e2e8f0', 4),
+            this.createTextNode(request, `${idBase}-price`, price, 16, 104, width - 32, 24, 18, 600, '#333333', `${name} price`),
+            this.createTextNode(request, `${idBase}-badge`, badge, 16, 132, width - 32, 20, 13, 700, '#00a650', `${name} badge`),
+            this.createTextNode(request, `${idBase}-name`, name, 16, 156, width - 32, 32, 13, 500, '#475569', `${name} description`)
+        ]);
+    }
+
+    protected createSkeletonFrameNode(
+        request: OpenPencilAiDesignRequest,
+        idBase: string,
+        name: string,
+        role: string,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        color: string,
+        cornerRadius: number,
+        children: OpenPencilNode[] = []
+    ): OpenPencilNode {
+        return {
+            id: this.uniqueAiId(request.document, idBase),
+            type: 'frame',
+            name,
+            role,
+            x,
+            y,
+            width,
+            height,
+            cornerRadius,
+            fill: [{ type: 'solid', color }],
+            stroke: role === 'image' ? { color: '#94a3b8', width: 1 } : undefined,
+            effects: role === 'card' || role === 'product-card'
+                ? [{ type: 'shadow', offsetX: 0, offsetY: 2, blur: 8, spread: 0, color: 'rgba(15, 23, 42, 0.08)' }]
+                : undefined,
+            children
+        };
     }
 
     protected generateDeterministicContainedShapeOperations(request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] | undefined {
@@ -4142,13 +4477,14 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected collectAiLayoutQualityIssues(
         children: OpenPencilNode[],
-        parent: { path: string; width?: number; height?: number; pageRoot?: boolean },
+        parent: { path: string; width?: number; height?: number; pageRoot?: boolean; layout?: OpenPencilNode['layout'] },
         issues: OpenPencilValidationResult['issues']
     ): void {
         if (issues.length >= 24) {
             return;
         }
         const visible = this.visibleChildren(children).filter(child => !this.isAiLayoutIgnoredOverlay(child));
+        const parentUsesAutoLayout = parent.layout === 'horizontal' || parent.layout === 'vertical';
         const tolerance = 2;
         for (const child of visible) {
             const childPath = `${parent.path}.${child.id}`;
@@ -4156,7 +4492,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             const y = this.numberValue(child.y, 0);
             const width = this.visibleNodeWidth(child);
             const height = this.visibleNodeHeight(child);
-            if (!this.isAiLayoutAllowedOutOfBounds(child)) {
+            if (!parentUsesAutoLayout && !this.isAiLayoutAllowedOutOfBounds(child)) {
                 if (parent.width !== undefined && (x < -tolerance || x + width > parent.width + tolerance)) {
                     issues.push({
                         severity: 'error',
@@ -4178,10 +4514,14 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             this.collectAiLayoutQualityIssues(child.children ?? [], {
                 path: `${childPath}.children`,
                 width: this.numericDimensionValue(child.width),
-                height: this.numericDimensionValue(child.height)
+                height: this.numericDimensionValue(child.height),
+                layout: child.layout
             }, issues);
         }
 
+        if (parentUsesAutoLayout) {
+            return;
+        }
         const foreground = visible.filter(child => this.isAiLayoutForegroundNode(child));
         for (let leftIndex = 0; leftIndex < foreground.length; leftIndex++) {
             for (let rightIndex = leftIndex + 1; rightIndex < foreground.length; rightIndex++) {
