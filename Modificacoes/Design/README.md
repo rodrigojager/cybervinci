@@ -21,6 +21,10 @@ Purpose: embedded OpenPencil visual design editor, runtime adapter, templates, A
 Requires:
 
 - `Branding/packages/branding`
+- `AI-Providers/packages/ai-providers`
+- `AI-Providers/packages/ai-runtime`
+
+Canvas AI generation uses the provider-neutral CyberVinci AI Runtime. Each prompt-to-design, continuation, or selected-node edit interaction can choose provider, model, and reasoning effort for that request. The default Canvas AI path applies incremental stages to the open canvas so structure, content, and refinement appear as separate validated changes instead of waiting for one final operation list.
 
 Apply by copying package and vendor folder to the same relative locations in a baseline Theia tree, adding `@cybervinci/openpencil-extension`, then rebuilding.
 

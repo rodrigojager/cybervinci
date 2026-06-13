@@ -19,6 +19,9 @@
       "path": "../core"
     },
     {
+      "path": "../ai-runtime"
+    },
+    {
       "path": "../branding"
     },
     {

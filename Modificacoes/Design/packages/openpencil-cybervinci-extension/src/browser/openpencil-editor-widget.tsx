@@ -303,6 +303,16 @@ export class OpenPencilEditorWidget extends ReactWidget implements Navigatable, 
         return [...this.selectedIds];
     }
 
+    createAiRollbackSnapshot(): OpenPencilDocumentStateSnapshot | undefined {
+        return this.document ? this.createSnapshot() : undefined;
+    }
+
+    restoreAiRollbackSnapshot(snapshot: OpenPencilDocumentStateSnapshot): void {
+        this.restoreSnapshot(snapshot);
+        this.updateDirtyState(true);
+        this.update();
+    }
+
     setAiStatus(status: OpenPencilAiStatus | string | undefined): void {
         this.aiStatus = typeof status === 'string'
             ? { phase: 'preparing', label: status, detail: status }
