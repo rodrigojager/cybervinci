@@ -869,6 +869,36 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.diagnostics?.join(' ')).to.contain('Hanging stream provider streaming did not produce an OpenPencil operation');
     });
 
+    it('does not let diagnostic-only stream events extend the first operation timeout', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'diagnostic-only-stream-provider',
+            label: 'Diagnostic-only stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                for (let index = 0; index < 20; index++) {
+                    yield { type: 'diagnostic', message: `still thinking ${index}` };
+                    await new Promise(resolve => globalThis.setTimeout(resolve, 2));
+                }
+            }
+        };
+        const providerService = new FastStreamTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI diagnostic-only stream timeout test');
+        const startedAt = Date.now();
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Create a streamed design',
+            document,
+            selection: []
+        }, async () => {
+            throw new Error('The diagnostic-only stream should not apply operations.');
+        });
+
+        expect(Date.now() - startedAt).to.be.lessThan(120);
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('Diagnostic-only stream provider streaming did not produce an OpenPencil operation');
+    });
+
     it('expands streamed provider containers so later children remain visible', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'visible-bounds-stream-provider',
