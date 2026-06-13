@@ -1299,7 +1299,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 messageLength: error instanceof Error ? error.message.length : String(error).length
             });
             if (!appliedTotal) {
-                progress.cancel();
+                progress?.cancel();
                 progress = undefined;
                 return false;
             }

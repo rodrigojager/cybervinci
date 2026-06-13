@@ -9,7 +9,7 @@ import { PreferenceService } from '@theia/core/lib/common/preferences';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { CodexProviderAppServerNotification, CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import { FlowService } from '@cybervinci/flow/lib/common';
-import type { FlowAiAuthoringDraft } from '@cybervinci/flow/lib/common';
+import type { FlowAiAuthoringDraft, FlowPatternRoleOverride } from '@cybervinci/flow/lib/common';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -489,7 +489,7 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             preferSaved: record.preferSaved !== false
         };
         const parameters = this.isRecord(record.parameters) ? { parameters: record.parameters } : {};
-        const roleOverrides = this.isRecord(record.roleOverrides) ? { roleOverrides: record.roleOverrides } : {};
+        const roleOverrides = this.isRecord(record.roleOverrides) ? { roleOverrides: record.roleOverrides as Record<string, FlowPatternRoleOverride> } : {};
         const draft = this.extractFlowAiAuthoringDraft(record);
         const authoringDraft = draft ? { authoringDraft: draft } : {};
         const run = await flow.runDynamicWorkflow(workspaceRootUri ? { ...request, ...parameters, ...roleOverrides, ...authoringDraft, workspaceRootUri } : { ...request, ...parameters, ...roleOverrides, ...authoringDraft });

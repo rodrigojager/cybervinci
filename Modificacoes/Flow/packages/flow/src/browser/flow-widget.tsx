@@ -1480,6 +1480,7 @@ export class FlowWidget extends ReactWidget {
             this.update();
             return;
         }
+        const aiRuntime = this.aiRuntime;
         const prompt = this.state.aiPrompt.trim();
         if (!prompt) {
             return;
@@ -1491,7 +1492,7 @@ export class FlowWidget extends ReactWidget {
                 this.flowService.getAiAuthoringSpec(),
                 this.flowService.listWorkflows({ workspaceRootUri }),
                 this.flowService.listPipelinePresets({ workspaceRootUri }),
-                this.aiRuntime.listProviders({ workspacePath, includeUnavailable: true })
+                aiRuntime.listProviders({ workspacePath, includeUnavailable: true })
             ]);
             const capabilities = this.state.snapshot?.capabilities || await this.flowService.getCapabilities();
             const input: FlowAiAuthoringRuntimeInput = {
@@ -1507,7 +1508,7 @@ export class FlowWidget extends ReactWidget {
                 selectedPatternId: this.state.selectedPatternId,
                 selectedPipelinePresetId: this.state.selectedPipelinePresetId
             };
-            const result = await this.aiRuntime.runTask<FlowAiAuthoringRuntimeInput, FlowAiAuthoringDraft>({
+            const result = await aiRuntime.runTask<FlowAiAuthoringRuntimeInput, FlowAiAuthoringDraft>({
                 surfaceId: 'flow',
                 action: 'flow.authorWorkflow',
                 workspacePath,

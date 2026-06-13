@@ -16,7 +16,6 @@ import {
     RetrievalResult
 } from '@cybervinci/memory/lib/common';
 import {
-    CyberVinciAiContextPolicy,
     CyberVinciAiContextReport,
     CyberVinciAiTaskRequest
 } from '../common';
