@@ -514,6 +514,7 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'For a website, homepage, marketplace, e-commerce, or known-site copy, create one vertical page frame about 1200px wide and as tall as needed. Preserve that width and stack all major sections downward.',
             'For product rows, offer strips, category shelves, and carousels, keep cards inside the 1200px page width. If more items are needed, create another row or another section below; never extend the homepage horizontally.',
             'If the user asks to copy or recreate a full homepage, include the complete page structure: top navigation, hero/promo area, category shortcuts, several product/offer shelves, promotional banners, recommendations, benefits, and footer-like closing content when present.',
+            'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header with search/navigation, large promo hero, category shortcut cards, product shelves with 5-6 cards per row, horizontal promo banners between shelves, gray page background, and footer/help blocks near the bottom.',
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
             'Do not set clipContent:true on top-level views or general containers unless the user explicitly asks for masking/cropping. The canvas is unbounded; do not create invisible frames as canvas limits.',
             'Every frame, group, card, section, and top-level view must have bounds large enough to contain every visible child. Before adding a child with x/y/width/height, make sure parent width/height already contains the child.',
@@ -2758,6 +2759,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             width = maxWidth;
             changed = true;
         }
+        if (preservePageWidth && width !== undefined && this.shouldStackHomepageFlowChildren(node, width)) {
+            changed = this.stackManualChildrenVerticallyWithinWidth(node.children ?? [], width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
         if (preservePageWidth && width !== undefined && this.shouldReflowOverflowingChildren(node, bounds, width)) {
             changed = this.reflowManualChildrenWithinWidth(node.children ?? [], width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
@@ -2789,6 +2797,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     protected normalizePageVisibleBounds(page: OpenPencilPage, preservedPageWidth?: number): boolean {
         let changed = false;
         if (preservedPageWidth !== undefined) {
+            changed = this.stackManualChildrenVerticallyWithinWidth(page.children, preservedPageWidth) || changed;
             changed = this.reflowManualChildrenWithinWidth(page.children, preservedPageWidth) || changed;
         }
         let bounds = this.createManualChildrenVisibleBounds(page.children);
@@ -2866,6 +2875,73 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
         return width > maxWidth * 1.15
             && /\b(page|homepage|home|screen|view|website|site|marketplace|e-?commerce|catalog|landing|pagina|página|tela)\b/.test(label);
+    }
+
+    protected shouldStackHomepageFlowChildren(node: OpenPencilNode, width: number): boolean {
+        if (width < 560 || node.layout === 'horizontal' || node.layout === 'vertical') {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (children.length < 2) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        if (/\b(grid|grade|row|linha|shelf|shelves|cards?|products?|produtos?|offers?|ofertas?|carousel|carrossel)\b/.test(label)) {
+            return false;
+        }
+        const pageLike = /\b(page|homepage|home|screen|view|website|site|marketplace|e-?commerce|landing|content|main|mercado|pagina|página|tela)\b/.test(label);
+        const sectionLikeChildren = children.filter(child => this.isHomepageSectionLikeNode(child, width)).length;
+        return pageLike || sectionLikeChildren >= Math.min(2, children.length);
+    }
+
+    protected isHomepageSectionLikeNode(node: OpenPencilNode, pageWidth: number): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        const width = this.visibleNodeWidth(node);
+        const height = this.visibleNodeHeight(node);
+        return node.type === 'frame'
+            && height >= 40
+            && (width >= pageWidth * 0.35 || /\b(header|nav|hero|section|content|footer|rodap[eé]|banner|promo|category|categoria|shelf|ofertas?|produtos?|benefits?|canais|ajuda|venda|app)\b/.test(label));
+    }
+
+    protected stackManualChildrenVerticallyWithinWidth(children: OpenPencilNode[], maxWidth: number): boolean {
+        const visible = this.visibleChildren(children)
+            .filter(child => child.role !== 'overlay')
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0);
+        if (visible.length < 2 || maxWidth < 120) {
+            return false;
+        }
+
+        const sorted = visible.slice().sort((left, right) => {
+            const topDelta = this.numberValue(left.y, 0) - this.numberValue(right.y, 0);
+            return Math.abs(topDelta) > 16 ? topDelta : this.numberValue(left.x, 0) - this.numberValue(right.x, 0);
+        });
+        const minTop = Math.max(0, Math.min(...sorted.map(node => this.numberValue(node.y, 0))));
+        const gap = Math.max(16, Math.min(36, Math.round(maxWidth * 0.02)));
+        let cursorY = minTop;
+        let changed = false;
+
+        for (const node of sorted) {
+            let width = this.visibleNodeWidth(node);
+            if (node.type === 'frame' && width > maxWidth) {
+                node.width = maxWidth;
+                width = maxWidth;
+                changed = true;
+            }
+            const targetX = width >= maxWidth * 0.92
+                ? 0
+                : Math.max(0, Math.min(Math.round((maxWidth - width) / 2), maxWidth - width));
+            if (this.numberValue(node.x, 0) !== targetX) {
+                node.x = targetX;
+                changed = true;
+            }
+            if (this.numberValue(node.y, 0) !== cursorY) {
+                node.y = this.roundScaledValue(cursorY);
+                changed = true;
+            }
+            cursorY += this.visibleNodeHeight(node) + gap;
+        }
+
+        return changed;
     }
 
     protected reflowManualChildrenWithinWidth(children: OpenPencilNode[], maxWidth: number): boolean {
