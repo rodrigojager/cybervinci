@@ -1432,7 +1432,10 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         target: URI;
         reviewModel: OpenPencilAiReviewModel;
     }> {
-        const preview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(document), selection, generated.operations, { mode: requestMode });
+        const preview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(document), selection, generated.operations, {
+            mode: requestMode,
+            normalizeVisibleBounds: true
+        });
         const validation = this.commandService.validateDocument(preview.document);
         const validationMessage = validation.issues
             .filter(issue => issue.severity === 'error')
@@ -1558,7 +1561,10 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
             selectionCount: baseSelection.length
         });
         this.reportAiStatus(widget, progress, this.createAiStatus('validating', 'Validating', 'Canvas AI is validating the active design...'));
-        const applyPreview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(latestDocument), baseSelection, operations, { mode: requestMode });
+        const applyPreview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(latestDocument), baseSelection, operations, {
+            mode: requestMode,
+            normalizeVisibleBounds: true
+        });
         const applyValidation = this.commandService.validateDocument(applyPreview.document);
         if (!applyPreview.changed || !applyValidation.valid) {
             canvasAiFrontendDebug('apply-rejected', {
@@ -1573,6 +1579,10 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         this.reportAiStatus(widget, progress, this.createAiApplyingStatus(0, operations.length));
         const result = await widget.applyOperationsProgressively(operations, {
             selection: baseSelection,
+            applyOptions: {
+                mode: requestMode,
+                normalizeVisibleBounds: true
+            },
             batchSize: options.batchSize ?? this.aiProgressiveBatchSize(operations.length),
             delayMs: options.delayMs ?? OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS,
             onProgress: applyProgress => {

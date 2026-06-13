@@ -48,7 +48,7 @@ import {
     OpenPencilPathAnchor,
     OpenPencilPathHandleSide
 } from '../common/openpencil-types';
-import { OpenPencilDesignCommandService, OpenPencilDesignSession } from './openpencil-design-command-service';
+import { OpenPencilApplyOperationsOptions, OpenPencilDesignCommandService, OpenPencilDesignSession } from './openpencil-design-command-service';
 import { OpenPencilReactRuntimeHost } from './openpencil-react-runtime-host';
 
 export const OpenPencilEditorWidgetOptions = Symbol('OpenPencilEditorWidgetOptions');
@@ -144,6 +144,7 @@ export interface OpenPencilProgressiveApplyOptions {
     batchSize?: number;
     delayMs?: number;
     selection?: string[];
+    applyOptions?: OpenPencilApplyOperationsOptions;
     onProgress?: (progress: OpenPencilProgressiveApplyProgress) => void | Promise<void>;
 }
 
@@ -384,7 +385,7 @@ export class OpenPencilEditorWidget extends ReactWidget implements Navigatable, 
                 const operation = operations[applied];
                 let result: OpenPencilCommandResult;
                 try {
-                    result = this.commandService.applyToDocument(this.document, currentSelection, operation);
+                    result = this.commandService.applyOperationsToDocument(this.document, currentSelection, [operation], options.applyOptions);
                 } catch (error) {
                     const failure = this.progressiveApplyFailure(applied, total, changed, error instanceof Error ? error.message : String(error));
                     await options.onProgress?.({ applied, total, operation, result: failure });

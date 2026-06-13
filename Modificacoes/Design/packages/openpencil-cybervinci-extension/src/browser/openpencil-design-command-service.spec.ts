@@ -844,6 +844,82 @@ describe('OpenPencilDesignCommandService', () => {
         ]);
     });
 
+    it('expands streamed provider containers so later children remain visible', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'visible-bounds-stream-provider',
+            label: 'Visible bounds stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations(request) {
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'createNode',
+                        parentId: request.document.activePageId,
+                        node: {
+                            id: 'ai-visible-screen',
+                            type: 'frame',
+                            name: 'AI visible screen',
+                            width: 320,
+                            height: 180,
+                            clipContent: true,
+                            fill: [{ type: 'solid', color: '#ffffff' }]
+                        }
+                    }
+                };
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'ai-visible-screen',
+                        node: {
+                            id: 'ai-visible-offscreen-card',
+                            type: 'frame',
+                            name: 'AI visible offscreen card',
+                            x: 360,
+                            y: 140,
+                            width: 180,
+                            height: 96,
+                            fill: [{ type: 'solid', color: '#f8fafc' }]
+                        }
+                    }
+                };
+                yield { type: 'complete' };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI streamed visible bounds test');
+        let currentDocument = document;
+        let currentSelection: string[] = [];
+
+        await providerService.streamAiOperations({
+            prompt: 'Create a streamed design where every element remains visible',
+            document: currentDocument,
+            selection: currentSelection
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, {
+                mode: 'maintenance',
+                normalizeVisibleBounds: true
+            });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+
+        const page = currentDocument.pages![0];
+        const root = page.children.find(node => node.id === 'ai-visible-screen');
+
+        expect(root).to.exist;
+        expect(root?.clipContent).to.equal(false);
+        expect(Number(root?.width)).to.be.greaterThan(539);
+        expect(Number(root?.height)).to.be.greaterThan(235);
+        expect(Number(page.width)).to.be.at.least(Number(root?.x ?? 0) + Number(root?.width ?? 0));
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',
