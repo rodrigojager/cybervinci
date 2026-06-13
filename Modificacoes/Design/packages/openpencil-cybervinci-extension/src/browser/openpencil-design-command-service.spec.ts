@@ -1035,6 +1035,100 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(shelf?.width));
     });
 
+    it('converts oversized marketplace offer shelves into desktop grid columns', () => {
+        const document = service.createDesign('Homepage oversized shelf grid test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 640;
+        page.children = [
+            createHomepageSection('mercado-offers-section', 'Mercado ofertas do dia shelf', 0, 0, 971, 260)
+        ];
+        page.children[0].children = Array.from({ length: 5 }, (_, index) => ({
+            id: `wide-offer-card-${index + 1}`,
+            type: 'frame',
+            name: `Wide offer card ${index + 1}`,
+            role: 'card',
+            x: 16,
+            y: 24 + index * 136,
+            width: 820,
+            height: 120,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            children: []
+        }));
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const shelf = result.document.pages![0].children.find(node => node.id === 'mercado-offers-section');
+        const cards = shelf?.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(cards[0].width).to.equal(315);
+        expect(cards[0].x).to.equal(0);
+        expect(cards[1].x).to.equal(327);
+        expect(cards[2].x).to.equal(654);
+        expect(cards[3].x).to.equal(0);
+        expect(Number(cards[3].y)).to.be.greaterThan(Number(cards[0].y));
+        expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(971);
+    });
+
+    it('keeps card child text and shapes inside the card bounds during visible normalization', () => {
+        const document = service.createDesign('Homepage card child clamp test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [
+            {
+                id: 'offer-card',
+                type: 'frame',
+                name: 'Offer card',
+                role: 'card',
+                x: 80,
+                y: 80,
+                width: 300,
+                height: 140,
+                fill: [{ type: 'solid', color: '#ffffff' }],
+                children: [
+                    {
+                        id: 'escaping-offer-title',
+                        type: 'text',
+                        name: 'Escaping offer title',
+                        x: 250,
+                        y: 20,
+                        width: 180,
+                        height: 24,
+                        content: 'Texto da oferta'
+                    },
+                    {
+                        id: 'escaping-offer-shape',
+                        type: 'rectangle',
+                        name: 'Escaping offer shape',
+                        x: 320,
+                        y: 56,
+                        width: 120,
+                        height: 40,
+                        fill: [{ type: 'solid', color: '#f5f5f5' }]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'offer-card');
+        const children = card?.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(Math.max(...children.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(card?.width));
+        expect(children.find(node => node.id === 'escaping-offer-title')?.x).to.equal(120);
+        expect(children.find(node => node.id === 'escaping-offer-shape')?.x).to.equal(180);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',
