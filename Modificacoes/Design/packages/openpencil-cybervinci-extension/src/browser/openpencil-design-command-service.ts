@@ -785,6 +785,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected readonly documents = new OpenPencilDocumentService();
     protected readonly sessions = new Map<string, OpenPencilDesignSession>();
+    protected readonly providerStreamFirstOperationTimeoutMs: number = 90000;
+    protected readonly providerStreamIdleTimeoutMs: number = 45000;
+    protected readonly providerStreamTotalTimeoutMs: number = 240000;
 
     @inject(ContributionProvider) @named(OpenPencilAiDesignProvider) @optional()
     protected readonly aiProviderContributions: ContributionProvider<OpenPencilAiDesignProvider> | undefined;
@@ -1693,21 +1696,48 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             });
 
             try {
-                for await (const event of provider.streamOperations(currentRequest, context)) {
-                    if (event.type === 'diagnostic') {
-                        diagnostics.push(`${providerName}: ${event.message}`);
-                        continue;
-                    }
-                    if (event.type === 'operation') {
-                        await acceptOperations([event.operation]);
-                        continue;
-                    }
-                    if (event.type === 'complete') {
-                        diagnostics.push(...(event.diagnostics ?? []).map(diagnostic => `${providerName}: ${diagnostic}`));
-                        if (event.operations?.length) {
-                            completedOperations = event.operations;
+                const streamStartedAt = Date.now();
+                const streamIterator = provider.streamOperations(currentRequest, context)[Symbol.asyncIterator]();
+                try {
+                    while (true) {
+                        const elapsed = Date.now() - streamStartedAt;
+                        const remainingTotal = this.providerStreamTotalTimeoutMs - elapsed;
+                        if (remainingTotal <= 0) {
+                            throw new Error(`${providerName} streaming did not finish within ${Math.round(this.providerStreamTotalTimeoutMs / 1000)} seconds.`);
+                        }
+                        const nextTimeout = Math.min(
+                            remainingTotal,
+                            acceptedOperations.length ? this.providerStreamIdleTimeoutMs : this.providerStreamFirstOperationTimeoutMs
+                        );
+                        const next = await this.withProviderStreamTimeout(
+                            Promise.resolve(streamIterator.next()),
+                            nextTimeout,
+                            acceptedOperations.length
+                                ? `${providerName} streaming stopped producing OpenPencil operations for ${Math.round(nextTimeout / 1000)} seconds.`
+                                : `${providerName} streaming did not produce an OpenPencil operation within ${Math.round(nextTimeout / 1000)} seconds.`
+                        );
+                        if (next.done) {
+                            break;
+                        }
+                        const event = next.value;
+                        if (event.type === 'diagnostic') {
+                            diagnostics.push(`${providerName}: ${event.message}`);
+                            continue;
+                        }
+                        if (event.type === 'operation') {
+                            await acceptOperations([event.operation]);
+                            continue;
+                        }
+                        if (event.type === 'complete') {
+                            diagnostics.push(...(event.diagnostics ?? []).map(diagnostic => `${providerName}: ${diagnostic}`));
+                            if (event.operations?.length) {
+                                completedOperations = event.operations;
+                            }
                         }
                     }
+                } catch (error) {
+                    this.closeProviderStreamIterator(streamIterator);
+                    throw error;
                 }
                 if (!acceptedOperations.length && completedOperations?.length) {
                     await acceptOperations(completedOperations);
@@ -1757,6 +1787,33 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             source: 'deterministic-fallback',
             diagnostics
         };
+    }
+
+    protected withProviderStreamTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const timeout = globalThis.setTimeout(() => reject(new Error(message)), timeoutMs);
+            promise.then(
+                value => {
+                    globalThis.clearTimeout(timeout);
+                    resolve(value);
+                },
+                error => {
+                    globalThis.clearTimeout(timeout);
+                    reject(error);
+                }
+            );
+        });
+    }
+
+    protected closeProviderStreamIterator(iterator: AsyncIterator<OpenPencilAiDesignStreamEvent>): void {
+        try {
+            const close = iterator.return?.();
+            if (close) {
+                void Promise.resolve(close).catch(() => undefined);
+            }
+        } catch {
+            // The timeout or provider error is the actionable diagnostic; cleanup failure is non-fatal.
+        }
     }
 
     protected resolveAiProviders(): OpenPencilAiDesignProvider[] {

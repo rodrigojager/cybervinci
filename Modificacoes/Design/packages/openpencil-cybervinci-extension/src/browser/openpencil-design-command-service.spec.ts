@@ -844,6 +844,31 @@ describe('OpenPencilDesignCommandService', () => {
         ]);
     });
 
+    it('times out a hanging streaming provider instead of waiting indefinitely', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-stream-provider',
+            label: 'Hanging stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                await new Promise<void>(() => undefined);
+            }
+        };
+        const providerService = new FastStreamTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI hanging stream timeout test');
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Create a streamed design',
+            document,
+            selection: []
+        }, async () => {
+            throw new Error('The hanging stream should not apply operations.');
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('Hanging stream provider streaming did not produce an OpenPencil operation');
+    });
+
     it('expands streamed provider containers so later children remain visible', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'visible-bounds-stream-provider',
@@ -2759,4 +2784,10 @@ function createHomepageSection(id: string, name: string, x: number, y: number, w
         fill: [{ type: 'solid', color: '#ffffff' }],
         children: []
     };
+}
+
+class FastStreamTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
+    protected override readonly providerStreamFirstOperationTimeoutMs = 10;
+    protected override readonly providerStreamIdleTimeoutMs = 10;
+    protected override readonly providerStreamTotalTimeoutMs = 20;
 }
