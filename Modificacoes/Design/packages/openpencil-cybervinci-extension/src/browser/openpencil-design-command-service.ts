@@ -515,6 +515,7 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'For product rows, offer strips, category shelves, and carousels, keep cards inside the 1200px page width. If more items are needed, create another row or another section below; never extend the homepage horizontally.',
             'For homepage-style output, use real section frames with padding/gap/layout to create spacing. Do not create spacer-only nodes named Spacer, Espaço, Space, Gap, or "before/after" blocks.',
             'For marketplace/product shelves, create a shelf section that wraps cards inside the page width. A shelf should not be a single horizontal layout that extends beyond the page.',
+            'For desktop marketplace shelves, prefer 3-4 visible product cards per row when card details are large. Keep every text box, icon, image, and shape inside its card or section bounds.',
             'If the user asks to copy or recreate a full homepage, include the complete page structure: top navigation, hero/promo area, category shortcuts, several product/offer shelves, promotional banners, recommendations, benefits, and footer-like closing content when present.',
             'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header with search/navigation, large promo hero, category shortcut cards, product shelves with 5-6 cards per row, horizontal promo banners between shelves, gray page background, and footer/help blocks near the bottom.',
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
@@ -2768,6 +2769,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 return changed;
             }
         }
+        if (preservePageWidth && width !== undefined && this.shouldGridHomepageShelfChildren(node, bounds, width)) {
+            changed = this.gridHomepageShelfChildrenWithinWidth(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
         if (preservePageWidth && width !== undefined && this.shouldWrapOverflowingHorizontalLayoutChildren(node, bounds, width)) {
             changed = this.wrapHorizontalLayoutChildrenWithinWidth(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
@@ -2777,6 +2785,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         if (preservePageWidth && width !== undefined && this.shouldReflowOverflowingChildren(node, bounds, width)) {
             changed = this.reflowManualChildrenWithinWidth(node.children ?? [], width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+        if (preservePageWidth && width !== undefined && this.shouldClampManualChildrenWithinWidth(node, bounds, width)) {
+            changed = this.clampManualChildrenWithinWidth(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
             if (!bounds) {
                 return changed;
@@ -2901,6 +2916,38 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return this.isShelfLikeNode(node) || cardLikeChildren >= Math.min(2, children.length);
     }
 
+    protected shouldGridHomepageShelfChildren(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
+        if (width < 720 || this.isNavigationLikeNode(node)) {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child));
+        if (cardChildren.length < 3 || !this.isShelfLikeNode(node)) {
+            return false;
+        }
+        const grid = this.homepageShelfGridMetrics(node, width);
+        if (grid.columns < 2) {
+            return false;
+        }
+        const oversizedCards = cardChildren.some(child => this.visibleNodeWidth(child) > grid.cardWidth * 1.12);
+        const similarX = cardChildren.every(child => Math.abs(this.numberValue(child.x, 0) - this.numberValue(cardChildren[0].x, 0)) <= 24);
+        const spreadY = Math.max(...cardChildren.map(child => this.numberValue(child.y, 0)))
+            - Math.min(...cardChildren.map(child => this.numberValue(child.y, 0)));
+        return bounds.right > width || oversizedCards || (similarX && spreadY > 24) || node.layout === 'horizontal';
+    }
+
+    protected homepageShelfGridMetrics(node: OpenPencilNode, maxWidth: number): { columns: number; cardWidth: number; gap: number; left: number; top: number; rightLimit: number; availableWidth: number } {
+        const padding = this.normalizedPadding(node.padding);
+        const gap = Math.max(8, Math.min(24, this.numberValue(node.gap, 12)));
+        const left = Math.max(0, padding.left);
+        const top = Math.max(0, padding.top);
+        const rightLimit = Math.max(left + 1, maxWidth - Math.max(0, padding.right));
+        const availableWidth = Math.max(1, rightLimit - left);
+        const columns = Math.max(1, Math.min(4, Math.floor((availableWidth + gap) / (280 + gap))));
+        const cardWidth = Math.max(120, Math.floor((availableWidth - gap * (columns - 1)) / columns));
+        return { columns, cardWidth, gap, left, top, rightLimit, availableWidth };
+    }
+
     protected isNavigationLikeNode(node: OpenPencilNode): boolean {
         const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
         return /\b(header|navbar|nav|menu|search|busca|barra|cabecalho|cabeçalho|topbar)\b/.test(label);
@@ -2985,6 +3032,60 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return changed;
     }
 
+    protected gridHomepageShelfChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
+        const allChildren = this.visibleChildren(node.children ?? []);
+        const cardChildren = allChildren.filter(child => child.role !== 'overlay' && this.isCardLikeHomepageChild(child));
+        if (cardChildren.length < 3) {
+            return false;
+        }
+        const grid = this.homepageShelfGridMetrics(node, maxWidth);
+        if (grid.columns < 2) {
+            return false;
+        }
+        const nonCardBounds = this.createManualChildrenVisibleBounds(
+            allChildren.filter(child => child.role !== 'overlay' && !this.isCardLikeHomepageChild(child))
+        );
+        const startY = nonCardBounds
+            ? Math.max(grid.top, this.ceilVisibleBound(nonCardBounds.bottom + grid.gap))
+            : grid.top;
+        const rowHeight = Math.max(...cardChildren.map(child => this.visibleNodeHeight(child)));
+        let changed = false;
+        let bottom = startY;
+
+        if (node.layout !== 'none') {
+            node.layout = 'none';
+            changed = true;
+        }
+
+        for (const [index, child] of cardChildren.entries()) {
+            const column = index % grid.columns;
+            const row = Math.floor(index / grid.columns);
+            const targetX = grid.left + column * (grid.cardWidth + grid.gap);
+            const targetY = startY + row * (rowHeight + grid.gap);
+            if (child.type === 'frame' && this.numericDimensionValue(child.width) !== grid.cardWidth) {
+                child.width = grid.cardWidth;
+                changed = true;
+            }
+            if (this.numberValue(child.x, 0) !== targetX) {
+                child.x = this.roundScaledValue(targetX);
+                changed = true;
+            }
+            if (this.numberValue(child.y, 0) !== targetY) {
+                child.y = this.roundScaledValue(targetY);
+                changed = true;
+            }
+            changed = this.clampManualChildrenWithinWidth(child, grid.cardWidth) || changed;
+            bottom = Math.max(bottom, targetY + this.visibleNodeHeight(child));
+        }
+
+        const requiredHeight = this.ceilVisibleBound(bottom + Math.max(0, this.normalizedPadding(node.padding).bottom));
+        if (this.numericDimensionValue(node.height) !== requiredHeight) {
+            node.height = requiredHeight;
+            changed = true;
+        }
+        return changed;
+    }
+
     protected wrapHorizontalLayoutChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
         const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
         if (children.length < 2 || maxWidth < 120) {
@@ -3039,6 +3140,49 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             changed = true;
         }
         return changed;
+    }
+
+    protected shouldClampManualChildrenWithinWidth(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
+        if (node.layout === 'horizontal' || node.layout === 'vertical' || width < 1) {
+            return false;
+        }
+        return bounds.left < 0 || bounds.right > width;
+    }
+
+    protected clampManualChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
+        if (node.layout === 'horizontal' || node.layout === 'vertical' || maxWidth < 1) {
+            return false;
+        }
+        let changed = false;
+        for (const child of this.visibleChildren(node.children ?? []).filter(candidate => candidate.role !== 'overlay')) {
+            let childWidth = this.visibleNodeWidth(child);
+            if (childWidth > maxWidth && this.canResizeNodeForVisibleClamp(child)) {
+                child.width = maxWidth;
+                childWidth = maxWidth;
+                changed = true;
+            }
+            let targetX = this.numberValue(child.x, 0);
+            if (targetX < 0) {
+                targetX = 0;
+            }
+            if (targetX + childWidth > maxWidth) {
+                targetX = Math.max(0, maxWidth - childWidth);
+            }
+            if (this.numberValue(child.x, 0) !== targetX) {
+                child.x = this.roundScaledValue(targetX);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    protected canResizeNodeForVisibleClamp(node: OpenPencilNode): boolean {
+        return node.type === 'frame'
+            || node.type === 'group'
+            || node.type === 'rectangle'
+            || node.type === 'text'
+            || node.type === 'image'
+            || node.type === 'icon_font';
     }
 
     protected reflowManualChildrenWithinWidth(children: OpenPencilNode[], maxWidth: number): boolean {
