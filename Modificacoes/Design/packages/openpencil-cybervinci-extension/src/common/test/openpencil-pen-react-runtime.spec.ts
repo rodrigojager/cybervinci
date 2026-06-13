@@ -110,7 +110,8 @@ describe('OpenPencil pen-react runtime integration contract', () => {
         expect(widgetSource).to.contain('resourceName={this.uri.path.base}');
         expect(widgetSource).to.contain('onSelectionChange={nextSelection => this.setSelection(nextSelection)}');
         expect(commandServiceSource).to.contain('export interface OpenPencilDesignSession');
-        expect(commandServiceSource).to.contain('applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: { mode?: OpenPencilAiDesignRequest[\'mode\'] })');
+        expect(commandServiceSource).to.contain('export interface OpenPencilApplyOperationsOptions');
+        expect(commandServiceSource).to.contain('applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: OpenPencilApplyOperationsOptions)');
         expect(backendSource).to.contain("reactIsolation: 'pen-react'");
         expect(backendSource).to.contain('mounts DesignProvider, DesignCanvas, CoreToolbar, LayerPanel, and PropertyPanel');
         expect(backendSource).to.contain('local SVG canvas remains as a fallback');

@@ -224,6 +224,8 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(source).to.contain('createAiRollbackSnapshot()');
         expect(source).to.contain('restoreAiRollbackSnapshot(snapshot: OpenPencilDocumentStateSnapshot)');
         expect(source).to.contain('applyOperationsProgressively(operations: OpenPencilDesignOperation[], options: OpenPencilProgressiveApplyOptions = {})');
+        expect(source).to.contain('applyOptions?: OpenPencilApplyOperationsOptions;');
+        expect(source).to.contain('this.commandService.applyOperationsToDocument(this.document, currentSelection, [operation], options.applyOptions)');
         expect(source).to.contain('await options.onProgress?.({ applied, total, result: lastResult });');
         expect(source).to.contain('await this.waitForProgressiveApplyFrame(delayMs);');
         expect(source).to.contain('requestAnimationFrame(() => {');
@@ -241,6 +243,7 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(source).to.contain("this.createAiStatus('validating', 'Validating'");
         expect(source).to.contain('const applyValidation = this.commandService.validateDocument(applyPreview.document);');
         expect(source).to.contain('await widget.applyOperationsProgressively(operations, {');
+        expect(source).to.contain('normalizeVisibleBounds: true');
         expect(source).to.contain('this.createAiApplyingStatus(applyProgress.applied, applyProgress.total)');
         expect(source).to.contain("this.createAiStatus('complete', 'Done'");
         expect(source).to.contain("this.createAiStatus('error', 'Error'");

@@ -37,6 +37,13 @@ export const OpenPencilAiDesignProvider = Symbol('OpenPencilAiDesignProvider');
 
 const CYBERVINCI_CANVAS_AI_DEBUG_STORAGE_KEY = 'cybervinci.canvasAiDebug';
 
+interface OpenPencilVisibleBounds {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+}
+
 declare global {
     interface Window {
         cyberVinciCanvasAiDebug?: boolean;
@@ -150,6 +157,11 @@ export interface OpenPencilDesignSession {
     getDocument(): OpenPencilDocument | undefined;
     getSelection(): string[];
     applyOperation(operation: OpenPencilDesignOperation): Promise<OpenPencilCommandResult>;
+}
+
+export interface OpenPencilApplyOperationsOptions {
+    mode?: OpenPencilAiDesignRequest['mode'];
+    normalizeVisibleBounds?: boolean;
 }
 
 export interface OpenPencilAiDesignRequest {
@@ -499,6 +511,8 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'For editable page designs, top-level view frames should usually use layout:"none" or omit layout and rely on numeric x/y/width/height. Use layout:"vertical" or layout:"horizontal" only for internal stacks where children should remain auto-positioned.',
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
             'Do not set clipContent:true on top-level views or general containers unless the user explicitly asks for masking/cropping. The canvas is unbounded; do not create invisible frames as canvas limits.',
+            'Every frame, group, card, section, and top-level view must have bounds large enough to contain every visible child. Before adding a child with x/y/width/height, make sure parent width/height already contains the child.',
+            'During incremental generation, never rely on hidden overflow or a later final pass to reveal content. If a later child needs more space, resize or update the parent in the same step so the whole design remains visible while streaming.',
             'Use OpenPencil property names exactly: text nodes use content, shapes use fill:[{type:"solid",color:"#..."}], stroke uses {color,width,thickness}, rounded corners use cornerRadius, and sizes/positions use numeric x,y,width,height.',
             'Do not emit CSS property names such as backgroundColor, borderRadius, position, display, left, top, color, or font-weight; map them to OpenPencil node properties instead.',
             'Readability and contrast are mandatory: text must contrast with the nearest background; never place dark text on dark backgrounds or light text on light backgrounds. If a background is dark, use light text; if a background is light, use dark text.',
@@ -746,7 +760,7 @@ export interface OpenPencilDesignCommandService {
     getSession(uri: URI): OpenPencilDesignSession | undefined;
     createDesign(name?: string): OpenPencilDocument;
     applyToDocument(document: OpenPencilDocument, selection: string[], operation: OpenPencilDesignOperation): OpenPencilCommandResult;
-    applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: { mode?: OpenPencilAiDesignRequest['mode'] }): OpenPencilCommandResult;
+    applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: OpenPencilApplyOperationsOptions): OpenPencilCommandResult;
     parseBatchDesignDsl(dsl: string): OpenPencilBatchDesignDslCommand[];
     applyBatchDesignDsl(document: OpenPencilDocument, selection: string[], dsl: string): OpenPencilCommandResult;
     getDocumentSummary(document: OpenPencilDocument): OpenPencilDocumentSummary;
@@ -1234,7 +1248,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         };
     }
 
-    applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: { mode?: OpenPencilAiDesignRequest['mode'] }): OpenPencilCommandResult {
+    applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: OpenPencilApplyOperationsOptions): OpenPencilCommandResult {
         const initialPage = this.documents.getActivePage(document);
         const createdRootViewIds = this.collectCreatedRootViewIds(operations, initialPage);
         let currentDocument = document;
@@ -1250,6 +1264,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             if (result.message) {
                 messages.push(result.message);
             }
+        }
+        if (options?.normalizeVisibleBounds && this.normalizeDocumentVisibleBounds(currentDocument)) {
+            changed = true;
         }
         if (options?.mode !== 'continuation' && this.arrangeCreatedRootViews(currentDocument, createdRootViewIds)) {
             changed = true;
@@ -2076,7 +2093,10 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (continuationDiagnostic) {
             return continuationDiagnostic;
         }
-        const preview = this.applyOperationsToDocument(this.documents.cloneDocument(request.document), request.selection, operations, { mode: request.mode });
+        const preview = this.applyOperationsToDocument(this.documents.cloneDocument(request.document), request.selection, operations, {
+            mode: request.mode,
+            normalizeVisibleBounds: true
+        });
         if (this.previewReportedPartialFailure(preview.message)) {
             return `${providerName} operations were rejected because preview application reported a partial failure${preview.message ? `: ${preview.message}` : '.'}`;
         }
@@ -2684,6 +2704,235 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             node.y = top;
             cursor += width + gap;
         }
+    }
+
+    protected normalizeDocumentVisibleBounds(document: OpenPencilDocument): boolean {
+        const page = this.documents.getActivePage(document);
+        let changed = false;
+        for (const node of page.children) {
+            changed = this.normalizeNodeVisibleBounds(node) || changed;
+        }
+        return this.normalizePageVisibleBounds(page) || changed;
+    }
+
+    protected normalizeNodeVisibleBounds(node: OpenPencilNode): boolean {
+        let changed = false;
+        for (const child of node.children ?? []) {
+            changed = this.normalizeNodeVisibleBounds(child) || changed;
+        }
+        const bounds = this.createNodeChildrenVisibleBounds(node);
+        if (!bounds) {
+            return changed;
+        }
+
+        const width = this.numericDimensionValue(node.width);
+        const height = this.numericDimensionValue(node.height);
+        const overflowsX = width !== undefined && (bounds.left < 0 || bounds.right > width);
+        const overflowsY = height !== undefined && (bounds.top < 0 || bounds.bottom > height);
+        const shouldMaterializeWidth = width === undefined && !!node.clipContent && bounds.right > 0;
+        const shouldMaterializeHeight = height === undefined && !!node.clipContent && bounds.bottom > 0;
+
+        if ((overflowsX || overflowsY || bounds.left < 0 || bounds.top < 0) && node.clipContent) {
+            node.clipContent = false;
+            changed = true;
+        }
+        if ((width !== undefined && bounds.right > width) || shouldMaterializeWidth) {
+            node.width = this.ceilVisibleBound(bounds.right);
+            changed = true;
+        }
+        if ((height !== undefined && bounds.bottom > height) || shouldMaterializeHeight) {
+            node.height = this.ceilVisibleBound(bounds.bottom);
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected normalizePageVisibleBounds(page: OpenPencilPage): boolean {
+        const bounds = this.createManualChildrenVisibleBounds(page.children);
+        if (!bounds) {
+            return false;
+        }
+        let changed = false;
+        let normalizedBounds = bounds;
+        const dx = bounds.left < 0 ? Math.ceil(-bounds.left) : 0;
+        const dy = bounds.top < 0 ? Math.ceil(-bounds.top) : 0;
+        if (dx || dy) {
+            for (const node of page.children) {
+                node.x = this.numberValue(node.x, 0) + dx;
+                node.y = this.numberValue(node.y, 0) + dy;
+            }
+            normalizedBounds = {
+                left: bounds.left + dx,
+                top: bounds.top + dy,
+                right: bounds.right + dx,
+                bottom: bounds.bottom + dy
+            };
+            changed = true;
+        }
+
+        const pageWidth = Math.max(120, this.numberValue(page.width, 900));
+        const pageHeight = Math.max(120, this.numberValue(page.height, 620));
+        const margin = Math.min(40, Math.floor(Math.min(pageWidth, pageHeight) / 8));
+        if (normalizedBounds.right > pageWidth) {
+            page.width = this.ceilVisibleBound(normalizedBounds.right + margin);
+            changed = true;
+        }
+        if (normalizedBounds.bottom > pageHeight) {
+            page.height = this.ceilVisibleBound(normalizedBounds.bottom + margin);
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected createNodeChildrenVisibleBounds(node: OpenPencilNode): OpenPencilVisibleBounds | undefined {
+        const children = this.visibleChildren(node.children ?? []);
+        if (!children.length) {
+            return undefined;
+        }
+        if (node.layout === 'horizontal' || node.layout === 'vertical') {
+            const overlayChildren = children.filter(child => child.role === 'overlay');
+            const flowChildren = children.filter(child => child.role !== 'overlay');
+            return this.unionVisibleBounds(
+                this.createLayoutChildrenVisibleBounds(node, flowChildren),
+                this.createManualChildrenVisibleBounds(overlayChildren)
+            );
+        }
+        return this.createManualChildrenVisibleBounds(children);
+    }
+
+    protected createLayoutChildrenVisibleBounds(node: OpenPencilNode, children: OpenPencilNode[]): OpenPencilVisibleBounds | undefined {
+        if (!children.length) {
+            return undefined;
+        }
+        const padding = this.normalizedPadding(node.padding);
+        const gap = Math.max(0, this.numberValue(node.gap, 0));
+        let bounds: OpenPencilVisibleBounds | undefined;
+        if (node.layout === 'horizontal') {
+            let cursor = padding.left;
+            for (const child of children) {
+                const width = this.visibleNodeWidth(child);
+                const height = this.visibleNodeHeight(child);
+                bounds = this.unionVisibleBounds(bounds, {
+                    left: cursor,
+                    top: padding.top,
+                    right: cursor + width,
+                    bottom: padding.top + height
+                });
+                cursor += width + gap;
+            }
+            if (bounds) {
+                bounds = {
+                    left: Math.min(bounds.left, 0),
+                    top: Math.min(bounds.top, 0),
+                    right: bounds.right + padding.right,
+                    bottom: bounds.bottom + padding.bottom
+                };
+            }
+            return bounds;
+        }
+
+        let cursor = padding.top;
+        for (const child of children) {
+            const width = this.visibleNodeWidth(child);
+            const height = this.visibleNodeHeight(child);
+            bounds = this.unionVisibleBounds(bounds, {
+                left: padding.left,
+                top: cursor,
+                right: padding.left + width,
+                bottom: cursor + height
+            });
+            cursor += height + gap;
+        }
+        if (bounds) {
+            bounds = {
+                left: Math.min(bounds.left, 0),
+                top: Math.min(bounds.top, 0),
+                right: bounds.right + padding.right,
+                bottom: bounds.bottom + padding.bottom
+            };
+        }
+        return bounds;
+    }
+
+    protected createManualChildrenVisibleBounds(children: OpenPencilNode[]): OpenPencilVisibleBounds | undefined {
+        let bounds: OpenPencilVisibleBounds | undefined;
+        for (const child of this.visibleChildren(children)) {
+            const x = this.numberValue(child.x, 0);
+            const y = this.numberValue(child.y, 0);
+            bounds = this.unionVisibleBounds(bounds, {
+                left: x,
+                top: y,
+                right: x + this.visibleNodeWidth(child),
+                bottom: y + this.visibleNodeHeight(child)
+            });
+        }
+        return bounds;
+    }
+
+    protected unionVisibleBounds(first: OpenPencilVisibleBounds | undefined, second: OpenPencilVisibleBounds | undefined): OpenPencilVisibleBounds | undefined {
+        if (!first) {
+            return second;
+        }
+        if (!second) {
+            return first;
+        }
+        return {
+            left: Math.min(first.left, second.left),
+            top: Math.min(first.top, second.top),
+            right: Math.max(first.right, second.right),
+            bottom: Math.max(first.bottom, second.bottom)
+        };
+    }
+
+    protected visibleChildren(children: OpenPencilNode[]): OpenPencilNode[] {
+        return children.filter(child => child.visible !== false && child.enabled !== false && child.enabled !== 'false');
+    }
+
+    protected visibleNodeWidth(node: OpenPencilNode): number {
+        const width = this.numericDimensionValue(node.width);
+        if (width !== undefined) {
+            return Math.max(0, width);
+        }
+        return node.width === 'fill_container' ? 0 : this.isTextLikeNode(node) ? 160 : 120;
+    }
+
+    protected visibleNodeHeight(node: OpenPencilNode): number {
+        const height = this.numericDimensionValue(node.height);
+        if (height !== undefined) {
+            return Math.max(0, height);
+        }
+        return this.isTextLikeNode(node) ? 40 : 120;
+    }
+
+    protected normalizedPadding(padding: OpenPencilNode['padding']): { top: number; right: number; bottom: number; left: number } {
+        if (Array.isArray(padding)) {
+            if (padding.length >= 4) {
+                return {
+                    top: this.numberValue(padding[0], 0),
+                    right: this.numberValue(padding[1], 0),
+                    bottom: this.numberValue(padding[2], 0),
+                    left: this.numberValue(padding[3], 0)
+                };
+            }
+            if (padding.length >= 2) {
+                const vertical = this.numberValue(padding[0], 0);
+                const horizontal = this.numberValue(padding[1], 0);
+                return { top: vertical, right: horizontal, bottom: vertical, left: horizontal };
+            }
+            const value = this.numberValue(padding[0], 0);
+            return { top: value, right: value, bottom: value, left: value };
+        }
+        const value = this.numberValue(padding, 0);
+        return { top: value, right: value, bottom: value, left: value };
+    }
+
+    protected numericDimensionValue(value: OpenPencilNode['width'] | OpenPencilNode['height']): number | undefined {
+        const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number.parseFloat(value) : NaN;
+        return Number.isFinite(parsed) ? parsed : undefined;
+    }
+
+    protected ceilVisibleBound(value: number): number {
+        return Math.max(1, Math.ceil(value));
     }
 
     protected isStandaloneRootViewNode(node: Partial<OpenPencilNode>, page: OpenPencilPage): boolean {
