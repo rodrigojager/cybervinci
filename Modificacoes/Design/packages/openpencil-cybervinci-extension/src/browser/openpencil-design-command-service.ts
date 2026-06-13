@@ -791,6 +791,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected readonly documents = new OpenPencilDocumentService();
     protected readonly sessions = new Map<string, OpenPencilDesignSession>();
+    protected readonly providerGenerateTimeoutMs: number = 25000;
     protected readonly providerStreamFirstOperationTimeoutMs: number = 20000;
     protected readonly providerStreamIdleTimeoutMs: number = 30000;
     protected readonly providerStreamTotalTimeoutMs: number = 120000;
@@ -1566,7 +1567,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 selectionCount: request.selection.length
             });
             try {
-                const providerResponse = await provider.generateOperations(request, context);
+                const providerResponse = await this.withProviderGenerateTimeout(
+                    Promise.resolve(provider.generateOperations(request, context)),
+                    this.providerGenerateTimeoutMs,
+                    `${providerName} generation did not return OpenPencil operations within ${Math.round(this.providerGenerateTimeoutMs / 1000)} seconds.`
+                );
                 const responseDiagnostics = this.providerDiagnostics(providerResponse, providerName);
                 diagnostics.push(...responseDiagnostics);
                 const providerOperations = this.providerOperations(providerResponse);
@@ -1658,6 +1663,22 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             source: 'deterministic-fallback',
             diagnostics
         };
+    }
+
+    protected withProviderGenerateTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const timeout = globalThis.setTimeout(() => reject(new Error(message)), timeoutMs);
+            promise.then(
+                value => {
+                    globalThis.clearTimeout(timeout);
+                    resolve(value);
+                },
+                error => {
+                    globalThis.clearTimeout(timeout);
+                    reject(error);
+                }
+            );
+        });
     }
 
     async streamAiOperations(request: OpenPencilAiDesignRequest, apply: OpenPencilAiDesignStreamApply): Promise<OpenPencilAiDesignResult> {
