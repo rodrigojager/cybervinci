@@ -36,7 +36,7 @@ import { OPENPENCIL_FILE_EXTENSION, OpenPencilDesignOperation, OpenPencilDocumen
 import { OpenPencilTemplateService } from '../common/openpencil-template-service';
 import { createOpenPencilAiReviewModel, OpenPencilAiReviewModel } from './openpencil-ai-review-model';
 import { OpenPencilAiReviewService } from './openpencil-ai-review-widget';
-import { OpenPencilAiDesignRequest, OpenPencilAiDesignResult, OpenPencilDesignCommandService } from './openpencil-design-command-service';
+import { OpenPencilAiDesignRequest, OpenPencilAiDesignResult, OpenPencilApplyOperationsOptions, OpenPencilDesignCommandService } from './openpencil-design-command-service';
 import { OpenPencilAiStatus, OpenPencilEditorWidget, OpenPencilProgressiveApplyResult } from './openpencil-editor-widget';
 
 export namespace OpenPencilCommands {
@@ -178,6 +178,7 @@ const OPENPENCIL_AI_INCREMENTAL_KEY = 'openpencil.ai.incremental';
 const CYBERVINCI_CANVAS_AI_DEBUG_STORAGE_KEY = 'cybervinci.canvasAiDebug';
 const OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS = 80;
 const OPENPENCIL_AI_PROGRESSIVE_MAX_BATCH_SIZE = 4;
+const OPENPENCIL_AI_STREAMING_FULL_PAGE_CONTINUATION_PASSES = 4;
 
 type OpenPencilProgressHandle = Awaited<ReturnType<ProgressService['showProgress']>>;
 
@@ -1025,7 +1026,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 });
                 this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Error', 'Canvas AI preview did not change the design.'));
                 this.messages.warn(`Canvas AI generated ${generated.operations.length} operation${generated.operations.length === 1 ? '' : 's'}, but the preview did not change the design${preview.message ? `: ${preview.message}` : '.'}`);
-                await this.openAiReviewPanel(widget, generated.operations, preview.reviewModel, preview.target, true, selection, requestMode);
+                await this.openAiReviewPanel(widget, generated.operations, preview.reviewModel, preview.target, true, selection, requestMode, this.createAiApplyOptions(prompt, requestMode));
                 return;
             }
             if (!preview.valid) {
@@ -1036,14 +1037,16 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 });
                 this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Error', 'Canvas AI preview validation failed.'));
                 this.messages.warn(`Canvas AI preview was not applied because validation failed${preview.validationMessage ? `: ${preview.validationMessage}` : '.'}`);
-                await this.openAiReviewPanel(widget, generated.operations, preview.reviewModel, preview.target, true, selection, requestMode);
+                await this.openAiReviewPanel(widget, generated.operations, preview.reviewModel, preview.target, true, selection, requestMode, this.createAiApplyOptions(prompt, requestMode));
                 return;
             }
             const source = generated.source === 'provider'
                 ? generated.providerLabel ?? 'configured CyberVinci provider'
                 : 'in-process deterministic adapter';
             if (this.isAiAutoApplyEnabled() || this.shouldAutoApplyAiResult(generated, selection, prompt)) {
-                await this.applyGeneratedAiOperations(widget, generated.operations, progress, selection, requestMode);
+                await this.applyGeneratedAiOperations(widget, generated.operations, progress, selection, requestMode, {
+                    applyOptions: this.createAiApplyOptions(prompt, requestMode)
+                });
                 return;
             }
             this.reportAiStatus(widget, progress, this.createAiStatus('validating', 'Ready', 'Canvas AI preview is ready.'));
@@ -1057,7 +1060,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 'Keep'
             );
             if (action === 'Review Changes') {
-                await this.openAiReviewPanel(widget, generated.operations, preview.reviewModel, preview.target, true, selection, requestMode);
+                await this.openAiReviewPanel(widget, generated.operations, preview.reviewModel, preview.target, true, selection, requestMode, this.createAiApplyOptions(prompt, requestMode));
                 return;
             }
             if (action !== 'Apply' && action !== 'Always Apply') {
@@ -1076,7 +1079,9 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                     location: 'notification'
                 }
             });
-            await this.applyGeneratedAiOperations(widget, generated.operations, progress, selection, requestMode);
+            await this.applyGeneratedAiOperations(widget, generated.operations, progress, selection, requestMode, {
+                applyOptions: this.createAiApplyOptions(prompt, requestMode)
+            });
         } catch (error) {
             canvasAiFrontendDebug('error', {
                 errorName: error instanceof Error ? error.name : typeof error,
@@ -1146,7 +1151,11 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                     }
                     continue;
                 }
-                const result = await this.applyGeneratedAiOperations(widget, generated.operations, progress, currentSelection, stage.mode, { quiet: true, batchSize: 1 });
+                const result = await this.applyGeneratedAiOperations(widget, generated.operations, progress, currentSelection, stage.mode, {
+                    quiet: true,
+                    batchSize: 1,
+                    applyOptions: this.createAiApplyOptions(stage.prompt, stage.mode)
+                });
                 if (!result?.completed) {
                     if (stage.required) {
                         throw new Error(result?.message ?? `Canvas AI could not apply required stage '${stage.label}'.`);
@@ -1232,8 +1241,28 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         let appliedTotal = 0;
         let currentSelection = [...selection];
         let currentApplyMode = requestMode;
+        let currentStreamPrompt = prompt;
         try {
             this.reportAiStatus(widget, progress, this.createAiStatus('preparing', 'Streaming', 'Canvas AI is streaming changes from the selected provider...'));
+            const applyStreamedOperations = async (streamed: OpenPencilAiDesignResult): Promise<{ document: OpenPencilDocument; selection: string[]; applied: number } | undefined> => {
+                const modeForBatch = currentApplyMode;
+                this.reportAiStatus(widget, progress, this.createAiStatus('applying', 'Applying stream', `Canvas AI is applying streamed change ${appliedTotal + 1}...`));
+                const result = await this.applyGeneratedAiOperations(widget, streamed.operations, progress, currentSelection, modeForBatch, {
+                    quiet: true,
+                    batchSize: 1,
+                    applyOptions: this.createAiApplyOptions(currentStreamPrompt, modeForBatch)
+                });
+                if (!result?.completed) {
+                    return undefined;
+                }
+                appliedTotal += result.applied;
+                currentSelection = result.selection;
+                currentApplyMode = modeForBatch === 'continuation' ? 'continuation' : 'maintenance';
+                const latestDocument = widget.getDocument();
+                return latestDocument
+                    ? { document: latestDocument, selection: result.selection, applied: result.applied }
+                    : undefined;
+            };
             const generated = await this.commandService.streamAiOperations({
                 prompt,
                 document,
@@ -1242,20 +1271,8 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 mode: requestMode,
                 workspacePath: executionChoice.workspacePath,
                 execution: executionChoice.execution
-            }, async streamed => {
-                this.reportAiStatus(widget, progress, this.createAiStatus('applying', 'Applying stream', `Canvas AI is applying streamed change ${appliedTotal + 1}...`));
-                const result = await this.applyGeneratedAiOperations(widget, streamed.operations, progress, currentSelection, currentApplyMode, { quiet: true, batchSize: 1 });
-                if (!result?.completed) {
-                    return undefined;
-                }
-                appliedTotal += result.applied;
-                currentSelection = result.selection;
-                currentApplyMode = 'maintenance';
-                const latestDocument = widget.getDocument();
-                return latestDocument
-                    ? { document: latestDocument, selection: result.selection, applied: result.applied }
-                    : undefined;
-            });
+            }, applyStreamedOperations);
+            let totalStreamedOperations = generated.operations.length;
 
             canvasAiFrontendDebug('streaming-result', {
                 source: generated.source,
@@ -1270,6 +1287,39 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 progress.cancel();
                 progress = undefined;
                 return false;
+            }
+
+            if (this.shouldContinueFullPageStreaming(prompt, selection, requestMode)) {
+                for (let pass = 1; pass <= OPENPENCIL_AI_STREAMING_FULL_PAGE_CONTINUATION_PASSES; pass++) {
+                    const latestDocument = widget.getDocument();
+                    if (!latestDocument) {
+                        break;
+                    }
+                    const beforePassApplied = appliedTotal;
+                    currentSelection = [];
+                    currentApplyMode = 'continuation';
+                    currentStreamPrompt = this.createFullPageStreamingContinuationPrompt(prompt, pass, OPENPENCIL_AI_STREAMING_FULL_PAGE_CONTINUATION_PASSES);
+                    this.reportAiStatus(widget, progress, this.createAiStatus('preparing', 'Continuing page', `Canvas AI is adding more homepage sections (${pass}/${OPENPENCIL_AI_STREAMING_FULL_PAGE_CONTINUATION_PASSES})...`));
+                    const continuation = await this.commandService.streamAiOperations({
+                        prompt: currentStreamPrompt,
+                        document: latestDocument,
+                        selection: [],
+                        uri: widget.uri.toString(),
+                        mode: 'continuation',
+                        workspacePath: executionChoice.workspacePath,
+                        execution: executionChoice.execution
+                    }, applyStreamedOperations);
+                    totalStreamedOperations += continuation.operations.length;
+                    canvasAiFrontendDebug('streaming-continuation-result', {
+                        pass,
+                        operationsCount: continuation.operations.length,
+                        appliedTotal,
+                        diagnosticsCount: continuation.diagnostics?.length ?? 0
+                    });
+                    if (!continuation.operations.length || appliedTotal === beforePassApplied || continuation.operations.length < 8) {
+                        break;
+                    }
+                }
             }
 
             const finalDocument = widget.getDocument();
@@ -1290,7 +1340,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
             }
 
             this.reportAiStatus(widget, progress, this.createAiStatus('complete', 'Done', `Canvas AI streamed and applied ${appliedTotal} change${appliedTotal === 1 ? '' : 's'}.`));
-            this.messages.info(`Canvas AI streamed ${appliedTotal} design change${appliedTotal === 1 ? '' : 's'} using the selected provider/model; save when satisfied. Selection: ${this.formatSelection(currentSelection)}.`);
+            this.messages.info(`Canvas AI streamed ${appliedTotal} design change${appliedTotal === 1 ? '' : 's'} (${totalStreamedOperations} operation${totalStreamedOperations === 1 ? '' : 's'} received) using the selected provider/model; save when satisfied. Selection: ${this.formatSelection(currentSelection)}.`);
             return true;
         } catch (error) {
             canvasAiFrontendDebug('streaming-error', {
@@ -1432,10 +1482,12 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         target: URI;
         reviewModel: OpenPencilAiReviewModel;
     }> {
-        const preview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(document), selection, generated.operations, {
-            mode: requestMode,
-            normalizeVisibleBounds: true
-        });
+        const preview = this.commandService.applyOperationsToDocument(
+            this.documents.cloneDocument(document),
+            selection,
+            generated.operations,
+            this.createAiApplyOptions(prompt, requestMode)
+        );
         const validation = this.commandService.validateDocument(preview.document);
         const validationMessage = validation.issues
             .filter(issue => issue.severity === 'error')
@@ -1505,7 +1557,8 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         previewArtifact: URI,
         canAlwaysApply: boolean,
         selection?: string[],
-        requestMode?: OpenPencilAiDesignRequest['mode']
+        requestMode?: OpenPencilAiDesignRequest['mode'],
+        applyOptions?: OpenPencilApplyOperationsOptions
     ): Promise<void> {
         const apply = async () => {
             const progress = await this.progressService.showProgress({
@@ -1515,7 +1568,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 }
             });
             try {
-                await this.applyGeneratedAiOperations(widget, operations, progress, selection, requestMode);
+                await this.applyGeneratedAiOperations(widget, operations, progress, selection, requestMode, { applyOptions });
             } finally {
                 progress.cancel();
                 widget.clearAiStatusSoon();
@@ -1544,7 +1597,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         progress?: OpenPencilProgressHandle,
         selection?: string[],
         requestMode?: OpenPencilAiDesignRequest['mode'],
-        options: { quiet?: boolean; batchSize?: number; delayMs?: number } = {}
+        options: { quiet?: boolean; batchSize?: number; delayMs?: number; applyOptions?: OpenPencilApplyOperationsOptions } = {}
     ): Promise<OpenPencilProgressiveApplyResult | undefined> {
         const latestDocument = widget.getDocument();
         if (!latestDocument) {
@@ -1560,11 +1613,12 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
             operationsCount: operations.length,
             selectionCount: baseSelection.length
         });
-        this.reportAiStatus(widget, progress, this.createAiStatus('validating', 'Validating', 'Canvas AI is validating the active design...'));
-        const applyPreview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(latestDocument), baseSelection, operations, {
+        const applyOptions = options.applyOptions ?? {
             mode: requestMode,
             normalizeVisibleBounds: true
-        });
+        };
+        this.reportAiStatus(widget, progress, this.createAiStatus('validating', 'Validating', 'Canvas AI is validating the active design...'));
+        const applyPreview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(latestDocument), baseSelection, operations, applyOptions);
         const applyValidation = this.commandService.validateDocument(applyPreview.document);
         if (!applyPreview.changed || !applyValidation.valid) {
             canvasAiFrontendDebug('apply-rejected', {
@@ -1579,10 +1633,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         this.reportAiStatus(widget, progress, this.createAiApplyingStatus(0, operations.length));
         const result = await widget.applyOperationsProgressively(operations, {
             selection: baseSelection,
-            applyOptions: {
-                mode: requestMode,
-                normalizeVisibleBounds: true
-            },
+            applyOptions,
             batchSize: options.batchSize ?? this.aiProgressiveBatchSize(operations.length),
             delayMs: options.delayMs ?? OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS,
             onProgress: applyProgress => {
@@ -1618,6 +1669,47 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
 
     protected isPageLevelAiPrompt(prompt: string): boolean {
         return /\b(landing|page|screen|dashboard|site|app|hero|interface|tela|pagina|página)\b/i.test(prompt);
+    }
+
+    protected createAiApplyOptions(prompt: string, requestMode?: OpenPencilAiDesignRequest['mode']): OpenPencilApplyOperationsOptions {
+        const preservePageWidth = this.shouldPreserveAiPageWidth(prompt);
+        return {
+            mode: requestMode,
+            normalizeVisibleBounds: true,
+            preservePageWidth,
+            targetPageWidth: preservePageWidth ? 1200 : undefined
+        };
+    }
+
+    protected shouldPreserveAiPageWidth(prompt: string): boolean {
+        const lower = prompt.toLowerCase();
+        if (/\b(side[- ]by[- ]side|lado a lado|desktop e mobile|mobile e desktop|multiple views|múltiplas telas|multiplas telas)\b/i.test(lower)) {
+            return false;
+        }
+        return /\b(homepage|home page|página inicial|pagina inicial|landing|site|website|web|e-?commerce|loja|marketplace|mercado livre|mercadolivre|copy|copia|cópia|clone|clonar)\b/i.test(lower);
+    }
+
+    protected shouldContinueFullPageStreaming(prompt: string, selection: string[], requestMode?: OpenPencilAiDesignRequest['mode']): boolean {
+        if (selection.length || requestMode === 'maintenance') {
+            return false;
+        }
+        const lower = prompt.toLowerCase();
+        if (!this.shouldPreserveAiPageWidth(prompt)) {
+            return false;
+        }
+        return /\b(full|complete|entire|all|todos?|todas?|complet[ao]|inteir[ao]|página inicial|pagina inicial|homepage|mercado livre|mercadolivre|copy|copia|cópia|clone|clonar)\b/i.test(lower);
+    }
+
+    protected createFullPageStreamingContinuationPrompt(originalPrompt: string, pass: number, totalPasses: number): string {
+        return [
+            `Original user request: ${originalPrompt}`,
+            `Full homepage continuation pass ${pass}/${totalPasses}.`,
+            'Continue the same page vertically by adding the next missing homepage sections below the current content.',
+            'Preserve all existing nodes and IDs. Do not recreate, delete, replace, or cover existing content.',
+            'Keep the page around 1200px wide. Add product shelves, promo banners, category blocks, recommendations, benefits, and closing/footer-like content below the current bottom.',
+            'Wrap cards into rows inside the page width; never extend the design horizontally to the right.',
+            'Stream each added node immediately as an OpenPencil operation and finish with complete when this pass is done.'
+        ].join('\n');
     }
 
     protected createAiStatus(phase: OpenPencilAiStatus['phase'], label: string, detail: string): OpenPencilAiStatus {

@@ -55,8 +55,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     `OpenPencil Canvas ${request.mode ?? context.phase}`,
                     context.documentContext.documentName
                 ],
-                maxItems: 5,
-                tokenBudget: 3000,
+                maxItems: 8,
+                tokenBudget: 8000,
                 taskId: 'openpencil-design'
             },
             output: {
@@ -67,6 +67,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Return only one JSON object.',
                     'The JSON object must use contract "openpencil.design-operations.v1".',
                     'The operations array must contain OpenPencilDesignOperation objects only.',
+                    'For website/homepage/e-commerce requests, keep one vertical page frame about 1200px wide, wrap product shelves into rows, and extend downward for the complete page.',
                     'Do not include markdown, prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
                 ].join(' ')
             },
@@ -107,8 +108,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     `OpenPencil Canvas ${request.mode ?? context.phase}`,
                     context.documentContext.documentName
                 ],
-                maxItems: 5,
-                tokenBudget: 3000,
+                maxItems: 8,
+                tokenBudget: 8000,
                 taskId: 'openpencil-design-stream'
             },
             output: {
@@ -119,6 +120,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Every visible canvas change must be emitted immediately as one complete line: {"type":"operation","operation":{...}}.',
                     'The nested operation object must be one OpenPencilDesignOperation.',
                     'Create parents before children, use stable IDs, and emit non-auto-layout sibling layers front-to-back: text, icons, controls, cards, then backgrounds.',
+                    'For website/homepage/e-commerce requests, keep one vertical page frame about 1200px wide and add sections downward. Product shelves wrap into rows or new sections; never create an endless horizontal strip.',
+                    'For full homepage copy requests, keep streaming section by section until the visible page includes navigation, hero/promos, categories, several product shelves, banners, recommendations, benefits, and closing/footer content.',
                     'Do not restate operations that were already emitted.',
                     'When finished, emit {"type":"complete"}.',
                     'Do not include prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
@@ -181,6 +184,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'You are provider-neutral: follow this contract regardless of the selected provider, model, runtime, or reasoning effort.',
             'Think through the design privately, but expose progress by emitting one operation as soon as that canvas element is decided.',
             'Emit operations in the order the user should see the canvas grow: page/root frame, major sections, containers, text, controls, decorative elements, then refinements.',
+            'For website/homepage/e-commerce requests, preserve a fixed page width around 1200px and extend downward. Additional products or shelves go into new rows/sections below, not beyond the right edge.',
+            'For full homepage copies, stream a long vertical page with many sections rather than only the above-the-fold portion.',
             'For non-auto-layout siblings, stream foreground layers before background layers so text and controls stay readable while the canvas updates.',
             'Preserve existing node IDs unless creating or explicitly replacing nodes.',
             request.mode === 'continuation'
