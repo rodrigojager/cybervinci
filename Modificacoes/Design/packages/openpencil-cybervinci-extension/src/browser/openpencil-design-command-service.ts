@@ -239,11 +239,25 @@ export interface OpenPencilAiDesignProviderResult {
 
 export type OpenPencilAiDesignProviderResponse = OpenPencilDesignOperation[] | OpenPencilAiDesignProviderResult | undefined;
 
+export type OpenPencilAiDesignStreamEvent =
+    | { readonly type: 'operation'; readonly operation: OpenPencilDesignOperation }
+    | { readonly type: 'diagnostic'; readonly message: string }
+    | { readonly type: 'complete'; readonly operations?: OpenPencilDesignOperation[]; readonly diagnostics?: string[] };
+
+export interface OpenPencilAiDesignStreamApplyResult {
+    readonly document: OpenPencilDocument;
+    readonly selection: string[];
+    readonly applied: number;
+}
+
+export type OpenPencilAiDesignStreamApply = (result: OpenPencilAiDesignResult) => Promise<OpenPencilAiDesignStreamApplyResult | undefined>;
+
 export interface OpenPencilAiDesignProvider {
     readonly id?: string;
     readonly label?: string;
     readonly priority?: number;
     generateOperations(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): Promise<OpenPencilAiDesignProviderResponse> | OpenPencilAiDesignProviderResponse;
+    streamOperations?(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): AsyncIterable<OpenPencilAiDesignStreamEvent>;
 }
 
 @injectable()
@@ -738,6 +752,7 @@ export interface OpenPencilDesignCommandService {
     getDocumentSummary(document: OpenPencilDocument): OpenPencilDocumentSummary;
     validateDocument(document: OpenPencilDocument): OpenPencilValidationResult;
     generateAiOperations(request: OpenPencilAiDesignRequest): Promise<OpenPencilAiDesignResult>;
+    streamAiOperations(request: OpenPencilAiDesignRequest, apply: OpenPencilAiDesignStreamApply): Promise<OpenPencilAiDesignResult>;
     exportDocument(document: OpenPencilDocument, selection: string[], format: OpenPencilExportFormat, selectionOnly?: boolean): string;
     importDocument(source: string, name?: string): OpenPencilDocument;
 }
@@ -1574,6 +1589,144 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             providerReturnedOperations,
             diagnosticsCount: diagnostics.length
         });
+        return {
+            operations: [],
+            context,
+            source: 'deterministic-fallback',
+            diagnostics
+        };
+    }
+
+    async streamAiOperations(request: OpenPencilAiDesignRequest, apply: OpenPencilAiDesignStreamApply): Promise<OpenPencilAiDesignResult> {
+        const context = this.createAiSkillContext(request);
+        const diagnostics: string[] = [];
+        const providers = this.resolveAiProviders();
+        let providerReturnedOperations = false;
+
+        for (const [providerIndex, provider] of providers.entries()) {
+            if (!provider.streamOperations) {
+                continue;
+            }
+            const providerName = provider.label ?? provider.id ?? 'AI provider';
+            const providerDetails = {
+                providerId: provider.id,
+                providerLabel: provider.label,
+                providerIndex,
+                providersCount: providers.length,
+                priority: provider.priority ?? 0
+            };
+            let currentRequest: OpenPencilAiDesignRequest = request;
+            const acceptedOperations: OpenPencilDesignOperation[] = [];
+            let completedOperations: OpenPencilDesignOperation[] | undefined;
+
+            const acceptOperations = async (operations: OpenPencilDesignOperation[]): Promise<void> => {
+                if (!operations.length) {
+                    return;
+                }
+                providerReturnedOperations = true;
+                if (!operations.every(operation => this.isDesignOperationLike(operation))) {
+                    diagnostics.push(`${providerName} streamed operations that do not match the OpenPencil structured operation contract.`);
+                    return;
+                }
+                const normalizedOperations = this.normalizeProviderAiOperations(operations, currentRequest);
+                const previewDiagnostic = this.validateAiOperationsPreview(normalizedOperations, currentRequest, providerName);
+                if (previewDiagnostic) {
+                    diagnostics.push(previewDiagnostic);
+                    canvasAiFrontendDebug('provider-stream-rejected', {
+                        ...providerDetails,
+                        reason: 'preview-validation',
+                        operationsCount: normalizedOperations.length,
+                        diagnosticsCount: diagnostics.length
+                    });
+                    return;
+                }
+                const applyResult = await apply({
+                    operations: normalizedOperations,
+                    context,
+                    source: 'provider',
+                    providerId: provider.id,
+                    providerLabel: provider.label ?? provider.id,
+                    diagnostics
+                });
+                if (!applyResult?.applied) {
+                    diagnostics.push(`${providerName} streamed operations were valid but were not applied by the Canvas editor.`);
+                    return;
+                }
+                acceptedOperations.push(...normalizedOperations);
+                currentRequest = {
+                    ...currentRequest,
+                    document: applyResult.document,
+                    selection: applyResult.selection,
+                    mode: 'maintenance'
+                };
+            };
+
+            canvasAiFrontendDebug('provider-stream-start', {
+                ...providerDetails,
+                selectionCount: request.selection.length
+            });
+
+            try {
+                for await (const event of provider.streamOperations(currentRequest, context)) {
+                    if (event.type === 'diagnostic') {
+                        diagnostics.push(`${providerName}: ${event.message}`);
+                        continue;
+                    }
+                    if (event.type === 'operation') {
+                        await acceptOperations([event.operation]);
+                        continue;
+                    }
+                    if (event.type === 'complete') {
+                        diagnostics.push(...(event.diagnostics ?? []).map(diagnostic => `${providerName}: ${diagnostic}`));
+                        if (event.operations?.length) {
+                            completedOperations = event.operations;
+                        }
+                    }
+                }
+                if (!acceptedOperations.length && completedOperations?.length) {
+                    for (const operation of completedOperations) {
+                        await acceptOperations([operation]);
+                    }
+                }
+                if (acceptedOperations.length) {
+                    canvasAiFrontendDebug('provider-stream-accepted', {
+                        ...providerDetails,
+                        operationsCount: acceptedOperations.length,
+                        diagnosticsCount: diagnostics.length
+                    });
+                    return {
+                        operations: acceptedOperations,
+                        context,
+                        source: 'provider',
+                        providerId: provider.id,
+                        providerLabel: provider.label ?? provider.id,
+                        diagnostics
+                    };
+                }
+                diagnostics.push(`${providerName} streaming completed without usable OpenPencil operations.`);
+            } catch (error) {
+                diagnostics.push(`${providerName} streaming failed: ${error instanceof Error ? error.message : String(error)}`);
+                canvasAiFrontendDebug('provider-stream-error', {
+                    ...providerDetails,
+                    diagnosticsCount: diagnostics.length,
+                    errorName: error instanceof Error ? error.name : typeof error,
+                    messageLength: error instanceof Error ? error.message.length : String(error).length
+                });
+                if (acceptedOperations.length) {
+                    return {
+                        operations: acceptedOperations,
+                        context,
+                        source: 'provider',
+                        providerId: provider.id,
+                        providerLabel: provider.label ?? provider.id,
+                        diagnostics
+                    };
+                }
+            }
+        }
+
+        const failureMessage = this.createPageLevelAiFailureMessage(providers, diagnostics, providerReturnedOperations);
+        diagnostics.push(failureMessage);
         return {
             operations: [],
             context,

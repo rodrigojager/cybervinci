@@ -1,12 +1,15 @@
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import {
+    parseCyberVinciAiJson,
     CyberVinciAiRuntimeService,
     CyberVinciAiTaskResult
 } from '@cybervinci/ai-runtime/lib/common';
+import { CyberVinciAiRuntimeFrontendService } from '@cybervinci/ai-runtime/lib/browser';
 import {
     OpenPencilAiDesignProvider,
     OpenPencilAiDesignProviderResult,
     OpenPencilAiDesignRequest,
+    OpenPencilAiDesignStreamEvent,
     OpenPencilAiSkillContext
 } from './openpencil-design-command-service';
 import { OpenPencilDesignOperation } from '../common/openpencil-types';
@@ -27,6 +30,9 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
 
     @inject(CyberVinciAiRuntimeService) @optional()
     protected readonly aiRuntime: CyberVinciAiRuntimeService | undefined;
+
+    @inject(CyberVinciAiRuntimeFrontendService) @optional()
+    protected readonly aiRuntimeFrontend: CyberVinciAiRuntimeFrontendService | undefined;
 
     async generateOperations(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): Promise<OpenPencilAiDesignProviderResult> {
         if (!this.aiRuntime) {
@@ -80,6 +86,78 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
         return this.toProviderResult(result);
     }
 
+    async *streamOperations(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): AsyncIterable<OpenPencilAiDesignStreamEvent> {
+        if (!this.aiRuntimeFrontend) {
+            yield { type: 'diagnostic', message: 'CyberVinci AI Runtime streaming service is not available in this frontend container.' };
+            return;
+        }
+        const parser = new OpenPencilAiRuntimeOperationStreamParser();
+        for await (const event of this.aiRuntimeFrontend.runTaskStream<OpenPencilAiRuntimeTaskInput, OpenPencilAiRuntimeResponse>({
+            surfaceId: 'openpencil-design',
+            action: 'canvas.streamOperations',
+            workspacePath: request.workspacePath,
+            sessionId: this.sessionId(request, context),
+            userPrompt: request.prompt,
+            systemPrompt: this.createStreamingSystemPrompt(request),
+            input: this.createInput(request, context),
+            context: {
+                mode: request.workspacePath ? 'memory-if-available' : 'none',
+                queries: [
+                    request.prompt,
+                    `OpenPencil Canvas ${request.mode ?? context.phase}`,
+                    context.documentContext.documentName
+                ],
+                maxItems: 5,
+                tokenBudget: 3000,
+                taskId: 'openpencil-design-stream'
+            },
+            output: {
+                mode: 'text',
+                schemaName: 'openpencil_design_operation_events',
+                instructions: [
+                    'Stream newline-delimited JSON objects only. Do not wrap output in Markdown fences.',
+                    'Every visible canvas change must be emitted immediately as one complete line: {"type":"operation","operation":{...}}.',
+                    'The nested operation object must be one OpenPencilDesignOperation.',
+                    'Create parents before children, use stable IDs, and emit operations in visual/layer order.',
+                    'Do not restate operations that were already emitted.',
+                    'When finished, emit {"type":"complete"}.',
+                    'Do not include prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
+                ].join(' ')
+            },
+            effectPolicy: {
+                previewOnly: true,
+                workspaceWrites: 'forbidden',
+                shellExecution: 'forbidden',
+                requireUserConfirmation: false
+            },
+            execution: {
+                approvalPolicy: 'never',
+                sandboxMode: 'read-only',
+                webSearch: 'disabled',
+                ...request.execution
+            }
+        })) {
+            if (event.type === 'text-delta') {
+                for (const parsed of parser.push(event.text)) {
+                    yield parsed;
+                }
+                continue;
+            }
+            if (event.type === 'error') {
+                yield { type: 'diagnostic', message: event.message };
+                continue;
+            }
+            if (event.type === 'complete') {
+                for (const parsed of parser.finish(event.text)) {
+                    yield parsed;
+                }
+                if (event.diagnostics.length) {
+                    yield { type: 'complete', diagnostics: event.diagnostics };
+                }
+            }
+        }
+    }
+
     protected createSystemPrompt(request: OpenPencilAiDesignRequest): string {
         return [
             'You are CyberVinci Canvas AI for OpenPencil.',
@@ -89,6 +167,23 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'For incremental stages, produce operations for the current stage only; do not wait to design the entire page if the stage asks for one section, skeleton, content pass, or refinement pass.',
             request.mode === 'continuation'
                 ? 'Continuation mode: keep existing content, preserve geometry, and add or refine only what the user requested.'
+                : undefined,
+            request.selection.length
+                ? 'Selected-node edit mode: preserve selected node IDs unless replacement is explicitly required.'
+                : undefined
+        ].filter(Boolean).join(' ');
+    }
+
+    protected createStreamingSystemPrompt(request: OpenPencilAiDesignRequest): string {
+        return [
+            'You are CyberVinci Canvas AI for OpenPencil.',
+            'Generate or edit the .op document by streaming structured OpenPencilDesignOperation events.',
+            'You are provider-neutral: follow this contract regardless of the selected provider, model, runtime, or reasoning effort.',
+            'Think through the design privately, but expose progress by emitting one operation as soon as that canvas element is decided.',
+            'Emit operations in the order the user should see the canvas grow: page/root frame, major sections, containers, text, controls, decorative elements, then refinements.',
+            'Preserve existing node IDs unless creating or explicitly replacing nodes.',
+            request.mode === 'continuation'
+                ? 'Continuation mode: keep existing content, preserve geometry, and append or refine only what the user requested.'
                 : undefined,
             request.selection.length
                 ? 'Selected-node edit mode: preserve selected node IDs unless replacement is explicitly required.'
@@ -233,3 +328,151 @@ const OPENPENCIL_AI_RUNTIME_RESPONSE_SCHEMA: Record<string, unknown> = {
         }
     }
 };
+
+class OpenPencilAiRuntimeOperationStreamParser {
+
+    protected buffer = '';
+    protected receivedText = false;
+
+    push(text: string): OpenPencilAiDesignStreamEvent[] {
+        this.receivedText = this.receivedText || !!text;
+        this.buffer += text;
+        return this.drain();
+    }
+
+    finish(fallbackText?: string): OpenPencilAiDesignStreamEvent[] {
+        if (!this.receivedText && fallbackText) {
+            this.buffer += fallbackText;
+        }
+        const events = this.drain();
+        const remaining = this.buffer.trim();
+        if (!remaining) {
+            return events;
+        }
+        for (const event of this.parseJsonValue(remaining)) {
+            events.push(event);
+        }
+        this.buffer = '';
+        return events;
+    }
+
+    protected drain(): OpenPencilAiDesignStreamEvent[] {
+        const events: OpenPencilAiDesignStreamEvent[] = [];
+        while (true) {
+            const extracted = this.extractNextJsonObject(this.buffer);
+            if (!extracted) {
+                this.trimLeadingNonJson();
+                break;
+            }
+            if (extracted.start > 0) {
+                this.buffer = this.buffer.slice(extracted.start);
+            }
+            if (!extracted.complete) {
+                break;
+            }
+            const candidate = this.buffer.slice(0, extracted.end + 1);
+            this.buffer = this.buffer.slice(extracted.end + 1);
+            for (const event of this.parseJsonValue(candidate)) {
+                events.push(event);
+            }
+        }
+        return events;
+    }
+
+    protected parseJsonValue(text: string): OpenPencilAiDesignStreamEvent[] {
+        try {
+            return this.toEvents(parseCyberVinciAiJson(text));
+        } catch {
+            return [];
+        }
+    }
+
+    protected toEvents(value: unknown): OpenPencilAiDesignStreamEvent[] {
+        if (Array.isArray(value)) {
+            return [{
+                type: 'complete',
+                operations: value.filter(candidate => this.asRecord(candidate)) as OpenPencilDesignOperation[]
+            }];
+        }
+        const object = this.asRecord(value);
+        if (!object) {
+            return [];
+        }
+        const events: OpenPencilAiDesignStreamEvent[] = [];
+        const operation = this.asRecord(object.operation);
+        if (object.type === 'operation' && operation) {
+            events.push({ type: 'operation', operation: operation as unknown as OpenPencilDesignOperation });
+            return events;
+        }
+        if (typeof object.operation === 'string') {
+            events.push({ type: 'operation', operation: object as unknown as OpenPencilDesignOperation });
+            return events;
+        }
+        const operations = Array.isArray(object.operations)
+            ? object.operations.filter(candidate => this.asRecord(candidate)) as OpenPencilDesignOperation[]
+            : undefined;
+        if (object.type === 'complete' || operations?.length) {
+            events.push({
+                type: 'complete',
+                operations,
+                diagnostics: Array.isArray(object.diagnostics)
+                    ? object.diagnostics.filter((diagnostic): diagnostic is string => typeof diagnostic === 'string')
+                    : undefined
+            });
+            return events;
+        }
+        if ((object.type === 'diagnostic' || object.type === 'warning' || object.type === 'checkpoint') && typeof object.message === 'string') {
+            events.push({ type: 'diagnostic', message: object.message });
+        }
+        return events;
+    }
+
+    protected extractNextJsonObject(text: string): { start: number; end: number; complete: boolean } | undefined {
+        const start = text.indexOf('{');
+        if (start < 0) {
+            return undefined;
+        }
+        let depth = 0;
+        let inString = false;
+        let escaped = false;
+        for (let index = start; index < text.length; index++) {
+            const char = text[index];
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (char === '\\') {
+                    escaped = true;
+                } else if (char === '"') {
+                    inString = false;
+                }
+                continue;
+            }
+            if (char === '"') {
+                inString = true;
+            } else if (char === '{') {
+                depth++;
+            } else if (char === '}') {
+                depth--;
+                if (depth === 0) {
+                    return { start, end: index, complete: true };
+                }
+            }
+        }
+        return { start, end: text.length - 1, complete: false };
+    }
+
+    protected trimLeadingNonJson(): void {
+        const start = this.buffer.indexOf('{');
+        if (start > 0) {
+            this.buffer = this.buffer.slice(start);
+        } else if (start < 0 && this.buffer.length > 4096) {
+            this.buffer = '';
+        }
+    }
+
+    protected asRecord(value: unknown): Record<string, unknown> | undefined {
+        return value && typeof value === 'object' && !Array.isArray(value)
+            ? value as Record<string, unknown>
+            : undefined;
+    }
+}

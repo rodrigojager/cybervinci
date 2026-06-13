@@ -44,7 +44,6 @@ import {
     CodexProviderLoginRequest,
     CodexProviderLoginResult,
     CodexProviderOptions,
-    CodexProviderRequest,
     CodexProviderService,
     CodexProviderStatus,
     CodexProviderStreamMessage,
@@ -112,7 +111,7 @@ export class CodexProviderFrontendService {
 
     protected streams = new Map<string, StreamState>();
 
-    async send(request: CodexProviderRequest, cancellationToken?: CancellationToken): Promise<AsyncIterable<CodexProviderStreamMessage>> {
+    async send(request: CodexProviderBackendRequest, cancellationToken?: CancellationToken): Promise<AsyncIterable<CodexProviderStreamMessage>> {
         const streamState: StreamState = {
             id: generateUuid(),
             tokens: [],
@@ -145,20 +144,20 @@ export class CodexProviderFrontendService {
         const backendRequest: CodexProviderBackendRequest = {
             prompt: request.prompt,
             sessionId: request.sessionId,
-            runtime: this.getRuntime(),
-            executablePath: this.preferenceService.get<string>(CODEX_CLI_EXECUTABLE_PATH_PREF, undefined),
-            profile: this.preferenceService.get<string>(CODEX_CLI_PROFILE_PREF, undefined),
-            modelProvider: this.getModelProvider(),
-            openRouterApiKey: this.preferenceService.get<string>(CODEX_CLI_OPENROUTER_API_KEY_PREF, undefined),
-            openCodeApiKey: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_API_KEY_PREF, undefined),
-            openCodeExecutablePath: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_EXECUTABLE_PATH_PREF, undefined),
-            openCodeAgent: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_AGENT_PREF, undefined),
-            openCodeVariant: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_VARIANT_PREF, undefined),
-            geminiExecutablePath: this.preferenceService.get<string>(CODEX_CLI_GEMINI_EXECUTABLE_PATH_PREF, undefined),
-            claudeExecutablePath: this.preferenceService.get<string>(CODEX_CLI_CLAUDE_EXECUTABLE_PATH_PREF, undefined),
-            claudeAgent: this.preferenceService.get<string>(CODEX_CLI_CLAUDE_AGENT_PREF, undefined),
-            cursorExecutablePath: this.preferenceService.get<string>(CODEX_CLI_CURSOR_EXECUTABLE_PATH_PREF, undefined),
-            cursorMode: this.preferenceService.get<string>(CODEX_CLI_CURSOR_MODE_PREF, undefined),
+            runtime: request.runtime ?? this.getRuntime(),
+            executablePath: request.executablePath ?? this.preferenceService.get<string>(CODEX_CLI_EXECUTABLE_PATH_PREF, undefined),
+            profile: request.profile ?? this.preferenceService.get<string>(CODEX_CLI_PROFILE_PREF, undefined),
+            modelProvider: request.modelProvider ?? this.getModelProvider(),
+            openRouterApiKey: request.openRouterApiKey ?? this.preferenceService.get<string>(CODEX_CLI_OPENROUTER_API_KEY_PREF, undefined),
+            openCodeApiKey: request.openCodeApiKey ?? this.preferenceService.get<string>(CODEX_CLI_OPENCODE_API_KEY_PREF, undefined),
+            openCodeExecutablePath: request.openCodeExecutablePath ?? this.preferenceService.get<string>(CODEX_CLI_OPENCODE_EXECUTABLE_PATH_PREF, undefined),
+            openCodeAgent: request.openCodeAgent ?? this.preferenceService.get<string>(CODEX_CLI_OPENCODE_AGENT_PREF, undefined),
+            openCodeVariant: request.openCodeVariant ?? this.preferenceService.get<string>(CODEX_CLI_OPENCODE_VARIANT_PREF, undefined),
+            geminiExecutablePath: request.geminiExecutablePath ?? this.preferenceService.get<string>(CODEX_CLI_GEMINI_EXECUTABLE_PATH_PREF, undefined),
+            claudeExecutablePath: request.claudeExecutablePath ?? this.preferenceService.get<string>(CODEX_CLI_CLAUDE_EXECUTABLE_PATH_PREF, undefined),
+            claudeAgent: request.claudeAgent ?? this.preferenceService.get<string>(CODEX_CLI_CLAUDE_AGENT_PREF, undefined),
+            cursorExecutablePath: request.cursorExecutablePath ?? this.preferenceService.get<string>(CODEX_CLI_CURSOR_EXECUTABLE_PATH_PREF, undefined),
+            cursorMode: request.cursorMode ?? this.preferenceService.get<string>(CODEX_CLI_CURSOR_MODE_PREF, undefined),
             options: {
                 cwd: await this.getWorkspaceRoot(),
                 model: this.preferenceService.get<string>(CODEX_CLI_MODEL_PREF, undefined) as CodexProviderOptions['model'],

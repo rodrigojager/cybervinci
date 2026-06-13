@@ -1098,6 +1098,9 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         requestMode: OpenPencilAiDesignRequest['mode'] | undefined,
         executionChoice: OpenPencilAiExecutionChoice
     ): Promise<void> {
+        if (await this.executeStreamingAiPromptWithFeedback(widget, document, selection, prompt, requestMode, executionChoice)) {
+            return;
+        }
         const stages = this.createAiIncrementalStages(prompt, selection, requestMode);
         const rollbackSnapshot = widget.createAiRollbackSnapshot();
         let progress: OpenPencilProgressHandle | undefined = await this.progressService.showProgress({
@@ -1205,6 +1208,111 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                     diagnostics: diagnostics.slice(0, 5)
                 });
             }
+        } finally {
+            progress?.cancel();
+            widget.clearAiStatusSoon();
+        }
+    }
+
+    protected async executeStreamingAiPromptWithFeedback(
+        widget: OpenPencilEditorWidget,
+        document: OpenPencilDocument,
+        selection: string[],
+        prompt: string,
+        requestMode: OpenPencilAiDesignRequest['mode'] | undefined,
+        executionChoice: OpenPencilAiExecutionChoice
+    ): Promise<boolean> {
+        const rollbackSnapshot = widget.createAiRollbackSnapshot();
+        let progress: OpenPencilProgressHandle | undefined = await this.progressService.showProgress({
+            text: 'Canvas AI is streaming design changes...',
+            options: {
+                location: 'notification'
+            }
+        });
+        let appliedTotal = 0;
+        let currentSelection = [...selection];
+        let currentApplyMode = requestMode;
+        try {
+            this.reportAiStatus(widget, progress, this.createAiStatus('preparing', 'Streaming', 'Canvas AI is streaming changes from the selected provider...'));
+            const generated = await this.commandService.streamAiOperations({
+                prompt,
+                document,
+                selection,
+                uri: widget.uri.toString(),
+                mode: requestMode,
+                workspacePath: executionChoice.workspacePath,
+                execution: executionChoice.execution
+            }, async streamed => {
+                this.reportAiStatus(widget, progress, this.createAiStatus('applying', 'Applying stream', `Canvas AI is applying streamed change ${appliedTotal + 1}...`));
+                const result = await this.applyGeneratedAiOperations(widget, streamed.operations, progress, currentSelection, currentApplyMode, { quiet: true, batchSize: 1 });
+                if (!result?.completed) {
+                    return undefined;
+                }
+                appliedTotal += result.applied;
+                currentSelection = result.selection;
+                currentApplyMode = 'maintenance';
+                const latestDocument = widget.getDocument();
+                return latestDocument
+                    ? { document: latestDocument, selection: result.selection, applied: result.applied }
+                    : undefined;
+            });
+
+            canvasAiFrontendDebug('streaming-result', {
+                source: generated.source,
+                providerId: generated.providerId,
+                providerLabel: generated.providerLabel,
+                operationsCount: generated.operations.length,
+                appliedTotal,
+                diagnosticsCount: generated.diagnostics?.length ?? 0
+            });
+
+            if (!generated.operations.length || !appliedTotal) {
+                progress.cancel();
+                progress = undefined;
+                return false;
+            }
+
+            const finalDocument = widget.getDocument();
+            const validation = finalDocument ? this.commandService.validateDocument(finalDocument) : undefined;
+            if (!validation?.valid) {
+                const detail = validation?.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ') ?? 'unknown validation error';
+                this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Needs review', 'Canvas AI streamed changes with validation issues.'));
+                const action = await this.messages.warn(
+                    `Canvas AI streamed ${appliedTotal} change${appliedTotal === 1 ? '' : 's'}, but final validation reported issues: ${detail}`,
+                    'Rollback',
+                    'Keep'
+                );
+                if (action === 'Rollback' && rollbackSnapshot) {
+                    widget.restoreAiRollbackSnapshot(rollbackSnapshot);
+                    this.reportAiStatus(widget, progress, this.createAiStatus('complete', 'Rolled back', 'Canvas AI streamed changes were rolled back.'));
+                }
+                return true;
+            }
+
+            this.reportAiStatus(widget, progress, this.createAiStatus('complete', 'Done', `Canvas AI streamed and applied ${appliedTotal} change${appliedTotal === 1 ? '' : 's'}.`));
+            this.messages.info(`Canvas AI streamed ${appliedTotal} design change${appliedTotal === 1 ? '' : 's'} using the selected provider/model; save when satisfied. Selection: ${this.formatSelection(currentSelection)}.`);
+            return true;
+        } catch (error) {
+            canvasAiFrontendDebug('streaming-error', {
+                appliedTotal,
+                errorName: error instanceof Error ? error.name : typeof error,
+                messageLength: error instanceof Error ? error.message.length : String(error).length
+            });
+            if (!appliedTotal) {
+                progress.cancel();
+                progress = undefined;
+                return false;
+            }
+            this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Error', 'Canvas AI streaming stopped.'));
+            const action = await this.messages.error(
+                `Canvas AI streaming stopped after applying ${appliedTotal} change${appliedTotal === 1 ? '' : 's'}: ${error instanceof Error ? error.message : String(error)}`,
+                'Rollback',
+                'Keep'
+            );
+            if (action === 'Rollback' && rollbackSnapshot) {
+                widget.restoreAiRollbackSnapshot(rollbackSnapshot);
+            }
+            return true;
         } finally {
             progress?.cancel();
             widget.clearAiStatusSoon();
