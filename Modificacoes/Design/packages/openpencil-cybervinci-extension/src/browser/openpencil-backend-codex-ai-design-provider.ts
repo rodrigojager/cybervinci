@@ -12,7 +12,7 @@ import {
 export class OpenPencilBackendCodexAiDesignProvider implements OpenPencilAiDesignProvider {
 
     readonly id = 'openpencil.cybervinci-backend-codex';
-    readonly label = 'CyberVinci Codex backend';
+    readonly label = 'Legacy backend fallback';
     readonly priority = 200;
 
     @inject(WebSocketConnectionProvider)
@@ -36,7 +36,7 @@ export class OpenPencilBackendCodexAiDesignProvider implements OpenPencilAiDesig
             };
         } catch (error) {
             return {
-                diagnostics: [`Backend Codex generation failed: ${error instanceof Error ? error.message : String(error)}`]
+                diagnostics: [`Legacy backend generation failed: ${error instanceof Error ? error.message : String(error)}`]
             };
         }
     }

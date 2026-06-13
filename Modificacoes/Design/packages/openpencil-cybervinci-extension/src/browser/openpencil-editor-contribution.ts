@@ -1,5 +1,6 @@
 import URI from '@theia/core/lib/common/uri';
 import { Command, CommandContribution, CommandRegistry, DisposableCollection, MenuContribution, MenuModelRegistry, MessageService, ProgressService, UriSelection } from '@theia/core/lib/common';
+import { FileUri } from '@theia/core/lib/common/file-uri';
 import {
     codicon,
     CommonMenus,
@@ -23,6 +24,11 @@ import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import { WorkspaceService } from '@theia/workspace/lib/browser';
 import { BinaryBuffer } from '@theia/core/lib/common/buffer';
 import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
+import {
+    CyberVinciAiExecutionSelection,
+    CyberVinciAiProviderDescriptor,
+    CyberVinciAiRuntimeService
+} from '@cybervinci/ai-runtime/lib/common';
 import { cybervinciCanvasCommandLabel, cybervinciCanvasProductLabel, CYBERVINCI_MENU_ITEMS, CyberVinciMenus } from '@cybervinci/branding/lib/common';
 import { OPENPENCIL_BACKEND_PATH, OpenPencilBackendService, OpenPencilBridgeOperationResult } from '../common/openpencil-protocol';
 import { OpenPencilDocumentService } from '../common/openpencil-document-service';
@@ -31,7 +37,7 @@ import { OpenPencilTemplateService } from '../common/openpencil-template-service
 import { createOpenPencilAiReviewModel, OpenPencilAiReviewModel } from './openpencil-ai-review-model';
 import { OpenPencilAiReviewService } from './openpencil-ai-review-widget';
 import { OpenPencilAiDesignRequest, OpenPencilAiDesignResult, OpenPencilDesignCommandService } from './openpencil-design-command-service';
-import { OpenPencilAiStatus, OpenPencilEditorWidget } from './openpencil-editor-widget';
+import { OpenPencilAiStatus, OpenPencilEditorWidget, OpenPencilProgressiveApplyResult } from './openpencil-editor-widget';
 
 export namespace OpenPencilCommands {
     export const NEW_DESIGN: Command = {
@@ -168,11 +174,25 @@ export namespace OpenPencilMenus {
 }
 
 const OPENPENCIL_AI_AUTO_APPLY_KEY = 'openpencil.ai.autoApply';
+const OPENPENCIL_AI_INCREMENTAL_KEY = 'openpencil.ai.incremental';
 const CYBERVINCI_CANVAS_AI_DEBUG_STORAGE_KEY = 'cybervinci.canvasAiDebug';
 const OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS = 80;
 const OPENPENCIL_AI_PROGRESSIVE_MAX_BATCH_SIZE = 4;
 
 type OpenPencilProgressHandle = Awaited<ReturnType<ProgressService['showProgress']>>;
+
+interface OpenPencilAiExecutionChoice {
+    execution?: CyberVinciAiExecutionSelection;
+    workspacePath?: string;
+}
+
+interface OpenPencilAiIncrementalStage {
+    id: string;
+    label: string;
+    required: boolean;
+    mode?: OpenPencilAiDesignRequest['mode'];
+    prompt: string;
+}
 
 declare global {
     interface Window {
@@ -237,6 +257,9 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
 
     @inject(OpenPencilDesignCommandService)
     protected readonly commandService: OpenPencilDesignCommandService;
+
+    @inject(CyberVinciAiRuntimeService) @optional()
+    protected readonly aiRuntimeService: CyberVinciAiRuntimeService | undefined;
 
     @inject(OpenPencilAiReviewService)
     protected readonly aiReviewService: OpenPencilAiReviewService;
@@ -847,7 +870,11 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         if (!prompt?.trim()) {
             return;
         }
-        await this.executeAiPromptWithFeedback(widget, document, selection, prompt.trim(), options.requestMode);
+        const executionChoice = await this.readAiExecutionChoice();
+        if (!executionChoice) {
+            return;
+        }
+        await this.executeAiPromptWithFeedback(widget, document, selection, prompt.trim(), options.requestMode, executionChoice);
     }
 
     protected async readAiPrompt(title: string, prompt: string, value: string): Promise<string | undefined> {
@@ -857,7 +884,95 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         return window.prompt(`${title}\n${prompt}`, value) ?? undefined;
     }
 
-    protected async executeAiPromptWithFeedback(widget: OpenPencilEditorWidget, document: OpenPencilDocument, selection: string[], prompt: string, requestMode?: OpenPencilAiDesignRequest['mode']): Promise<void> {
+    protected async readAiExecutionChoice(): Promise<OpenPencilAiExecutionChoice | undefined> {
+        const workspacePath = this.resolveWorkspacePath();
+        if (!this.aiRuntimeService) {
+            return { workspacePath };
+        }
+        try {
+            const providers = await this.aiRuntimeService.listProviders({ workspacePath, includeUnavailable: true });
+            if (!providers.length) {
+                return { workspacePath };
+            }
+            if (!this.quickInputService) {
+                return {
+                    workspacePath,
+                    execution: await this.aiRuntimeService.getDefaultExecution({ workspacePath, includeUnavailable: true })
+                };
+            }
+            const providerPick = await this.quickInputService.pick(providers.map(provider => ({
+                label: provider.label,
+                description: provider.id,
+                detail: this.providerPickDetail(provider),
+                provider
+            })), {
+                title: cybervinciCanvasCommandLabel('Canvas AI Provider'),
+                placeHolder: 'Choose provider for this Canvas AI request'
+            });
+            if (!providerPick) {
+                return undefined;
+            }
+            const provider = providerPick.provider;
+            const defaultModel = provider.defaultModel ?? provider.models?.[0] ?? '';
+            const model = await this.quickInputService.input({
+                title: cybervinciCanvasCommandLabel('Canvas AI Model'),
+                value: defaultModel,
+                prompt: 'Model for this request. Leave empty to use the provider default.',
+                placeHolder: defaultModel || 'provider default'
+            });
+            if (model === undefined) {
+                return undefined;
+            }
+            const reasoning = await this.quickInputService.pick([
+                { label: 'medium', description: 'Balanced reasoning for design work' },
+                { label: 'low', description: 'Faster, cheaper reasoning' },
+                { label: 'high', description: 'More deliberate layout and refinement' },
+                { label: 'none', description: 'Disable native reasoning effort' }
+            ], {
+                title: cybervinciCanvasCommandLabel('Canvas AI Reasoning'),
+                placeHolder: 'Choose reasoning effort for this request'
+            });
+            if (!reasoning) {
+                return undefined;
+            }
+            return {
+                workspacePath,
+                execution: {
+                    providerId: provider.id,
+                    runtime: provider.runtime,
+                    modelProvider: provider.modelProvider,
+                    label: provider.label,
+                    model: model.trim() || undefined,
+                    reasoningPolicy: reasoning.label === 'none' ? 'off' : 'auto',
+                    reasoningEffort: reasoning.label as CyberVinciAiExecutionSelection['reasoningEffort']
+                }
+            };
+        } catch (error) {
+            this.messages.warn(`Canvas AI Runtime provider selection failed; using fallback providers. ${error instanceof Error ? error.message : String(error)}`);
+            return { workspacePath };
+        }
+    }
+
+    protected providerPickDetail(provider: CyberVinciAiProviderDescriptor): string {
+        const state = provider.available ? 'available' : 'unavailable';
+        const model = provider.defaultModel ?? provider.models?.[0];
+        return [state, model ? `default model: ${model}` : undefined, provider.message].filter(Boolean).join(' | ');
+    }
+
+    protected resolveWorkspacePath(): string | undefined {
+        const root = this.workspaceService.tryGetRoots()[0]?.resource;
+        return root ? FileUri.fsPath(root) : undefined;
+    }
+
+    protected async executeAiPromptWithFeedback(widget: OpenPencilEditorWidget, document: OpenPencilDocument, selection: string[], prompt: string, requestMode: OpenPencilAiDesignRequest['mode'] | undefined, executionChoice: OpenPencilAiExecutionChoice): Promise<void> {
+        if (this.isAiIncrementalEnabled()) {
+            await this.executeIncrementalAiPromptWithFeedback(widget, document, selection, prompt, requestMode, executionChoice);
+            return;
+        }
+        await this.executeAiPromptBatchWithFeedback(widget, document, selection, prompt, requestMode, executionChoice);
+    }
+
+    protected async executeAiPromptBatchWithFeedback(widget: OpenPencilEditorWidget, document: OpenPencilDocument, selection: string[], prompt: string, requestMode: OpenPencilAiDesignRequest['mode'] | undefined, executionChoice: OpenPencilAiExecutionChoice): Promise<void> {
         canvasAiFrontendDebug('prompt-submit', {
             uri: widget.uri.toString(),
             promptLength: prompt.length,
@@ -876,7 +991,9 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 document,
                 selection,
                 uri: widget.uri.toString(),
-                mode: requestMode
+                mode: requestMode,
+                workspacePath: executionChoice.workspacePath,
+                execution: executionChoice.execution
             });
             canvasAiFrontendDebug('provider-result', {
                 source: generated.source,
@@ -971,6 +1088,232 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
             progress?.cancel();
             widget.clearAiStatusSoon();
         }
+    }
+
+    protected async executeIncrementalAiPromptWithFeedback(
+        widget: OpenPencilEditorWidget,
+        document: OpenPencilDocument,
+        selection: string[],
+        prompt: string,
+        requestMode: OpenPencilAiDesignRequest['mode'] | undefined,
+        executionChoice: OpenPencilAiExecutionChoice
+    ): Promise<void> {
+        const stages = this.createAiIncrementalStages(prompt, selection, requestMode);
+        const rollbackSnapshot = widget.createAiRollbackSnapshot();
+        let progress: OpenPencilProgressHandle | undefined = await this.progressService.showProgress({
+            text: 'Canvas AI is starting incremental design...',
+            options: {
+                location: 'notification'
+            }
+        });
+        let appliedTotal = 0;
+        let currentSelection = [...selection];
+        const diagnostics: string[] = [];
+        try {
+            for (const [index, stage] of stages.entries()) {
+                const latestDocument = widget.getDocument();
+                if (!latestDocument) {
+                    throw new Error('Canvas document is not loaded.');
+                }
+                this.reportAiStatus(widget, progress, this.createAiStatus('preparing', stage.label, `Canvas AI is running ${stage.label.toLowerCase()} (${index + 1}/${stages.length})...`));
+                const generated = await this.commandService.generateAiOperations({
+                    prompt: stage.prompt,
+                    document: latestDocument,
+                    selection: currentSelection,
+                    uri: widget.uri.toString(),
+                    mode: stage.mode,
+                    workspacePath: executionChoice.workspacePath,
+                    execution: executionChoice.execution
+                });
+                diagnostics.push(...(generated.diagnostics ?? []));
+                canvasAiFrontendDebug('incremental-stage-result', {
+                    stageId: stage.id,
+                    stageIndex: index,
+                    source: generated.source,
+                    providerId: generated.providerId,
+                    operationsCount: generated.operations.length,
+                    diagnosticsCount: generated.diagnostics?.length ?? 0
+                });
+                if (!generated.operations.length) {
+                    if (stage.required && appliedTotal === 0) {
+                        progress.cancel();
+                        progress = undefined;
+                        await this.executeAiPromptBatchWithFeedback(widget, document, selection, prompt, requestMode, executionChoice);
+                        return;
+                    }
+                    continue;
+                }
+                const result = await this.applyGeneratedAiOperations(widget, generated.operations, progress, currentSelection, stage.mode, { quiet: true, batchSize: 1 });
+                if (!result?.completed) {
+                    if (stage.required) {
+                        throw new Error(result?.message ?? `Canvas AI could not apply required stage '${stage.label}'.`);
+                    }
+                    continue;
+                }
+                appliedTotal += result.applied;
+                currentSelection = result.selection;
+            }
+
+            if (!appliedTotal) {
+                progress.cancel();
+                progress = undefined;
+                await this.executeAiPromptBatchWithFeedback(widget, document, selection, prompt, requestMode, executionChoice);
+                return;
+            }
+
+            const finalDocument = widget.getDocument();
+            const validation = finalDocument ? this.commandService.validateDocument(finalDocument) : undefined;
+            if (!validation?.valid) {
+                const detail = validation?.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ') ?? 'unknown validation error';
+                this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Needs review', 'Canvas AI generated an incremental design with validation issues.'));
+                const action = await this.messages.warn(
+                    `Canvas AI applied ${appliedTotal} incremental change${appliedTotal === 1 ? '' : 's'}, but final validation reported issues: ${detail}`,
+                    'Rollback',
+                    'Keep'
+                );
+                if (action === 'Rollback' && rollbackSnapshot) {
+                    widget.restoreAiRollbackSnapshot(rollbackSnapshot);
+                    this.reportAiStatus(widget, progress, this.createAiStatus('complete', 'Rolled back', 'Canvas AI changes were rolled back.'));
+                }
+                return;
+            }
+
+            this.reportAiStatus(widget, progress, this.createAiStatus('complete', 'Done', `Canvas AI incrementally applied ${appliedTotal} change${appliedTotal === 1 ? '' : 's'}.`));
+            this.messages.info(`Canvas AI incrementally updated the design using the selected provider/model; save when satisfied. Selection: ${this.formatSelection(currentSelection)}.`);
+        } catch (error) {
+            canvasAiFrontendDebug('incremental-error', {
+                appliedTotal,
+                errorName: error instanceof Error ? error.name : typeof error,
+                messageLength: error instanceof Error ? error.message.length : String(error).length
+            });
+            this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Error', 'Canvas AI incremental generation stopped.'));
+            if (appliedTotal && rollbackSnapshot) {
+                const action = await this.messages.error(
+                    `Canvas AI stopped after applying ${appliedTotal} incremental change${appliedTotal === 1 ? '' : 's'}: ${error instanceof Error ? error.message : String(error)}`,
+                    'Rollback',
+                    'Keep'
+                );
+                if (action === 'Rollback') {
+                    widget.restoreAiRollbackSnapshot(rollbackSnapshot);
+                }
+            } else {
+                this.messages.error(`Canvas AI did not finish: ${error instanceof Error ? error.message : String(error)}`);
+            }
+            if (diagnostics.length) {
+                canvasAiFrontendDebug('incremental-diagnostics', {
+                    diagnosticsCount: diagnostics.length,
+                    diagnostics: diagnostics.slice(0, 5)
+                });
+            }
+        } finally {
+            progress?.cancel();
+            widget.clearAiStatusSoon();
+        }
+    }
+
+    protected createAiIncrementalStages(prompt: string, selection: string[], requestMode?: OpenPencilAiDesignRequest['mode']): OpenPencilAiIncrementalStage[] {
+        const originalRequest = `Original user request: ${prompt}`;
+        if (selection.length || requestMode === 'maintenance') {
+            return [
+                {
+                    id: 'selected-edit',
+                    label: 'Editing selection',
+                    required: true,
+                    mode: 'maintenance',
+                    prompt: [
+                        originalRequest,
+                        'Incremental stage 1/2: edit the selected node(s) now.',
+                        'Return the smallest ordered set of operations that visibly performs the requested edit.',
+                        'Preserve selected node IDs unless a replaceNode operation is necessary.'
+                    ].join('\n')
+                },
+                {
+                    id: 'selected-refine',
+                    label: 'Refining selection',
+                    required: false,
+                    mode: 'maintenance',
+                    prompt: [
+                        originalRequest,
+                        'Incremental stage 2/2: inspect the current selected edit and refine spacing, contrast, copy, and visual consistency.',
+                        'Return only operations that improve the current canvas. Return no unrelated changes.'
+                    ].join('\n')
+                }
+            ];
+        }
+        if (requestMode === 'continuation') {
+            return [
+                {
+                    id: 'continuation-structure',
+                    label: 'Adding structure',
+                    required: true,
+                    mode: 'continuation',
+                    prompt: [
+                        originalRequest,
+                        'Incremental stage 1/3: add only the missing top-level section containers below existing content or inside visible empty space.',
+                        'Do not delete, replace, or recreate existing nodes. Make the structure visible immediately.'
+                    ].join('\n')
+                },
+                {
+                    id: 'continuation-content',
+                    label: 'Adding content',
+                    required: false,
+                    mode: 'maintenance',
+                    prompt: [
+                        originalRequest,
+                        'Incremental stage 2/3: populate the newly added section containers with concrete text, controls, cards, icons, or imagery placeholders.',
+                        'Preserve all existing IDs and add elements one logical element at a time in visual order.'
+                    ].join('\n')
+                },
+                {
+                    id: 'continuation-refine',
+                    label: 'Refining',
+                    required: false,
+                    mode: 'maintenance',
+                    prompt: [
+                        originalRequest,
+                        'Incremental stage 3/3: refine the current continuation for spacing, contrast, alignment, hierarchy, and final selection.',
+                        'Return only operations that improve the existing canvas.'
+                    ].join('\n')
+                }
+            ];
+        }
+        return [
+            {
+                id: 'generation-skeleton',
+                label: 'Creating skeleton',
+                required: true,
+                mode: 'generation',
+                prompt: [
+                    originalRequest,
+                    'Incremental stage 1/3: create only the root view frame and major visible section/container skeleton.',
+                    'Do not wait for the full page. The canvas should show the intended structure after this stage.',
+                    'Prefer one top-level frame with major child sections; include enough fill/stroke/background so the structure is visible.'
+                ].join('\n')
+            },
+            {
+                id: 'generation-content',
+                label: 'Adding elements',
+                required: false,
+                mode: 'maintenance',
+                prompt: [
+                    originalRequest,
+                    'Incremental stage 2/3: add content into the existing skeleton.',
+                    'Add text, buttons, cards, input fields, icons, images/placeholders, and supporting shapes one logical element at a time.',
+                    'Preserve existing IDs. Do not recreate the root frame or major sections.'
+                ].join('\n')
+            },
+            {
+                id: 'generation-refine',
+                label: 'Refining',
+                required: false,
+                mode: 'maintenance',
+                prompt: [
+                    originalRequest,
+                    'Incremental stage 3/3: refine the current design for spacing, contrast, typography, alignment, layer order, and final selection.',
+                    'Return only operations that improve the existing canvas, not a replacement design.'
+                ].join('\n')
+            }
+        ];
     }
 
     protected async createAiPreviewFile(widget: OpenPencilEditorWidget, document: OpenPencilDocument, generated: OpenPencilAiDesignResult, prompt: string, selection: string[], requestMode?: OpenPencilAiDesignRequest['mode']): Promise<{
@@ -1084,14 +1427,21 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         await this.aiReviewService.openReview(reviewSession);
     }
 
-    protected async applyGeneratedAiOperations(widget: OpenPencilEditorWidget, operations: OpenPencilDesignOperation[], progress?: OpenPencilProgressHandle, selection?: string[], requestMode?: OpenPencilAiDesignRequest['mode']): Promise<void> {
+    protected async applyGeneratedAiOperations(
+        widget: OpenPencilEditorWidget,
+        operations: OpenPencilDesignOperation[],
+        progress?: OpenPencilProgressHandle,
+        selection?: string[],
+        requestMode?: OpenPencilAiDesignRequest['mode'],
+        options: { quiet?: boolean; batchSize?: number; delayMs?: number } = {}
+    ): Promise<OpenPencilProgressiveApplyResult | undefined> {
         const latestDocument = widget.getDocument();
         if (!latestDocument) {
             canvasAiFrontendDebug('apply-rejected', {
                 reason: 'missing-document',
                 operationsCount: operations.length
             });
-            return;
+            return undefined;
         }
         const baseSelection = selection ?? widget.getSelection();
         canvasAiFrontendDebug('apply-start', {
@@ -1110,13 +1460,13 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
             });
             this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Error', 'Canvas AI could not validate the active design.'));
             this.messages.warn(`Canvas AI edit was not applied because the active design no longer validates the preview${applyPreview.message ? `: ${applyPreview.message}` : '.'}`);
-            return;
+            return undefined;
         }
         this.reportAiStatus(widget, progress, this.createAiApplyingStatus(0, operations.length));
         const result = await widget.applyOperationsProgressively(operations, {
             selection: baseSelection,
-            batchSize: this.aiProgressiveBatchSize(operations.length),
-            delayMs: OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS,
+            batchSize: options.batchSize ?? this.aiProgressiveBatchSize(operations.length),
+            delayMs: options.delayMs ?? OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS,
             onProgress: applyProgress => {
                 this.reportAiStatus(widget, progress, this.createAiApplyingStatus(applyProgress.applied, applyProgress.total));
             }
@@ -1137,8 +1487,11 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 selectionCount: result.selection.length
             });
             this.reportAiStatus(widget, progress, this.createAiStatus('complete', 'Done', `Canvas AI applied ${result.applied}/${result.total} changes.`));
-            this.messages.info(`Canvas AI edit applied to the open design; save when satisfied. Selection: ${this.formatSelection(result.selection)}.`);
+            if (!options.quiet) {
+                this.messages.info(`Canvas AI edit applied to the open design; save when satisfied. Selection: ${this.formatSelection(result.selection)}.`);
+            }
         }
+        return result;
     }
 
     protected shouldAutoApplyAiResult(generated: OpenPencilAiDesignResult, selection: string[], prompt: string): boolean {
@@ -1174,6 +1527,14 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
             return typeof window !== 'undefined' && window.localStorage?.getItem(OPENPENCIL_AI_AUTO_APPLY_KEY) === 'true';
         } catch {
             return false;
+        }
+    }
+
+    protected isAiIncrementalEnabled(): boolean {
+        try {
+            return typeof window === 'undefined' || window.localStorage?.getItem(OPENPENCIL_AI_INCREMENTAL_KEY) !== 'false';
+        } catch {
+            return true;
         }
     }
 

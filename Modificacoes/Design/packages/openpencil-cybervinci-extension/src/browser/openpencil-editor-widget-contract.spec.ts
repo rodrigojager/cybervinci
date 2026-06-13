@@ -221,6 +221,8 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(source).to.contain("export type OpenPencilAiStatusPhase = 'preparing' | 'validating' | 'applying' | 'complete' | 'error';");
         expect(source).to.contain('setAiStatus(status: OpenPencilAiStatus | string | undefined)');
         expect(source).to.contain('clearAiStatusSoon(delayMs = 2400)');
+        expect(source).to.contain('createAiRollbackSnapshot()');
+        expect(source).to.contain('restoreAiRollbackSnapshot(snapshot: OpenPencilDocumentStateSnapshot)');
         expect(source).to.contain('applyOperationsProgressively(operations: OpenPencilDesignOperation[], options: OpenPencilProgressiveApplyOptions = {})');
         expect(source).to.contain('await options.onProgress?.({ applied, total, result: lastResult });');
         expect(source).to.contain('await this.waitForProgressiveApplyFrame(delayMs);');

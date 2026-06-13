@@ -22,6 +22,7 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@theia/ai-core": "1.72.0",
     "@theia/core": "1.72.0",
+    "@cybervinci/ai-runtime": "1.72.0",
     "@cybervinci/branding": "1.72.0",
     "@theia/editor": "1.72.0",
     "@theia/filesystem": "1.72.0",

@@ -91,6 +91,10 @@ describe('OpenPencil Theia UX integration contract', () => {
         expect(contributionSource).to.contain("format: 'auto'");
         expect(contributionSource).to.contain('current selection: ${this.formatSelection');
         expect(contributionSource).to.contain('this.commandService.generateAiOperations');
+        expect(contributionSource).to.contain('readAiExecutionChoice');
+        expect(contributionSource).to.contain('executeIncrementalAiPromptWithFeedback');
+        expect(contributionSource).to.contain('{ quiet: true, batchSize: 1 }');
+        expect(contributionSource).to.contain('OPENPENCIL_AI_INCREMENTAL_KEY');
         expect(contributionSource).to.contain('createAiPreviewFile');
         expect(contributionSource).to.contain('runAiPromptFlow');
         expect(contributionSource).to.contain('promptToDesign');
@@ -118,11 +122,18 @@ describe('OpenPencil Theia UX integration contract', () => {
         expect(contributionSource).not.to.contain('local mock');
     });
 
-    it('registers a CyberVinci language-model AI provider behind the OpenPencil provider extension point', () => {
+    it('registers provider-neutral AI Runtime first and keeps legacy language-model fallback behind the OpenPencil provider extension point', () => {
         const moduleSource = readPackageFile('src/browser/openpencil-frontend-module.ts');
+        const runtimeProviderSource = readPackageFile('src/browser/openpencil-ai-runtime-design-provider.ts');
         const serviceSource = readPackageFile('src/browser/openpencil-design-command-service.ts');
 
         expect(moduleSource).to.contain('bindRootContributionProvider(bind, OpenPencilAiDesignProvider)');
+        expect(moduleSource).to.contain('OpenPencilAiRuntimeDesignProvider');
+        expect(moduleSource.indexOf('OpenPencilAiRuntimeDesignProvider')).to.be.lessThan(moduleSource.indexOf('OpenPencilBackendCodexAiDesignProvider'));
+        expect(runtimeProviderSource).to.contain('CyberVinciAiRuntimeService');
+        expect(runtimeProviderSource).to.contain("surfaceId: 'openpencil-design'");
+        expect(runtimeProviderSource).to.contain("action: 'canvas.generateOperations'");
+        expect(runtimeProviderSource).to.contain('request.execution');
         expect(moduleSource).to.contain('OpenPencilCyberVinciAiDesignProvider');
         expect(serviceSource).to.contain('LanguageModelRegistry');
         expect(serviceSource).to.contain('LanguageModelService');

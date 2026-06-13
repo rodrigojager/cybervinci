@@ -4,6 +4,7 @@ import { ContributionProvider } from '@theia/core/lib/common';
 import { generateUuid } from '@theia/core/lib/common/uuid';
 import { inject, injectable, named, optional, unmanaged } from '@theia/core/shared/inversify';
 import { getTextOfResponse, LanguageModel, LanguageModelRegistry, LanguageModelService, UserRequest } from '@theia/ai-core';
+import type { CyberVinciAiExecutionSelection } from '@cybervinci/ai-runtime/lib/common';
 import {
     OpenPencilBooleanOperation,
     OpenPencilCommandResult,
@@ -157,6 +158,8 @@ export interface OpenPencilAiDesignRequest {
     readonly selection: string[];
     readonly uri?: string;
     readonly mode?: 'generation' | 'maintenance' | 'continuation';
+    readonly workspacePath?: string;
+    readonly execution?: CyberVinciAiExecutionSelection;
 }
 
 export interface OpenPencilAiLayoutNodeSummary {
@@ -434,7 +437,7 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
         const registeredModels = await this.languageModelRegistry?.getLanguageModels?.() ?? [];
         const codexProviderFallback = registeredModels.find(model => model.status.status === 'ready' && (model.id === 'codex-provider' || model.family === 'codex-provider'));
         if (!models.length && codexProviderFallback) {
-            addModel(codexProviderFallback, 'Added ready Codex Provider fallback for OpenPencil after no configured purpose-specific model was selected');
+            addModel(codexProviderFallback, 'Added ready CyberVinci AI provider fallback for OpenPencil after no configured purpose-specific model was selected');
         }
         let alternateModelCount = 0;
         for (const model of registeredModels
@@ -444,7 +447,7 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             alternateModelCount++;
         }
         if (!alternateModelCount && models.some(model => model.family === 'codex-provider')) {
-            diagnostics.push('No ready non-Codex alternate Theia AI model is registered for OpenPencil to try after Codex Provider.');
+            diagnostics.push('No ready alternate Theia AI model is registered for OpenPencil to try after the CyberVinci AI provider fallback.');
         }
         if (!models.length) {
             diagnostics.push("No configured Theia AI language model is available for OpenPencil or chat.");
@@ -1553,7 +1556,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (!providers.length) {
             diagnostics.push(
                 'Canvas AI requires a configured AI provider to generate designs.',
-                'Install and configure a Theia AI language model (OpenAI, Anthropic, Ollama, etc.) for agent \'OpenPencil\' and purpose \'openpencil-design\', or install the Codex CLI (https://github.com/anthropics/claude-code).',
+                'Install and configure CyberVinci AI Providers/AI Runtime, or configure a Theia AI language model for agent \'OpenPencil\' and purpose \'openpencil-design\'.',
                 'Once configured, reopen the Canvas editor and try again.',
                 'No design was generated.'
             );
@@ -1562,7 +1565,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 `${providers.length} AI provider${providers.length === 1 ? ' was' : 's were'} registered but none returned usable OpenPencil operations.`,
                 providerReturnedOperations
                     ? 'A provider responded but its operations failed validation. Check the diagnostics above for details.'
-                    : 'Verify your AI model configuration, API keys, and network connectivity. For Codex Provider, ensure the Codex CLI is installed and logged in.',
+                    : 'Verify your selected AI runtime, model configuration, API keys, CLI login state, and network connectivity.',
                 'No design was generated — Canvas AI will not apply fallback content without AI confirmation.'
             );
         }
@@ -1593,7 +1596,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (!providers.length) {
             return [
                 'OpenPencil AI page generation requires a configured AI provider, but no OpenPencil AI provider is registered.',
-                "Configure a Theia AI language model for agent 'OpenPencil' and purpose 'openpencil-design' or 'chat', then try again."
+                'Configure CyberVinci AI Runtime/AI Providers, or configure a Theia AI language model for OpenPencil, then try again.'
             ].join(' ');
         }
         const reason = providerReturnedOperations
@@ -1603,7 +1606,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 : 'No configured provider returned usable OpenPencil operations.';
         const guidance = diagnostics.some(diagnostic => /usageLimitExceeded|usage limit/i.test(diagnostic))
             ? 'Switch OpenPencil/chat to another ready Theia AI model, or retry after the usage limit reset.'
-            : "Configure or select a Theia AI language model for agent 'OpenPencil' and purpose 'openpencil-design' or 'chat', then try again.";
+            : 'Configure or select a CyberVinci AI Runtime provider/model, or a Theia AI language model for OpenPencil, then try again.';
         const details = diagnostics.length ? ` Diagnostics: ${diagnostics.join(' ')}` : '';
         return [
             'OpenPencil AI page generation did not run a usable AI result.',
