@@ -982,6 +982,59 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Math.max(...sections.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
     });
 
+    it('wraps overflowing horizontal homepage shelves inside the preserved page width', () => {
+        const document = service.createDesign('Homepage shelf wrap test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [
+            createHomepageSection('mercado-homepage', 'Mercado Homepage', 0, 0, 1200, 260)
+        ];
+        page.children[0].children = [
+            {
+                id: 'ultimas-ofertas-shelf',
+                type: 'frame',
+                name: 'Ultimas ofertas shelf',
+                role: 'section',
+                x: 0,
+                y: 40,
+                width: 971,
+                height: 150,
+                layout: 'horizontal',
+                gap: 12,
+                padding: [16, 16, 16, 16],
+                fill: [{ type: 'solid', color: '#ffffff' }],
+                children: Array.from({ length: 4 }, (_, index) => ({
+                    id: `oferta-card-${index + 1}`,
+                    type: 'frame',
+                    name: `Oferta card ${index + 1}`,
+                    role: 'card',
+                    width: 300,
+                    height: 120,
+                    fill: [{ type: 'solid', color: '#ffffff' }],
+                    children: []
+                }))
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const homepage = result.document.pages![0].children.find(node => node.id === 'mercado-homepage');
+        const shelf = homepage?.children?.find(node => node.id === 'ultimas-ofertas-shelf');
+        const cards = shelf?.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(result.document.pages![0].width).to.equal(1200);
+        expect(shelf?.layout).to.equal('none');
+        expect(cards[3].x).to.equal(16);
+        expect(Number(cards[3].y)).to.be.greaterThan(16);
+        expect(Number(shelf?.height)).to.be.greaterThan(150);
+        expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(shelf?.width));
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',

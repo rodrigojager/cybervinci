@@ -68,6 +68,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'The JSON object must use contract "openpencil.design-operations.v1".',
                     'The operations array must contain OpenPencilDesignOperation objects only.',
                     'For website/homepage/e-commerce requests, keep one vertical page frame about 1200px wide, wrap product shelves into rows, and extend downward for the complete page.',
+                    'Use section padding/gap/layout for spacing; do not create spacer-only nodes named Spacer, Espaço, Space, Gap, or before/after blocks.',
+                    'Product shelves must fit inside the page width and wrap into rows instead of becoming one long horizontal strip.',
                     'Do not include markdown, prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
                 ].join(' ')
             },
@@ -121,6 +123,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'The nested operation object must be one OpenPencilDesignOperation.',
                     'Create parents before children, use stable IDs, and emit non-auto-layout sibling layers front-to-back: text, icons, controls, cards, then backgrounds.',
                     'For website/homepage/e-commerce requests, keep one vertical page frame about 1200px wide and add sections downward. Product shelves wrap into rows or new sections; never create an endless horizontal strip.',
+                    'Use real section frames with padding/gap/layout for spacing; do not create spacer-only nodes named Spacer, Espaço, Space, Gap, or before/after blocks.',
+                    'A marketplace product shelf should be a bounded section with wrapped rows of cards inside the page width, not a lateral canvas strip.',
                     'For full homepage copy requests, keep streaming section by section until the visible page includes navigation, hero/promos, categories, several product shelves, banners, recommendations, benefits, and closing/footer content.',
                     'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header/search/navigation, large promo hero, category shortcuts, product shelves with 5-6 cards per row, promo banners between shelves, gray page background, and footer/help blocks.',
                     'Do not restate operations that were already emitted.',
