@@ -16,7 +16,7 @@ CyberVinci C# Kit maps those capabilities to CyberVinci-owned modules:
 - `@cybervinci/csharp-kit`: solution/project explorer, `.slnf` solution-filter awareness, solution/project-reference management, solution/project restore/build/clean/rebuild/format/test/publish, `.pubxml` publish-profile workflow, ASP.NET user-secrets/dev-certificate workflow, EF Core migration/database commands, project and item templates, Monaco C# IntelliSense/snippets, symbol hover/outline/go-to-definition, Razor/cshtml directive inventory, commands, NuGet search/install/outdated/vulnerable/deprecated audit/update workflow with `global.json` SDK and `dotnet test` runner intent, `.editorconfig`/`.globalconfig` code-style/analyzer inventory, workspace `dotnet-tools.json` local tool inventory, `.runsettings` test configuration inventory, Central Package Management, `Directory.Build.props`/`Directory.Build.targets` and NuGet.config source/mapping awareness, Theia Test Explorer integration, CoreCLR debug adapter bridge, ASP.NET launch profile run/debug/watch, integrated launch URL opening, debug/task generation and Theia AI Core C# context variables/slash commands.
 - `@cybervinci/memory-roslyn`: Roslyn semantic workspace analysis for Memory.
 - `@cybervinci/razor-visual-editor`: visual `.html`/`.cshtml` editing and Razor token protection.
-- `@cybervinci/codex-provider`: optional AI-assisted C# workflows fed by C# Kit AI/Memory context packs instead of Microsoft IntelliCode.
+- `@cybervinci/ai-providers`: optional AI-assisted C# workflows fed by C# Kit AI/Memory context packs instead of Microsoft IntelliCode.
 
 ## What Is Implemented Now
 

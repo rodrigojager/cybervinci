@@ -8,10 +8,10 @@ Purpose: dedicated CyberVinci Codex UI, sidebar/editor/webview host bridge, stat
 
 Requires:
 
-- `Codex-Provider/packages/codex-provider`
+- `AI-Providers/packages/ai-providers`
 - `Branding/packages/branding`
 
-Apply by copying the package into `Baseline/theia/packages/`, adding `@cybervinci/codex`, `@cybervinci/codex-provider`, and `@cybervinci/branding` to the target app dependencies, then rebuilding.
+Apply by copying the package into `Baseline/theia/packages/`, adding `@cybervinci/codex`, `@cybervinci/ai-providers`, and `@cybervinci/branding` to the target app dependencies, then rebuilding.
 
 Installer example:
 

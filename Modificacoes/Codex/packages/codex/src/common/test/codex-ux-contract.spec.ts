@@ -83,7 +83,7 @@ describe('codex UX contract', () => {
         const packageJson = readPackageText('package.json');
 
         expect(hostService).to.contain('CodexProviderService');
-        expect(packageJson).to.contain('@cybervinci/codex-provider');
+        expect(packageJson).to.contain('@cybervinci/ai-providers');
         expect(packageJson).not.to.contain('"OpenAI.chatgpt"');
         expect(packageJson).to.contain('copy:webview');
     });

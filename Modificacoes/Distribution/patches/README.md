@@ -81,7 +81,7 @@ Typical file:
 
 **Upgrade risk:** high. AI IDE bindings may change frequently.
 
-**If it conflicts:** keep upstream module structure and re-add CyberVinci agent/service bindings needed by Codex-Provider, Memory, and product AI flows.
+**If it conflicts:** keep upstream module structure and re-add CyberVinci agent/service bindings needed by AI-Providers, Memory, and product AI flows.
 
 ## Maintenance rule
 

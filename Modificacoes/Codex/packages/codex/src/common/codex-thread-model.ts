@@ -8,7 +8,7 @@ import {
     CodexProviderApprovalRequestMessage,
     CodexProviderStreamMessage,
     CodexProviderUserInputRequestMessage
-} from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+} from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 
 export type CodexThreadRole = 'user' | 'assistant' | 'system' | 'tool' | 'thinking';
 

@@ -7,8 +7,9 @@
 import { inject, injectable, optional, postConstruct } from '@theia/core/shared/inversify';
 import { PreferenceService } from '@theia/core/lib/common/preferences';
 import { FileUri } from '@theia/core/lib/common/file-uri';
-import { CodexProviderAppServerNotification, CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { CodexProviderAppServerNotification, CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import { FlowService } from '@cybervinci/flow/lib/common';
+import type { FlowAiAuthoringDraft } from '@cybervinci/flow/lib/common';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
@@ -489,9 +490,21 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
         };
         const parameters = this.isRecord(record.parameters) ? { parameters: record.parameters } : {};
         const roleOverrides = this.isRecord(record.roleOverrides) ? { roleOverrides: record.roleOverrides } : {};
-        const authoringDraft = this.isRecord(record.authoringDraft) ? { authoringDraft: record.authoringDraft } : this.isRecord(record.draft) ? { authoringDraft: record.draft } : {};
+        const draft = this.extractFlowAiAuthoringDraft(record);
+        const authoringDraft = draft ? { authoringDraft: draft } : {};
         const run = await flow.runDynamicWorkflow(workspaceRootUri ? { ...request, ...parameters, ...roleOverrides, ...authoringDraft, workspaceRootUri } : { ...request, ...parameters, ...roleOverrides, ...authoringDraft });
         return { run };
+    }
+
+    protected extractFlowAiAuthoringDraft(record: Record<string, unknown>): FlowAiAuthoringDraft | undefined {
+        const draft = this.isRecord(record.authoringDraft) ? record.authoringDraft : this.isRecord(record.draft) ? record.draft : undefined;
+        if (!draft) {
+            return undefined;
+        }
+        if (typeof draft.version !== 'string' || typeof draft.action !== 'string') {
+            throw new Error('flow-run-dynamic-workflow authoringDraft requires string version and action.');
+        }
+        return draft as unknown as FlowAiAuthoringDraft;
     }
 
     protected requireFlowService(): FlowService {

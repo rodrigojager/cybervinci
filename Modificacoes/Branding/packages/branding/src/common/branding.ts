@@ -255,16 +255,28 @@ export const CYBERVINCI_PRODUCT_FEATURES: readonly CyberVinciProductFeature[] = 
         notes: ['Owns deterministic AI/tool output filtering, raw artifact capture, Codex wrapper and hook controls, and status commands exposed in the product surface.']
     },
     {
-        id: 'codex-provider-provider',
-        label: 'Codex Provider',
-        packageName: '@cybervinci/codex-provider',
-        packagePath: 'packages/codex-provider',
+        id: 'ai-providers',
+        label: 'CyberVinci AI Providers',
+        packageName: '@cybervinci/ai-providers',
+        packagePath: 'packages/ai-providers',
         category: 'provider-extension',
         ownerBoundary: 'cybervinci-owned',
         updateRisk: 'medium',
         requiredInBrowserApp: true,
         requiredInElectronApp: true,
-        notes: ['Configures Codex Provider for CyberVinci chat and OpenPencil design purposes through Theia AI requirements.']
+        notes: ['Configures provider/runtime adapters for CyberVinci chat, OpenPencil design, Codex CLI, direct HTTP routers, and CLI runtimes.']
+    },
+    {
+        id: 'ai-runtime',
+        label: 'CyberVinci AI Runtime',
+        packageName: '@cybervinci/ai-runtime',
+        packagePath: 'packages/ai-runtime',
+        category: 'provider-extension',
+        ownerBoundary: 'cybervinci-owned',
+        updateRisk: 'medium',
+        requiredInBrowserApp: true,
+        requiredInElectronApp: true,
+        notes: ['Provides the provider-neutral AI task gateway used by feature-specific AI buttons and prompt panels.']
     },
     {
         id: 'codex-sidebar',

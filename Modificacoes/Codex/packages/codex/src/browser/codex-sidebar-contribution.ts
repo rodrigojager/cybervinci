@@ -10,7 +10,7 @@ import { EditorManager, EDITOR_CONTEXT_MENU } from '@theia/editor/lib/browser';
 import { CYBERVINCI_MENU_ITEMS, CyberVinciMenus } from '@cybervinci/branding/lib/common';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import { HostedPluginSupport } from '@theia/plugin-ext/lib/hosted/browser/hosted-plugin';
-import { CodexProviderFrontendService } from '@cybervinci/codex-provider/lib/browser/codex-provider-frontend-service';
+import { CodexProviderFrontendService } from '@cybervinci/ai-providers/lib/browser/ai-providers-frontend-service';
 import { CodexExtensionCommands } from '../common';
 import { CodexWebviewWidget } from './webview/codex-webview-widget';
 import { CodexConversationEditorContribution } from './codex-conversation-editor-contribution';

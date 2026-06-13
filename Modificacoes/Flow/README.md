@@ -13,7 +13,8 @@ Purpose: block/workflow editor similar to N8N, with workflow states, runs, human
 Requires:
 
 - `Branding/packages/branding`
-- `Codex-Provider/packages/codex-provider`
+- `AI-Providers/packages/ai-providers`
+- `AI-Providers/packages/ai-runtime`
 - `Memory/packages/memory`
 
 Apply by copying the package into `Baseline/theia/packages/`, adding `@cybervinci/flow` and its required CyberVinci packages to the app dependencies, then rebuilding.
