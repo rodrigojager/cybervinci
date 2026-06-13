@@ -954,6 +954,34 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
     });
 
+    it('stacks homepage sections vertically instead of leaving lateralized section blocks', () => {
+        const document = service.createDesign('Homepage section flow test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 800;
+        page.children = [
+            createHomepageSection('marketplace-hero-section', 'Marketplace Hero Section', 0, 0, 1200, 220),
+            createHomepageSection('marketplace-offers-section', 'Marketplace Offers Section', 1240, 0, 980, 260),
+            createHomepageSection('marketplace-recommendations-section', 'Marketplace Recommendations Section', 0, 80, 980, 260),
+            createHomepageSection('marketplace-footer-section', 'Marketplace Footer Section', 1240, 120, 980, 180)
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const sections = result.document.pages![0].children;
+
+        expect(result.changed).to.equal(true);
+        expect(result.document.pages![0].width).to.equal(1200);
+        expect(sections.map(node => node.x)).to.deep.equal([0, 110, 110, 110]);
+        expect(Number(sections[1].y)).to.be.greaterThan(Number(sections[0].y) + Number(sections[0].height));
+        expect(Number(sections[2].y)).to.be.greaterThan(Number(sections[1].y) + Number(sections[1].height));
+        expect(Number(sections[3].y)).to.be.greaterThan(Number(sections[2].y) + Number(sections[2].height));
+        expect(Math.max(...sections.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',
@@ -2568,5 +2596,20 @@ function createPaintOrderTextNode(id: string, content: string): OpenPencilNode {
         content,
         fontSize: 18,
         fill: [{ type: 'solid', color: '#111827' }]
+    };
+}
+
+function createHomepageSection(id: string, name: string, x: number, y: number, width: number, height: number): OpenPencilNode {
+    return {
+        id,
+        type: 'frame',
+        name,
+        role: 'section',
+        x,
+        y,
+        width,
+        height,
+        fill: [{ type: 'solid', color: '#ffffff' }],
+        children: []
     };
 }

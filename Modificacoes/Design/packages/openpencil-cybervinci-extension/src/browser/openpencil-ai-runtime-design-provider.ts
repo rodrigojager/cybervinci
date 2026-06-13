@@ -122,6 +122,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Create parents before children, use stable IDs, and emit non-auto-layout sibling layers front-to-back: text, icons, controls, cards, then backgrounds.',
                     'For website/homepage/e-commerce requests, keep one vertical page frame about 1200px wide and add sections downward. Product shelves wrap into rows or new sections; never create an endless horizontal strip.',
                     'For full homepage copy requests, keep streaming section by section until the visible page includes navigation, hero/promos, categories, several product shelves, banners, recommendations, benefits, and closing/footer content.',
+                    'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header/search/navigation, large promo hero, category shortcuts, product shelves with 5-6 cards per row, promo banners between shelves, gray page background, and footer/help blocks.',
                     'Do not restate operations that were already emitted.',
                     'When finished, emit {"type":"complete"}.',
                     'Do not include prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
@@ -186,6 +187,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'Emit operations in the order the user should see the canvas grow: page/root frame, major sections, containers, text, controls, decorative elements, then refinements.',
             'For website/homepage/e-commerce requests, preserve a fixed page width around 1200px and extend downward. Additional products or shelves go into new rows/sections below, not beyond the right edge.',
             'For full homepage copies, stream a long vertical page with many sections rather than only the above-the-fold portion.',
+            'For Mercado Livre-style marketplace pages, organize content as a centered vertical marketplace feed with a yellow header, promo hero, category shortcuts, repeated product shelves, banners, recommendations, and footer/help content.',
             'For non-auto-layout siblings, stream foreground layers before background layers so text and controls stay readable while the canvas updates.',
             'Preserve existing node IDs unless creating or explicitly replacing nodes.',
             request.mode === 'continuation'
