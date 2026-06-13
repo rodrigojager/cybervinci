@@ -168,3 +168,38 @@ export interface CyberVinciAiTaskResult<TStructured = unknown> {
     notifications: CodexProviderNotificationMessage[];
     diagnostics: string[];
 }
+
+export type CyberVinciAiTaskStreamEvent<TStructured = unknown> =
+    | CyberVinciAiTaskStreamTextDelta
+    | CyberVinciAiTaskStreamReasoningDelta
+    | CyberVinciAiTaskStreamNotification
+    | CyberVinciAiTaskStreamComplete<TStructured>
+    | CyberVinciAiTaskStreamError;
+
+export interface CyberVinciAiTaskStreamTextDelta {
+    readonly type: 'text-delta';
+    readonly text: string;
+}
+
+export interface CyberVinciAiTaskStreamReasoningDelta {
+    readonly type: 'reasoning-delta';
+    readonly text: string;
+}
+
+export interface CyberVinciAiTaskStreamNotification {
+    readonly type: 'notification';
+    readonly notification: CodexProviderNotificationMessage;
+}
+
+export interface CyberVinciAiTaskStreamComplete<TStructured = unknown> {
+    readonly type: 'complete';
+    readonly text: string;
+    readonly structured?: TStructured;
+    readonly notifications: CodexProviderNotificationMessage[];
+    readonly diagnostics: string[];
+}
+
+export interface CyberVinciAiTaskStreamError {
+    readonly type: 'error';
+    readonly message: string;
+}

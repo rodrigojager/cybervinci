@@ -11,8 +11,8 @@
 import { CancellationToken } from '@theia/core';
 import {
     CodexProviderApprovalResponseMessage,
+    CodexProviderBackendRequest,
     CodexProviderLoginResult,
-    CodexProviderRequest,
     CodexProviderStatus,
     CodexProviderStreamMessage,
     CodexProviderThreadActionResult,
@@ -29,7 +29,7 @@ export const CodexProviderRuntimeProvider = Symbol('CodexProviderRuntimeProvider
  * command output, and streamed assistant text in their own UX.
  */
 export interface CodexProviderRuntimeProvider {
-    send(request: CodexProviderRequest, cancellationToken?: CancellationToken): Promise<AsyncIterable<CodexProviderStreamMessage>>;
+    send(request: CodexProviderBackendRequest, cancellationToken?: CancellationToken): Promise<AsyncIterable<CodexProviderStreamMessage>>;
     login(): Promise<CodexProviderLoginResult>;
     restart(): Promise<CodexProviderStatus>;
     getStatus(): Promise<CodexProviderStatus>;
