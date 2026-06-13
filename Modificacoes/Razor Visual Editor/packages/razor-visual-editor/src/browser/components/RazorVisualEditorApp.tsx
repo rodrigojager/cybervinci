@@ -208,6 +208,8 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
             const result = await props.visualAiService.run({
                 providerId: options.providerId,
                 model: options.model,
+                reasoningPolicy: options.reasoningPolicy,
+                reasoningEffort: options.reasoningEffort,
                 instruction: options.instruction,
                 fileUri: props.document.uri.toString(),
                 html: editor.getHtml(),

@@ -10,7 +10,7 @@
     "src"
   ],
   "dependencies": {
-    "@cybervinci/codex-provider": "1.72.0",
+    "@cybervinci/ai-runtime": "1.72.0",
     "@theia/core": "1.72.0",
     "@theia/editor": "1.72.0",
     "@theia/filesystem": "1.72.0",

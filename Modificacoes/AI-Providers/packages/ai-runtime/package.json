@@ -1,26 +1,21 @@
 {
-  "name": "@cybervinci/flow",
+  "name": "@cybervinci/ai-runtime",
   "version": "1.72.0",
-  "description": "Theia - CyberVinci Flow",
+  "description": "CyberVinci provider-neutral AI task runtime",
   "dependencies": {
-    "@theia/core": "1.72.0",
-    "@theia/ai-core": "1.72.0",
-    "@cybervinci/ai-runtime": "1.72.0",
     "@cybervinci/ai-providers": "1.72.0",
-    "@cybervinci/branding": "1.72.0",
     "@cybervinci/memory": "1.72.0",
+    "@theia/core": "1.72.0",
     "@theia/workspace": "1.72.0",
-    "js-yaml": "^4.1.1",
     "tslib": "^2.8.1"
   },
   "publishConfig": {
     "access": "public"
   },
-  "main": "lib/common",
   "theiaExtensions": [
     {
-      "frontend": "lib/browser/flow-frontend-module",
-      "backend": "lib/node/flow-backend-module"
+      "frontend": "lib/browser/ai-runtime-frontend-module",
+      "backend": "lib/node/ai-runtime-backend-module"
     }
   ],
   "keywords": [
@@ -37,8 +32,7 @@
   "homepage": "https://github.com/eclipse-theia/theia",
   "files": [
     "lib",
-    "src",
-    "README.md"
+    "src"
   ],
   "scripts": {
     "build": "theiaext build",

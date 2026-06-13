@@ -21,6 +21,8 @@ export interface VisualAiProtectedToken {
 export interface VisualAiRunRequest {
     providerId: string;
     model?: string;
+    reasoningPolicy?: 'off' | 'native' | 'virtual' | 'auto' | 'native_plus_virtual_light';
+    reasoningEffort?: 'none' | 'low' | 'medium' | 'high' | 'xhigh';
     instruction: string;
     fileUri: string;
     html: string;
@@ -38,4 +40,3 @@ export interface VisualAiRunResult {
     warnings: string[];
     rawText?: string;
 }
-

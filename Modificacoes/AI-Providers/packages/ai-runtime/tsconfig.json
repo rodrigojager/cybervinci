@@ -6,24 +6,14 @@
     "outDir": "lib"
   },
   "include": [
-    "src",
-    "src/**/*.json"
+    "src"
   ],
   "references": [
-    {
-      "path": "../ai-runtime"
-    },
     {
       "path": "../ai-providers"
     },
     {
-      "path": "../ai-core"
-    },
-    {
       "path": "../core"
-    },
-    {
-      "path": "../branding"
     },
     {
       "path": "../memory"

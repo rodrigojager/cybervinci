@@ -203,6 +203,7 @@ export const FLOW_AI_AUTHORING_SYSTEM_PROMPT = [
     'When existing saved workflows fit the user request, choose action "run_saved_workflow".',
     'When a built-in workflow pattern fits, choose action "instantiate_pattern" and fill typed parameters.',
     'For pattern model selection, use pattern.agenticStages and emit roleOverrides keyed by stage id or role.',
+    'When choosing provider/model for agentic states, prefer provider ids and models from the aiProviders catalog supplied in the task input.',
     'When no saved workflow or pattern fits, choose action "create_workflow" and emit a complete FlowWorkflow object.',
     'Every agentic state may specify provider, model, modelExecution.reasoningPolicy, nativeReasoning effort, and virtualReasoning mode.',
     'Use dynamic_parallel for data-dependent fan-out and tournament for candidate competition judged by an agentic step.',

@@ -1,4 +1,8 @@
-import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
+import {
+    CodexProviderBackendRequest,
+    CodexProviderRuntime,
+    CodexProviderService
+} from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import { LanguageModel, LanguageModelRegistry, LanguageModelService } from '@theia/ai-core';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import { FlowWorkflowState, FlowWorkload } from '../common';
@@ -35,6 +39,7 @@ export interface LlmCodexProviderProviderConfig {
     codexProvider: CodexProviderService;
     providerId: string;
     modelId?: string;
+    request?: Partial<CodexProviderBackendRequest>;
 }
 
 export type FlowLlmProviderConfig = LlmCommandProviderConfig | LlmChatProviderConfig | LlmE2eMockProviderConfig | LlmCodexProviderProviderConfig;
@@ -74,8 +79,9 @@ export class FlowAgentProviderRegistry implements FlowAgentProviderResolver {
         if (providerId === 'theia' || providerId === 'theia-language-model') {
             return this.resolveTheiaProvider(context, providerId);
         }
-        if (providerId === 'codex' || providerId === 'codex-provider') {
-            return this.resolveCodexProvider(context, providerId);
+        const codexRuntimeProvider = parseCodexRuntimeProviderId(providerId);
+        if (providerId === 'codex' || providerId === 'codex-provider' || codexRuntimeProvider) {
+            return this.resolveCodexProvider(context, providerId, codexRuntimeProvider);
         }
         const customCommand = process.env[customProviderCommandEnvName(providerId)];
         if (customCommand?.trim()) {
@@ -165,15 +171,24 @@ export class FlowAgentProviderRegistry implements FlowAgentProviderResolver {
         return undefined;
     }
 
-    protected async resolveCodexProvider(context: FlowAgentProviderResolutionContext, providerId: string): Promise<LlmCodexProviderProviderConfig> {
+    protected async resolveCodexProvider(
+        context: FlowAgentProviderResolutionContext,
+        providerId: string,
+        runtimeProvider?: { runtime: CodexProviderRuntime; modelProvider: string }
+    ): Promise<LlmCodexProviderProviderConfig> {
         const modelId = resolveModelId(context);
         if (!this.codexProviderService) {
             throw new Error(this.unsupportedProviderMessage(context, providerId, 'CodexProviderService is not available in this backend container.'));
         }
+        const request = {
+            runtime: runtimeProvider?.runtime,
+            modelProvider: runtimeProvider?.modelProvider,
+            ...codexProviderRequestOptions(context.state.provider?.options)
+        };
         try {
-            const status = await this.codexProviderService.getStatus({ cwd: process.cwd() });
+            const status = await this.codexProviderService.getStatus({ cwd: process.cwd(), model: modelId, ...request });
             if (status.available && status.authenticated !== false) {
-                return { codexProvider: this.codexProviderService, providerId, modelId };
+                return { codexProvider: this.codexProviderService, providerId, modelId, request };
             }
             throw new Error('Codex provider is not available or authenticated.');
         } catch (error) {
@@ -221,6 +236,45 @@ function defaultTheiaSelections(): Array<{ agentId: string; purpose: string }> {
 function stringOption(options: Record<string, unknown> | undefined, key: string): string | undefined {
     const value = options?.[key];
     return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function codexProviderRequestOptions(options: Record<string, unknown> | undefined): Partial<CodexProviderBackendRequest> {
+    return {
+        executablePath: stringOption(options, 'executablePath'),
+        profile: stringOption(options, 'profile'),
+        openRouterApiKey: stringOption(options, 'openRouterApiKey'),
+        openCodeApiKey: stringOption(options, 'openCodeApiKey'),
+        openCodeExecutablePath: stringOption(options, 'openCodeExecutablePath'),
+        openCodeAgent: stringOption(options, 'openCodeAgent'),
+        openCodeVariant: stringOption(options, 'openCodeVariant'),
+        geminiExecutablePath: stringOption(options, 'geminiExecutablePath'),
+        claudeExecutablePath: stringOption(options, 'claudeExecutablePath'),
+        claudeAgent: stringOption(options, 'claudeAgent'),
+        cursorExecutablePath: stringOption(options, 'cursorExecutablePath'),
+        cursorMode: stringOption(options, 'cursorMode')
+    };
+}
+
+function parseCodexRuntimeProviderId(providerId: string): { runtime: CodexProviderRuntime; modelProvider: string } | undefined {
+    const separator = providerId.indexOf(':');
+    if (separator <= 0) {
+        return undefined;
+    }
+    const runtime = providerId.slice(0, separator) as CodexProviderRuntime;
+    const modelProvider = providerId.slice(separator + 1);
+    if (!isCodexProviderRuntime(runtime) || !modelProvider) {
+        return undefined;
+    }
+    return { runtime, modelProvider };
+}
+
+function isCodexProviderRuntime(value: string): value is CodexProviderRuntime {
+    return value === 'codex-app-server'
+        || value === 'direct-http'
+        || value === 'opencode-cli'
+        || value === 'gemini-cli'
+        || value === 'claude-code-cli'
+        || value === 'cursor-cli';
 }
 
 function normalizeLegacyProviderAlias(providerId: string): string {

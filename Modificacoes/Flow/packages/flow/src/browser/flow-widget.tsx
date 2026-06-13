@@ -1,8 +1,11 @@
 import { OpenerService, ReactWidget, open } from '@theia/core/lib/browser';
 import { FrontendLanguageModelRegistry, LanguageModel } from '@theia/ai-core';
 import { nls } from '@theia/core/lib/common';
+import { FileUri } from '@theia/core/lib/common/file-uri';
 import URI from '@theia/core/lib/common/uri';
-import { inject, injectable, postConstruct } from '@theia/core/shared/inversify';
+import { CyberVinciAiButton, CyberVinciAiExecutionPicker } from '@cybervinci/ai-runtime/lib/browser';
+import { CyberVinciAiExecutionSelection, CyberVinciAiProviderDescriptor, CyberVinciAiRuntimeService } from '@cybervinci/ai-runtime/lib/common';
+import { inject, injectable, optional, postConstruct } from '@theia/core/shared/inversify';
 import * as React from '@theia/core/shared/react';
 import { WorkspaceService } from '@theia/workspace/lib/browser';
 import { artifactUriToOpenUri } from './flow-artifacts';
@@ -94,6 +97,10 @@ interface FlowWidgetState {
     runHistoryVisible: boolean;
     openMenu?: FlowTopMenu;
     prompt: string;
+    aiPromptOpen: boolean;
+    aiPrompt: string;
+    aiExecution: CyberVinciAiExecutionSelection;
+    aiQuestion?: string;
     busy: boolean;
     error?: string;
     executionModeHint?: FlowRunExecutionMode;
@@ -127,6 +134,29 @@ interface FlowLanguageModelOption {
     status: 'ready' | 'unavailable';
 }
 
+interface FlowAiAuthoringRuntimeInput {
+    authoringSpec: unknown;
+    activeWorkflow?: unknown;
+    workflowSummaries: FlowWorkflowSummaryForAi[];
+    workflowPatterns: FlowWorkflowPattern[];
+    modelProfiles: FlowModelProfile[];
+    pipelinePresets: FlowPipelinePreset[];
+    aiProviders: CyberVinciAiProviderDescriptor[];
+    languageModels: FlowLanguageModelOption[];
+    capabilities?: FlowCapabilities;
+    selectedPatternId?: string;
+    selectedPipelinePresetId?: string;
+}
+
+interface FlowWorkflowSummaryForAi {
+    id: string;
+    name: string;
+    description?: string;
+    stateCount: number;
+    transitionCount: number;
+    editable: boolean;
+}
+
 @injectable()
 export class FlowWidget extends ReactWidget {
 
@@ -144,6 +174,9 @@ export class FlowWidget extends ReactWidget {
 
     @inject(FrontendLanguageModelRegistry)
     protected readonly languageModelRegistry: FrontendLanguageModelRegistry;
+
+    @inject(CyberVinciAiRuntimeService) @optional()
+    protected readonly aiRuntime?: CyberVinciAiRuntimeService;
 
     @inject(OpenerService)
     protected readonly openerService: OpenerService;
@@ -165,6 +198,12 @@ export class FlowWidget extends ReactWidget {
         runHistory: [],
         runHistoryVisible: false,
         prompt: 'Build the next CyberVinci feature with explicit artifacts and a human review gate.',
+        aiPromptOpen: false,
+        aiPrompt: '',
+        aiExecution: {
+            reasoningPolicy: 'auto',
+            reasoningEffort: 'medium'
+        },
         busy: false
     };
 
@@ -477,9 +516,13 @@ export class FlowWidget extends ReactWidget {
                     <button title='Start run' onClick={this.startRun} disabled={this.state.busy || !workflow || workflow.file?.editable === false}>
                         <i className='codicon codicon-debug-start' />
                     </button>
-                    <button title='Run dynamic workflow from current prompt' onClick={this.runDynamicWorkflowFromPrompt} disabled={this.state.busy || !this.state.prompt.trim()}>
-                        <i className='codicon codicon-symbol-event' />
-                    </button>
+                    <CyberVinciAiButton
+                        label=''
+                        title='Open Flow AI'
+                        active={this.state.aiPromptOpen}
+                        onClick={this.toggleAiPromptPanel}
+                        disabled={this.state.busy || !this.aiRuntime}
+                    />
                     <button title={manualTickFallback ? 'Tick run manually (fallback)' : 'Tick disabled while kernel event stream is active'} onClick={this.tickRun} disabled={this.state.busy || !run || runReadOnly || !manualTickFallback}>
                         <i className='codicon codicon-debug-step-over' />
                     </button>
@@ -498,18 +541,7 @@ export class FlowWidget extends ReactWidget {
                 </div>
             </header>
 
-            <section className='flow__prompt'>
-                <label className='flow__prompt-field'>
-                    <span>Prompt da run</span>
-                    <textarea
-                        rows={3}
-                        value={this.state.prompt}
-                        onChange={event => this.setPrompt(event.currentTarget.value)}
-                        placeholder='Descreva objetivo, entradas, restricoes e entregaveis esperados.'
-                        aria-label='Run prompt'
-                    />
-                </label>
-            </section>
+            {this.state.aiPromptOpen && this.renderAiPromptPanel()}
 
             {this.state.error && <div className='flow__error'>{this.state.error}</div>}
             {workflow?.file?.unsupportedReason && <div className='flow__validation'><span>{workflow.file.unsupportedReason}</span></div>}
@@ -620,6 +652,68 @@ export class FlowWidget extends ReactWidget {
     protected setPrompt(prompt: string): void {
         this.state = { ...this.state, prompt };
         this.update();
+    }
+
+    protected setAiPrompt(aiPrompt: string): void {
+        this.state = { ...this.state, aiPrompt };
+        this.update();
+    }
+
+    protected setAiExecution(aiExecution: CyberVinciAiExecutionSelection): void {
+        this.state = { ...this.state, aiExecution };
+        this.update();
+    }
+
+    protected readonly toggleAiPromptPanel = (): void => {
+        const aiPromptOpen = !this.state.aiPromptOpen;
+        this.state = {
+            ...this.state,
+            aiPromptOpen,
+            aiPrompt: this.state.aiPrompt || this.state.prompt,
+            aiQuestion: aiPromptOpen ? this.state.aiQuestion : undefined
+        };
+        this.update();
+    };
+
+    protected renderAiPromptPanel(): React.ReactNode {
+        if (!this.aiRuntime) {
+            return undefined;
+        }
+        return <section className='flow__ai-panel'>
+            <header>
+                <div>
+                    <h3>Flow AI</h3>
+                    {this.state.aiQuestion && <p>{this.state.aiQuestion}</p>}
+                </div>
+                <button type='button' className='flow__ai-close' title='Close Flow AI' onClick={this.toggleAiPromptPanel}>
+                    <i className='codicon codicon-close' />
+                </button>
+            </header>
+            <CyberVinciAiExecutionPicker
+                service={this.aiRuntime}
+                value={this.state.aiExecution}
+                disabled={this.state.busy}
+                onChange={selection => this.setAiExecution(selection)}
+            />
+            <label className='flow__prompt-field'>
+                <span>Prompt da run</span>
+                <textarea
+                    rows={4}
+                    value={this.state.aiPrompt}
+                    onChange={event => this.setAiPrompt(event.currentTarget.value)}
+                    placeholder='Descreva objetivo, entradas, restricoes e entregaveis esperados.'
+                    aria-label='Flow AI prompt'
+                />
+            </label>
+            <footer>
+                <button type='button' className='theia-button secondary' onClick={this.toggleAiPromptPanel} disabled={this.state.busy}>
+                    Cancelar
+                </button>
+                <button type='button' className='theia-button main' onClick={this.runFlowAiPrompt} disabled={this.state.busy || !this.state.aiPrompt.trim()}>
+                    <i className='codicon codicon-sparkle' /> Rodar IA
+                </button>
+            </footer>
+        </section>;
     }
 
     protected readonly handleTopMenuPointerDown = (event: PointerEvent): void => {
@@ -1380,6 +1474,98 @@ export class FlowWidget extends ReactWidget {
         }, error => classifyExecutionModeFromError(error));
     };
 
+    protected readonly runFlowAiPrompt = async (): Promise<void> => {
+        if (!this.aiRuntime) {
+            this.state = { ...this.state, error: 'CyberVinci AI Runtime is not available.' };
+            this.update();
+            return;
+        }
+        const prompt = this.state.aiPrompt.trim();
+        if (!prompt) {
+            return;
+        }
+        await this.withBusy(async () => {
+            const workspaceRootUri = await this.workspaceRootUri();
+            const workspacePath = await this.workspaceRootPath();
+            const [authoringSpec, workflows, pipelinePresets, aiProviders] = await Promise.all([
+                this.flowService.getAiAuthoringSpec(),
+                this.flowService.listWorkflows({ workspaceRootUri }),
+                this.flowService.listPipelinePresets({ workspaceRootUri }),
+                this.aiRuntime.listProviders({ workspacePath, includeUnavailable: true })
+            ]);
+            const capabilities = this.state.snapshot?.capabilities || await this.flowService.getCapabilities();
+            const input: FlowAiAuthoringRuntimeInput = {
+                authoringSpec,
+                activeWorkflow: this.state.snapshot?.activeWorkflow ? redactFlowSecretsValue(this.state.snapshot.activeWorkflow) : undefined,
+                workflowSummaries: workflows.map(toFlowWorkflowSummaryForAi),
+                workflowPatterns: this.state.workflowPatterns,
+                modelProfiles: this.state.modelProfiles,
+                pipelinePresets,
+                aiProviders,
+                languageModels: this.state.languageModels,
+                capabilities,
+                selectedPatternId: this.state.selectedPatternId,
+                selectedPipelinePresetId: this.state.selectedPipelinePresetId
+            };
+            const result = await this.aiRuntime.runTask<FlowAiAuthoringRuntimeInput, FlowAiAuthoringDraft>({
+                surfaceId: 'flow',
+                action: 'flow.authorWorkflow',
+                workspacePath,
+                userPrompt: prompt,
+                systemPrompt: authoringSpec.systemPrompt,
+                input,
+                context: {
+                    mode: 'memory-if-available',
+                    maxItems: 8,
+                    tokenBudget: 1600
+                },
+                output: {
+                    mode: 'json',
+                    schemaName: 'FlowAiAuthoringDraft',
+                    schema: authoringSpec.outputSchema,
+                    instructions: 'Return exactly one FlowAiAuthoringDraft. Use ask_user only when required information is missing.'
+                },
+                effectPolicy: {
+                    previewOnly: false,
+                    workspaceWrites: 'allow-with-approval',
+                    shellExecution: 'forbidden',
+                    requireUserConfirmation: true
+                },
+                execution: {
+                    ...this.state.aiExecution,
+                    collaborationMode: 'default'
+                }
+            });
+            const draft = coerceFlowAiAuthoringDraft(result.structured);
+            if (draft.action === 'ask_user') {
+                this.state = {
+                    ...this.state,
+                    prompt,
+                    aiPrompt: prompt,
+                    aiPromptOpen: true,
+                    aiQuestion: draft.questionMarkdown || draft.reason || 'Flow AI needs more detail before it can build the workflow.',
+                    error: undefined
+                };
+                return;
+            }
+            const activeRun = await this.flowService.runDynamicWorkflow({
+                workspaceRootUri,
+                prompt,
+                preferSaved: true,
+                authoringDraft: draft
+            });
+            await this.applyExternalRunState(workspaceRootUri, activeRun.workflowId, activeRun, prompt);
+            this.state = {
+                ...this.state,
+                prompt,
+                aiPrompt: prompt,
+                aiPromptOpen: false,
+                aiQuestion: undefined,
+                error: undefined
+            };
+        }, error => classifyExecutionModeFromError(error));
+    };
+
     protected readonly runDynamicWorkflowFromPrompt = async (): Promise<void> => {
         await this.withBusy(async () => {
             const workspaceRootUri = await this.workspaceRootUri();
@@ -2008,6 +2194,12 @@ export class FlowWidget extends ReactWidget {
         return roots[0]?.resource.toString();
     }
 
+    protected async workspaceRootPath(): Promise<string | undefined> {
+        const roots = await this.workspaceService.roots;
+        const root = roots[0];
+        return root ? FileUri.fsPath(root.resource.toString()) : undefined;
+    }
+
     protected async subscribeActiveRunStream(runId: string | undefined): Promise<void> {
         if (!runId || this.activeRunStreamId === runId) {
             return;
@@ -2353,10 +2545,7 @@ function PatternRoleOverrideRow(props: {
             })}
         >
             <option value=''>Default provider</option>
-            <option value='theia-language-model'>Theia language model</option>
-            <option value='codex-provider'>Codex provider</option>
-            <option value='command'>Command provider</option>
-            <option value='e2e-mock'>E2E mock</option>
+            {flowProviderOptions().map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <select
             value={currentModelId}
@@ -3583,10 +3772,7 @@ function ModelExecutionEditor(props: {
                     })}
                 >
                     <option value='inherit'>Use profile/default</option>
-                    <option value='theia-language-model'>Theia language model</option>
-                    <option value='codex-provider'>Codex provider</option>
-                    <option value='command'>Command provider</option>
-                    <option value='e2e-mock'>E2E mock</option>
+                    {flowProviderOptions().map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
             </label>
             <label>
@@ -4659,6 +4845,22 @@ function modelOptionLabel(models: FlowLanguageModelOption[], modelId: string, em
     return model ? model.label : modelId;
 }
 
+function flowProviderOptions(): Array<{ value: string; label: string }> {
+    return [
+        { value: 'theia-language-model', label: 'Theia language model' },
+        { value: 'codex-provider', label: 'Codex provider' },
+        { value: 'codex-app-server:codex', label: 'Codex app server' },
+        { value: 'direct-http:openrouter', label: 'OpenRouter' },
+        { value: 'direct-http:opencode-go', label: 'OpenCode Go' },
+        { value: 'direct-http:opencode', label: 'OpenCode Zen' },
+        { value: 'gemini-cli:gemini', label: 'Gemini CLI' },
+        { value: 'claude-code-cli:claude-code', label: 'Claude Code' },
+        { value: 'cursor-cli:cursor', label: 'Cursor CLI' },
+        { value: 'command', label: 'Command provider' },
+        { value: 'e2e-mock', label: 'E2E mock' }
+    ];
+}
+
 function MarkdownReportViewer(props: { report: string }): React.ReactElement {
     const blocks = parseMarkdownBlocks(redactFlowSecretsText(props.report) || 'No report content available in the workload envelope.');
     return <div className='flow__artifact-markdown'>
@@ -5485,6 +5687,31 @@ function capabilityAndPolicyTone(
         return 'blocked';
     }
     return 'missing';
+}
+
+function toFlowWorkflowSummaryForAi(workflow: FlowWorkflow): FlowWorkflowSummaryForAi {
+    return {
+        id: workflow.id,
+        name: workflow.name,
+        description: workflow.description,
+        stateCount: Object.keys(workflow.states || {}).length,
+        transitionCount: workflow.transitions.length,
+        editable: workflow.file?.editable !== false
+    };
+}
+
+function coerceFlowAiAuthoringDraft(value: unknown): FlowAiAuthoringDraft {
+    if (!isRecord(value) || typeof value.version !== 'string' || typeof value.action !== 'string') {
+        throw new Error('Flow AI response must be a FlowAiAuthoringDraft object with version and action.');
+    }
+    if (!['run_saved_workflow', 'instantiate_pattern', 'create_workflow', 'ask_user'].includes(value.action)) {
+        throw new Error(`Flow AI returned unsupported authoring action: ${value.action}`);
+    }
+    return value as unknown as FlowAiAuthoringDraft;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
 }
 
 function classifyExecutionModeFromError(error: unknown): { executionModeHint?: FlowRunExecutionMode; executionModeHintMessage?: string } | undefined {
