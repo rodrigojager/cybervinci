@@ -87,6 +87,16 @@
     background: var(--theia-editorWidget-background);
 }
 
+.ai-providers-configuration-widget .ai-providers-connect-panel {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
 .ai-providers-configuration-widget .ai-providers-mode-header {
     display: flex;
     justify-content: space-between;
@@ -98,6 +108,90 @@
 .ai-providers-configuration-widget .ai-providers-mode-title {
     color: var(--theia-foreground);
     font-weight: 600;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-search {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-search input {
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-group h3 {
+    margin: 0 0 6px;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-list {
+    display: grid;
+    gap: 4px;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-item {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--theia-foreground);
+    cursor: pointer;
+    text-align: left;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-item:hover {
+    background: var(--theia-list-hoverBackground);
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-item.active {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+    color: var(--theia-list-activeSelectionForeground);
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-item.available:not(.active) {
+    border-left-color: var(--theia-testing-iconPassed);
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-item.needs-config:not(.active) {
+    border-left-color: var(--theia-testing-iconQueued);
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-copy {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-copy strong,
+.ai-providers-configuration-widget .ai-providers-connect-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-providers-configuration-widget .ai-providers-connect-copy small,
+.ai-providers-configuration-widget .ai-providers-connect-state {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
 }
 
 .ai-providers-configuration-widget .ai-providers-segment {

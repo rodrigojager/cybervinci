@@ -118,7 +118,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Stream newline-delimited JSON objects only. Do not wrap output in Markdown fences.',
                     'Every visible canvas change must be emitted immediately as one complete line: {"type":"operation","operation":{...}}.',
                     'The nested operation object must be one OpenPencilDesignOperation.',
-                    'Create parents before children, use stable IDs, and emit operations in visual/layer order.',
+                    'Create parents before children, use stable IDs, and emit non-auto-layout sibling layers front-to-back: text, icons, controls, cards, then backgrounds.',
                     'Do not restate operations that were already emitted.',
                     'When finished, emit {"type":"complete"}.',
                     'Do not include prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
@@ -181,6 +181,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'You are provider-neutral: follow this contract regardless of the selected provider, model, runtime, or reasoning effort.',
             'Think through the design privately, but expose progress by emitting one operation as soon as that canvas element is decided.',
             'Emit operations in the order the user should see the canvas grow: page/root frame, major sections, containers, text, controls, decorative elements, then refinements.',
+            'For non-auto-layout siblings, stream foreground layers before background layers so text and controls stay readable while the canvas updates.',
             'Preserve existing node IDs unless creating or explicitly replacing nodes.',
             request.mode === 'continuation'
                 ? 'Continuation mode: keep existing content, preserve geometry, and append or refine only what the user requested.'

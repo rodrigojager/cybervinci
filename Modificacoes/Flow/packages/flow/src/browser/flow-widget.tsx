@@ -97,10 +97,13 @@ interface FlowWidgetState {
     runHistoryVisible: boolean;
     openMenu?: FlowTopMenu;
     prompt: string;
+    aiMode: FlowAiInteractionMode;
+    selectedAiWorkflowId?: string;
     aiPromptOpen: boolean;
     aiPrompt: string;
     aiExecution: CyberVinciAiExecutionSelection;
     aiQuestion?: string;
+    aiAnswer?: string;
     busy: boolean;
     error?: string;
     executionModeHint?: FlowRunExecutionMode;
@@ -114,6 +117,7 @@ interface FlowWorkflowHistoryEntry {
 }
 
 type FlowTopMenu = 'workflow' | 'file' | 'agents' | 'history';
+type FlowAiInteractionMode = 'chat' | 'saved-flow' | 'dynamic-flow';
 
 export interface FlowExternalRunOptions {
     prompt?: string;
@@ -198,6 +202,7 @@ export class FlowWidget extends ReactWidget {
         runHistory: [],
         runHistoryVisible: false,
         prompt: 'Build the next CyberVinci feature with explicit artifacts and a human review gate.',
+        aiMode: 'dynamic-flow',
         aiPromptOpen: false,
         aiPrompt: '',
         aiExecution: {
@@ -294,6 +299,7 @@ export class FlowWidget extends ReactWidget {
                 },
                 patternRoleOverrides: this.state.patternRoleOverrides,
                 selectedPipelinePresetId: this.state.selectedPipelinePresetId || pipelinePresets[0]?.id,
+                selectedAiWorkflowId: this.state.selectedAiWorkflowId || snapshot.activeWorkflow?.id || snapshot.workflows[0]?.id,
                 selectedId: this.state.selectedId || (snapshot.activeWorkflow ? Object.keys(snapshot.activeWorkflow.states)[0] : undefined),
                 workflowUndoStack: [],
                 workflowRedoStack: [],
@@ -603,11 +609,13 @@ export class FlowWidget extends ReactWidget {
                         selectedStateId={this.state.selectedKind === 'state' ? this.state.selectedId : undefined}
                         selectedState={selectedState}
                         selectedTransition={selectedTransition}
+                        agents={this.state.agents}
                         modelProfiles={this.state.modelProfiles}
                         languageModels={this.state.languageModels}
                         gates={run?.gates || []}
                         validation={validation}
                         onUpdateState={this.updateWorkflowState}
+                        onSelectStateAgent={this.selectStateAgent}
                         onOpenAgent={this.openAgentMarkdown}
                         onAddBranch={this.addParallelBranch}
                         onDeleteState={this.deleteWorkflowState}
@@ -664,13 +672,29 @@ export class FlowWidget extends ReactWidget {
         this.update();
     }
 
+    protected setAiMode(aiMode: FlowAiInteractionMode): void {
+        this.state = {
+            ...this.state,
+            aiMode,
+            selectedAiWorkflowId: this.state.selectedAiWorkflowId || this.state.snapshot?.activeWorkflow?.id || this.state.snapshot?.workflows[0]?.id
+        };
+        this.update();
+    }
+
+    protected setSelectedAiWorkflow(selectedAiWorkflowId: string): void {
+        this.state = { ...this.state, selectedAiWorkflowId };
+        this.update();
+    }
+
     protected readonly toggleAiPromptPanel = (): void => {
         const aiPromptOpen = !this.state.aiPromptOpen;
         this.state = {
             ...this.state,
             aiPromptOpen,
             aiPrompt: this.state.aiPrompt || this.state.prompt,
-            aiQuestion: aiPromptOpen ? this.state.aiQuestion : undefined
+            selectedAiWorkflowId: this.state.selectedAiWorkflowId || this.state.snapshot?.activeWorkflow?.id || this.state.snapshot?.workflows[0]?.id,
+            aiQuestion: aiPromptOpen ? this.state.aiQuestion : undefined,
+            aiAnswer: aiPromptOpen ? this.state.aiAnswer : undefined
         };
         this.update();
     };
@@ -679,16 +703,44 @@ export class FlowWidget extends ReactWidget {
         if (!this.aiRuntime) {
             return undefined;
         }
+        const workflows = this.state.snapshot?.workflows || [];
+        const selectedWorkflow = workflows.find(workflow => workflow.id === this.state.selectedAiWorkflowId)
+            || this.state.snapshot?.activeWorkflow
+            || workflows[0];
+        const selectedPipelinePreset = this.state.pipelinePresets.find(preset => preset.id === this.state.selectedPipelinePresetId);
         return <section className='flow__ai-panel'>
             <header>
                 <div>
                     <h3>Flow AI</h3>
                     {this.state.aiQuestion && <p>{this.state.aiQuestion}</p>}
+                    {this.state.aiAnswer && <p>{this.state.aiAnswer}</p>}
                 </div>
                 <button type='button' className='flow__ai-close' title='Close Flow AI' onClick={this.toggleAiPromptPanel}>
                     <i className='codicon codicon-close' />
                 </button>
             </header>
+            <div className='flow__ai-mode-grid' aria-label='Flow AI mode'>
+                {this.renderAiModeButton('chat', 'comment-discussion', 'Chat')}
+                {this.renderAiModeButton('saved-flow', 'type-hierarchy-sub', 'Saved Flow')}
+                {this.renderAiModeButton('dynamic-flow', 'sparkle', 'Dynamic Flow')}
+            </div>
+            <div className='flow__ai-route-summary'>
+                <span>Modo: <strong>{flowAiModeLabel(this.state.aiMode)}</strong></span>
+                {this.state.aiMode === 'saved-flow'
+                    ? <span>Workflow: <strong>{selectedWorkflow?.name || 'Nenhum workflow salvo'}</strong></span>
+                    : <span>Preset: <strong>{selectedPipelinePreset?.name || 'Automático'}</strong></span>}
+            </div>
+            {this.state.aiMode === 'saved-flow' && <label className='flow__factory-field'>
+                <span>Workflow salvo</span>
+                <select
+                    value={selectedWorkflow?.id || ''}
+                    disabled={this.state.busy || workflows.length === 0}
+                    onChange={event => this.setSelectedAiWorkflow(event.currentTarget.value)}
+                    aria-label='Workflow salvo para Flow AI'
+                >
+                    {workflows.map(workflow => <option key={workflow.id} value={workflow.id}>{workflow.name} ({workflow.id})</option>)}
+                </select>
+            </label>}
             <CyberVinciAiExecutionPicker
                 service={this.aiRuntime}
                 value={this.state.aiExecution}
@@ -710,10 +762,24 @@ export class FlowWidget extends ReactWidget {
                     Cancelar
                 </button>
                 <button type='button' className='theia-button main' onClick={this.runFlowAiPrompt} disabled={this.state.busy || !this.state.aiPrompt.trim()}>
-                    <i className='codicon codicon-sparkle' /> Rodar IA
+                    <i className='codicon codicon-sparkle' /> {flowAiRunLabel(this.state.aiMode)}
                 </button>
             </footer>
         </section>;
+    }
+
+    protected renderAiModeButton(mode: FlowAiInteractionMode, icon: string, label: string): React.ReactNode {
+        const active = this.state.aiMode === mode;
+        return <button
+            type='button'
+            className={active ? 'flow__ai-mode flow__ai-mode--active' : 'flow__ai-mode'}
+            onClick={() => this.setAiMode(mode)}
+            disabled={this.state.busy}
+            aria-pressed={active}
+        >
+            <i className={`codicon codicon-${icon}`} />
+            <span>{label}</span>
+        </button>;
     }
 
     protected readonly handleTopMenuPointerDown = (event: PointerEvent): void => {
@@ -1488,6 +1554,72 @@ export class FlowWidget extends ReactWidget {
         await this.withBusy(async () => {
             const workspaceRootUri = await this.workspaceRootUri();
             const workspacePath = await this.workspaceRootPath();
+            if (this.state.aiMode === 'chat') {
+                const result = await aiRuntime.runTask<Record<string, unknown>, unknown>({
+                    surfaceId: 'flow',
+                    action: 'flow.chat',
+                    workspacePath,
+                    userPrompt: prompt,
+                    systemPrompt: 'You are CyberVinci Flow AI. Answer concisely about workflows, saved flows, dynamic flows, agents, and pipeline execution. Do not start a workflow unless the user selects a Flow mode.',
+                    input: {
+                        activeWorkflow: this.state.snapshot?.activeWorkflow ? redactFlowSecretsValue(this.state.snapshot.activeWorkflow) : undefined,
+                        workflows: (this.state.snapshot?.workflows || []).map(toFlowWorkflowSummaryForAi),
+                        selectedWorkflowId: this.state.selectedAiWorkflowId,
+                        selectedPipelinePresetId: this.state.selectedPipelinePresetId
+                    },
+                    context: {
+                        mode: 'memory-if-available',
+                        maxItems: 5,
+                        tokenBudget: 1200
+                    },
+                    output: {
+                        mode: 'text'
+                    },
+                    effectPolicy: {
+                        previewOnly: true,
+                        workspaceWrites: 'forbidden',
+                        shellExecution: 'forbidden',
+                        requireUserConfirmation: false
+                    },
+                    execution: {
+                        ...this.state.aiExecution,
+                        collaborationMode: 'default'
+                    }
+                });
+                this.state = {
+                    ...this.state,
+                    prompt,
+                    aiPrompt: prompt,
+                    aiPromptOpen: true,
+                    aiQuestion: undefined,
+                    aiAnswer: result.text,
+                    error: undefined
+                };
+                return;
+            }
+            if (this.state.aiMode === 'saved-flow') {
+                const workflowId = this.state.selectedAiWorkflowId || this.state.snapshot?.activeWorkflow?.id || this.state.snapshot?.workflows[0]?.id;
+                if (!workflowId) {
+                    throw new Error('Selecione um workflow salvo para rodar a pipeline completa.');
+                }
+                const activeRun = await this.flowService.startRun({
+                    workspaceRootUri,
+                    workflowId,
+                    prompt
+                });
+                await this.applyExternalRunState(workspaceRootUri, activeRun.workflowId, activeRun, prompt);
+                this.state = {
+                    ...this.state,
+                    prompt,
+                    aiPrompt: prompt,
+                    aiPromptOpen: false,
+                    aiQuestion: undefined,
+                    aiAnswer: undefined,
+                    selectedAiWorkflowId: workflowId,
+                    error: undefined
+                };
+                return;
+            }
             const [authoringSpec, workflows, pipelinePresets, aiProviders] = await Promise.all([
                 this.flowService.getAiAuthoringSpec(),
                 this.flowService.listWorkflows({ workspaceRootUri }),
@@ -1562,6 +1694,7 @@ export class FlowWidget extends ReactWidget {
                 aiPrompt: prompt,
                 aiPromptOpen: false,
                 aiQuestion: undefined,
+                aiAnswer: undefined,
                 error: undefined
             };
         }, error => classifyExecutionModeFromError(error));
@@ -1651,6 +1784,40 @@ export class FlowWidget extends ReactWidget {
             });
             await open(this.openerService, new URI(agent.uri));
         });
+    };
+
+    protected readonly selectStateAgent = async (stateId: string, selection: string): Promise<void> => {
+        const workflow = this.state.snapshot?.activeWorkflow;
+        const existingState = workflow ? findFlowWorkflowState(workflow, stateId) : undefined;
+        if (!workflow || !existingState) {
+            return;
+        }
+        if (!selection) {
+            await this.updateWorkflowState(stateId, { agent: undefined });
+            return;
+        }
+        if (selection.startsWith('id:')) {
+            await this.updateWorkflowState(stateId, { agent: selection.slice(3) });
+            return;
+        }
+        if (!selection.startsWith('path:')) {
+            await this.updateWorkflowState(stateId, { agent: selection });
+            return;
+        }
+        const relativePath = selection.slice(5);
+        const existingAgentId = Object.entries(workflow.agents || {}).find(([, pathValue]) => pathValue === relativePath)?.[0];
+        const agentId = existingAgentId || uniqueWorkflowAgentId(workflow, relativePath);
+        const activeWorkflow = replaceFlowWorkflowState({
+            ...workflow,
+            agents: {
+                ...(workflow.agents || {}),
+                [agentId]: relativePath
+            }
+        }, stateId, {
+            ...existingState.state,
+            agent: agentId
+        });
+        await this.replaceActiveWorkflow(activeWorkflow, 'state', stateId);
     };
 
     protected readonly openArtifact = async (artifactUri: string): Promise<void> => {
@@ -2268,15 +2435,16 @@ function AgentLibrary(props: {
                     <i className='codicon codicon-file-code' />
                     <span>{agent.relativePath}</span>
                 </button>
-                <time dateTime={agent.updatedAt}>{formatTimestamp(agent.updatedAt)}</time>
+                <span className='flow__agent-library-source'>{agent.source === 'catalog' ? 'Catalog' : 'Workspace'}</span>
                 <div>
                     <button title='Duplicate agent Markdown' onClick={() => props.onDuplicate(agent.relativePath)} disabled={props.busy}>
                         <i className='codicon codicon-copy' />
                     </button>
-                    <button title='Rename agent Markdown' onClick={() => props.onRename(agent.relativePath)} disabled={props.busy}>
+                    <button title='Rename agent Markdown' onClick={() => props.onRename(agent.relativePath)} disabled={props.busy || agent.source === 'catalog'}>
                         <i className='codicon codicon-edit' />
                     </button>
                 </div>
+                <time dateTime={agent.updatedAt}>{formatTimestamp(agent.updatedAt)}</time>
             </article>)}
         </div>
     </section>;
@@ -3214,11 +3382,13 @@ function Inspector(props: {
     selectedStateId?: string;
     selectedState?: FlowWorkflow['states'][string];
     selectedTransition?: FlowWorkflowTransition;
+    agents: FlowAgentMarkdownSummary[];
     modelProfiles: FlowModelProfile[];
     languageModels: FlowLanguageModelOption[];
     gates: FlowHumanGate[];
     validation?: FlowSnapshot['validation'];
     onUpdateState: (stateId: string, statePatch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
+    onSelectStateAgent: (stateId: string, selection: string) => Promise<void>;
     onOpenAgent: (agentIdOrPath: string) => Promise<void>;
     onAddBranch: (parallelStateId: string, branchType: FlowStateType) => Promise<string | undefined>;
     onDeleteState: (stateId: string) => Promise<void>;
@@ -3299,9 +3469,11 @@ function Inspector(props: {
             state={state}
             editable={props.workflow.file?.editable !== false}
             issues={validationIssues}
+            agents={props.agents}
             modelProfiles={props.modelProfiles}
             languageModels={props.languageModels}
             onUpdateState={props.onUpdateState}
+            onSelectAgent={props.onSelectStateAgent}
             onOpenAgent={props.onOpenAgent}
             onAddBranch={props.onAddBranch}
             onDeleteState={props.onDeleteState}
@@ -3360,9 +3532,11 @@ function StateEditor(props: {
     state: FlowWorkflow['states'][string];
     editable: boolean;
     issues: FlowValidationIssue[];
+    agents: FlowAgentMarkdownSummary[];
     modelProfiles: FlowModelProfile[];
     languageModels: FlowLanguageModelOption[];
     onUpdateState: (stateId: string, statePatch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
+    onSelectAgent: (stateId: string, selection: string) => Promise<void>;
     onOpenAgent: (agentIdOrPath: string) => Promise<void>;
     onAddBranch: (parallelStateId: string, branchType: FlowStateType) => Promise<string | undefined>;
     onDeleteState: (stateId: string) => Promise<void>;
@@ -3370,6 +3544,7 @@ function StateEditor(props: {
 }): React.ReactElement {
     const updateInput = (patch: Partial<NonNullable<FlowWorkflow['states'][string]['input']>>) =>
         props.onUpdateState(props.stateId, { input: compactObject({ ...(props.state.input || {}), ...patch }) });
+    const agentSelect = createFlowAgentSelectModel(props.workflow, props.agents, props.state.agent);
     return <section className='flow__state-editor' aria-label='State editor'>
         <div className='flow__section-heading'>
             <h4>Workflow fields</h4>
@@ -3387,6 +3562,26 @@ function StateEditor(props: {
             <h5>Agente</h5>
             <label>
                 <span>Agent</span>
+                <select
+                    value={agentSelect.value}
+                    disabled={!props.editable}
+                    onChange={event => props.onSelectAgent(props.stateId, event.currentTarget.value)}
+                    aria-label='Selecionar agente do Flow'
+                >
+                    <option value=''>Sem agente</option>
+                    {agentSelect.workflow.length > 0 && <optgroup label='Workflow'>
+                        {agentSelect.workflow.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </optgroup>}
+                    {agentSelect.workspace.length > 0 && <optgroup label='Workspace'>
+                        {agentSelect.workspace.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </optgroup>}
+                    {agentSelect.catalog.length > 0 && <optgroup label='Agency Agents'>
+                        {agentSelect.catalog.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </optgroup>}
+                </select>
+            </label>
+            <label>
+                <span>Agent id/path manual</span>
                 <div className='flow__agent-field'>
                     <input
                         value={props.state.agent || ''}
@@ -5464,6 +5659,102 @@ function renderWorkflowVersions(versions: FlowWorkflowVersion[]): string {
             diff
         ].filter(Boolean).join('\n');
     }).join('\n\n');
+}
+
+interface FlowAgentSelectOption {
+    value: string;
+    label: string;
+}
+
+function createFlowAgentSelectModel(workflow: FlowWorkflow, agents: FlowAgentMarkdownSummary[], currentAgent: string | undefined): {
+    value: string;
+    workflow: FlowAgentSelectOption[];
+    workspace: FlowAgentSelectOption[];
+    catalog: FlowAgentSelectOption[];
+} {
+    const workflowOptions = Object.entries(workflow.agents || {})
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([agentId, relativePath]) => ({
+            value: `id:${agentId}`,
+            label: `${agentId} - ${relativePath}`
+        }));
+    const workflowPaths = new Set(Object.values(workflow.agents || {}));
+    const workspaceOptions = agents
+        .filter(agent => agent.source !== 'catalog' && !workflowPaths.has(agent.relativePath))
+        .map(agent => ({
+            value: `path:${agent.relativePath}`,
+            label: flowAgentOptionLabel(agent)
+        }));
+    const catalogOptions = agents
+        .filter(agent => agent.source === 'catalog' && !workflowPaths.has(agent.relativePath))
+        .map(agent => ({
+            value: `path:${agent.relativePath}`,
+            label: flowAgentOptionLabel(agent)
+        }));
+    let value = '';
+    if (currentAgent) {
+        const mappedPath = workflow.agents?.[currentAgent];
+        if (mappedPath !== undefined) {
+            value = `id:${currentAgent}`;
+        } else if (agents.some(agent => agent.relativePath === currentAgent)) {
+            value = `path:${currentAgent}`;
+        }
+    }
+    return {
+        value,
+        workflow: workflowOptions,
+        workspace: workspaceOptions,
+        catalog: catalogOptions
+    };
+}
+
+function flowAgentOptionLabel(agent: FlowAgentMarkdownSummary): string {
+    return `${flowAgentDisplayName(agent.relativePath)} - ${agent.relativePath}`;
+}
+
+function flowAgentDisplayName(relativePath: string): string {
+    const filename = relativePath.split('/').pop() || relativePath;
+    return filename.replace(/\.(md|markdown)$/i, '').replace(/[-_]+/g, ' ');
+}
+
+function uniqueWorkflowAgentId(workflow: FlowWorkflow, relativePath: string): string {
+    const base = agentIdFromRelativePath(relativePath);
+    if (!workflow.agents?.[base]) {
+        return base;
+    }
+    for (let index = 2; index < 1000; index++) {
+        const candidate = `${base}_${index}`;
+        if (!workflow.agents?.[candidate]) {
+            return candidate;
+        }
+    }
+    return `${base}_${Date.now()}`;
+}
+
+function agentIdFromRelativePath(relativePath: string): string {
+    const filename = relativePath.split('/').pop() || relativePath;
+    const base = filename.replace(/\.(md|markdown)$/i, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
+    return base || 'agent';
+}
+
+function flowAiModeLabel(mode: FlowAiInteractionMode): string {
+    if (mode === 'chat') {
+        return 'Chat';
+    }
+    if (mode === 'saved-flow') {
+        return 'Saved Flow';
+    }
+    return 'Dynamic Flow';
+}
+
+function flowAiRunLabel(mode: FlowAiInteractionMode): string {
+    if (mode === 'chat') {
+        return 'Enviar chat';
+    }
+    if (mode === 'saved-flow') {
+        return 'Rodar saved flow';
+    }
+    return 'Rodar dynamic flow';
 }
 
 function resolveExecutionMode(

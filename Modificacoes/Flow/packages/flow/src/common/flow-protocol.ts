@@ -109,6 +109,7 @@ export interface FlowAgentMarkdownFile {
     relativePath: string;
     content: string;
     updatedAt: string;
+    source?: 'workspace' | 'catalog';
 }
 
 export interface FlowAgentMarkdownSummary {
@@ -116,6 +117,7 @@ export interface FlowAgentMarkdownSummary {
     uri: string;
     relativePath: string;
     updatedAt: string;
+    source?: 'workspace' | 'catalog';
 }
 
 export interface FlowCreateWorkflowFromTemplateRequest extends FlowWorkspaceRequest {

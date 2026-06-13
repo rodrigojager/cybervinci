@@ -1628,7 +1628,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                     diagnostics.push(`${providerName} streamed operations that do not match the OpenPencil structured operation contract.`);
                     return;
                 }
-                const normalizedOperations = this.normalizeProviderAiOperations(operations, currentRequest);
+                const normalizedOperations = this.normalizeProviderAiStreamingOperations(operations, currentRequest);
                 const previewDiagnostic = this.validateAiOperationsPreview(normalizedOperations, currentRequest, providerName);
                 if (previewDiagnostic) {
                     diagnostics.push(previewDiagnostic);
@@ -1684,9 +1684,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                     }
                 }
                 if (!acceptedOperations.length && completedOperations?.length) {
-                    for (const operation of completedOperations) {
-                        await acceptOperations([operation]);
-                    }
+                    await acceptOperations(completedOperations);
                 }
                 if (acceptedOperations.length) {
                     canvasAiFrontendDebug('provider-stream-accepted', {
@@ -1802,6 +1800,39 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             .filter(node => !createdIds.has(node.id))
             .map(node => ({ operation: 'removeNode', nodeId: node.id }));
         return removals.length ? [...removals, ...normalizedOperations] : normalizedOperations;
+    }
+
+    protected normalizeProviderAiStreamingOperations(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] {
+        return this.normalizeProviderAiOperations(operations, request)
+            .map(operation => this.normalizeProviderAiStreamingInsertionIndex(operation, request));
+    }
+
+    protected normalizeProviderAiStreamingInsertionIndex(operation: OpenPencilDesignOperation, request: OpenPencilAiDesignRequest): OpenPencilDesignOperation {
+        if (!this.isProviderAiCreateOperation(operation)) {
+            return operation;
+        }
+        const page = this.documents.getActivePage(request.document);
+        const parentId = this.normalizePageParentId(operation.parentId, page);
+        const parent = parentId ? this.documents.findNode(request.document, parentId) : undefined;
+        if (parentId && !parent) {
+            return operation;
+        }
+        if (parent && this.isProviderAiAutoLayoutNode(parent)) {
+            return operation;
+        }
+        const siblings = parent ? parent.children ?? [] : page.children;
+        if (!siblings.length) {
+            return this.hasProviderAiIndex(operation) ? this.omitProviderAiCreateIndex(operation) : operation;
+        }
+        const index = this.providerAiStreamingZOrderInsertionIndex(operation.node, siblings);
+        const withoutIndex = this.omitProviderAiCreateIndex(operation);
+        return index === undefined ? withoutIndex : { ...withoutIndex, index };
+    }
+
+    protected providerAiStreamingZOrderInsertionIndex(node: Partial<OpenPencilNode>, siblings: OpenPencilNode[]): number | undefined {
+        const rank = this.providerAiNodeZRank(node);
+        const insertBefore = siblings.findIndex(sibling => this.providerAiNodeZRank(sibling) < rank);
+        return insertBefore >= 0 ? insertBefore : undefined;
     }
 
     protected normalizeProviderAiOperationZOrder(operation: OpenPencilDesignOperation): OpenPencilDesignOperation {

@@ -70,6 +70,14 @@ interface ProviderPresetConfig {
     defaultModel?: string;
 }
 
+interface ProviderCatalogItem {
+    preset: ProviderPreset;
+    label: string;
+    description: string;
+    group: 'Popular' | 'Providers';
+    recommended?: boolean;
+}
+
 const PROVIDER_PRESET_CONFIG: Record<ProviderPreset, ProviderPresetConfig> = {
     codex: { runtime: 'codex-app-server', provider: 'codex' },
     openrouter: { runtime: 'direct-http', provider: 'openrouter', defaultModel: 'openrouter/openai/gpt-5' },
@@ -79,6 +87,52 @@ const PROVIDER_PRESET_CONFIG: Record<ProviderPreset, ProviderPresetConfig> = {
     'claude-code': { runtime: 'claude-code-cli', provider: 'claude-code', defaultModel: 'sonnet' },
     cursor: { runtime: 'cursor-cli', provider: 'cursor' }
 };
+
+const PROVIDER_CATALOG: ProviderCatalogItem[] = [
+    {
+        preset: 'opencode',
+        label: 'OpenCode Zen',
+        description: 'Single API key for coding-focused models',
+        group: 'Popular',
+        recommended: true
+    },
+    {
+        preset: 'openrouter',
+        label: 'OpenRouter',
+        description: 'Direct API access to many hosted models',
+        group: 'Popular'
+    },
+    {
+        preset: 'codex',
+        label: 'Codex CLI',
+        description: 'Use the local Codex app-server and account auth',
+        group: 'Popular'
+    },
+    {
+        preset: 'opencode-go',
+        label: 'OpenCode Go',
+        description: 'OpenCode Go direct API adapter',
+        group: 'Providers'
+    },
+    {
+        preset: 'gemini',
+        label: 'Gemini CLI',
+        description: 'Use the Gemini CLI from PATH or configured executable',
+        group: 'Providers'
+    },
+    {
+        preset: 'claude-code',
+        label: 'Claude Code',
+        description: 'Use Claude Code CLI with optional agent routing',
+        group: 'Providers'
+    },
+    {
+        preset: 'cursor',
+        label: 'Cursor CLI',
+        description: 'Use Cursor agent CLI in ask or plan mode',
+        group: 'Providers'
+    }
+];
 
 @injectable()
 export class CodexProviderConfigurationWidget extends ReactWidget {
@@ -99,6 +153,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
     protected readonly quickInputService: QuickInputService;
 
     protected status: CodexProviderStatus | undefined;
+    protected providerCatalogSearch = '';
 
     @postConstruct()
     protected init(): void {
@@ -270,21 +325,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
                     )}
                 </div>
 
-                <div className="ai-providers-mode-panel">
-                    <div className="ai-providers-mode-header">
-                        <span className="ai-providers-mode-title">{nls.localizeByDefault('Provider')}</span>
-                        <span className="ai-providers-mode-current">{this.currentProviderLabel()}</span>
-                    </div>
-                    <div className="ai-providers-segmented">
-                        {this.renderProviderButton('codex', codicon('terminal'), 'Codex CLI')}
-                        {this.renderProviderButton('openrouter', codicon('cloud'), 'OpenRouter')}
-                        {this.renderProviderButton('opencode-go', codicon('rocket'), 'OpenCode Go')}
-                        {this.renderProviderButton('opencode', codicon('symbol-color'), 'OpenCode Zen')}
-                        {this.renderProviderButton('gemini', codicon('star-full'), 'Gemini CLI')}
-                        {this.renderProviderButton('claude-code', codicon('comment-discussion'), 'Claude Code')}
-                        {this.renderProviderButton('cursor', codicon('edit'), 'Cursor CLI')}
-                    </div>
-                </div>
+                {this.renderProviderConnector()}
 
                 {this.renderDetectedProviders()}
 
@@ -453,6 +494,99 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
                 </div>
             </div>
         );
+    }
+
+    protected renderProviderConnector(): React.ReactNode {
+        const query = this.providerCatalogSearch.trim().toLowerCase();
+        const items = PROVIDER_CATALOG.filter(item =>
+            !query || item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query)
+        );
+        const popular = items.filter(item => item.group === 'Popular');
+        const providers = items.filter(item => item.group === 'Providers');
+        return (
+            <div className="ai-providers-connect-panel">
+                <div className="ai-providers-mode-header">
+                    <span className="ai-providers-mode-title">{nls.localize('theia/ai-providers/configuration/connectProvider', 'Connect a provider')}</span>
+                    <span className="ai-providers-mode-current">{this.currentProviderLabel()}</span>
+                </div>
+                <div className="ai-providers-connect-search">
+                    <span className={codicon('search')} />
+                    <input
+                        value={this.providerCatalogSearch}
+                        onChange={event => {
+                            this.providerCatalogSearch = event.currentTarget.value;
+                            this.update();
+                        }}
+                        placeholder={nls.localizeByDefault('Search')}
+                        aria-label={nls.localize('theia/ai-providers/configuration/searchProviders', 'Search providers')}
+                    />
+                </div>
+                {this.renderProviderCatalogGroup('Popular', popular)}
+                {this.renderProviderCatalogGroup('Providers', providers)}
+            </div>
+        );
+    }
+
+    protected renderProviderCatalogGroup(label: string, items: ProviderCatalogItem[]): React.ReactNode {
+        if (!items.length) {
+            return undefined;
+        }
+        return (
+            <section className="ai-providers-connect-group" aria-label={label}>
+                <h3>{label}</h3>
+                <div className="ai-providers-connect-list">
+                    {items.map(item => this.renderProviderCatalogItem(item))}
+                </div>
+            </section>
+        );
+    }
+
+    protected renderProviderCatalogItem(item: ProviderCatalogItem): React.ReactNode {
+        const active = this.currentProviderPreset() === item.preset;
+        const detected = this.detectedProviderFor(item.preset);
+        const state = detected?.available ? 'available' : detected?.cliAvailable ? 'needs-config' : detected ? 'missing' : 'unknown';
+        return (
+            <button
+                key={item.preset}
+                className={`ai-providers-connect-item ${state} ${active ? 'active' : ''}`}
+                title={this.detectedProviderTitle(detected)}
+                onClick={() => this.applyProviderPreset(item.preset)}
+            >
+                <span className={this.providerCatalogIcon(item.preset)} />
+                <span className="ai-providers-connect-copy">
+                    <strong>{item.label}{item.recommended ? ' (Recommended)' : ''}</strong>
+                    <small>{item.description}</small>
+                </span>
+                <span className="ai-providers-connect-state">
+                    {active
+                        ? nls.localizeByDefault('Current')
+                        : detected?.available
+                        ? nls.localize('theia/ai-providers/configuration/ready', 'Ready')
+                        : detected?.cliAvailable
+                        ? nls.localizeByDefault('Configure')
+                        : nls.localize('theia/ai-providers/configuration/availableAdapter', 'Adapter')}
+                </span>
+            </button>
+        );
+    }
+
+    protected providerCatalogIcon(preset: ProviderPreset): string {
+        switch (preset) {
+            case 'codex':
+                return codicon('terminal');
+            case 'openrouter':
+                return codicon('cloud');
+            case 'opencode-go':
+                return codicon('rocket');
+            case 'opencode':
+                return codicon('symbol-color');
+            case 'gemini':
+                return codicon('star-full');
+            case 'claude-code':
+                return codicon('comment-discussion');
+            case 'cursor':
+                return codicon('edit');
+        }
     }
 
     protected renderStatusTile(label: string, value: string, tone: 'pass' | 'warn' | 'fail' | 'neutral', detail?: string): React.ReactNode {
