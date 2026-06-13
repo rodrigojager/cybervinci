@@ -787,9 +787,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected readonly documents = new OpenPencilDocumentService();
     protected readonly sessions = new Map<string, OpenPencilDesignSession>();
-    protected readonly providerStreamFirstOperationTimeoutMs: number = 90000;
-    protected readonly providerStreamIdleTimeoutMs: number = 45000;
-    protected readonly providerStreamTotalTimeoutMs: number = 240000;
+    protected readonly providerStreamFirstOperationTimeoutMs: number = 20000;
+    protected readonly providerStreamIdleTimeoutMs: number = 30000;
+    protected readonly providerStreamTotalTimeoutMs: number = 120000;
 
     @inject(ContributionProvider) @named(OpenPencilAiDesignProvider) @optional()
     protected readonly aiProviderContributions: ContributionProvider<OpenPencilAiDesignProvider> | undefined;
@@ -1699,17 +1699,28 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
             try {
                 const streamStartedAt = Date.now();
+                const firstOperationDeadline = streamStartedAt + this.providerStreamFirstOperationTimeoutMs;
+                let lastAcceptedOperationAt = streamStartedAt;
                 const streamIterator = provider.streamOperations(currentRequest, context)[Symbol.asyncIterator]();
                 try {
                     while (true) {
-                        const elapsed = Date.now() - streamStartedAt;
+                        const now = Date.now();
+                        const elapsed = now - streamStartedAt;
                         const remainingTotal = this.providerStreamTotalTimeoutMs - elapsed;
                         if (remainingTotal <= 0) {
                             throw new Error(`${providerName} streaming did not finish within ${Math.round(this.providerStreamTotalTimeoutMs / 1000)} seconds.`);
                         }
+                        const remainingOperationTime = acceptedOperations.length
+                            ? this.providerStreamIdleTimeoutMs - (now - lastAcceptedOperationAt)
+                            : firstOperationDeadline - now;
+                        if (remainingOperationTime <= 0) {
+                            throw new Error(acceptedOperations.length
+                                ? `${providerName} streaming stopped producing OpenPencil operations for ${Math.round(this.providerStreamIdleTimeoutMs / 1000)} seconds.`
+                                : `${providerName} streaming did not produce an OpenPencil operation within ${Math.round(this.providerStreamFirstOperationTimeoutMs / 1000)} seconds.`);
+                        }
                         const nextTimeout = Math.min(
                             remainingTotal,
-                            acceptedOperations.length ? this.providerStreamIdleTimeoutMs : this.providerStreamFirstOperationTimeoutMs
+                            remainingOperationTime
                         );
                         const next = await this.withProviderStreamTimeout(
                             Promise.resolve(streamIterator.next()),
@@ -1727,7 +1738,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                             continue;
                         }
                         if (event.type === 'operation') {
+                            const acceptedBefore = acceptedOperations.length;
                             await acceptOperations([event.operation]);
+                            if (acceptedOperations.length > acceptedBefore) {
+                                lastAcceptedOperationAt = Date.now();
+                            }
                             continue;
                         }
                         if (event.type === 'complete') {
