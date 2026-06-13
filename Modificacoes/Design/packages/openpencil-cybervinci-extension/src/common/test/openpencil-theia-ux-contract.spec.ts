@@ -139,6 +139,8 @@ describe('OpenPencil Theia UX integration contract', () => {
         expect(runtimeProviderSource).to.contain("action: 'canvas.streamOperations'");
         expect(runtimeProviderSource).to.contain('streamOperations');
         expect(runtimeProviderSource).to.contain('openpencil_design_operation_events');
+        expect(runtimeProviderSource).to.contain('tokenBudget: 8000');
+        expect(runtimeProviderSource).to.contain('one vertical page frame about 1200px wide');
         expect(runtimeProviderSource).to.contain('request.execution');
         expect(moduleSource).to.contain('OpenPencilCyberVinciAiDesignProvider');
         expect(serviceSource).to.contain('LanguageModelRegistry');

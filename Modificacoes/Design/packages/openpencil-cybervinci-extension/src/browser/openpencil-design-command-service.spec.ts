@@ -920,6 +920,40 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Number(page.width)).to.be.at.least(Number(root?.x ?? 0) + Number(root?.width ?? 0));
     });
 
+    it('preserves homepage page width and wraps overflowing generated rows vertically', () => {
+        const document = service.createDesign('Homepage width preservation test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = Array.from({ length: 5 }, (_, index) => ({
+            id: `homepage-product-card-${index + 1}`,
+            type: 'frame',
+            name: `Homepage product card ${index + 1}`,
+            role: 'card',
+            x: index * 310,
+            y: 420,
+            width: 280,
+            height: 160,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            children: []
+        }));
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const normalizedPage = result.document.pages![0];
+        const cards = normalizedPage.children;
+
+        expect(result.changed).to.equal(true);
+        expect(normalizedPage.width).to.equal(1200);
+        expect(cards[4].x).to.equal(0);
+        expect(Number(cards[4].y)).to.be.greaterThan(420);
+        expect(Number(normalizedPage.height)).to.be.greaterThan(700);
+        expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',

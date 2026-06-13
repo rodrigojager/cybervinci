@@ -162,6 +162,8 @@ export interface OpenPencilDesignSession {
 export interface OpenPencilApplyOperationsOptions {
     mode?: OpenPencilAiDesignRequest['mode'];
     normalizeVisibleBounds?: boolean;
+    preservePageWidth?: boolean;
+    targetPageWidth?: number;
 }
 
 export interface OpenPencilAiDesignRequest {
@@ -509,6 +511,9 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             ] : []),
             'When a request asks for multiple independent views, such as desktop and mobile, create separate top-level frames and place them side by side inside the page with a clear gap; scale them uniformly if needed, never overlap or clip them.',
             'For editable page designs, top-level view frames should usually use layout:"none" or omit layout and rely on numeric x/y/width/height. Use layout:"vertical" or layout:"horizontal" only for internal stacks where children should remain auto-positioned.',
+            'For a website, homepage, marketplace, e-commerce, or known-site copy, create one vertical page frame about 1200px wide and as tall as needed. Preserve that width and stack all major sections downward.',
+            'For product rows, offer strips, category shelves, and carousels, keep cards inside the 1200px page width. If more items are needed, create another row or another section below; never extend the homepage horizontally.',
+            'If the user asks to copy or recreate a full homepage, include the complete page structure: top navigation, hero/promo area, category shortcuts, several product/offer shelves, promotional banners, recommendations, benefits, and footer-like closing content when present.',
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
             'Do not set clipContent:true on top-level views or general containers unless the user explicitly asks for masking/cropping. The canvas is unbounded; do not create invisible frames as canvas limits.',
             'Every frame, group, card, section, and top-level view must have bounds large enough to contain every visible child. Before adding a child with x/y/width/height, make sure parent width/height already contains the child.',
@@ -1265,7 +1270,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 messages.push(result.message);
             }
         }
-        if (options?.normalizeVisibleBounds && this.normalizeDocumentVisibleBounds(currentDocument)) {
+        if (options?.normalizeVisibleBounds && this.normalizeDocumentVisibleBounds(currentDocument, options)) {
             changed = true;
         }
         if (options?.mode !== 'continuation' && this.arrangeCreatedRootViews(currentDocument, createdRootViewIds)) {
@@ -1674,7 +1679,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                     ...currentRequest,
                     document: applyResult.document,
                     selection: applyResult.selection,
-                    mode: 'maintenance'
+                    mode: currentRequest.mode === 'continuation' ? 'continuation' : 'maintenance'
                 };
             };
 
@@ -2077,6 +2082,18 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return /\b(landing|page|screen|dashboard|site|app|hero|interface|tela|pagina|página)\b/i.test(prompt);
     }
 
+    protected shouldPreservePageWidthForAiPrompt(prompt: string): boolean {
+        const lower = prompt.toLowerCase();
+        if (/\b(side[- ]by[- ]side|lado a lado|desktop e mobile|mobile e desktop|multiple views|múltiplas telas|multiplas telas)\b/i.test(lower)) {
+            return false;
+        }
+        return /\b(homepage|home page|página inicial|pagina inicial|landing|site|website|web|e-?commerce|loja|marketplace|mercado livre|mercadolivre|copy|copia|cópia|clone|clonar)\b/i.test(lower);
+    }
+
+    protected aiPromptTargetPageWidth(prompt: string): number | undefined {
+        return this.shouldPreservePageWidthForAiPrompt(prompt) ? 1200 : undefined;
+    }
+
     protected isTopLevelPageLikeCreateOperation(operation: OpenPencilDesignOperation, page: OpenPencilPage): boolean {
         if ((operation.operation !== 'createNode' && operation.operation !== 'addNode') || this.normalizePageParentId(operation.parentId, page)) {
             return false;
@@ -2095,7 +2112,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         const preview = this.applyOperationsToDocument(this.documents.cloneDocument(request.document), request.selection, operations, {
             mode: request.mode,
-            normalizeVisibleBounds: true
+            normalizeVisibleBounds: true,
+            preservePageWidth: this.shouldPreservePageWidthForAiPrompt(request.prompt),
+            targetPageWidth: this.aiPromptTargetPageWidth(request.prompt)
         });
         if (this.previewReportedPartialFailure(preview.message)) {
             return `${providerName} operations were rejected because preview application reported a partial failure${preview.message ? `: ${preview.message}` : '.'}`;
@@ -2706,27 +2725,47 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
     }
 
-    protected normalizeDocumentVisibleBounds(document: OpenPencilDocument): boolean {
+    protected normalizeDocumentVisibleBounds(document: OpenPencilDocument, options: OpenPencilApplyOperationsOptions = {}): boolean {
         const page = this.documents.getActivePage(document);
         let changed = false;
-        for (const node of page.children) {
-            changed = this.normalizeNodeVisibleBounds(node) || changed;
+        const preservedPageWidth = options.preservePageWidth
+            ? this.preservedPageWidth(page, options.targetPageWidth)
+            : undefined;
+        if (preservedPageWidth !== undefined && page.width !== preservedPageWidth) {
+            page.width = preservedPageWidth;
+            changed = true;
         }
-        return this.normalizePageVisibleBounds(page) || changed;
+        for (const node of page.children) {
+            changed = this.normalizeNodeVisibleBounds(node, options.preservePageWidth === true, preservedPageWidth) || changed;
+        }
+        return this.normalizePageVisibleBounds(page, preservedPageWidth) || changed;
     }
 
-    protected normalizeNodeVisibleBounds(node: OpenPencilNode): boolean {
+    protected normalizeNodeVisibleBounds(node: OpenPencilNode, preservePageWidth = false, maxWidth?: number): boolean {
         let changed = false;
         for (const child of node.children ?? []) {
-            changed = this.normalizeNodeVisibleBounds(child) || changed;
+            changed = this.normalizeNodeVisibleBounds(child, preservePageWidth, this.numericDimensionValue(node.width) ?? maxWidth) || changed;
         }
-        const bounds = this.createNodeChildrenVisibleBounds(node);
+        let bounds = this.createNodeChildrenVisibleBounds(node);
         if (!bounds) {
             return changed;
         }
 
-        const width = this.numericDimensionValue(node.width);
+        let width = this.numericDimensionValue(node.width);
         const height = this.numericDimensionValue(node.height);
+        if (preservePageWidth && width !== undefined && maxWidth !== undefined && this.shouldClampOversizedPageContainer(node, width, maxWidth)) {
+            node.width = maxWidth;
+            width = maxWidth;
+            changed = true;
+        }
+        if (preservePageWidth && width !== undefined && this.shouldReflowOverflowingChildren(node, bounds, width)) {
+            changed = this.reflowManualChildrenWithinWidth(node.children ?? [], width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+
         const overflowsX = width !== undefined && (bounds.left < 0 || bounds.right > width);
         const overflowsY = height !== undefined && (bounds.top < 0 || bounds.bottom > height);
         const shouldMaterializeWidth = width === undefined && !!node.clipContent && bounds.right > 0;
@@ -2736,7 +2775,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             node.clipContent = false;
             changed = true;
         }
-        if ((width !== undefined && bounds.right > width) || shouldMaterializeWidth) {
+        if (!preservePageWidth && ((width !== undefined && bounds.right > width) || shouldMaterializeWidth)) {
             node.width = this.ceilVisibleBound(bounds.right);
             changed = true;
         }
@@ -2747,12 +2786,15 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return changed;
     }
 
-    protected normalizePageVisibleBounds(page: OpenPencilPage): boolean {
-        const bounds = this.createManualChildrenVisibleBounds(page.children);
-        if (!bounds) {
-            return false;
-        }
+    protected normalizePageVisibleBounds(page: OpenPencilPage, preservedPageWidth?: number): boolean {
         let changed = false;
+        if (preservedPageWidth !== undefined) {
+            changed = this.reflowManualChildrenWithinWidth(page.children, preservedPageWidth) || changed;
+        }
+        let bounds = this.createManualChildrenVisibleBounds(page.children);
+        if (!bounds) {
+            return changed;
+        }
         let normalizedBounds = bounds;
         const dx = bounds.left < 0 ? Math.ceil(-bounds.left) : 0;
         const dy = bounds.top < 0 ? Math.ceil(-bounds.top) : 0;
@@ -2770,11 +2812,22 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             changed = true;
         }
 
-        const pageWidth = Math.max(120, this.numberValue(page.width, 900));
+        const pageWidth = Math.max(120, preservedPageWidth ?? this.numberValue(page.width, 900));
         const pageHeight = Math.max(120, this.numberValue(page.height, 620));
         const margin = Math.min(40, Math.floor(Math.min(pageWidth, pageHeight) / 8));
-        if (normalizedBounds.right > pageWidth) {
+        if (preservedPageWidth !== undefined && normalizedBounds.right > pageWidth) {
+            const reflowed = this.reflowManualChildrenWithinWidth(page.children, pageWidth);
+            if (reflowed) {
+                bounds = this.createManualChildrenVisibleBounds(page.children);
+                normalizedBounds = bounds ?? normalizedBounds;
+                changed = true;
+            }
+        }
+        if (preservedPageWidth === undefined && normalizedBounds.right > pageWidth) {
             page.width = this.ceilVisibleBound(normalizedBounds.right + margin);
+            changed = true;
+        } else if (preservedPageWidth !== undefined && page.width !== preservedPageWidth) {
+            page.width = preservedPageWidth;
             changed = true;
         }
         if (normalizedBounds.bottom > pageHeight) {
@@ -2782,6 +2835,112 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             changed = true;
         }
         return changed;
+    }
+
+    protected preservedPageWidth(page: OpenPencilPage, targetPageWidth: number | undefined): number {
+        const current = Math.max(120, this.numberValue(page.width, 900));
+        const target = Math.max(900, Math.min(1440, Math.round(targetPageWidth ?? 1200)));
+        if (current > 1600) {
+            return target;
+        }
+        return Math.max(current, target);
+    }
+
+    protected shouldReflowOverflowingChildren(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
+        if ((node.layout === 'horizontal' || node.layout === 'vertical') || bounds.right <= width || width < 560) {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []);
+        if (children.length < 3) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return children.length >= 6
+            || /\b(page|homepage|home|screen|view|section|content|products?|offers?|cards?|grid|list|catalog|categoria|categorias|ofertas?|produtos?)\b/.test(label);
+    }
+
+    protected shouldClampOversizedPageContainer(node: OpenPencilNode, width: number, maxWidth: number): boolean {
+        if (width <= maxWidth || maxWidth < 560 || node.type !== 'frame') {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return width > maxWidth * 1.15
+            && /\b(page|homepage|home|screen|view|website|site|marketplace|e-?commerce|catalog|landing|pagina|página|tela)\b/.test(label);
+    }
+
+    protected reflowManualChildrenWithinWidth(children: OpenPencilNode[], maxWidth: number): boolean {
+        const visible = this.visibleChildren(children)
+            .filter(child => child.role !== 'overlay')
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0);
+        if (visible.length < 2 || maxWidth < 120) {
+            return false;
+        }
+
+        const rows = this.groupManualChildrenIntoRows(visible);
+        let changed = false;
+        let yOffset = 0;
+        const gap = Math.max(12, Math.min(24, Math.round(maxWidth * 0.015)));
+
+        for (const row of rows) {
+            const sorted = row.slice().sort((left, right) => this.numberValue(left.x, 0) - this.numberValue(right.x, 0));
+            const originalTop = Math.min(...sorted.map(node => this.numberValue(node.y, 0)));
+            const originalBottom = Math.max(...sorted.map(node => this.numberValue(node.y, 0) + this.visibleNodeHeight(node)));
+            const startX = Math.max(0, Math.min(...sorted.map(node => this.numberValue(node.x, 0))));
+            const availableRight = Math.max(startX + 1, maxWidth);
+            let cursorX = startX;
+            let cursorY = originalTop + yOffset;
+            let lineHeight = 0;
+            let rowBottom = cursorY;
+
+            for (const node of sorted) {
+                const width = Math.min(this.visibleNodeWidth(node), Math.max(1, availableRight - startX));
+                const height = this.visibleNodeHeight(node);
+                if (cursorX > startX && cursorX + width > availableRight) {
+                    cursorX = startX;
+                    cursorY += lineHeight + gap;
+                    lineHeight = 0;
+                }
+                if (this.numberValue(node.x, 0) !== cursorX) {
+                    node.x = this.roundScaledValue(cursorX);
+                    changed = true;
+                }
+                if (this.numberValue(node.y, 0) !== cursorY) {
+                    node.y = this.roundScaledValue(cursorY);
+                    changed = true;
+                }
+                cursorX += width + gap;
+                lineHeight = Math.max(lineHeight, height);
+                rowBottom = Math.max(rowBottom, cursorY + height);
+            }
+
+            const originalShiftedBottom = originalBottom + yOffset;
+            if (rowBottom > originalShiftedBottom) {
+                yOffset += rowBottom - originalShiftedBottom + gap;
+            }
+        }
+
+        return changed;
+    }
+
+    protected groupManualChildrenIntoRows(children: OpenPencilNode[]): OpenPencilNode[][] {
+        const sorted = children.slice().sort((left, right) => {
+            const topDelta = this.numberValue(left.y, 0) - this.numberValue(right.y, 0);
+            return Math.abs(topDelta) > 16 ? topDelta : this.numberValue(left.x, 0) - this.numberValue(right.x, 0);
+        });
+        const rows: OpenPencilNode[][] = [];
+        for (const child of sorted) {
+            const top = this.numberValue(child.y, 0);
+            const row = rows.find(candidate => {
+                const rowTop = Math.min(...candidate.map(node => this.numberValue(node.y, 0)));
+                return Math.abs(top - rowTop) <= 24;
+            });
+            if (row) {
+                row.push(child);
+            } else {
+                rows.push([child]);
+            }
+        }
+        return rows;
     }
 
     protected createNodeChildrenVisibleBounds(node: OpenPencilNode): OpenPencilVisibleBounds | undefined {
