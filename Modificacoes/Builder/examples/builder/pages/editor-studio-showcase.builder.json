@@ -1,0 +1,1466 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "editor-studio-showcase",
+    "name": "Editor Studio Showcase",
+    "description": "Polished example page for validating Builder component editing, style controls, data bindings and layers.",
+    "createdBy": "CyberVinci UI Builder Extension",
+    "createdAt": "2026-06-02T00:00:00.000Z",
+    "updatedAt": "2026-06-02T00:00:00.000Z",
+    "tags": [
+      "showcase",
+      "properties",
+      "visual-editor"
+    ]
+  },
+  "page": {
+    "id": "editor-studio-showcase",
+    "title": "Atlas Studio",
+    "route": "/examples/atlas-studio",
+    "layout": "marketing"
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "pink",
+    "radius": "md",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "spacing": {
+      "xs": 6,
+      "sm": 10,
+      "md": 18,
+      "lg": 28,
+      "xl": 48
+    },
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#faf5f8",
+      "heroSurface": "#2f2529",
+      "textPrimary": "#21171c",
+      "textMuted": "#725f68",
+      "brandAccent": "#e84f93"
+    }
+  },
+  "actions": {
+    "openBrief": {
+      "type": "navigate",
+      "params": {
+        "to": "/brief"
+      }
+    },
+    "submitLead": {
+      "type": "submitForm",
+      "params": {
+        "formId": "studio-brief-form",
+        "actionId": "openBrief"
+      }
+    },
+    "showToast": {
+      "type": "showNotification",
+      "params": {
+        "title": "Brief saved",
+        "message": "The page keeps actions as canonical Builder JSON."
+      }
+    }
+  },
+  "dataSources": {
+    "campaignMetrics": {
+      "type": "static",
+      "description": "Static metrics for the showcase page.",
+      "config": {
+        "data": {
+          "launches": 28,
+          "conversion": "14.8%",
+          "cycle": "6 days"
+        }
+      }
+    },
+    "editorPages": {
+      "type": "static",
+      "description": "Rows used by the data table section.",
+      "config": {
+        "data": [
+          {
+            "page": "Pricing refresh",
+            "owner": "Growth",
+            "status": "Ready",
+            "score": "96"
+          },
+          {
+            "page": "Partner landing",
+            "owner": "Marketing",
+            "status": "Review",
+            "score": "88"
+          },
+          {
+            "page": "Onboarding guide",
+            "owner": "Product",
+            "status": "Draft",
+            "score": "73"
+          }
+        ]
+      }
+    }
+  },
+  "states": {
+    "leadFormOpen": {
+      "type": "boolean",
+      "defaultValue": true
+    }
+  },
+  "tree": {
+    "id": "studio-root",
+    "type": "Page",
+    "props": {
+      "title": "Atlas Studio",
+      "description": "A complete Builder page composed from editable Mantine-backed components.",
+      "fullWidth": true,
+      "background": "#faf5f8"
+    },
+    "style": {
+      "css": {
+        "fontFamily": "Inter, system-ui, sans-serif",
+        "background": "#faf5f8"
+      }
+    },
+    "children": [
+      {
+        "id": "studio-hero-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#2f2529"
+        },
+        "style": {
+          "css": {
+            "position": "relative",
+            "overflow": "hidden",
+            "background": "radial-gradient(circle at 18% 18%, rgba(232,79,147,0.44), transparent 31%), radial-gradient(circle at 86% 8%, rgba(255,210,229,0.22), transparent 28%), linear-gradient(135deg, #2b2227 0%, #46353c 54%, #21191d 100%)",
+            "color": "#ffffff"
+          }
+        },
+        "children": [
+          {
+            "id": "studio-hero-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "lg"
+            },
+            "style": {
+              "css": {
+                "maxWidth": "1180px",
+                "margin": "0 auto",
+                "padding": "48px 24px"
+              }
+            },
+            "children": [
+              {
+                "id": "studio-hero-layout",
+                "type": "Box",
+                "props": {
+                  "component": "div"
+                },
+                "style": {
+                  "css": {
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))",
+                    "alignItems": "center",
+                    "gap": "28px"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "studio-hero-copy",
+                    "type": "Stack",
+                    "props": {
+                      "gap": "lg",
+                      "align": "stretch"
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": "640px"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-hero-badge",
+                        "type": "Badge",
+                        "props": {
+                          "children": "Visual page composition",
+                          "variant": "light",
+                          "color": "pink",
+                          "size": "lg",
+                          "radius": "xl"
+                        },
+                        "style": {
+                          "css": {
+                            "alignSelf": "flex-start",
+                            "background": "rgba(255,255,255,0.12)",
+                            "color": "#ffd9e7",
+                            "border": "1px solid rgba(255,255,255,0.18)",
+                            "letterSpacing": "0.02em"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-hero-title",
+                        "type": "Title",
+                        "props": {
+                          "children": "Design polished pages while every edit stays structured",
+                          "order": 1,
+                          "color": "#ffffff",
+                          "weight": 800
+                        },
+                        "style": {
+                          "css": {
+                            "fontSize": "38px",
+                            "lineHeight": "1.04",
+                            "letterSpacing": "0",
+                            "margin": "0"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-hero-subtitle",
+                        "type": "Text",
+                        "props": {
+                          "children": "Atlas Studio is a complete Builder page made from Mantine-backed components. Select a layer, edit props through RJSF, then tune CSS rules in the style tab.",
+                          "size": "xl",
+                          "color": "#f3dce7"
+                        },
+                        "style": {
+                          "css": {
+                            "fontSize": "16px",
+                            "lineHeight": "1.6",
+                            "maxWidth": "600px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-hero-actions",
+                        "type": "Group",
+                        "props": {
+                          "gap": "md",
+                          "align": "center",
+                          "wrap": true
+                        },
+                        "children": [
+                          {
+                            "id": "studio-hero-primary",
+                            "type": "Button",
+                            "props": {
+                              "children": "Open brief",
+                              "variant": "filled",
+                              "color": "pink",
+                              "size": "lg",
+                              "radius": "xl"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "48px",
+                                "paddingInline": "26px",
+                                "background": "#ff6aa9",
+                                "boxShadow": "0 16px 34px rgba(255,106,169,0.32)"
+                              }
+                            },
+                            "events": {
+                              "onClick": {
+                                "actionId": "openBrief"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-hero-secondary",
+                            "type": "Button",
+                            "props": {
+                              "children": "Inspect layers",
+                              "variant": "outline",
+                              "color": "pink",
+                              "size": "lg",
+                              "radius": "xl"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "48px",
+                                "paddingInline": "24px",
+                                "color": "#ffeaf2",
+                                "borderColor": "rgba(255,255,255,0.34)",
+                                "background": "rgba(255,255,255,0.06)"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "studio-hero-proof",
+                        "type": "Group",
+                        "props": {
+                          "gap": "xl",
+                          "align": "center",
+                          "wrap": true
+                        },
+                        "style": {
+                          "css": {
+                            "display": "flex",
+                            "alignItems": "center",
+                            "flexWrap": "wrap",
+                            "gap": "18px",
+                            "paddingTop": "16px",
+                            "color": "#f9dce8"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "studio-proof-one",
+                            "type": "Text",
+                            "props": {
+                              "children": "28 launches",
+                              "weight": 700,
+                              "color": "#ffffff"
+                            },
+                            "style": {
+                              "css": {
+                                "fontSize": "15px",
+                                "marginRight": "18px"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-proof-two",
+                            "type": "Text",
+                            "props": {
+                              "children": "14.8% CTA lift",
+                              "weight": 700,
+                              "color": "#ffffff"
+                            },
+                            "style": {
+                              "css": {
+                                "fontSize": "15px",
+                                "marginRight": "18px"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-proof-three",
+                            "type": "Text",
+                            "props": {
+                              "children": "6 day cycle",
+                              "weight": 700,
+                              "color": "#ffffff"
+                            },
+                            "style": {
+                              "css": {
+                                "fontSize": "15px"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "studio-hero-panel",
+                    "type": "Card",
+                    "props": {
+                      "padding": "xl",
+                      "radius": "lg",
+                      "shadow": "xl",
+                      "withBorder": true,
+                      "background": "#fffafb"
+                    },
+                    "style": {
+                      "css": {
+                        "position": "relative",
+                        "overflow": "hidden",
+                        "border": "1px solid rgba(255,255,255,0.58)",
+                        "boxShadow": "0 30px 90px rgba(16, 8, 13, 0.34)",
+                        "padding": "28px"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-panel-image",
+                        "type": "Box",
+                        "props": {
+                          "component": "div"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": "180px",
+                            "borderRadius": "18px",
+                            "backgroundImage": "linear-gradient(180deg, rgba(47,37,41,0.06), rgba(47,37,41,0.48)), url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80')",
+                            "backgroundSize": "cover",
+                            "backgroundPosition": "center",
+                            "marginBottom": "22px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-panel-badge",
+                        "type": "Badge",
+                        "props": {
+                          "children": "Live component model",
+                          "variant": "light",
+                          "color": "pink",
+                          "size": "md"
+                        },
+                        "style": {
+                          "css": {
+                            "marginBottom": "12px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-panel-title",
+                        "type": "Title",
+                        "props": {
+                          "children": "Everything here is selectable",
+                          "order": 2,
+                          "color": "#21171c",
+                          "weight": 800
+                        },
+                        "style": {
+                          "css": {
+                            "margin": "0 0 8px",
+                            "fontSize": "24px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-panel-copy",
+                        "type": "Text",
+                        "props": {
+                          "children": "Cards, typography, data tables and form fields expose different schema shapes, so the inspector has useful controls.",
+                          "color": "#725f68"
+                        },
+                        "style": {
+                          "css": {
+                            "lineHeight": "1.65",
+                            "marginBottom": "18px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-panel-metrics",
+                        "type": "SimpleGrid",
+                        "props": {
+                          "cols": 3,
+                          "spacing": "sm"
+                        },
+                        "style": {
+                          "css": {
+                            "gridTemplateColumns": "repeat(auto-fit, minmax(120px, 1fr))"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "studio-panel-metric-launches",
+                            "type": "MetricCard",
+                            "props": {
+                              "label": "Launches",
+                              "value": "28",
+                              "trendLabel": "+7",
+                              "color": "pink"
+                            },
+                            "style": {
+                              "css": {
+                                "padding": "16px",
+                                "border": "1px solid #f2d7e2",
+                                "boxShadow": "none",
+                                "background": "#fff5f9"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-panel-metric-conversion",
+                            "type": "MetricCard",
+                            "props": {
+                              "label": "Conversion",
+                              "value": "14.8%",
+                              "trendLabel": "+3.1%",
+                              "color": "grape"
+                            },
+                            "style": {
+                              "css": {
+                                "padding": "16px",
+                                "border": "1px solid #eadcf5",
+                                "boxShadow": "none",
+                                "background": "#fbf6ff"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-panel-metric-cycle",
+                            "type": "MetricCard",
+                            "props": {
+                              "label": "Cycle",
+                              "value": "6d",
+                              "trendLabel": "-2d",
+                              "color": "teal"
+                            },
+                            "style": {
+                              "css": {
+                                "padding": "16px",
+                                "border": "1px solid #d6f3ec",
+                                "boxShadow": "none",
+                                "background": "#f3fffb"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "studio-features-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#ffffff"
+        },
+        "style": {
+          "css": {
+            "padding": "56px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "studio-features-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "lg"
+            },
+            "style": {
+              "css": {
+                "maxWidth": "1180px",
+                "margin": "0 auto",
+                "padding": "0 24px"
+              }
+            },
+            "children": [
+              {
+                "id": "studio-section-heading",
+                "type": "Stack",
+                "props": {
+                  "gap": "sm",
+                  "align": "center"
+                },
+                "style": {
+                  "css": {
+                    "maxWidth": "760px",
+                    "margin": "0 auto 36px",
+                    "textAlign": "center"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "studio-features-badge",
+                    "type": "Badge",
+                    "props": {
+                      "children": "Editor coverage",
+                      "variant": "light",
+                      "color": "pink",
+                      "radius": "xl"
+                    }
+                  },
+                  {
+                    "id": "studio-features-title",
+                    "type": "Title",
+                    "props": {
+                      "children": "A beautiful page that still uses dynamic component config",
+                      "order": 2,
+                      "align": "center",
+                      "color": "#21171c",
+                      "weight": 800
+                    },
+                    "style": {
+                      "css": {
+                        "fontSize": "32px",
+                        "lineHeight": "1.08",
+                        "margin": "0"
+                      }
+                    }
+                  },
+                  {
+                    "id": "studio-features-copy",
+                    "type": "Text",
+                    "props": {
+                      "children": "The visual quality comes from Builder style objects and theme tokens, while props, data, actions and layer editing remain generated and inspectable.",
+                      "align": "center",
+                      "color": "#725f68"
+                    },
+                    "style": {
+                      "css": {
+                        "fontSize": "17px",
+                        "lineHeight": "1.7"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "studio-feature-cards",
+                "type": "SimpleGrid",
+                "props": {
+                  "cols": 3,
+                  "spacing": "lg"
+                },
+                "style": {
+                  "css": {
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(230px, 1fr))"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "studio-feature-card-props",
+                    "type": "Card",
+                    "props": {
+                      "padding": "xl",
+                      "radius": "lg",
+                      "shadow": "md",
+                      "withBorder": true,
+                      "background": "#ffffff"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid #f0dde6",
+                        "boxShadow": "0 18px 42px rgba(95, 49, 72, 0.08)"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-feature-icon-props",
+                        "type": "Icon",
+                        "props": {
+                          "name": "settings",
+                          "label": "Props",
+                          "color": "pink",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "marginBottom": "16px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-feature-title-props",
+                        "type": "Title",
+                        "props": {
+                          "children": "RJSF props",
+                          "order": 3,
+                          "color": "#21171c"
+                        }
+                      },
+                      {
+                        "id": "studio-feature-copy-props",
+                        "type": "Text",
+                        "props": {
+                          "children": "Select headings, buttons and cards to edit strings, enums, booleans and arrays from registry schemas.",
+                          "color": "#725f68"
+                        },
+                        "style": {
+                          "css": {
+                            "lineHeight": "1.65"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "studio-feature-card-style",
+                    "type": "Card",
+                    "props": {
+                      "padding": "xl",
+                      "radius": "lg",
+                      "shadow": "md",
+                      "withBorder": true,
+                      "background": "#fff7fb"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid #f0c9dc",
+                        "boxShadow": "0 22px 48px rgba(232, 79, 147, 0.12)"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-feature-icon-style",
+                        "type": "Icon",
+                        "props": {
+                          "name": "palette",
+                          "label": "Style",
+                          "color": "pink",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "marginBottom": "16px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-feature-title-style",
+                        "type": "Title",
+                        "props": {
+                          "children": "Style controls",
+                          "order": 3,
+                          "color": "#21171c"
+                        }
+                      },
+                      {
+                        "id": "studio-feature-copy-style",
+                        "type": "Text",
+                        "props": {
+                          "children": "Apply presets or individual CSS rules to selected nodes without changing their component props.",
+                          "color": "#725f68"
+                        },
+                        "style": {
+                          "css": {
+                            "lineHeight": "1.65"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "studio-feature-card-data",
+                    "type": "Card",
+                    "props": {
+                      "padding": "xl",
+                      "radius": "lg",
+                      "shadow": "md",
+                      "withBorder": true,
+                      "background": "#ffffff"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid #e7e1f2",
+                        "boxShadow": "0 18px 42px rgba(70, 52, 96, 0.08)"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-feature-icon-data",
+                        "type": "Icon",
+                        "props": {
+                          "name": "database",
+                          "label": "Data",
+                          "color": "grape",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "marginBottom": "16px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-feature-title-data",
+                        "type": "Title",
+                        "props": {
+                          "children": "Data and actions",
+                          "order": 3,
+                          "color": "#21171c"
+                        }
+                      },
+                      {
+                        "id": "studio-feature-copy-data",
+                        "type": "Text",
+                        "props": {
+                          "children": "Metrics, tables and buttons include data/action metadata so the inspector has meaningful content.",
+                          "color": "#725f68"
+                        },
+                        "style": {
+                          "css": {
+                            "lineHeight": "1.65"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "studio-dashboard-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#faf5f8"
+        },
+        "style": {
+          "css": {
+            "padding": "56px 0",
+            "background": "linear-gradient(180deg, #faf5f8 0%, #f3edf1 100%)"
+          }
+        },
+        "children": [
+          {
+            "id": "studio-dashboard-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "lg"
+            },
+            "style": {
+              "css": {
+                "maxWidth": "1180px",
+                "margin": "0 auto",
+                "padding": "0 24px"
+              }
+            },
+            "children": [
+              {
+                "id": "studio-dashboard-shell",
+                "type": "Card",
+                "props": {
+                  "padding": "xl",
+                  "radius": "lg",
+                  "shadow": "xl",
+                  "withBorder": true,
+                  "background": "#ffffff"
+                },
+                "style": {
+                  "css": {
+                    "border": "1px solid #eadde4",
+                    "boxShadow": "0 28px 70px rgba(69, 44, 56, 0.12)",
+                    "padding": "30px"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "studio-dashboard-header",
+                    "type": "Group",
+                    "props": {
+                      "gap": "md",
+                      "align": "center",
+                      "justify": "space-between",
+                      "wrap": true
+                    },
+                    "style": {
+                      "css": {
+                        "marginBottom": "24px"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-dashboard-heading-stack",
+                        "type": "Stack",
+                        "props": {
+                          "gap": "xs"
+                        },
+                        "children": [
+                          {
+                            "id": "studio-dashboard-kicker",
+                            "type": "Badge",
+                            "props": {
+                              "children": "Q3 launch",
+                              "variant": "light",
+                              "color": "pink"
+                            },
+                            "style": {
+                              "css": {
+                                "alignSelf": "flex-start"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-dashboard-title",
+                            "type": "Title",
+                            "props": {
+                              "children": "Campaign workspace",
+                              "order": 2,
+                              "color": "#21171c",
+                              "weight": 800
+                            },
+                            "style": {
+                              "css": {
+                                "margin": "0"
+                              }
+                            }
+                          },
+                          {
+                            "id": "studio-dashboard-copy",
+                            "type": "Text",
+                            "props": {
+                              "children": "A dashboard area for testing nested layers, selected styles and table props.",
+                              "color": "#725f68"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "studio-dashboard-action",
+                        "type": "Button",
+                        "props": {
+                          "children": "Notify team",
+                          "variant": "light",
+                          "color": "pink",
+                          "radius": "xl"
+                        },
+                        "events": {
+                          "onClick": {
+                            "actionId": "showToast"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "studio-dashboard-stats",
+                    "type": "SimpleGrid",
+                    "props": {
+                      "cols": 3,
+                      "spacing": "md"
+                    },
+                    "style": {
+                      "css": {
+                        "gridTemplateColumns": "repeat(auto-fit, minmax(210px, 1fr))",
+                        "marginBottom": "24px"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-dashboard-score",
+                        "type": "StatCard",
+                        "props": {
+                          "title": "Readiness",
+                          "value": "94",
+                          "subtitle": "Content, QA and legal",
+                          "helperText": "Updated today",
+                          "color": "pink"
+                        },
+                        "style": {
+                          "css": {
+                            "padding": "20px",
+                            "background": "linear-gradient(135deg, #fff5f9 0%, #ffffff 100%)",
+                            "border": "1px solid #f0d4e0",
+                            "boxShadow": "none"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-dashboard-risk",
+                        "type": "StatCard",
+                        "props": {
+                          "title": "Open issues",
+                          "value": "3",
+                          "subtitle": "Needs design review",
+                          "helperText": "Down from 9",
+                          "color": "yellow"
+                        },
+                        "style": {
+                          "css": {
+                            "padding": "20px",
+                            "background": "linear-gradient(135deg, #fffaf0 0%, #ffffff 100%)",
+                            "border": "1px solid #f2e2ba",
+                            "boxShadow": "none"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-dashboard-velocity",
+                        "type": "StatCard",
+                        "props": {
+                          "title": "Velocity",
+                          "value": "1.8x",
+                          "subtitle": "Compared with last cycle",
+                          "helperText": "Stable",
+                          "color": "teal"
+                        },
+                        "style": {
+                          "css": {
+                            "padding": "20px",
+                            "background": "linear-gradient(135deg, #f2fffb 0%, #ffffff 100%)",
+                            "border": "1px solid #cfeee6",
+                            "boxShadow": "none"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "studio-dashboard-table-card",
+                    "type": "Card",
+                    "props": {
+                      "padding": "lg",
+                      "radius": "md",
+                      "shadow": "none",
+                      "withBorder": true,
+                      "background": "#fcfafb"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid #eee3e8",
+                        "overflow": "hidden"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-dashboard-table",
+                        "type": "DataTable",
+                        "props": {
+                          "title": "Editable page queue",
+                          "description": "Rows are static here, while the node keeps a sourceId for the data tab.",
+                          "columns": [
+                            {
+                              "key": "page",
+                              "label": "Page",
+                              "sortable": true
+                            },
+                            {
+                              "key": "owner",
+                              "label": "Owner",
+                              "sortable": true
+                            },
+                            {
+                              "key": "status",
+                              "label": "Status",
+                              "sortable": true
+                            },
+                            {
+                              "key": "score",
+                              "label": "Score",
+                              "align": "right",
+                              "sortable": true
+                            }
+                          ],
+                          "rows": [
+                            {
+                              "page": "Pricing refresh",
+                              "owner": "Growth",
+                              "status": "Ready",
+                              "score": "96"
+                            },
+                            {
+                              "page": "Partner landing",
+                              "owner": "Marketing",
+                              "status": "Review",
+                              "score": "88"
+                            },
+                            {
+                              "page": "Onboarding guide",
+                              "owner": "Product",
+                              "status": "Draft",
+                              "score": "73"
+                            }
+                          ],
+                          "pageSize": 5,
+                          "searchable": true,
+                          "sortable": true,
+                          "selectable": false,
+                          "striped": true,
+                          "highlightOnHover": true,
+                          "emptyText": "No pages queued"
+                        },
+                        "data": {
+                          "sourceId": "editorPages"
+                        },
+                        "style": {
+                          "css": {
+                            "width": "100%"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "studio-form-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#ffffff"
+        },
+        "style": {
+          "css": {
+            "padding": "56px 0",
+            "background": "#ffffff"
+          }
+        },
+        "children": [
+          {
+            "id": "studio-form-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "lg"
+            },
+            "style": {
+              "css": {
+                "maxWidth": "1180px",
+                "margin": "0 auto",
+                "padding": "0 24px"
+              }
+            },
+            "children": [
+              {
+                "id": "studio-form-layout",
+                "type": "Box",
+                "props": {
+                  "component": "div"
+                },
+                "style": {
+                  "css": {
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(300px, 1fr))",
+                    "gap": "32px",
+                    "alignItems": "stretch"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "studio-form-copy-card",
+                    "type": "Card",
+                    "props": {
+                      "padding": "xl",
+                      "radius": "lg",
+                      "shadow": "none",
+                      "withBorder": true,
+                      "background": "#2f2529"
+                    },
+                    "style": {
+                      "css": {
+                        "color": "#ffffff",
+                        "background": "linear-gradient(145deg, #2f2529 0%, #493640 100%)",
+                        "border": "1px solid #58404b",
+                        "padding": "28px",
+                        "minHeight": "100%"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-form-copy-badge",
+                        "type": "Badge",
+                        "props": {
+                          "children": "Structured forms",
+                          "variant": "light",
+                          "color": "pink"
+                        },
+                        "style": {
+                          "css": {
+                            "background": "rgba(255,255,255,0.12)",
+                            "color": "#ffd9e7",
+                            "marginBottom": "18px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-form-copy-title",
+                        "type": "Title",
+                        "props": {
+                          "children": "Brief a page without leaving the builder",
+                          "order": 2,
+                          "color": "#ffffff",
+                          "weight": 800
+                        },
+                        "style": {
+                          "css": {
+                            "fontSize": "30px",
+                            "lineHeight": "1.08",
+                            "margin": "0 0 16px"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-form-copy-text",
+                        "type": "Text",
+                        "props": {
+                          "children": "This form uses multiple field schemas so the properties inspector shows realistic inputs, selects and textarea controls.",
+                          "color": "#f3dce7"
+                        },
+                        "style": {
+                          "css": {
+                            "fontSize": "16px",
+                            "lineHeight": "1.7"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "studio-form-card",
+                    "type": "Card",
+                    "props": {
+                      "padding": "xl",
+                      "radius": "lg",
+                      "shadow": "lg",
+                      "withBorder": true,
+                      "background": "#fffafb"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid #f0d8e2",
+                        "boxShadow": "0 24px 62px rgba(99, 54, 76, 0.12)",
+                        "padding": "28px"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "studio-brief-form",
+                        "type": "DynamicForm",
+                        "props": {
+                          "title": "Launch brief",
+                          "description": "Capture the high-level page requirements.",
+                          "submitLabel": "Save brief",
+                          "resetLabel": "Clear",
+                          "layout": "vertical",
+                          "gap": "md"
+                        },
+                        "events": {
+                          "onSubmit": {
+                            "actionId": "submitLead"
+                          }
+                        },
+                        "style": {
+                          "css": {
+                            "display": "grid",
+                            "gap": "18px"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "studio-form-name",
+                            "type": "TextInput",
+                            "props": {
+                              "name": "pageName",
+                              "label": "Page name",
+                              "placeholder": "Pricing refresh",
+                              "required": true,
+                              "type": "text",
+                              "size": "md"
+                            }
+                          },
+                          {
+                            "id": "studio-form-owner",
+                            "type": "Select",
+                            "props": {
+                              "name": "owner",
+                              "label": "Owner",
+                              "placeholder": "Choose a team",
+                              "data": [
+                                {
+                                  "label": "Growth",
+                                  "value": "growth"
+                                },
+                                {
+                                  "label": "Marketing",
+                                  "value": "marketing"
+                                },
+                                {
+                                  "label": "Product",
+                                  "value": "product"
+                                }
+                              ],
+                              "searchable": true,
+                              "clearable": true
+                            }
+                          },
+                          {
+                            "id": "studio-form-notes",
+                            "type": "Textarea",
+                            "props": {
+                              "name": "notes",
+                              "label": "Notes",
+                              "placeholder": "Goals, audience and launch constraints",
+                              "minRows": 4,
+                              "autosize": true
+                            }
+                          },
+                          {
+                            "id": "studio-form-urgent",
+                            "type": "Checkbox",
+                            "props": {
+                              "name": "urgent",
+                              "label": "Flag this as a launch-critical page",
+                              "defaultChecked": true
+                            }
+                          },
+                          {
+                            "id": "studio-form-submit",
+                            "type": "Button",
+                            "props": {
+                              "children": "Save brief",
+                              "variant": "filled",
+                              "color": "pink",
+                              "type": "submit",
+                              "radius": "xl",
+                              "fullWidth": true
+                            },
+                            "style": {
+                              "css": {
+                                "height": "44px",
+                                "background": "#e84f93"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "studio-cta-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#2f2529"
+        },
+        "style": {
+          "css": {
+            "padding": "56px 0",
+            "background": "linear-gradient(135deg, #2f2529 0%, #4a3440 100%)",
+            "color": "#ffffff"
+          }
+        },
+        "children": [
+          {
+            "id": "studio-cta-container",
+            "type": "Container",
+            "props": {
+              "size": "lg",
+              "padding": "lg"
+            },
+            "style": {
+              "css": {
+                "maxWidth": "900px",
+                "margin": "0 auto",
+                "padding": "0 24px",
+                "textAlign": "center"
+              }
+            },
+            "children": [
+              {
+                "id": "studio-cta-stack",
+                "type": "Stack",
+                "props": {
+                  "gap": "lg",
+                  "align": "center"
+                },
+                "children": [
+                  {
+                    "id": "studio-cta-title",
+                    "type": "Title",
+                    "props": {
+                      "children": "Use this page as the visual smoke test",
+                      "order": 2,
+                      "align": "center",
+                      "color": "#ffffff",
+                      "weight": 800
+                    },
+                    "style": {
+                      "css": {
+                        "fontSize": "32px",
+                        "lineHeight": "1.08",
+                        "margin": "0"
+                      }
+                    }
+                  },
+                  {
+                    "id": "studio-cta-copy",
+                    "type": "Text",
+                    "props": {
+                      "children": "Open the example, select layers, edit props, switch to style/data, and confirm the GrapeJS-inspired panels stay functional.",
+                      "align": "center",
+                      "color": "#f3dce7"
+                    },
+                    "style": {
+                      "css": {
+                        "fontSize": "17px",
+                        "lineHeight": "1.7",
+                        "maxWidth": "720px"
+                      }
+                    }
+                  },
+                  {
+                    "id": "studio-cta-actions",
+                    "type": "Group",
+                    "props": {
+                      "gap": "md",
+                      "align": "center",
+                      "justify": "center",
+                      "wrap": true
+                    },
+                    "children": [
+                      {
+                        "id": "studio-cta-primary",
+                        "type": "Button",
+                        "props": {
+                          "children": "Open brief",
+                          "variant": "filled",
+                          "color": "pink",
+                          "radius": "xl",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "background": "#ff6aa9",
+                            "paddingInline": "26px"
+                          }
+                        },
+                        "events": {
+                          "onClick": {
+                            "actionId": "openBrief"
+                          }
+                        }
+                      },
+                      {
+                        "id": "studio-cta-secondary",
+                        "type": "Button",
+                        "props": {
+                          "children": "Review JSON",
+                          "variant": "outline",
+                          "color": "pink",
+                          "radius": "xl",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "color": "#ffeaf2",
+                            "borderColor": "rgba(255,255,255,0.34)"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "aiHints": {
+    "intent": "Provide a polished page for testing the Builder visual editor and property panels.",
+    "tone": "product-focused and precise",
+    "audience": "CyberVinci Builder users validating component editing",
+    "context": "Use this file to inspect the GrapeJS-inspired panel skin and RJSF property editing."
+  }
+}

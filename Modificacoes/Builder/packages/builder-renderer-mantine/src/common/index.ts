@@ -85,45 +85,152 @@ export type BuilderMantineComponentResolver =
     | ((node: BuilderNode, context: BuilderNodeRenderContext) => BuilderMantineComponentType | undefined);
 
 export interface BuilderMantineLayoutComponentSet {
+    Affix?: BuilderMantineComponentType;
+    AppShell?: BuilderMantineComponentType;
+    AppShellAside?: BuilderMantineComponentType;
+    AppShellFooter?: BuilderMantineComponentType;
+    AppShellHeader?: BuilderMantineComponentType;
+    AppShellMain?: BuilderMantineComponentType;
+    AppShellNavbar?: BuilderMantineComponentType;
+    AppShellSection?: BuilderMantineComponentType;
+    AspectRatio?: BuilderMantineComponentType;
     Box?: BuilderMantineComponentType;
     Card?: BuilderMantineComponentType;
+    CardSection?: BuilderMantineComponentType;
+    Center?: BuilderMantineComponentType;
+    Collapse?: BuilderMantineComponentType;
     Container?: BuilderMantineComponentType;
     Divider?: BuilderMantineComponentType;
+    Flex?: BuilderMantineComponentType;
     Grid?: BuilderMantineComponentType;
     GridCol?: BuilderMantineComponentType;
     Group?: BuilderMantineComponentType;
+    Indicator?: BuilderMantineComponentType;
+    Paper?: BuilderMantineComponentType;
+    ScrollArea?: BuilderMantineComponentType;
+    ScrollAreaAutosize?: BuilderMantineComponentType;
     SimpleGrid?: BuilderMantineComponentType;
     Space?: BuilderMantineComponentType;
+    Spoiler?: BuilderMantineComponentType;
     Stack?: BuilderMantineComponentType;
+    TableScrollContainer?: BuilderMantineComponentType;
+    VisuallyHidden?: BuilderMantineComponentType;
 }
 
 export interface BuilderMantineTypographyComponentSet {
     Title?: BuilderMantineComponentType;
     Text?: BuilderMantineComponentType;
     Badge?: BuilderMantineComponentType;
+    Blockquote?: BuilderMantineComponentType;
+    Code?: BuilderMantineComponentType;
+    Highlight?: BuilderMantineComponentType;
+    Kbd?: BuilderMantineComponentType;
     List?: BuilderMantineComponentType;
     ListItem?: BuilderMantineComponentType;
+    Mark?: BuilderMantineComponentType;
+    NumberFormatter?: BuilderMantineComponentType;
+    Pill?: BuilderMantineComponentType;
+    PillGroup?: BuilderMantineComponentType;
     TypographyStylesProvider?: BuilderMantineComponentType;
 }
 
 export interface BuilderMantineFormComponentSet {
+    ActionIcon?: BuilderMantineComponentType;
+    ActionIconGroup?: BuilderMantineComponentType;
+    ActionIconGroupSection?: BuilderMantineComponentType;
+    Autocomplete?: BuilderMantineComponentType;
+    Burger?: BuilderMantineComponentType;
     Button?: BuilderMantineComponentType;
+    ButtonGroup?: BuilderMantineComponentType;
+    ButtonGroupSection?: BuilderMantineComponentType;
+    CheckboxGroup?: BuilderMantineComponentType;
+    CheckboxCard?: BuilderMantineComponentType;
+    CheckboxIndicator?: BuilderMantineComponentType;
+    ChipGroup?: BuilderMantineComponentType;
+    Chip?: BuilderMantineComponentType;
+    CloseButton?: BuilderMantineComponentType;
+    ColorSwatch?: BuilderMantineComponentType;
+    CopyButton?: BuilderMantineComponentType;
+    ColorInput?: BuilderMantineComponentType;
+    ColorPicker?: BuilderMantineComponentType;
+    HueSlider?: BuilderMantineComponentType;
+    AlphaSlider?: BuilderMantineComponentType;
+    AngleSlider?: BuilderMantineComponentType;
+    Fieldset?: BuilderMantineComponentType;
+    FileButton?: BuilderMantineComponentType;
+    Input?: BuilderMantineComponentType;
+    InputBase?: BuilderMantineComponentType;
+    InputWrapper?: BuilderMantineComponentType;
+    InputLabel?: BuilderMantineComponentType;
+    InputDescription?: BuilderMantineComponentType;
+    InputPlaceholder?: BuilderMantineComponentType;
+    InputClearButton?: BuilderMantineComponentType;
+    InputError?: BuilderMantineComponentType;
     TextInput?: BuilderMantineComponentType;
     Textarea?: BuilderMantineComponentType;
     Select?: BuilderMantineComponentType;
+    MultiSelect?: BuilderMantineComponentType;
+    NativeSelect?: BuilderMantineComponentType;
+    Combobox?: BuilderMantineComponentType;
+    ComboboxTarget?: BuilderMantineComponentType;
+    ComboboxDropdownTarget?: BuilderMantineComponentType;
+    ComboboxEventsTarget?: BuilderMantineComponentType;
+    ComboboxDropdown?: BuilderMantineComponentType;
+    ComboboxOptions?: BuilderMantineComponentType;
+    ComboboxOption?: BuilderMantineComponentType;
+    ComboboxSearch?: BuilderMantineComponentType;
+    ComboboxEmpty?: BuilderMantineComponentType;
+    ComboboxGroup?: BuilderMantineComponentType;
+    ComboboxHeader?: BuilderMantineComponentType;
+    ComboboxFooter?: BuilderMantineComponentType;
+    ComboboxChevron?: BuilderMantineComponentType;
+    ComboboxClearButton?: BuilderMantineComponentType;
+    ComboboxHiddenInput?: BuilderMantineComponentType;
     Checkbox?: BuilderMantineComponentType;
+    FileInput?: BuilderMantineComponentType;
+    JsonInput?: BuilderMantineComponentType;
+    PasswordInput?: BuilderMantineComponentType;
+    Pill?: BuilderMantineComponentType;
+    PillGroup?: BuilderMantineComponentType;
+    PillsInput?: BuilderMantineComponentType;
+    PillsInputField?: BuilderMantineComponentType;
+    PinInput?: BuilderMantineComponentType;
+    RadioCard?: BuilderMantineComponentType;
     RadioGroup?: BuilderMantineComponentType;
     Radio?: BuilderMantineComponentType;
+    RadioIndicator?: BuilderMantineComponentType;
+    RangeSlider?: BuilderMantineComponentType;
+    Rating?: BuilderMantineComponentType;
+    SegmentedControl?: BuilderMantineComponentType;
+    Slider?: BuilderMantineComponentType;
+    Switch?: BuilderMantineComponentType;
+    SwitchGroup?: BuilderMantineComponentType;
+    TagsInput?: BuilderMantineComponentType;
     NumberInput?: BuilderMantineComponentType;
     DateInput?: BuilderMantineComponentType;
     DynamicForm?: BuilderMantineComponentType;
+    UnstyledButton?: BuilderMantineComponentType;
     Stack?: BuilderMantineComponentType;
     Group?: BuilderMantineComponentType;
 }
 
 export interface BuilderMantineDataDisplayComponentSet {
+    Accordion?: BuilderMantineComponentType;
+    AccordionItem?: BuilderMantineComponentType;
+    AccordionControl?: BuilderMantineComponentType;
+    AccordionPanel?: BuilderMantineComponentType;
     Table?: BuilderMantineComponentType;
+    TableCaption?: BuilderMantineComponentType;
+    TableThead?: BuilderMantineComponentType;
+    TableTbody?: BuilderMantineComponentType;
+    TableTfoot?: BuilderMantineComponentType;
+    TableTr?: BuilderMantineComponentType;
+    TableTh?: BuilderMantineComponentType;
+    TableTd?: BuilderMantineComponentType;
     DataTable?: BuilderMantineComponentType;
+    Timeline?: BuilderMantineComponentType;
+    TimelineItem?: BuilderMantineComponentType;
+    Tree?: BuilderMantineComponentType;
     Card?: BuilderMantineComponentType;
     Group?: BuilderMantineComponentType;
     Stack?: BuilderMantineComponentType;
@@ -136,6 +243,26 @@ export interface BuilderMantineNavigationComponentSet {
     Anchor?: BuilderMantineComponentType;
     NavLink?: BuilderMantineComponentType;
     Breadcrumbs?: BuilderMantineComponentType;
+    Button?: BuilderMantineComponentType;
+    Menu?: BuilderMantineComponentType;
+    MenuTarget?: BuilderMantineComponentType;
+    MenuDropdown?: BuilderMantineComponentType;
+    MenuItem?: BuilderMantineComponentType;
+    MenuLabel?: BuilderMantineComponentType;
+    MenuDivider?: BuilderMantineComponentType;
+    Pagination?: BuilderMantineComponentType;
+    PaginationRoot?: BuilderMantineComponentType;
+    PaginationControl?: BuilderMantineComponentType;
+    PaginationDots?: BuilderMantineComponentType;
+    PaginationFirst?: BuilderMantineComponentType;
+    PaginationItems?: BuilderMantineComponentType;
+    PaginationLast?: BuilderMantineComponentType;
+    PaginationNext?: BuilderMantineComponentType;
+    PaginationPrevious?: BuilderMantineComponentType;
+    Stepper?: BuilderMantineComponentType;
+    StepperStep?: BuilderMantineComponentType;
+    StepperCompleted?: BuilderMantineComponentType;
+    TableOfContents?: BuilderMantineComponentType;
     Tabs?: BuilderMantineComponentType;
     TabsList?: BuilderMantineComponentType;
     TabsTab?: BuilderMantineComponentType;
@@ -143,24 +270,81 @@ export interface BuilderMantineNavigationComponentSet {
 }
 
 export interface BuilderMantineOverlayComponentSet {
+    Dialog?: BuilderMantineComponentType;
     Modal?: BuilderMantineComponentType;
+    ModalRoot?: BuilderMantineComponentType;
+    ModalOverlay?: BuilderMantineComponentType;
+    ModalContent?: BuilderMantineComponentType;
+    ModalHeader?: BuilderMantineComponentType;
+    ModalTitle?: BuilderMantineComponentType;
+    ModalCloseButton?: BuilderMantineComponentType;
+    ModalBody?: BuilderMantineComponentType;
+    ModalStack?: BuilderMantineComponentType;
+    ModalBase?: BuilderMantineComponentType;
+    ModalBaseOverlay?: BuilderMantineComponentType;
+    ModalBaseContent?: BuilderMantineComponentType;
+    ModalBaseHeader?: BuilderMantineComponentType;
+    ModalBaseTitle?: BuilderMantineComponentType;
+    ModalBaseCloseButton?: BuilderMantineComponentType;
+    ModalBaseBody?: BuilderMantineComponentType;
     Drawer?: BuilderMantineComponentType;
+    DrawerRoot?: BuilderMantineComponentType;
+    DrawerOverlay?: BuilderMantineComponentType;
+    DrawerContent?: BuilderMantineComponentType;
+    DrawerHeader?: BuilderMantineComponentType;
+    DrawerTitle?: BuilderMantineComponentType;
+    DrawerCloseButton?: BuilderMantineComponentType;
+    DrawerBody?: BuilderMantineComponentType;
+    DrawerStack?: BuilderMantineComponentType;
+    HoverCard?: BuilderMantineComponentType;
+    HoverCardDropdown?: BuilderMantineComponentType;
+    HoverCardTarget?: BuilderMantineComponentType;
+    Popover?: BuilderMantineComponentType;
+    PopoverDropdown?: BuilderMantineComponentType;
+    PopoverTarget?: BuilderMantineComponentType;
+    Tooltip?: BuilderMantineComponentType;
+    TooltipFloating?: BuilderMantineComponentType;
+    TooltipGroup?: BuilderMantineComponentType;
+    Overlay?: BuilderMantineComponentType;
+    Portal?: BuilderMantineComponentType;
+    OptionalPortal?: BuilderMantineComponentType;
+    Transition?: BuilderMantineComponentType;
+    FocusTrap?: BuilderMantineComponentType;
+    FocusTrapInitialFocus?: BuilderMantineComponentType;
+    FloatingArrow?: BuilderMantineComponentType;
+    FloatingIndicator?: BuilderMantineComponentType;
+    NativeScrollArea?: BuilderMantineComponentType;
+    RemoveScroll?: BuilderMantineComponentType;
     Stack?: BuilderMantineComponentType;
     Group?: BuilderMantineComponentType;
 }
 
 export interface BuilderMantineFeedbackComponentSet {
     Alert?: BuilderMantineComponentType;
+    LoadingOverlay?: BuilderMantineComponentType;
     Notification?: BuilderMantineComponentType;
     Loader?: BuilderMantineComponentType;
+    Progress?: BuilderMantineComponentType;
+    ProgressRoot?: BuilderMantineComponentType;
+    ProgressSection?: BuilderMantineComponentType;
+    ProgressLabel?: BuilderMantineComponentType;
+    RingProgress?: BuilderMantineComponentType;
+    SemiCircleProgress?: BuilderMantineComponentType;
+    Skeleton?: BuilderMantineComponentType;
     Group?: BuilderMantineComponentType;
     Text?: BuilderMantineComponentType;
 }
 
 export interface BuilderMantineMediaComponentSet {
+    BackgroundImage?: BuilderMantineComponentType;
     Image?: BuilderMantineComponentType;
     Avatar?: BuilderMantineComponentType;
+    AvatarGroup?: BuilderMantineComponentType;
     ThemeIcon?: BuilderMantineComponentType;
+    CheckIcon?: BuilderMantineComponentType;
+    CloseIcon?: BuilderMantineComponentType;
+    RadioIcon?: BuilderMantineComponentType;
+    AccordionChevron?: BuilderMantineComponentType;
 }
 
 export interface BuilderMantineMarketingComponentSet {
@@ -429,7 +613,7 @@ export function builderThemeToMantineTheme(theme: BuilderTheme | undefined): Bui
         mantineTheme.defaultRadius = theme.radius === 'none' ? 0 : theme.radius;
     }
     if (theme.spacing) {
-        mantineTheme.spacing = { ...theme.spacing };
+        mantineTheme.spacing = readMantineSpacing(theme.spacing);
     }
 
     const colors = readMantineColorTokens(theme.tokens?.colors);
@@ -492,7 +676,28 @@ export function createBuilderMantineLayoutComponents(
         Group: createLayoutAdapter('div', mantine.Group, mapGroupProps),
         SimpleGrid: createLayoutAdapter('div', mantine.SimpleGrid, mapSimpleGridProps),
         Grid: createGridAdapter(mantine),
+        GridCol: createLayoutAdapter('div', mantine.GridCol, mapGridColProps),
         Card: createLayoutAdapter('article', mantine.Card, mapCardProps),
+        CardSection: createLayoutAdapter('section', mantine.CardSection, mapCardSectionProps),
+        Paper: createLayoutAdapter('div', mantine.Paper, mapPaperProps),
+        Center: createLayoutAdapter('div', mantine.Center, mapCenterProps),
+        Flex: createLayoutAdapter('div', mantine.Flex, mapFlexProps),
+        AspectRatio: createLayoutAdapter('div', mantine.AspectRatio, mapAspectRatioProps),
+        Affix: createLayoutAdapter('div', mantine.Affix, mapAffixProps),
+        AppShell: createAppShellAdapter(mantine),
+        AppShellAside: createLayoutAdapter('aside', mantine.AppShellAside, mapAppShellSectionProps),
+        AppShellFooter: createLayoutAdapter('footer', mantine.AppShellFooter, mapAppShellSectionProps),
+        AppShellHeader: createLayoutAdapter('header', mantine.AppShellHeader, mapAppShellSectionProps),
+        AppShellMain: createLayoutAdapter('main', mantine.AppShellMain, mapAppShellSectionProps),
+        AppShellNavbar: createLayoutAdapter('nav', mantine.AppShellNavbar, mapAppShellSectionProps),
+        AppShellSection: createLayoutAdapter('section', mantine.AppShellSection, mapAppShellSectionProps),
+        Collapse: createLayoutAdapter('div', mantine.Collapse, mapCollapseProps),
+        Indicator: createLayoutAdapter('div', mantine.Indicator, mapIndicatorProps),
+        ScrollArea: createLayoutAdapter('div', mantine.ScrollArea, mapScrollAreaProps),
+        Spoiler: createLayoutAdapter('div', mantine.Spoiler, mapSpoilerProps),
+        ScrollAreaAutosize: createLayoutAdapter('div', mantine.ScrollAreaAutosize, mapScrollAreaAutosizeProps),
+        TableScrollContainer: createLayoutAdapter('div', mantine.TableScrollContainer, mapTableScrollContainerProps),
+        VisuallyHidden: createLayoutAdapter('span', mantine.VisuallyHidden, mapVisuallyHiddenProps),
         Divider: createLayoutAdapter('hr', mantine.Divider, mapDividerProps),
         Space: createLayoutAdapter('div', mantine.Space, mapSpaceProps),
         Box: createLayoutAdapter('div', mantine.Box, mapBoxProps)
@@ -506,7 +711,17 @@ export function createBuilderMantineTypographyComponents(
         Title: createTypographyAdapter('h2', mantine.Title, mapTitleProps),
         Text: createTypographyAdapter('p', mantine.Text, mapTextProps),
         Badge: createTypographyAdapter('span', mantine.Badge, mapBadgeProps),
+        Code: createTypographyAdapter('code', mantine.Code, mapCodeProps),
+        Kbd: createTypographyAdapter('kbd', mantine.Kbd, mapKbdProps),
+        Mark: createTypographyAdapter('mark', mantine.Mark, mapMarkProps),
+        Pill: createTypographyAdapter('span', mantine.Pill, mapPillProps),
+        PillGroup: createTypographyAdapter('div', mantine.PillGroup, mapPillGroupProps),
+        TypographyStylesProvider: createTypographyAdapter('div', mantine.TypographyStylesProvider, mapTypographyStylesProviderProps),
+        NumberFormatter: createTypographyAdapter('span', mantine.NumberFormatter, mapNumberFormatterProps),
+        Blockquote: createTypographyAdapter('blockquote', mantine.Blockquote, mapBlockquoteProps),
+        Highlight: createTypographyAdapter('span', mantine.Highlight, mapHighlightProps),
         List: createListAdapter(mantine),
+        ListItem: createTypographyAdapter('li', mantine.ListItem, mapListItemProps),
         Markdown: createMarkdownAdapter(mantine)
     };
 }
@@ -516,13 +731,77 @@ export function createBuilderMantineFormComponents(
 ): Record<string, BuilderMantineComponentType> {
     return {
         Button: createFormAdapter('button', mantine.Button, mapButtonProps),
+        ButtonGroup: createSimpleAdapter('div', mantine.ButtonGroup, mapButtonGroupProps),
+        ButtonGroupSection: createSimpleAdapter('span', mantine.ButtonGroupSection, mapButtonGroupSectionProps),
+        ActionIcon: createActionIconAdapter(mantine),
+        ActionIconGroup: createSimpleAdapter('div', mantine.ActionIconGroup, mapActionIconGroupProps),
+        ActionIconGroupSection: createSimpleAdapter('span', mantine.ActionIconGroupSection, mapActionIconGroupSectionProps),
+        UnstyledButton: createFormAdapter('button', mantine.UnstyledButton, mapUnstyledButtonProps),
+        Burger: createFormAdapter('button', mantine.Burger, mapBurgerProps),
+        CloseButton: createFormAdapter('button', mantine.CloseButton, mapCloseButtonProps),
+        CopyButton: createCopyButtonAdapter(mantine),
+        Input: createFormAdapter('input', mantine.Input, mapInputProps),
+        InputBase: createFormAdapter('input', mantine.InputBase, mapInputBaseProps),
+        InputWrapper: createSimpleAdapter('div', mantine.InputWrapper, mapInputWrapperProps),
+        InputLabel: createSimpleAdapter('label', mantine.InputLabel, mapInputLabelProps),
+        InputDescription: createSimpleAdapter('div', mantine.InputDescription, mapInputDescriptionProps),
+        InputPlaceholder: createSimpleAdapter('span', mantine.InputPlaceholder, mapInputPlaceholderProps),
+        InputClearButton: createFormAdapter('button', mantine.InputClearButton, mapInputClearButtonProps),
+        InputError: createSimpleAdapter('div', mantine.InputError, mapInputErrorProps),
         TextInput: createFormAdapter('input', mantine.TextInput, mapTextInputProps),
+        Autocomplete: createFormAdapter('input', mantine.Autocomplete, mapAutocompleteProps),
+        PasswordInput: createFormAdapter('input', mantine.PasswordInput, mapPasswordInputProps),
         Textarea: createFormAdapter('textarea', mantine.Textarea, mapTextareaProps),
         Select: createSelectAdapter(mantine),
+        MultiSelect: createMultiSelectAdapter(mantine),
+        NativeSelect: createNativeSelectAdapter(mantine),
+        Combobox: createComboboxAdapter(mantine),
+        ComboboxTarget: createSimpleAdapter('div', mantine.ComboboxTarget, mapComboboxTargetProps),
+        ComboboxDropdownTarget: createSimpleAdapter('div', mantine.ComboboxDropdownTarget, mapComboboxTargetProps),
+        ComboboxEventsTarget: createSimpleAdapter('div', mantine.ComboboxEventsTarget, mapComboboxTargetProps),
+        ComboboxDropdown: createSimpleAdapter('div', mantine.ComboboxDropdown, mapComboboxDropdownProps),
+        ComboboxOptions: createSimpleAdapter('div', mantine.ComboboxOptions, mapComboboxOptionsProps),
+        ComboboxOption: createSimpleAdapter('div', mantine.ComboboxOption, mapComboboxOptionProps),
+        ComboboxSearch: createFormAdapter('input', mantine.ComboboxSearch, mapComboboxSearchProps),
+        ComboboxEmpty: createSimpleAdapter('div', mantine.ComboboxEmpty, mapComboboxEmptyProps),
+        ComboboxGroup: createSimpleAdapter('div', mantine.ComboboxGroup, mapComboboxGroupProps),
+        ComboboxHeader: createSimpleAdapter('div', mantine.ComboboxHeader, mapComboboxSectionProps),
+        ComboboxFooter: createSimpleAdapter('div', mantine.ComboboxFooter, mapComboboxSectionProps),
+        ComboboxChevron: createSimpleAdapter('span', mantine.ComboboxChevron, mapComboboxChevronProps),
+        ComboboxClearButton: createFormAdapter('button', mantine.ComboboxClearButton, mapComboboxClearButtonProps),
+        ComboboxHiddenInput: createFormAdapter('input', mantine.ComboboxHiddenInput, mapComboboxHiddenInputProps),
+        CheckboxGroup: createSimpleAdapter('fieldset', mantine.CheckboxGroup, mapCheckboxGroupProps),
         Checkbox: createFormAdapter('input', mantine.Checkbox, mapCheckboxProps),
+        CheckboxCard: createFormAdapter('label', mantine.CheckboxCard, mapCheckboxCardProps),
+        CheckboxIndicator: createSimpleAdapter('span', mantine.CheckboxIndicator, mapCheckboxIndicatorProps),
+        SwitchGroup: createSimpleAdapter('fieldset', mantine.SwitchGroup, mapSwitchGroupProps),
+        Switch: createFormAdapter('input', mantine.Switch, mapSwitchProps),
         RadioGroup: createRadioGroupAdapter(mantine),
+        Radio: createFormAdapter('input', mantine.Radio, mapRadioProps),
+        RadioCard: createFormAdapter('label', mantine.RadioCard, mapRadioCardProps),
+        RadioIndicator: createSimpleAdapter('span', mantine.RadioIndicator, mapRadioIndicatorProps),
         NumberInput: createFormAdapter('input', mantine.NumberInput, mapNumberInputProps),
         DateInput: createFormAdapter('input', mantine.DateInput, mapDateInputProps),
+        ChipGroup: createSimpleAdapter('div', mantine.ChipGroup, mapChipGroupProps),
+        Chip: createFormAdapter('button', mantine.Chip, mapChipProps),
+        Slider: createSliderAdapter(mantine),
+        RangeSlider: createRangeSliderAdapter(mantine),
+        SegmentedControl: createSegmentedControlAdapter(mantine),
+        PinInput: createFormAdapter('input', mantine.PinInput, mapPinInputProps),
+        ColorInput: createFormAdapter('input', mantine.ColorInput, mapColorInputProps),
+        ColorPicker: createFormAdapter('input', mantine.ColorPicker, mapColorPickerProps),
+        HueSlider: createColorSliderAdapter(mantine.HueSlider, mapHueSliderProps),
+        AlphaSlider: createColorSliderAdapter(mantine.AlphaSlider, mapAlphaSliderProps),
+        AngleSlider: createColorSliderAdapter(mantine.AngleSlider, mapAngleSliderProps),
+        ColorSwatch: createSimpleAdapter('span', mantine.ColorSwatch, mapColorSwatchProps),
+        JsonInput: createFormAdapter('textarea', mantine.JsonInput, mapJsonInputProps),
+        TagsInput: createFormAdapter('input', mantine.TagsInput, mapTagsInputProps),
+        FileInput: createFormAdapter('input', mantine.FileInput, mapFileInputProps),
+        FileButton: createFileButtonAdapter(mantine),
+        Fieldset: createLayoutAdapter('fieldset', mantine.Fieldset, mapFieldsetProps),
+        PillsInput: createPillsInputAdapter(mantine),
+        PillsInputField: createFormAdapter('input', mantine.PillsInputField, mapPillsInputFieldProps),
+        Rating: createFormAdapter('input', mantine.Rating, mapRatingProps),
         DynamicForm: createDynamicFormAdapter(mantine)
     };
 }
@@ -532,7 +811,21 @@ export function createBuilderMantineDataDisplayComponents(
 ): Record<string, BuilderMantineComponentType> {
     return {
         Table: createTableAdapter(mantine.Table, false),
+        TableCaption: createSimpleAdapter('caption', mantine.TableCaption, mapTableCaptionProps),
+        TableThead: createSimpleAdapter('thead', mantine.TableThead, mapTableSectionProps),
+        TableTbody: createSimpleAdapter('tbody', mantine.TableTbody, mapTableSectionProps),
+        TableTfoot: createSimpleAdapter('tfoot', mantine.TableTfoot, mapTableSectionProps),
+        TableTr: createSimpleAdapter('tr', mantine.TableTr, mapTableSectionProps),
+        TableTh: createSimpleAdapter('th', mantine.TableTh, mapTableCellProps),
+        TableTd: createSimpleAdapter('td', mantine.TableTd, mapTableCellProps),
         DataTable: createTableAdapter(mantine.DataTable ?? mantine.Table, true),
+        Accordion: createAccordionAdapter(mantine),
+        AccordionItem: createSimpleAdapter('section', mantine.AccordionItem, mapAccordionItemProps),
+        AccordionControl: createSimpleAdapter('button', mantine.AccordionControl, mapAccordionControlProps),
+        AccordionPanel: createSimpleAdapter('div', mantine.AccordionPanel, mapAccordionPanelProps),
+        Timeline: createTimelineAdapter(mantine),
+        TimelineItem: createSimpleAdapter('li', mantine.TimelineItem, mapTimelineItemProps),
+        Tree: createTreeAdapter(mantine),
         MetricCard: createMetricCardAdapter(mantine),
         StatCard: createStatCardAdapter(mantine)
     };
@@ -545,7 +838,29 @@ export function createBuilderMantineNavigationComponents(
         Anchor: createSimpleAdapter('a', mantine.Anchor, mapAnchorProps),
         NavLink: createNavLinkAdapter(mantine),
         Breadcrumbs: createBreadcrumbsAdapter(mantine),
-        Tabs: createTabsAdapter(mantine)
+        Menu: createMenuAdapter(mantine),
+        MenuTarget: createSimpleAdapter('div', mantine.MenuTarget, mapMenuTargetProps),
+        MenuDropdown: createSimpleAdapter('div', mantine.MenuDropdown, mapMenuDropdownProps),
+        MenuItem: createSimpleAdapter('button', mantine.MenuItem, mapMenuItemProps),
+        MenuLabel: createSimpleAdapter('div', mantine.MenuLabel, mapMenuLabelProps),
+        MenuDivider: createSimpleAdapter('hr', mantine.MenuDivider, mapMenuDividerProps),
+        Tabs: createTabsAdapter(mantine),
+        TabsList: createSimpleAdapter('div', mantine.TabsList, mapTabsListProps),
+        TabsTab: createSimpleAdapter('button', mantine.TabsTab, mapTabsTabProps),
+        TabsPanel: createSimpleAdapter('section', mantine.TabsPanel, mapTabsPanelProps),
+        Stepper: createStepperAdapter(mantine),
+        StepperStep: createSimpleAdapter('section', mantine.StepperStep, mapStepperStepProps),
+        StepperCompleted: createSimpleAdapter('section', mantine.StepperCompleted, mapStepperCompletedProps),
+        Pagination: createSimpleAdapter('nav', mantine.Pagination, mapPaginationProps),
+        PaginationRoot: createSimpleAdapter('nav', mantine.PaginationRoot, mapPaginationProps),
+        PaginationControl: createSimpleAdapter('button', mantine.PaginationControl, mapPaginationControlProps),
+        PaginationDots: createSimpleAdapter('span', mantine.PaginationDots, mapPaginationItemProps),
+        PaginationFirst: createSimpleAdapter('button', mantine.PaginationFirst, mapPaginationItemProps),
+        PaginationItems: createSimpleAdapter('div', mantine.PaginationItems, mapPaginationItemProps),
+        PaginationLast: createSimpleAdapter('button', mantine.PaginationLast, mapPaginationItemProps),
+        PaginationNext: createSimpleAdapter('button', mantine.PaginationNext, mapPaginationItemProps),
+        PaginationPrevious: createSimpleAdapter('button', mantine.PaginationPrevious, mapPaginationItemProps),
+        TableOfContents: createTableOfContentsAdapter(mantine)
     };
 }
 
@@ -554,7 +869,50 @@ export function createBuilderMantineOverlayComponents(
 ): Record<string, BuilderMantineComponentType> {
     return {
         Modal: createOverlayAdapter('section', mantine.Modal, mantine),
-        Drawer: createOverlayAdapter('aside', mantine.Drawer, mantine)
+        ModalRoot: createSimpleAdapter('section', mantine.ModalRoot, mapOverlayRootProps),
+        ModalOverlay: createSimpleAdapter('div', mantine.ModalOverlay, mapOverlaySubcomponentProps),
+        ModalContent: createSimpleAdapter('section', mantine.ModalContent, mapOverlaySubcomponentProps),
+        ModalHeader: createSimpleAdapter('header', mantine.ModalHeader, mapOverlaySubcomponentProps),
+        ModalTitle: createSimpleAdapter('h2', mantine.ModalTitle, mapOverlaySubcomponentProps),
+        ModalCloseButton: createFormAdapter('button', mantine.ModalCloseButton, mapCloseButtonProps),
+        ModalBody: createSimpleAdapter('div', mantine.ModalBody, mapOverlaySubcomponentProps),
+        ModalStack: createSimpleAdapter('div', mantine.ModalStack, mapOverlaySubcomponentProps),
+        ModalBase: createSimpleAdapter('section', mantine.ModalBase, mapOverlayRootProps),
+        ModalBaseOverlay: createSimpleAdapter('div', mantine.ModalBaseOverlay, mapOverlaySubcomponentProps),
+        ModalBaseContent: createSimpleAdapter('section', mantine.ModalBaseContent, mapOverlaySubcomponentProps),
+        ModalBaseHeader: createSimpleAdapter('header', mantine.ModalBaseHeader, mapOverlaySubcomponentProps),
+        ModalBaseTitle: createSimpleAdapter('h2', mantine.ModalBaseTitle, mapOverlaySubcomponentProps),
+        ModalBaseCloseButton: createFormAdapter('button', mantine.ModalBaseCloseButton, mapCloseButtonProps),
+        ModalBaseBody: createSimpleAdapter('div', mantine.ModalBaseBody, mapOverlaySubcomponentProps),
+        Drawer: createOverlayAdapter('aside', mantine.Drawer, mantine),
+        DrawerRoot: createSimpleAdapter('aside', mantine.DrawerRoot, mapOverlayRootProps),
+        DrawerOverlay: createSimpleAdapter('div', mantine.DrawerOverlay, mapOverlaySubcomponentProps),
+        DrawerContent: createSimpleAdapter('section', mantine.DrawerContent, mapOverlaySubcomponentProps),
+        DrawerHeader: createSimpleAdapter('header', mantine.DrawerHeader, mapOverlaySubcomponentProps),
+        DrawerTitle: createSimpleAdapter('h2', mantine.DrawerTitle, mapOverlaySubcomponentProps),
+        DrawerCloseButton: createFormAdapter('button', mantine.DrawerCloseButton, mapCloseButtonProps),
+        DrawerBody: createSimpleAdapter('div', mantine.DrawerBody, mapOverlaySubcomponentProps),
+        DrawerStack: createSimpleAdapter('div', mantine.DrawerStack, mapOverlaySubcomponentProps),
+        Tooltip: createTooltipAdapter(mantine),
+        Popover: createFloatingCardAdapter('Popover', mantine),
+        PopoverTarget: createSimpleAdapter('div', mantine.PopoverTarget, mapFloatingTargetProps),
+        PopoverDropdown: createSimpleAdapter('div', mantine.PopoverDropdown, mapFloatingDropdownProps),
+        HoverCard: createFloatingCardAdapter('HoverCard', mantine),
+        HoverCardTarget: createSimpleAdapter('div', mantine.HoverCardTarget, mapFloatingTargetProps),
+        HoverCardDropdown: createSimpleAdapter('div', mantine.HoverCardDropdown, mapFloatingDropdownProps),
+        TooltipFloating: createTooltipAdapter({ ...mantine, Tooltip: mantine.TooltipFloating }),
+        TooltipGroup: createSimpleAdapter('div', mantine.TooltipGroup, mapTooltipGroupProps),
+        Dialog: createSimpleAdapter('section', mantine.Dialog, mapDialogProps),
+        Overlay: createSimpleAdapter('div', mantine.Overlay, mapVisualOverlayProps),
+        Portal: createSimpleAdapter('div', mantine.Portal, mapPortalProps),
+        OptionalPortal: createSimpleAdapter('div', mantine.OptionalPortal, mapOptionalPortalProps),
+        Transition: createTransitionAdapter(mantine),
+        FocusTrap: createSimpleAdapter('div', mantine.FocusTrap, mapFocusTrapProps),
+        FocusTrapInitialFocus: createSimpleAdapter('span', mantine.FocusTrapInitialFocus, mapOverlaySubcomponentProps),
+        FloatingArrow: createSimpleAdapter('span', mantine.FloatingArrow, mapFloatingArrowProps),
+        FloatingIndicator: createFloatingIndicatorAdapter(mantine),
+        NativeScrollArea: createSimpleAdapter('div', mantine.NativeScrollArea, mapNativeScrollAreaProps),
+        RemoveScroll: createSimpleAdapter('div', mantine.RemoveScroll, mapRemoveScrollProps)
     };
 }
 
@@ -563,8 +921,17 @@ export function createBuilderMantineFeedbackComponents(
 ): Record<string, BuilderMantineComponentType> {
     return {
         Alert: createSimpleAdapter('div', mantine.Alert, mapAlertProps),
+        Notification: createNotificationAdapter(mantine),
         NotificationBlock: createNotificationAdapter(mantine),
-        Loader: createLoaderAdapter(mantine)
+        LoadingOverlay: createSimpleAdapter('div', mantine.LoadingOverlay, mapLoadingOverlayProps),
+        Loader: createLoaderAdapter(mantine),
+        Progress: createProgressAdapter(mantine),
+        ProgressRoot: createSimpleAdapter('div', mantine.ProgressRoot, mapProgressRootProps),
+        ProgressSection: createSimpleAdapter('div', mantine.ProgressSection, mapProgressSectionProps),
+        ProgressLabel: createSimpleAdapter('span', mantine.ProgressLabel, mapProgressLabelProps),
+        RingProgress: createRingProgressAdapter(mantine),
+        SemiCircleProgress: createSimpleAdapter('progress', mantine.SemiCircleProgress, mapSemiCircleProgressProps),
+        Skeleton: createSimpleAdapter('div', mantine.Skeleton, mapSkeletonProps)
     };
 }
 
@@ -573,8 +940,15 @@ export function createBuilderMantineMediaComponents(
 ): Record<string, BuilderMantineComponentType> {
     return {
         Image: createSimpleAdapter('img', mantine.Image, mapImageProps),
+        BackgroundImage: createSimpleAdapter('div', mantine.BackgroundImage, mapBackgroundImageProps),
         Avatar: createSimpleAdapter('img', mantine.Avatar, mapAvatarProps),
-        Icon: createIconAdapter(mantine)
+        AvatarGroup: createSimpleAdapter('div', mantine.AvatarGroup, mapAvatarGroupProps),
+        ThemeIcon: createThemeIconAdapter(mantine),
+        Icon: createIconAdapter(mantine),
+        CheckIcon: createSimpleAdapter('span', mantine.CheckIcon, mapInternalIconProps),
+        CloseIcon: createSimpleAdapter('span', mantine.CloseIcon, mapInternalIconProps),
+        RadioIcon: createSimpleAdapter('span', mantine.RadioIcon, mapInternalIconProps),
+        AccordionChevron: createSimpleAdapter('span', mantine.AccordionChevron, mapInternalIconProps)
     };
 }
 
@@ -613,6 +987,14 @@ function readMantineColorTokens(value: BuilderJsonValue | undefined): Record<str
     }
 
     return Object.keys(colors).length > 0 ? colors : undefined;
+}
+
+function readMantineSpacing(spacing: Record<string, string | number>): Record<string, string> {
+    const normalized: Record<string, string> = {};
+    for (const [key, value] of Object.entries(spacing)) {
+        normalized[key] = typeof value === 'number' ? `${value}px` : value;
+    }
+    return normalized;
 }
 
 function readMantineOtherTokens(tokens: BuilderTheme['tokens'] | undefined): Record<string, BuilderJsonValue> | undefined {
@@ -808,13 +1190,27 @@ function attachSelectionHandler(
 }
 
 function normalizeIntrinsicProps(type: string, props: Record<string, unknown>): void {
-    if (type === 'Checkbox') {
+    if (type === 'ActionIcon' || type === 'UnstyledButton' || type === 'Burger' || type === 'CloseButton' || type === 'CopyButton' || type === 'Chip') {
+        props.type = 'button';
+    } else if (type === 'Checkbox' || type === 'CheckboxCard') {
         props.type = 'checkbox';
+    } else if (type === 'Switch') {
+        props.type = 'checkbox';
+    } else if (type === 'Radio' || type === 'RadioCard') {
+        props.type = 'radio';
     } else if (type === 'NumberInput') {
         props.type = 'number';
     } else if (type === 'DateInput') {
         props.type = 'date';
-    } else if (type === 'TextInput') {
+    } else if (type === 'PasswordInput') {
+        props.type = 'password';
+    } else if (type === 'Slider' || type === 'RangeSlider') {
+        props.type = 'range';
+    } else if (type === 'ColorInput' || type === 'ColorPicker') {
+        props.type = 'color';
+    } else if (type === 'FileInput' || type === 'FileButton') {
+        props.type = 'file';
+    } else if (type === 'TextInput' || type === 'Autocomplete') {
         props.type = props.type ?? 'text';
     }
 
@@ -1041,6 +1437,26 @@ function createGridAdapter(mantine: BuilderMantineLayoutComponentSet): React.Com
     };
 }
 
+function createAppShellAdapter(mantine: BuilderMantineLayoutComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineAppShellAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapAppShellProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        const header = React.Children.toArray(inputProps.header as React.ReactNode);
+        const navbar = React.Children.toArray(inputProps.navbar as React.ReactNode);
+        const aside = React.Children.toArray(inputProps.aside as React.ReactNode);
+        const footer = React.Children.toArray(inputProps.footer as React.ReactNode);
+        const shellChildren = [
+            header.length > 0 ? React.createElement(mantine.AppShellHeader ?? 'header', { key: 'header' }, ...header) : undefined,
+            navbar.length > 0 ? React.createElement(mantine.AppShellNavbar ?? 'nav', { key: 'navbar' }, ...navbar) : undefined,
+            aside.length > 0 ? React.createElement(mantine.AppShellAside ?? 'aside', { key: 'aside' }, ...aside) : undefined,
+            React.createElement(mantine.AppShellMain ?? 'main', { key: 'main' }, ...children),
+            footer.length > 0 ? React.createElement(mantine.AppShellFooter ?? 'footer', { key: 'footer' }, ...footer) : undefined
+        ].filter((child): child is React.ReactElement => child !== undefined);
+        props.children = shellChildren;
+        return React.createElement(mantine.AppShell ?? 'div', props);
+    };
+}
+
 function createTypographyAdapter(
     fallbackElement: string,
     mantineComponent: BuilderMantineComponentType | undefined,
@@ -1091,6 +1507,37 @@ function createFormAdapter(
     };
 }
 
+function createActionIconAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineActionIconAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapActionIconProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        props.children = children.length > 0 ? children : readString(inputProps.children) ?? readString(inputProps.label) ?? '+';
+        return React.createElement(mantine.ActionIcon ?? 'button', props);
+    };
+}
+
+function createCopyButtonAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineCopyButtonAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapCopyButtonProps(inputProps);
+        const buttonProps = mapButtonProps({
+            children: inputProps.children,
+            variant: inputProps.variant,
+            color: inputProps.color,
+            size: inputProps.size,
+            type: 'button'
+        });
+        if (mantine.CopyButton) {
+            props.children = ({ copied, copy }: { copied?: boolean; copy?: () => void }) => React.createElement(mantine.Button ?? 'button', {
+                ...buttonProps,
+                onClick: copy
+            }, String(copied ? inputProps.copiedLabel ?? 'Copied' : inputProps.children ?? 'Copy'));
+            return React.createElement(mantine.CopyButton, props);
+        }
+
+        return React.createElement(mantine.Button ?? 'button', buttonProps, String(inputProps.children ?? 'Copy'));
+    };
+}
+
 function createSelectAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
     return function BuilderMantineSelectAdapter(inputProps: Record<string, unknown>): React.ReactElement {
         const props = mapSelectProps(inputProps);
@@ -1100,6 +1547,146 @@ function createSelectAdapter(mantine: BuilderMantineFormComponentSet): React.Com
 
         const options = readOptions(inputProps.data).map(option => React.createElement('option', { key: option.value, value: option.value }, option.label));
         return React.createElement('select', props, ...options);
+    };
+}
+
+function createMultiSelectAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineMultiSelectAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapMultiSelectProps(inputProps);
+        if (mantine.MultiSelect) {
+            return React.createElement(mantine.MultiSelect, props);
+        }
+
+        props.multiple = true;
+        const options = readOptions(inputProps.data).map(option => React.createElement('option', { key: option.value, value: option.value }, option.label));
+        return React.createElement('select', props, ...options);
+    };
+}
+
+function createNativeSelectAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineNativeSelectAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapNativeSelectProps(inputProps);
+        if (mantine.NativeSelect) {
+            return React.createElement(mantine.NativeSelect, props);
+        }
+
+        const options = readOptions(inputProps.data).map(option => React.createElement('option', { key: option.value, value: option.value }, option.label));
+        return React.createElement('select', props, ...options);
+    };
+}
+
+function createComboboxAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineComboboxAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapComboboxProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        if (mantine.Combobox) {
+            props.children = children;
+            return React.createElement(mantine.Combobox, props);
+        }
+
+        return React.createElement('div', props, ...children);
+    };
+}
+
+function createSegmentedControlAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineSegmentedControlAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapSegmentedControlProps(inputProps);
+        if (mantine.SegmentedControl) {
+            return React.createElement(mantine.SegmentedControl, props);
+        }
+
+        const options = readOptions(inputProps.data).map(option => React.createElement('option', { key: option.value, value: option.value }, option.label));
+        return React.createElement('select', props, ...options);
+    };
+}
+
+function createColorSliderAdapter(
+    mantineComponent: BuilderMantineComponentType | undefined,
+    mapProps: (props: Record<string, unknown>) => Record<string, unknown>
+): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineColorSliderAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapProps(inputProps);
+        if (mantineComponent) {
+            return React.createElement(mantineComponent, props);
+        }
+
+        props.type = 'range';
+        props.value = props.defaultValue;
+        return createAccessibleNativeFormControl('input', props, inputProps);
+    };
+}
+
+function createSliderAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineSliderAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapSliderProps(inputProps);
+        if (mantine.Slider) {
+            return React.createElement(mantine.Slider, props);
+        }
+
+        props.type = 'range';
+        props.value = props.defaultValue;
+        return createAccessibleNativeFormControl('input', props, inputProps);
+    };
+}
+
+function createRangeSliderAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineRangeSliderAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapRangeSliderProps(inputProps);
+        if (mantine.RangeSlider) {
+            return React.createElement(mantine.RangeSlider, props);
+        }
+
+        const value = Array.isArray(props.defaultValue) && typeof props.defaultValue[0] === 'number' ? props.defaultValue[0] : undefined;
+        props.type = 'range';
+        props.value = value;
+        return createAccessibleNativeFormControl('input', props, inputProps);
+    };
+}
+
+function createFileButtonAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineFileButtonAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapFileButtonProps(inputProps);
+        const buttonProps = mapButtonProps({
+            children: inputProps.children,
+            variant: inputProps.variant,
+            color: inputProps.color,
+            size: inputProps.size,
+            disabled: inputProps.disabled,
+            type: 'button'
+        });
+        if (mantine.FileButton) {
+            props.children = (renderProps: Record<string, unknown>) => React.createElement(mantine.Button ?? 'button', {
+                ...buttonProps,
+                ...renderProps
+            }, String(inputProps.children ?? 'Select file'));
+            return React.createElement(mantine.FileButton, props);
+        }
+
+        return React.createElement('input', {
+            type: 'file',
+            accept: props.accept,
+            multiple: props.multiple,
+            disabled: props.disabled,
+            'aria-label': readString(inputProps.children) ?? 'Select file'
+        });
+    };
+}
+
+function createPillsInputAdapter(mantine: BuilderMantineFormComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantinePillsInputAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapPillsInputProps(inputProps);
+        const values = Array.isArray(inputProps.values) ? inputProps.values.filter((value): value is string => typeof value === 'string') : [];
+        const pillNodes = values.map(value => React.createElement(mantine.Pill ?? 'span', { key: value }, value));
+        const existingChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        const content = pillNodes.length > 0
+            ? React.createElement(mantine.PillGroup ?? 'div', { key: 'group' }, ...pillNodes)
+            : existingChildren;
+        if (mantine.PillsInput) {
+            props.children = content;
+            return React.createElement(mantine.PillsInput, props);
+        }
+
+        return React.createElement('div', props, ...(Array.isArray(content) ? content : [content]));
     };
 }
 
@@ -1151,7 +1738,8 @@ function createTableAdapter(
         const props = mapTableProps(inputProps);
         const columns = readColumns(inputProps.columns);
         const rows = readRows(inputProps.rows);
-        const tableChildren: React.ReactNode[] = [
+        const existingChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        const tableChildren: React.ReactNode[] = existingChildren.length > 0 && inputProps.columns === undefined && inputProps.rows === undefined && inputProps.caption === undefined ? existingChildren : [
             readString(inputProps.caption) ? React.createElement('caption', { key: 'caption' }, inputProps.caption as string) : undefined,
             React.createElement('thead', { key: 'head' }, React.createElement('tr', undefined, ...columns.map(column => React.createElement('th', { key: column.key }, column.label)))),
             React.createElement('tbody', { key: 'body' }, ...createTableBodyRows(columns, rows, readString(inputProps.emptyText) ?? 'No data available'))
@@ -1171,6 +1759,53 @@ function createTableAdapter(
             inputProps.description ? React.createElement('p', { key: 'description' }, String(inputProps.description)) : undefined,
             table
         );
+    };
+}
+
+function createAccordionAdapter(mantine: BuilderMantineDataDisplayComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineAccordionAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapAccordionProps(inputProps);
+        const items = readAccordionItems(inputProps.items);
+        const itemNodes = items.map((item, index) => React.createElement(mantine.AccordionItem ?? 'section', {
+            key: item.value,
+            value: item.value,
+            disabled: item.disabled
+        },
+            React.createElement(mantine.AccordionControl ?? 'h3', { key: 'control' }, item.label),
+            React.createElement(mantine.AccordionPanel ?? 'div', { key: 'panel' }, item.content)
+        ));
+        const existingChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        props.children = itemNodes.length > 0 ? itemNodes : existingChildren;
+        return React.createElement(mantine.Accordion ?? 'div', props);
+    };
+}
+
+function createTimelineAdapter(mantine: BuilderMantineDataDisplayComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineTimelineAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapTimelineProps(inputProps);
+        const itemNodes = readTimelineItems(inputProps.items).map((item, index) => React.createElement(mantine.TimelineItem ?? 'li', {
+            key: `${item.title}-${index}`,
+            title: item.title,
+            color: item.color
+        },
+            item.description ? React.createElement('p', { key: 'description' }, item.description) : undefined,
+            item.time ? React.createElement('small', { key: 'time' }, item.time) : undefined
+        ));
+        const existingChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        props.children = itemNodes.length > 0 ? itemNodes : existingChildren;
+        return React.createElement(mantine.Timeline ?? 'ol', props);
+    };
+}
+
+function createTreeAdapter(mantine: BuilderMantineDataDisplayComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineTreeAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapTreeProps(inputProps);
+        props.data = readTreeNodes(inputProps.data);
+        if (mantine.Tree) {
+            return React.createElement(mantine.Tree, props);
+        }
+
+        return React.createElement('ul', props, ...createNativeTreeItems(props.data as BuilderTreeItem[]));
     };
 }
 
@@ -1224,6 +1859,40 @@ function createBreadcrumbsAdapter(mantine: BuilderMantineNavigationComponentSet)
     };
 }
 
+function createMenuAdapter(mantine: BuilderMantineNavigationComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineMenuAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapMenuProps(inputProps);
+        const items = readMenuItems(inputProps.items);
+        const existingChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        if (!mantine.Menu) {
+            if (existingChildren.length > 0 && items.length === 0) {
+                return React.createElement('nav', props, ...existingChildren);
+            }
+            return React.createElement('nav', props,
+                React.createElement('button', { key: 'target', type: 'button' }, String(inputProps.label ?? 'Menu')),
+                React.createElement('ul', { key: 'items' }, ...items.map((item, index) => React.createElement('li', { key: `${item.label}-${index}` },
+                    item.href ? React.createElement('a', { href: item.href }, item.label) : item.label
+                )))
+            );
+        }
+
+        const menuItems = items.map((item, index) => React.createElement(mantine.MenuItem ?? 'button', {
+            key: `${item.label}-${index}`,
+            component: item.href ? 'a' : undefined,
+            href: item.href,
+                color: item.color,
+                disabled: item.disabled
+            }, item.label));
+        props.children = existingChildren.length > 0 && items.length === 0 ? existingChildren : [
+            React.createElement(mantine.MenuTarget ?? 'div', { key: 'target' },
+                React.createElement(mantine.Button ?? 'button', { type: 'button' }, String(inputProps.label ?? 'Menu'))
+            ),
+            React.createElement(mantine.MenuDropdown ?? 'div', { key: 'dropdown' }, ...menuItems)
+        ];
+        return React.createElement(mantine.Menu, props);
+    };
+}
+
 function createTabsAdapter(mantine: BuilderMantineNavigationComponentSet): React.ComponentType<Record<string, unknown>> {
     return function BuilderMantineTabsAdapter(inputProps: Record<string, unknown>): React.ReactElement {
         const props = mapTabsProps(inputProps);
@@ -1246,6 +1915,40 @@ function createTabsAdapter(mantine: BuilderMantineNavigationComponentSet): React
     };
 }
 
+function createStepperAdapter(mantine: BuilderMantineNavigationComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineStepperAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapStepperProps(inputProps);
+        const steps = readStepperSteps(inputProps.steps);
+        const stepNodes = steps.map((step, index) => React.createElement(mantine.StepperStep ?? 'li', {
+            key: `${step.label}-${index}`,
+            label: step.label,
+            description: step.description,
+            disabled: step.disabled
+        }, step.content));
+        const existingChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        props.children = stepNodes.length > 0 ? stepNodes : existingChildren;
+        return React.createElement(mantine.Stepper ?? 'ol', props);
+    };
+}
+
+function createTableOfContentsAdapter(mantine: BuilderMantineNavigationComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineTableOfContentsAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapTableOfContentsProps(inputProps);
+        const items = readTocItems(inputProps.items);
+        const children = items.map((item, index) => React.createElement(mantine.Anchor ?? 'a', {
+            key: `${item.href}-${index}`,
+            href: item.href,
+            'data-active': item.active ? 'true' : undefined
+        }, item.label));
+        if (mantine.TableOfContents) {
+            props.children = children;
+            return React.createElement(mantine.TableOfContents, props);
+        }
+
+        return React.createElement('nav', props, ...children);
+    };
+}
+
 function createOverlayAdapter(
     fallbackElement: string,
     mantineComponent: BuilderMantineComponentType | undefined,
@@ -1259,6 +1962,79 @@ function createOverlayAdapter(
             ? [...children, React.createElement(mantine.Group ?? 'div', { key: 'actions' }, ...actions)]
             : children;
         return React.createElement(mantineComponent ?? fallbackElement, props);
+    };
+}
+
+function createFloatingCardAdapter(
+    kind: 'Popover' | 'HoverCard',
+    mantine: BuilderMantineOverlayComponentSet
+): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineFloatingCardAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = kind === 'Popover' ? mapPopoverProps(inputProps) : mapHoverCardProps(inputProps);
+        const targetChildren = React.Children.toArray(inputProps.target as React.ReactNode);
+        const contentChildren = React.Children.toArray(inputProps.children as React.ReactNode);
+        const component = kind === 'Popover' ? mantine.Popover : mantine.HoverCard;
+        const Target = kind === 'Popover' ? mantine.PopoverTarget : mantine.HoverCardTarget;
+        const Dropdown = kind === 'Popover' ? mantine.PopoverDropdown : mantine.HoverCardDropdown;
+        const target = targetChildren[0] ?? React.createElement('button', { type: 'button' }, String(inputProps.label ?? kind));
+        const children = [
+            React.createElement(Target ?? 'div', { key: 'target' }, target),
+            React.createElement(Dropdown ?? 'div', { key: 'dropdown' }, ...(contentChildren.length > 0 ? contentChildren : [String(inputProps.label ?? kind)]))
+        ];
+        props.children = children;
+        return React.createElement(component ?? 'div', props);
+    };
+}
+
+function createTooltipAdapter(mantine: BuilderMantineOverlayComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineTooltipAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapTooltipProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        const child = children[0] ?? React.createElement('span', undefined, readString(inputProps.label) ?? 'Tooltip');
+        if (mantine.Tooltip) {
+            props.children = child;
+            return React.createElement(mantine.Tooltip, props);
+        }
+
+        return React.createElement('span', {
+            title: readString(inputProps.label),
+            'data-builder-node-id': props['data-builder-node-id'],
+            'data-builder-type': props['data-builder-type']
+        }, child);
+    };
+}
+
+function createTransitionAdapter(mantine: BuilderMantineOverlayComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineTransitionAdapter(inputProps: Record<string, unknown>): React.ReactElement | null {
+        const props = mapTransitionProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        const content = children.length > 0 ? children : [String(inputProps.label ?? 'Transition')];
+        if (mantine.Transition) {
+            props.children = (styles: React.CSSProperties) => React.createElement('div', {
+                style: mergeDefaultStyle(inputProps.style, styles as Record<string, unknown>)
+            }, ...content);
+            return React.createElement(mantine.Transition, props);
+        }
+
+        if (inputProps.mounted === false) {
+            return null;
+        }
+        return React.createElement('div', props, ...content);
+    };
+}
+
+function createFloatingIndicatorAdapter(mantine: BuilderMantineOverlayComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineFloatingIndicatorAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapFloatingIndicatorProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        if (mantine.FloatingIndicator && inputProps.target && inputProps.parent) {
+            props.children = children;
+            return React.createElement(mantine.FloatingIndicator, props);
+        }
+
+        props['aria-hidden'] = true;
+        props.children = children.length > 0 ? children : undefined;
+        return React.createElement('span', props);
     };
 }
 
@@ -1282,10 +2058,51 @@ function createLoaderAdapter(mantine: BuilderMantineFeedbackComponentSet): React
     };
 }
 
+function createProgressAdapter(mantine: BuilderMantineFeedbackComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineProgressAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapProgressProps(inputProps);
+        if (mantine.Progress) {
+            return React.createElement(mantine.Progress, props);
+        }
+
+        props.max = 100;
+        return React.createElement('progress', props);
+    };
+}
+
+function createRingProgressAdapter(mantine: BuilderMantineFeedbackComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineRingProgressAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapRingProgressProps(inputProps);
+        const value = typeof inputProps.value === 'number' ? inputProps.value : 0;
+        const color = readString(inputProps.color) ?? 'blue';
+        if (mantine.RingProgress) {
+            props.sections = [{ value, color }];
+            if (inputProps.label && mantine.Text) {
+                props.label = React.createElement(mantine.Text, { ta: 'center', size: 'sm' }, String(inputProps.label));
+            }
+            return React.createElement(mantine.RingProgress, props);
+        }
+
+        props.max = 100;
+        props.value = value;
+        props['aria-label'] = inputProps.label ?? props['aria-label'];
+        return React.createElement('progress', props);
+    };
+}
+
 function createIconAdapter(mantine: BuilderMantineMediaComponentSet): React.ComponentType<Record<string, unknown>> {
     return function BuilderMantineIconAdapter(inputProps: Record<string, unknown>): React.ReactElement {
         const props = mapIconProps(inputProps);
         props.children = readString(inputProps.label) ?? readString(inputProps.name) ?? 'icon';
+        return React.createElement(mantine.ThemeIcon ?? 'span', props);
+    };
+}
+
+function createThemeIconAdapter(mantine: BuilderMantineMediaComponentSet): React.ComponentType<Record<string, unknown>> {
+    return function BuilderMantineThemeIconAdapter(inputProps: Record<string, unknown>): React.ReactElement {
+        const props = mapThemeIconProps(inputProps);
+        const children = React.Children.toArray(inputProps.children as React.ReactNode);
+        props.children = children.length > 0 ? children : readString(inputProps.children) ?? readString(inputProps.label) ?? '*';
         return React.createElement(mantine.ThemeIcon ?? 'span', props);
     };
 }
@@ -1309,11 +2126,33 @@ function createFeatureGridAdapter(mantine: BuilderMantineMarketingComponentSet):
     return function BuilderMantineFeatureGridAdapter(inputProps: Record<string, unknown>): React.ReactElement {
         const props = mapSectionLikeProps(inputProps, ['title', 'description', 'columns', 'features']);
         const children = createMarketingHeader(mantine, inputProps);
-        const featureCards = readFeatures(inputProps.features).map(feature => React.createElement(mantine.Card ?? 'article', { key: feature.title },
+        const featureCards = readFeatures(inputProps.features).map(feature => React.createElement(mantine.Card ?? 'article', {
+            key: feature.title,
+            padding: inputProps.cardPadding ?? 'lg',
+            p: inputProps.cardPadding ?? 'lg',
+            radius: inputProps.cardRadius ?? 'md',
+            shadow: inputProps.cardShadow ?? 'sm',
+            withBorder: inputProps.cardWithBorder ?? true,
+            style: mergeDefaultStyle(undefined, {
+                display: 'grid',
+                gap: 12,
+                height: '100%',
+                padding: readCssSpacing(inputProps.cardPadding ?? 'lg')
+            })
+        },
             React.createElement(mantine.Title ?? 'h3', { order: 3 }, feature.title),
             React.createElement(mantine.Text ?? 'p', undefined, feature.description)
         ));
-        children.push(React.createElement(mantine.SimpleGrid ?? 'div', { key: 'features', cols: inputProps.columns }, ...featureCards));
+        children.push(React.createElement(mantine.SimpleGrid ?? 'div', {
+            key: 'features',
+            cols: inputProps.columns,
+            spacing: inputProps.spacing ?? 'lg',
+            verticalSpacing: inputProps.verticalSpacing ?? inputProps.spacing ?? 'lg',
+            style: mergeDefaultStyle(undefined, {
+                display: 'grid',
+                gap: readCssSpacing(inputProps.spacing ?? 'lg')
+            })
+        }, ...featureCards));
         props.children = React.Children.count(inputProps.children as React.ReactNode) > 0 ? inputProps.children : children;
         return React.createElement(mantine.Box ?? 'section', props);
     };
@@ -1323,13 +2162,35 @@ function createPricingSectionAdapter(mantine: BuilderMantineMarketingComponentSe
     return function BuilderMantinePricingSectionAdapter(inputProps: Record<string, unknown>): React.ReactElement {
         const props = mapSectionLikeProps(inputProps, ['title', 'description', 'plans']);
         const children = createMarketingHeader(mantine, inputProps);
-        const plans = readPricingPlans(inputProps.plans).map(plan => React.createElement(mantine.Card ?? 'article', { key: plan.name },
+        const plans = readPricingPlans(inputProps.plans).map(plan => React.createElement(mantine.Card ?? 'article', {
+            key: plan.name,
+            padding: inputProps.cardPadding ?? 'lg',
+            p: inputProps.cardPadding ?? 'lg',
+            radius: inputProps.cardRadius ?? 'md',
+            shadow: inputProps.cardShadow ?? 'sm',
+            withBorder: inputProps.cardWithBorder ?? true,
+            style: mergeDefaultStyle(undefined, {
+                display: 'grid',
+                gap: 14,
+                height: '100%',
+                padding: readCssSpacing(inputProps.cardPadding ?? 'lg')
+            })
+        },
             React.createElement(mantine.Title ?? 'h3', { order: 3 }, plan.name),
             React.createElement(mantine.Text ?? 'p', undefined, plan.price),
-            React.createElement(mantine.List ?? 'ul', undefined, ...plan.features.map(feature => React.createElement('li', { key: feature }, feature))),
+            React.createElement(mantine.List ?? 'ul', { spacing: 'xs' }, ...plan.features.map(feature => React.createElement('li', { key: feature }, feature))),
             plan.ctaLabel ? React.createElement(mantine.Button ?? 'button', undefined, plan.ctaLabel) : undefined
         ));
-        children.push(React.createElement(mantine.SimpleGrid ?? 'div', { key: 'plans', cols: plans.length || 1 }, ...plans));
+        children.push(React.createElement(mantine.SimpleGrid ?? 'div', {
+            key: 'plans',
+            cols: plans.length || 1,
+            spacing: inputProps.spacing ?? 'lg',
+            verticalSpacing: inputProps.verticalSpacing ?? inputProps.spacing ?? 'lg',
+            style: mergeDefaultStyle(undefined, {
+                display: 'grid',
+                gap: readCssSpacing(inputProps.spacing ?? 'lg')
+            })
+        }, ...plans));
         props.children = React.Children.count(inputProps.children as React.ReactNode) > 0 ? inputProps.children : children;
         return React.createElement(mantine.Box ?? 'section', props);
     };
@@ -1339,11 +2200,33 @@ function createTestimonialSectionAdapter(mantine: BuilderMantineMarketingCompone
     return function BuilderMantineTestimonialSectionAdapter(inputProps: Record<string, unknown>): React.ReactElement {
         const props = mapSectionLikeProps(inputProps, ['title', 'testimonials']);
         const children = createMarketingHeader(mantine, inputProps);
-        const testimonials = readTestimonials(inputProps.testimonials).map(testimonial => React.createElement(mantine.Card ?? 'article', { key: testimonial.author },
+        const testimonials = readTestimonials(inputProps.testimonials).map(testimonial => React.createElement(mantine.Card ?? 'article', {
+            key: testimonial.author,
+            padding: inputProps.cardPadding ?? 'lg',
+            p: inputProps.cardPadding ?? 'lg',
+            radius: inputProps.cardRadius ?? 'md',
+            shadow: inputProps.cardShadow ?? 'sm',
+            withBorder: inputProps.cardWithBorder ?? true,
+            style: mergeDefaultStyle(undefined, {
+                display: 'grid',
+                gap: 12,
+                height: '100%',
+                padding: readCssSpacing(inputProps.cardPadding ?? 'lg')
+            })
+        },
             React.createElement(mantine.Text ?? 'blockquote', undefined, testimonial.quote),
             React.createElement(mantine.Text ?? 'p', undefined, testimonial.author)
         ));
-        children.push(React.createElement(mantine.SimpleGrid ?? 'div', { key: 'testimonials', cols: testimonials.length || 1 }, ...testimonials));
+        children.push(React.createElement(mantine.SimpleGrid ?? 'div', {
+            key: 'testimonials',
+            cols: testimonials.length || 1,
+            spacing: inputProps.spacing ?? 'lg',
+            verticalSpacing: inputProps.verticalSpacing ?? inputProps.spacing ?? 'lg',
+            style: mergeDefaultStyle(undefined, {
+                display: 'grid',
+                gap: readCssSpacing(inputProps.spacing ?? 'lg')
+            })
+        }, ...testimonials));
         props.children = React.Children.count(inputProps.children as React.ReactNode) > 0 ? inputProps.children : children;
         return React.createElement(mantine.Box ?? 'section', props);
     };
@@ -1413,17 +2296,40 @@ function mapContainerProps(props: Record<string, unknown>): Record<string, unkno
 }
 
 function mapStackProps(props: Record<string, unknown>): Record<string, unknown> {
-    return dropUndefined({ ...props });
+    const next = { ...props };
+    next.gap = props.gap ?? 'md';
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: readCssSpacing(next.gap)
+    });
+    return dropUndefined(next);
 }
 
 function mapGroupProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = { ...props };
+    next.gap = props.gap ?? 'md';
     next.wrap = props.wrap === false ? 'nowrap' : 'wrap';
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'flex',
+        flexWrap: next.wrap,
+        gap: readCssSpacing(next.gap)
+    });
     return dropUndefined(next);
 }
 
 function mapSimpleGridProps(props: Record<string, unknown>): Record<string, unknown> {
-    return dropUndefined({ ...props });
+    const next = { ...props };
+    next.spacing = props.spacing ?? 'md';
+    next.verticalSpacing = props.verticalSpacing ?? next.spacing;
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'grid',
+        gap: readCssSpacing(next.spacing),
+        gridTemplateColumns: typeof props.cols === 'number' && props.cols > 0
+            ? `repeat(${props.cols}, minmax(0, 1fr))`
+            : undefined
+    });
+    return dropUndefined(next);
 }
 
 function mapGridProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1431,10 +2337,164 @@ function mapGridProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined(next);
 }
 
+function mapGridColProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
 function mapCardProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['background']);
+    next.p = props.padding ?? 'md';
     next.bg = props.background;
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'grid',
+        gap: 12,
+        padding: readCssSpacing(next.p)
+    });
     return dropUndefined(next);
+}
+
+function mapCardSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['padding']);
+    next.p = props.padding;
+    return dropUndefined(next);
+}
+
+function mapPaperProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['background']);
+    next.p = props.padding ?? 'md';
+    next.bg = props.background;
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'grid',
+        gap: 12,
+        padding: readCssSpacing(next.p)
+    });
+    return dropUndefined(next);
+}
+
+function mapCenterProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['padding', 'width', 'height', 'minHeight']);
+    next.p = props.padding;
+    next.w = props.width;
+    next.h = props.height;
+    next.mih = props.minHeight;
+    next.style = mergeDefaultStyle(props.style, {
+        display: props.inline === true ? 'inline-flex' : 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: readCssSpacing(props.padding),
+        width: props.width,
+        height: props.height,
+        minHeight: props.minHeight
+    });
+    return dropUndefined(next);
+}
+
+function mapFlexProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.gap = props.gap ?? 'md';
+    next.wrap = props.wrap === false ? 'nowrap' : 'wrap';
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'flex',
+        flexDirection: props.direction,
+        alignItems: props.align,
+        justifyContent: props.justify,
+        flexWrap: next.wrap,
+        gap: readCssSpacing(next.gap)
+    });
+    return dropUndefined(next);
+}
+
+function mapAspectRatioProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['width', 'maxWidth']);
+    next.ratio = props.ratio ?? 16 / 9;
+    next.style = mergeDefaultStyle(props.style, {
+        aspectRatio: typeof next.ratio === 'number' ? String(next.ratio) : undefined,
+        width: props.width,
+        maxWidth: props.maxWidth
+    });
+    return dropUndefined(next);
+}
+
+function mapAffixProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapAppShellProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'header', 'navbar', 'aside', 'footer', 'headerHeight', 'navbarWidth', 'asideWidth', 'footerHeight']);
+    next.padding = props.padding ?? 'md';
+    if (typeof props.headerHeight === 'number') {
+        next.header = { height: props.headerHeight };
+    }
+    if (typeof props.navbarWidth === 'number') {
+        next.navbar = { width: props.navbarWidth, breakpoint: 'sm' };
+    }
+    if (typeof props.asideWidth === 'number') {
+        next.aside = { width: props.asideWidth, breakpoint: 'md' };
+    }
+    if (typeof props.footerHeight === 'number') {
+        next.footer = { height: props.footerHeight };
+    }
+    next.style = mergeDefaultStyle(props.style, {
+        minHeight: '100%'
+    });
+    return dropUndefined(next);
+}
+
+function mapAppShellSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['height', 'width', 'padding']);
+    next.h = props.height;
+    next.w = props.width;
+    next.p = props.padding;
+    next.style = mergeDefaultStyle(props.style, {
+        padding: readCssSpacing(props.padding),
+        height: props.height,
+        width: props.width
+    });
+    return dropUndefined(next);
+}
+
+function mapCollapseProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.in = props.opened ?? true;
+    return dropUndefined(next);
+}
+
+function mapIndicatorProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapScrollAreaProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['width', 'height']);
+    next.w = props.width;
+    next.h = props.height;
+    next.style = mergeDefaultStyle(props.style, {
+        width: props.width,
+        height: props.height
+    });
+    return dropUndefined(next);
+}
+
+function mapScrollAreaAutosizeProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['maxHeight', 'maxWidth']);
+    next.mah = props.maxHeight;
+    next.maw = props.maxWidth;
+    next.style = mergeDefaultStyle(props.style, {
+        maxHeight: props.maxHeight,
+        maxWidth: props.maxWidth
+    });
+    return dropUndefined(next);
+}
+
+function mapSpoilerProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTableScrollContainerProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapVisuallyHiddenProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
 }
 
 function mapDividerProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1477,6 +2537,45 @@ function mapBadgeProps(props: Record<string, unknown>): Record<string, unknown> 
     return dropUndefined({ ...props });
 }
 
+function mapCodeProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    if (props.block === true) {
+        next.style = mergeDefaultStyle(props.style, {
+            display: 'block',
+            whiteSpace: 'pre-wrap'
+        });
+    }
+    return dropUndefined(next);
+}
+
+function mapKbdProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapMarkProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapPillProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapPillGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapNumberFormatterProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapBlockquoteProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapHighlightProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
 function mapListProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['items', 'type']);
     next.type = props.type === 'ordered' ? 'ordered' : 'unordered';
@@ -1484,8 +2583,16 @@ function mapListProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined(next);
 }
 
+function mapListItemProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
 function mapMarkdownProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined(withoutBuilderOnlyProps(props, ['content', 'allowHtml', 'sanitize', 'linkTarget', 'children']));
+}
+
+function mapTypographyStylesProviderProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
 }
 
 function mapButtonProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1497,9 +2604,114 @@ function mapButtonProps(props: Record<string, unknown>): Record<string, unknown>
     return dropUndefined(next);
 }
 
+function mapButtonGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapButtonGroupSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapActionIconProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['label']);
+    next.type = 'button';
+    next['aria-label'] = props.label ?? props['aria-label'];
+    return dropUndefined(next);
+}
+
+function mapActionIconGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapActionIconGroupSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapUnstyledButtonProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['href']);
+    next.type = props.component === 'button' || props.component === undefined ? 'button' : undefined;
+    next.href = props.component === 'a' ? props.href : undefined;
+    return dropUndefined(next);
+}
+
+function mapBurgerProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['label']);
+    next['aria-label'] = props.label ?? 'Toggle navigation';
+    next.type = 'button';
+    return dropUndefined(next);
+}
+
+function mapCloseButtonProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    next['aria-label'] = props['aria-label'] ?? 'Close';
+    return dropUndefined(next);
+}
+
+function mapCopyButtonProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['children', 'copiedLabel', 'variant', 'color', 'size']));
+}
+
+function mapInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = props.type ?? 'text';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapInputBaseProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = props.type ?? 'text';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapInputWrapperProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapInputLabelProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapInputDescriptionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapInputPlaceholderProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapInputClearButtonProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    next['aria-label'] = props['aria-label'] ?? 'Clear input';
+    return dropUndefined(next);
+}
+
+function mapInputErrorProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
 function mapTextInputProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['children']);
     next.type = props.type ?? 'text';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapAutocompleteProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'text';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapPasswordInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'password';
     addFormAccessibilityProps(next, props);
     return dropUndefined(next);
 }
@@ -1516,7 +2728,107 @@ function mapSelectProps(props: Record<string, unknown>): Record<string, unknown>
     return dropUndefined(next);
 }
 
+function mapMultiSelectProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapNativeSelectProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapComboboxProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['children', 'label', 'disabled']));
+}
+
+function mapComboboxTargetProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxDropdownProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxOptionsProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxOptionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxSearchProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'text';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapComboboxEmptyProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxChevronProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapComboboxClearButtonProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    next['aria-label'] = props['aria-label'] ?? 'Clear combobox';
+    return dropUndefined(next);
+}
+
+function mapComboboxHiddenInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'values']);
+    next.type = 'hidden';
+    if (Array.isArray(props.values)) {
+        next.value = props.values.filter(value => typeof value === 'string').join(',');
+    }
+    return dropUndefined(next);
+}
+
+function mapCheckboxGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
 function mapCheckboxProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'checkbox';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapCheckboxCardProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label', 'description']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapCheckboxIndicatorProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapSwitchGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapSwitchProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['children']);
     next.type = 'checkbox';
     addFormAccessibilityProps(next, props);
@@ -1527,6 +2839,23 @@ function mapRadioGroupProps(props: Record<string, unknown>): Record<string, unkn
     const next = withoutBuilderOnlyProps(props, ['children', 'data', 'orientation']);
     addFormAccessibilityProps(next, props);
     return dropUndefined(next);
+}
+
+function mapRadioProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'radio';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapRadioCardProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label', 'description']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapRadioIndicatorProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
 }
 
 function mapNumberInputProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1545,6 +2874,134 @@ function mapDateInputProps(props: Record<string, unknown>): Record<string, unkno
     return dropUndefined(next);
 }
 
+function mapChipProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    return dropUndefined(next);
+}
+
+function mapChipGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['label']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapSliderProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label', 'description']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapRangeSliderProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label', 'description']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapSegmentedControlProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapPinInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapColorInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'color';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapColorPickerProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'color';
+    next.value = props.defaultValue;
+    return dropUndefined(next);
+}
+
+function mapHueSliderProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapAlphaSliderProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapAngleSliderProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapColorSwatchProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    });
+    return dropUndefined(next);
+}
+
+function mapJsonInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapTagsInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapFileInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'clearable']);
+    next.type = 'file';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapFileButtonProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['children', 'variant', 'color', 'size']));
+}
+
+function mapPillsInputProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['values', 'children']);
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapPillsInputFieldProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.type = 'text';
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
+function mapFieldsetProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapRatingProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children', 'label', 'count', 'fractions']);
+    next.type = 'number';
+    next.value = props.defaultValue;
+    next.min = 0;
+    next.max = props.count;
+    addFormAccessibilityProps(next, props);
+    return dropUndefined(next);
+}
+
 function mapDynamicFormProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['children', 'title', 'description', 'submitLabel', 'resetLabel', 'layout', 'gap']);
     next.noValidate = true;
@@ -1553,6 +3010,52 @@ function mapDynamicFormProps(props: Record<string, unknown>): Record<string, unk
 
 function mapTableProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined(withoutBuilderOnlyProps(props, ['title', 'description', 'caption', 'columns', 'rows', 'emptyText', 'pageSize', 'searchable', 'sortable', 'selectable']));
+}
+
+function mapTableCaptionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTableSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTableCellProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapAccordionProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['items', 'children']);
+    if (props.multiple === true) {
+        delete next.defaultValue;
+    }
+    return dropUndefined(next);
+}
+
+function mapAccordionItemProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapAccordionControlProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    return dropUndefined(next);
+}
+
+function mapAccordionPanelProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTimelineProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['items']));
+}
+
+function mapTimelineItemProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTreeProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, []));
 }
 
 function mapMetricCardProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1581,14 +3084,170 @@ function mapBreadcrumbsProps(props: Record<string, unknown>): Record<string, unk
     return dropUndefined(withoutBuilderOnlyProps(props, ['items']));
 }
 
+function mapMenuProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['label', 'items']));
+}
+
+function mapMenuTargetProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapMenuDropdownProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapMenuItemProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    if (typeof props.href === 'string' && props.href.length > 0) {
+        next.component = 'a';
+    } else {
+        next.type = 'button';
+    }
+    return dropUndefined(next);
+}
+
+function mapMenuLabelProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapMenuDividerProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
 function mapTabsProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['tabs', 'children']);
     next.value = props.defaultValue;
     return dropUndefined(next);
 }
 
+function mapTabsListProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTabsTabProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    return dropUndefined(next);
+}
+
+function mapTabsPanelProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapStepperProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['steps', 'children']));
+}
+
+function mapStepperStepProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapStepperCompletedProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapPaginationProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.value = props.defaultValue;
+    return dropUndefined(next);
+}
+
+function mapPaginationControlProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = { ...props };
+    next.type = 'button';
+    return dropUndefined(next);
+}
+
+function mapPaginationItemProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTableOfContentsProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['items']));
+}
+
 function mapOverlayProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined(withoutBuilderOnlyProps(props, ['actions', 'children']));
+}
+
+function mapOverlayRootProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapOverlaySubcomponentProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapDialogProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapVisualOverlayProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapPortalProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapOptionalPortalProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTransitionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['children', 'label', 'style']));
+}
+
+function mapFocusTrapProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapFloatingArrowProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapFloatingIndicatorProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['children']);
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'inline-block',
+        minWidth: 24,
+        minHeight: 4,
+        borderRadius: 999,
+        backgroundColor: 'currentColor'
+    });
+    return dropUndefined(next);
+}
+
+function mapNativeScrollAreaProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapRemoveScrollProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapPopoverProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['label', 'target', 'children']));
+}
+
+function mapHoverCardProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['label', 'target', 'children']));
+}
+
+function mapFloatingTargetProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapFloatingDropdownProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapTooltipProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['children']));
+}
+
+function mapTooltipGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
 }
 
 function mapAlertProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1610,14 +3269,76 @@ function mapLoaderProps(props: Record<string, unknown>): Record<string, unknown>
     return dropUndefined(withoutBuilderOnlyProps(props, ['label']));
 }
 
+function mapLoadingOverlayProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapProgressProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['label']));
+}
+
+function mapProgressRootProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapProgressSectionProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapProgressLabelProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapRingProgressProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined(withoutBuilderOnlyProps(props, ['value', 'color', 'label']));
+}
+
+function mapSemiCircleProgressProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapSkeletonProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['width', 'height']);
+    next.w = props.width;
+    next.h = props.height;
+    next.style = mergeDefaultStyle(props.style, {
+        width: props.width,
+        height: props.height
+    });
+    return dropUndefined(next);
+}
+
 function mapImageProps(props: Record<string, unknown>): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, ['fit']);
     next.style = mergeStyle(props.style, props.fit ? { objectFit: props.fit } : undefined);
     return dropUndefined(next);
 }
 
+function mapBackgroundImageProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['padding', 'minHeight']);
+    next.p = props.padding;
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'grid',
+        alignContent: 'center',
+        gap: 12,
+        padding: readCssSpacing(props.padding),
+        minHeight: props.minHeight
+    });
+    return dropUndefined(next);
+}
+
 function mapAvatarProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined({ ...props });
+}
+
+function mapAvatarGroupProps(props: Record<string, unknown>): Record<string, unknown> {
+    return dropUndefined({ ...props });
+}
+
+function mapThemeIconProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['label']);
+    next['aria-label'] = props.label;
+    return dropUndefined(next);
 }
 
 function mapIconProps(props: Record<string, unknown>): Record<string, unknown> {
@@ -1626,9 +3347,19 @@ function mapIconProps(props: Record<string, unknown>): Record<string, unknown> {
     return dropUndefined(next);
 }
 
+function mapInternalIconProps(props: Record<string, unknown>): Record<string, unknown> {
+    const next = withoutBuilderOnlyProps(props, ['label']);
+    next['aria-label'] = props.label;
+    return dropUndefined(next);
+}
+
 function mapSectionLikeProps(props: Record<string, unknown>, builderOnlyKeys: string[]): Record<string, unknown> {
     const next = withoutBuilderOnlyProps(props, [...builderOnlyKeys, 'children']);
     next.ta = props.align;
+    next.style = mergeDefaultStyle(props.style, {
+        display: 'grid',
+        gap: 24
+    });
     return dropUndefined(next);
 }
 
@@ -1711,6 +3442,37 @@ function mergeStyle(existing: unknown, addition: Record<string, unknown> | undef
     };
 }
 
+function mergeDefaultStyle(existing: unknown, defaults: Record<string, unknown>): Record<string, unknown> {
+    const merged = {
+        ...defaults,
+        ...(isRecord(existing) ? existing : {})
+    };
+    for (const key of Object.keys(merged)) {
+        if (merged[key] === undefined) {
+            delete merged[key];
+        }
+    }
+    return merged;
+}
+
+function readCssSpacing(value: unknown): string | number | undefined {
+    if (typeof value === 'number') {
+        return value;
+    }
+    if (typeof value !== 'string' || value.length === 0) {
+        return undefined;
+    }
+    const fallbackByToken: Record<string, string> = {
+        xs: '0.625rem',
+        sm: '0.75rem',
+        md: '1rem',
+        lg: '1.25rem',
+        xl: '2rem'
+    };
+    const fallback = fallbackByToken[value];
+    return fallback ? `var(--mantine-spacing-${value}, ${fallback})` : value;
+}
+
 function readString(value: unknown): string | undefined {
     return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
@@ -1791,12 +3553,128 @@ function readNavItems(value: unknown): Array<{ label: string; href?: string; val
     return items;
 }
 
+function readMenuItems(value: unknown): Array<{ label: string; href?: string; color?: string; disabled?: boolean }> {
+    return readObjectList(value).map(item => {
+        const menuItem: { label: string; href?: string; color?: string; disabled?: boolean } = {
+            label: String(item.label ?? 'Menu item')
+        };
+        if (typeof item.href === 'string') {
+            menuItem.href = item.href;
+        }
+        if (typeof item.color === 'string') {
+            menuItem.color = item.color;
+        }
+        if (typeof item.disabled === 'boolean') {
+            menuItem.disabled = item.disabled;
+        }
+        return menuItem;
+    });
+}
+
+function readAccordionItems(value: unknown): Array<{ label: string; value: string; content: string; disabled?: boolean }> {
+    return readObjectList(value).map((item, index) => ({
+        label: String(item.label ?? `Item ${index + 1}`),
+        value: typeof item.value === 'string' && item.value.length > 0 ? item.value : `item-${index + 1}`,
+        content: String(item.content ?? ''),
+        disabled: typeof item.disabled === 'boolean' ? item.disabled : undefined
+    }));
+}
+
+function readTimelineItems(value: unknown): Array<{ title: string; description?: string; time?: string; color?: string }> {
+    return readObjectList(value).map(item => {
+        const timelineItem: { title: string; description?: string; time?: string; color?: string } = {
+            title: String(item.title ?? 'Timeline item')
+        };
+        if (typeof item.description === 'string') {
+            timelineItem.description = item.description;
+        }
+        if (typeof item.time === 'string') {
+            timelineItem.time = item.time;
+        }
+        if (typeof item.color === 'string') {
+            timelineItem.color = item.color;
+        }
+        return timelineItem;
+    });
+}
+
+function readStepperSteps(value: unknown): Array<{ label: string; description?: string; content?: string; disabled?: boolean }> {
+    return readObjectList(value).map(item => {
+        const step: { label: string; description?: string; content?: string; disabled?: boolean } = {
+            label: String(item.label ?? 'Step')
+        };
+        if (typeof item.description === 'string') {
+            step.description = item.description;
+        }
+        if (typeof item.content === 'string') {
+            step.content = item.content;
+        }
+        if (typeof item.disabled === 'boolean') {
+            step.disabled = item.disabled;
+        }
+        return step;
+    });
+}
+
+function readTocItems(value: unknown): Array<{ label: string; href: string; active?: boolean }> {
+    return readObjectList(value).map((item, index) => ({
+        label: String(item.label ?? `Section ${index + 1}`),
+        href: typeof item.href === 'string' ? item.href : `#section-${index + 1}`,
+        active: typeof item.active === 'boolean' ? item.active : undefined
+    }));
+}
+
+interface BuilderTreeItem {
+    label: string;
+    value: string;
+    children?: BuilderTreeItem[];
+}
+
+function readTreeNodes(value: unknown): BuilderTreeItem[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+    return value
+        .map((item, index) => readTreeNode(item, index))
+        .filter((item): item is BuilderTreeItem => item !== undefined);
+}
+
+function readTreeNode(value: unknown, index: number): BuilderTreeItem | undefined {
+    if (!isRecord(value)) {
+        return undefined;
+    }
+    const node: BuilderTreeItem = {
+        label: String(value.label ?? `Node ${index + 1}`),
+        value: typeof value.value === 'string' ? value.value : `node-${index + 1}`
+    };
+    const children = readTreeNodes(value.children);
+    if (children.length > 0) {
+        node.children = children;
+    }
+    return node;
+}
+
+function createNativeTreeItems(items: BuilderTreeItem[]): React.ReactElement[] {
+    return items.map(item => React.createElement('li', { key: item.value },
+        item.label,
+        item.children?.length ? React.createElement('ul', undefined, ...createNativeTreeItems(item.children)) : undefined
+    ));
+}
+
 function createMarketingHeader(mantine: BuilderMantineMarketingComponentSet, props: Record<string, unknown>): React.ReactElement[] {
     return [
         props.eyebrow ? React.createElement(mantine.Text ?? 'p', { key: 'eyebrow' }, String(props.eyebrow)) : undefined,
         props.title ? React.createElement(mantine.Title ?? 'h2', { key: 'title', order: 2 }, String(props.title)) : undefined,
         props.subtitle || props.description ? React.createElement(mantine.Text ?? 'p', { key: 'description' }, String(props.subtitle ?? props.description)) : undefined,
-        props.primaryActionLabel || props.secondaryActionLabel ? React.createElement(mantine.Group ?? 'div', { key: 'actions' },
+        props.primaryActionLabel || props.secondaryActionLabel ? React.createElement(mantine.Group ?? 'div', {
+            key: 'actions',
+            gap: 'md',
+            style: {
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: readCssSpacing('md')
+            }
+        },
             props.primaryActionLabel ? React.createElement(mantine.Button ?? 'button', { key: 'primary' }, String(props.primaryActionLabel)) : undefined,
             props.secondaryActionLabel ? React.createElement(mantine.Button ?? 'button', { key: 'secondary', variant: 'subtle' }, String(props.secondaryActionLabel)) : undefined
         ) : undefined

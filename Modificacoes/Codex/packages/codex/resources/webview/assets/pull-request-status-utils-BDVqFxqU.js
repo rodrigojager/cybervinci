@@ -1,0 +1,2 @@
+function e(e){if(e.merged)return`merged`;switch(e.state.toUpperCase()){case`OPEN`:return e.draft?`draft`:`open`;case`MERGED`:return`merged`;case`CLOSED`:return`closed`;default:return`closed`}}export{e as t};
+//# sourceMappingURL=pull-request-status-utils-BDVqFxqU.js.map

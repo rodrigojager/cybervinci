@@ -8,8 +8,15 @@ import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import { WorkspaceService } from '@theia/workspace/lib/browser';
 import { inject, injectable } from '@theia/core/shared/inversify';
 import { CYBERVINCI_MENU_ITEMS, CyberVinciMenus } from '@cybervinci/branding/lib/common';
+import { deserializeBuilderDocumentJson, serializeBuilderDocumentJson } from '@cybervinci/builder-schema';
 import { Builder_FILE_EXTENSION, BuilderCommands, BuilderService, isBuilderFileName } from '../common';
+import {
+    BUILDER_DEMO_LANDING_PAGE_BASENAME,
+    BUILDER_DEMO_LANDING_PAGE_VERSION,
+    createBuilderDemoLandingDocument
+} from '../common/builder-demo-landing';
 import { persistBuilderJsonFile } from './builder-file-persistence';
+import { exportPageToReactTsx } from './services/page-export-service';
 import { BuilderWidget } from './builder-widget';
 
 export namespace BuilderMenus {
@@ -51,7 +58,7 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
     }
 
     onStart(): void {
-        // Presence on FrontendApplicationContribution keeps this extension discoverable without boot-time work.
+        void this.openDemoLandingPageOnStart();
     }
 
     override async open(uri: URI, options?: WidgetOpenerOptions): Promise<BuilderWidget> {
@@ -61,29 +68,47 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
     registerCommands(commands: CommandRegistry): void {
         commands.registerCommand(BuilderCommands.OPEN, UriAwareCommandHandler.MonoSelect(this.selectionService, {
             execute: uri => this.openInContext(uri),
-            isEnabled: uri => this.resolveOpenCommandUri(uri) !== undefined,
+            isEnabled: () => true,
             isVisible: () => true
         }));
         commands.registerCommand(BuilderCommands.NEW_PAGE, {
             execute: () => this.newPage()
+        });
+        commands.registerCommand(BuilderCommands.OPEN_PAGE_JSON, {
+            execute: () => this.openPageJson()
+        });
+        commands.registerCommand(BuilderCommands.SAVE_PAGE, {
+            execute: () => this.savePage(),
+            isEnabled: () => this.activeWidget() !== undefined,
+            isVisible: () => this.activeWidget() !== undefined
+        });
+        commands.registerCommand(BuilderCommands.PREVIEW_PAGE, {
+            execute: () => this.previewPage(),
+            isEnabled: () => this.activeWidget() !== undefined,
+            isVisible: () => this.activeWidget() !== undefined
         });
         commands.registerCommand(BuilderCommands.EXPORT_HTML, {
             execute: selection => this.exportHtml(selection),
             isEnabled: selection => this.selectedBuilderUri(selection) !== undefined || this.activeWidget() !== undefined,
             isVisible: selection => this.selectedBuilderUri(selection) !== undefined || this.activeWidget() !== undefined
         });
+        commands.registerCommand(BuilderCommands.EXPORT_REACT, {
+            execute: selection => this.exportReact(selection),
+            isEnabled: selection => this.selectedBuilderUri(selection) !== undefined || this.activeWidget() !== undefined,
+            isVisible: selection => this.selectedBuilderUri(selection) !== undefined || this.activeWidget() !== undefined
+        });
         commands.registerCommand(BuilderCommands.GENERATE_UI_WITH_AI, {
             execute: selection => this.generateUiWithAi(selection)
         });
-        commands.registerCommand(BuilderCommands.Legacy.OPEN, {
+        commands.registerCommand(BuilderCommands.Legacy.CVUI_OPEN, {
             execute: selection => this.openInContext(selection)
         });
-        commands.registerCommand(BuilderCommands.Legacy.EXPORT_HTML, {
+        commands.registerCommand(BuilderCommands.Legacy.CVUI_EXPORT_HTML, {
             execute: selection => this.exportHtml(selection),
             isEnabled: selection => this.selectedBuilderUri(selection) !== undefined || this.activeWidget() !== undefined,
             isVisible: selection => this.selectedBuilderUri(selection) !== undefined || this.activeWidget() !== undefined
         });
-        commands.registerCommand(BuilderCommands.Legacy.GENERATE_UI_WITH_AI, {
+        commands.registerCommand(BuilderCommands.Legacy.CVUI_GENERATE_UI_WITH_AI, {
             execute: selection => this.generateUiWithAi(selection)
         });
     }
@@ -104,14 +129,34 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
             order: '1'
         });
         menus.registerMenuAction(BuilderMenus.BUILDER, {
+            commandId: BuilderCommands.OPEN_PAGE_JSON.id,
+            label: BuilderCommands.OPEN_PAGE_JSON.label,
+            order: '2'
+        });
+        menus.registerMenuAction(BuilderMenus.BUILDER, {
+            commandId: BuilderCommands.SAVE_PAGE.id,
+            label: BuilderCommands.SAVE_PAGE.label,
+            order: '3'
+        });
+        menus.registerMenuAction(BuilderMenus.BUILDER, {
+            commandId: BuilderCommands.PREVIEW_PAGE.id,
+            label: BuilderCommands.PREVIEW_PAGE.label,
+            order: '4'
+        });
+        menus.registerMenuAction(BuilderMenus.BUILDER, {
             commandId: BuilderCommands.EXPORT_HTML.id,
             label: BuilderCommands.EXPORT_HTML.label,
-            order: '2'
+            order: '5'
+        });
+        menus.registerMenuAction(BuilderMenus.BUILDER, {
+            commandId: BuilderCommands.EXPORT_REACT.id,
+            label: BuilderCommands.EXPORT_REACT.label,
+            order: '6'
         });
         menus.registerMenuAction(BuilderMenus.BUILDER, {
             commandId: BuilderCommands.GENERATE_UI_WITH_AI.id,
             label: BuilderCommands.GENERATE_UI_WITH_AI.label,
-            order: '3'
+            order: '7'
         });
         menus.registerMenuAction(CommonMenus.FILE_NEW, {
             commandId: BuilderCommands.NEW_PAGE.id,
@@ -140,24 +185,104 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
     protected async openInContext(selection: unknown): Promise<void> {
         const resolvedUri = this.resolveOpenCommandUri(selection);
         if (!resolvedUri) {
-            this.messages.warn('Select or open a Builder document before using CyberVinci: Open UI Builder.');
+            await this.openPageJsonOrCreate();
             return;
         }
         await this.open(resolvedUri, { mode: 'activate' });
     }
 
+    protected async openPageJsonOrCreate(): Promise<void> {
+        const opened = await this.openPageJson();
+        if (!opened) {
+            await this.newPage();
+        }
+    }
+
+    protected async openDemoLandingPageOnStart(): Promise<void> {
+        try {
+            const root = await this.workspaceRootUri();
+            const target = root.resolve(`${BUILDER_DEMO_LANDING_PAGE_BASENAME}${Builder_FILE_EXTENSION}`);
+            if (!await this.fileService.exists(target) || await this.shouldRefreshDemoLandingPage(target)) {
+                const document = createBuilderDemoLandingDocument({
+                    id: this.pageIdFromUri(target),
+                    route: '/launch-studio',
+                    createdBy: 'CyberVinci UI Builder'
+                });
+                await persistBuilderJsonFile(this.fileService, target, `${serializeBuilderDocumentJson(document, { space: 2 })}\n`);
+            }
+            await open(this.openerService, target, { activate: true });
+        } catch (error) {
+            if (error instanceof Error && error.message.includes('Open a workspace')) {
+                return;
+            }
+            this.messages.warn(`CyberVinci Builder demo page could not be opened automatically: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    protected async shouldRefreshDemoLandingPage(target: URI): Promise<boolean> {
+        try {
+            const existing = deserializeBuilderDocumentJson((await this.fileService.read(target)).value.toString(), {
+                sourceName: target.path.base
+            });
+            const isManagedDemo = existing.metadata.id === BUILDER_DEMO_LANDING_PAGE_BASENAME
+                || existing.page.id === BUILDER_DEMO_LANDING_PAGE_BASENAME;
+            return isManagedDemo && existing.metadata.builderDemoVersion !== BUILDER_DEMO_LANDING_PAGE_VERSION;
+        } catch {
+            return true;
+        }
+    }
+
     protected async newPage(): Promise<void> {
         const root = await this.workspaceRootUri();
-        const target = await this.nextAvailablePageUri(root, 'new-ui-page');
-        const pageId = target.path.name;
+        const target = await this.nextAvailablePageUri(root, 'new-page');
+        const pageId = this.pageIdFromUri(target);
         const result = await this.service.createDocument({
             id: pageId,
-            name: 'New UI Page',
-            title: 'New UI Page',
+            name: 'New Page',
+            title: 'New Page',
             route: `/${pageId}`
         });
         await persistBuilderJsonFile(this.fileService, target, result.json);
         await open(this.openerService, target, { activate: true });
+    }
+
+    protected async openPageJson(): Promise<boolean> {
+        const root = await this.workspaceRootUri();
+        const selected = await this.fileDialogService.showOpenDialog({
+            title: 'Open CyberVinci page JSON',
+            openLabel: 'Open Page',
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false
+        }, await this.fileService.resolve(root));
+
+        if (!selected) {
+            return false;
+        }
+        if (!isBuilderFileName(selected.path.toString())) {
+            this.messages.warn(`CyberVinci Page Builder supports ${Builder_FILE_EXTENSION}, .builder.json and .cvui.json files.`);
+            return false;
+        }
+        await open(this.openerService, selected, { activate: true });
+        return true;
+    }
+
+    protected async savePage(): Promise<void> {
+        const widget = this.activeWidget();
+        if (!widget) {
+            this.messages.warn('Open a CyberVinci page before saving.');
+            return;
+        }
+        await widget.savePage();
+    }
+
+    protected previewPage(): void {
+        const widget = this.activeWidget();
+        if (!widget) {
+            this.messages.warn('Open a CyberVinci page before previewing.');
+            return;
+        }
+        widget.showPreview();
     }
 
     protected async nextAvailablePageUri(root: URI, baseName: string): Promise<URI> {
@@ -170,6 +295,10 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
         }
     }
 
+    protected pageIdFromUri(uri: URI): string {
+        return uri.path.base.replace(/\.(cvpage|builder|cvui)\.json$/, '');
+    }
+
     protected async exportHtml(selection: unknown): Promise<void> {
         const widget = this.activeWidget();
         const uri = widget?.getUri() ?? this.selectedBuilderUri(selection);
@@ -177,8 +306,8 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
             this.messages.warn('Select or open a Builder document before exporting.');
             return;
         }
-        const json = widget?.getUri().isEqual(uri) ? widget.getJson() : (await this.fileService.read(uri)).value;
-        const exportDir = await this.selectExportDirectory(uri);
+        const json = widget?.getUri().isEqual(uri) ? widget.getJson() : (await this.fileService.read(uri)).value.toString();
+        const exportDir = await this.selectExportDirectory(uri, 'Select HTML export destination');
         if (!exportDir) {
             return;
         }
@@ -188,9 +317,32 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
         this.messages.info(`Exported Builder HTML to ${exportDir.path.toString()}`);
     }
 
-    protected async selectExportDirectory(sourceUri: URI): Promise<URI | undefined> {
+    protected async exportReact(selection: unknown): Promise<void> {
+        const widget = this.activeWidget();
+        const uri = widget?.getUri() ?? this.selectedBuilderUri(selection);
+        if (!uri) {
+            this.messages.warn('Select or open a Builder document before exporting React.');
+            return;
+        }
+
+        const document = widget?.getUri().isEqual(uri)
+            ? widget.getValidatedDocument()
+            : deserializeBuilderDocumentJson((await this.fileService.read(uri)).value.toString(), {
+                sourceName: uri.path.base
+            });
+        const exportDir = await this.selectExportDirectory(uri, 'Select React export destination');
+        if (!exportDir) {
+            return;
+        }
+        const result = exportPageToReactTsx(document);
+        await this.writeExportFiles(exportDir, result.files);
+        const warningText = result.warnings.length > 0 ? ` (${result.warnings.length} warning(s))` : '';
+        this.messages.info(`Exported React TSX to ${exportDir.path.toString()}${warningText}`);
+    }
+
+    protected async selectExportDirectory(sourceUri: URI, title: string): Promise<URI | undefined> {
         return this.fileDialogService.showOpenDialog({
-            title: 'Select HTML export destination',
+            title,
             openLabel: 'Export Here',
             canSelectFiles: false,
             canSelectFolders: true,
@@ -245,7 +397,7 @@ export class BuilderContribution extends NavigatableWidgetOpenHandler<BuilderWid
         } else {
             const root = await this.workspaceRootUri();
             uri = await this.nextAvailablePageUri(root, this.aiPageBaseName(prompt));
-            const pageId = uri.path.name;
+            const pageId = this.pageIdFromUri(uri);
             const created = await this.service.createDocument({
                 id: pageId,
                 name: prompt.length > 80 ? `${prompt.slice(0, 77)}...` : prompt,

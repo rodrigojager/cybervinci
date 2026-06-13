@@ -1,0 +1,94 @@
+.ai-providers-tool.container {
+    border: 1px solid var(--theia-border-color1);
+    border-radius: 4px;
+    margin: 4px 0;
+    overflow: hidden;
+}
+
+.ai-providers-tool.header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    min-height: 28px;
+    padding: 4px 8px;
+}
+
+.ai-providers-tool.header.clickable {
+    cursor: pointer;
+}
+
+.ai-providers-tool.header-left,
+.ai-providers-tool.header-right,
+.ai-providers-tool.row {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ai-providers-tool.title {
+    font-weight: 600;
+}
+
+.ai-providers-tool.icon {
+    color: var(--theia-button-background);
+}
+
+.ai-providers-tool.muted {
+    color: var(--theia-descriptionForeground);
+}
+
+.ai-providers-tool.badge,
+.ai-providers-tool.change-kind {
+    background: var(--theia-badge-background);
+    border-radius: 4px;
+    color: var(--theia-badge-foreground);
+    font-size: 11px;
+    line-height: 16px;
+    padding: 0 6px;
+}
+
+.ai-providers-tool.badge.success {
+    background: var(--theia-testing-iconPassed);
+    color: var(--theia-button-foreground);
+}
+
+.ai-providers-tool.badge.error {
+    background: var(--theia-errorForeground);
+    color: var(--theia-button-foreground);
+}
+
+.ai-providers-tool.details {
+    border-top: 1px solid var(--theia-border-color1);
+    padding: 6px 8px;
+}
+
+.ai-providers-tool.row + .ai-providers-tool.row {
+    margin-top: 4px;
+}
+
+.ai-providers-tool.path {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ai-providers-tool.output {
+    border-top: 1px solid var(--theia-border-color1);
+    color: var(--theia-editor-foreground);
+    margin: 0;
+    max-height: 240px;
+    overflow: auto;
+    padding: 8px;
+    white-space: pre-wrap;
+}
+
+.ai-providers-tool.output.diff {
+    font-size: var(--theia-code-font-size);
+    white-space: pre;
+}
+
+.ai-providers-tool.done {
+    color: var(--theia-descriptionForeground);
+    text-decoration: line-through;
+}

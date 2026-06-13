@@ -1,0 +1,2 @@
+import{f as e}from"./vscode-api-CjIlXYxl.js";function t({hostId:t,navigate:n,section:r,setSelectedHostId:i}){i(t),e.dispatchMessage(`show-settings`,{section:r})}export{t};
+//# sourceMappingURL=hooks-settings-navigation-GxCtibEJ.js.map

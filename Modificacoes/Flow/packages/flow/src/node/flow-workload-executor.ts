@@ -5,7 +5,8 @@ import * as path from 'path';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { generateUuid } from '@theia/core/lib/common';
 import { getTextOfResponse, LanguageModel, LanguageModelRegistry, LanguageModelService, UserRequest } from '@theia/ai-core';
-import { CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
+import { ReasoningStage, VirtualReasoningEngine, VirtualReasoningMode } from '@cybervinci/ai-providers/lib/common/virtual-reasoning';
 import * as Ajv from '@theia/core/shared/ajv';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import {
@@ -23,6 +24,7 @@ import {
     FlowWorkflow,
     FlowWorkflowState,
     FlowWorkload,
+    FlowReasoningMode,
     FlowSizeLimits,
     limitFlowJsonValue,
     truncateFlowText
@@ -35,6 +37,7 @@ import { AppliedImageEffect, ImageEffectHostAdapter, LocalImageEffectHostAdapter
 import workloadOutputSchema = require('./schemas/workload-output.schema.json');
 import contractsSchema = require('./schemas/contracts.schema.json');
 import { MemoryAdapter } from './memory-adapter';
+import { FlowAgentProviderRegistry, FlowAgentProviderResolver, FlowLlmProviderConfig } from './flow-agent-provider-registry';
 
 export interface FlowWorkloadExecutionContext {
     workflow: FlowWorkflow;
@@ -59,28 +62,6 @@ export interface FlowWorkloadExecutor {
     executeMemoryWriteWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeReportWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
 }
-
-interface LlmCommandProviderConfig {
-    command: string;
-}
-
-type LlmProviderMode = 'auto' | 'command' | 'chat' | 'codex' | 'none';
-
-interface LlmChatProviderConfig {
-    model: LanguageModel;
-    agentId: string;
-    purpose: string;
-}
-
-interface LlmE2eMockProviderConfig {
-    mock: 'e2e';
-}
-
-interface LlmCodexProviderProviderConfig {
-    codexProvider: CodexProviderService;
-}
-
-type FlowLlmProviderConfig = LlmCommandProviderConfig | LlmChatProviderConfig | LlmE2eMockProviderConfig | LlmCodexProviderProviderConfig;
 
 type SignalValue = string | number | boolean;
 
@@ -163,6 +144,23 @@ interface InputArtifact {
     content: string;
 }
 
+interface FlowPrimitiveItem {
+    index: number;
+    value: unknown;
+    source?: string;
+}
+
+interface FlowPrimitiveStepResult {
+    stateId: string;
+    workloadId: string;
+    failed: boolean;
+    artifacts: FlowArtifact[];
+    effects: FlowEffect[];
+    signals: FlowRun['signals'];
+    issues: string[];
+    metadata?: Record<string, unknown>;
+}
+
 @injectable()
 export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor {
 
@@ -174,7 +172,8 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         @inject(LanguageModelRegistry) @optional() protected readonly languageModelRegistry?: LanguageModelRegistry,
         @inject(LanguageModelService) @optional() protected readonly languageModelService?: LanguageModelService,
         @inject(CodexProviderService) @optional() protected readonly codexProviderService?: CodexProviderService,
-        @inject(MemoryAdapter) @optional() protected readonly memoryAdapter?: MemoryAdapter
+        @inject(MemoryAdapter) @optional() protected readonly memoryAdapter?: MemoryAdapter,
+        @inject(FlowAgentProviderResolver) @optional() protected readonly agentProviderResolver?: FlowAgentProviderResolver
     ) {
     }
 
@@ -182,6 +181,10 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         switch (context.state.type) {
             case 'agent':
                 return this.executeAgentWorkload(context);
+            case 'dynamic_parallel':
+                return this.executeDynamicParallelWorkload(context);
+            case 'tournament':
+                return this.executeTournamentWorkload(context);
             case 'context':
                 return this.executeContextWorkload(context);
             case 'command':
@@ -195,13 +198,165 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         }
     }
 
+    async executeDynamicParallelWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
+        const config = context.state.dynamicParallel;
+        if (!config?.itemsFrom || !config.worker) {
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Dynamic parallel workload "${context.workload.stateId}" is missing item source or worker configuration.`,
+                completionStatus: 'failed'
+            });
+        }
+        const items = await this.resolvePrimitiveItems(context, config.itemsFrom, config.maxItems);
+        if (items.length === 0) {
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Dynamic parallel workload "${context.workload.stateId}" could not resolve any item from "${config.itemsFrom}".`,
+                completionStatus: 'failed'
+            });
+        }
+        const concurrency = boundedInteger(config.concurrency, 1, Math.max(1, items.length), 3);
+        const runWorker = async (item: FlowPrimitiveItem): Promise<FlowPrimitiveStepResult> => {
+            const itemArtifact = await this.materializePrimitiveInputArtifact(
+                context,
+                `dynamic-parallel/${context.workload.stateId}/items/item-${item.index}.json`,
+                JSON.stringify({ index: item.index, item: item.value }, undefined, 2)
+            );
+            const workerStateId = `${context.workload.stateId}.item_${item.index}`;
+            const workerState: FlowWorkflowState = {
+                ...config.worker,
+                id: workerStateId,
+                agent: config.worker.agent || context.state.agent,
+                input: {
+                    ...(config.worker.input || {}),
+                    include: uniqueStrings([
+                        ...(config.worker.input?.include || []),
+                        ...context.workload.inputArtifacts,
+                        itemArtifact.summary || itemArtifact.uri
+                    ])
+                }
+            };
+            return this.executePrimitiveStep(context, workerStateId, workerState, {
+                itemIndex: item.index,
+                item: item.value,
+                parentStateId: context.workload.stateId
+            });
+        };
+        const results = await mapWithConcurrency(items, concurrency, runWorker);
+        const failed = dynamicParallelFailed(results, config.failurePolicy, config.failureThreshold);
+        const aggregate = {
+            type: 'dynamic_parallel',
+            stateId: context.workload.stateId,
+            itemCount: items.length,
+            successCount: results.filter(result => !result.failed).length,
+            failureCount: results.filter(result => result.failed).length,
+            failurePolicy: config.failurePolicy || 'best_effort',
+            joinStrategy: config.joinStrategy || 'collect',
+            results: results.map(result => primitiveResultSummary(result))
+        };
+        const aggregatePath = config.outputKey || context.state.outputs?.[0] || `dynamic-parallel/${context.workload.stateId}/results.json`;
+        const aggregateArtifactUri = await this.writePrimitiveAggregateArtifact(context, aggregatePath, aggregate);
+        this.registerPrimitiveAggregateSignals(context, 'dynamic_parallel', aggregate.itemCount, aggregate.successCount, aggregate.failureCount);
+        for (const issue of primitiveIssues(results)) {
+            if (!context.workload.issues.includes(issue)) {
+                context.workload.issues.push(issue);
+            }
+        }
+        context.workload.outputEnvelope = primitiveOutputEnvelope(context, failed ? 'failed' : 'completed', aggregatePath, aggregate);
+        return this.completeWorkloadWithArtifacts(context, [aggregateArtifactUri], {
+            effectSummary: failed
+                ? `Dynamic parallel "${context.workload.stateId}" completed with ${aggregate.failureCount} failed item(s).`
+                : `Dynamic parallel "${context.workload.stateId}" completed ${aggregate.successCount} item(s).`,
+            completionStatus: failed ? 'failed' : 'completed'
+        });
+    }
+
+    async executeTournamentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
+        const config = context.state.tournament;
+        if (!config?.candidatesFrom || !config.judge) {
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Tournament workload "${context.workload.stateId}" is missing candidate source or judge configuration.`,
+                completionStatus: 'failed'
+            });
+        }
+        const candidates = await this.resolvePrimitiveItems(context, config.candidatesFrom, config.maxComparisons);
+        if (candidates.length === 0) {
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Tournament workload "${context.workload.stateId}" could not resolve any candidate from "${config.candidatesFrom}".`,
+                completionStatus: 'failed'
+            });
+        }
+        const candidateArtifact = await this.materializePrimitiveInputArtifact(
+            context,
+            `tournament/${context.workload.stateId}/candidates.json`,
+            JSON.stringify({
+                candidates: candidates.map(candidate => ({ index: candidate.index, value: candidate.value })),
+                criteria: config.criteria || [],
+                strategy: config.strategy || 'single_round',
+                winnerCount: config.winnerCount || 1,
+                tieBreaker: config.tieBreaker || 'judge_again'
+            }, undefined, 2)
+        );
+        const judgeStateId = `${context.workload.stateId}.judge`;
+        const judgeState: FlowWorkflowState = {
+            ...config.judge,
+            id: judgeStateId,
+            agent: config.judge.agent || context.state.agent || 'judge',
+            input: {
+                ...(config.judge.input || {}),
+                include: uniqueStrings([
+                    ...(config.judge.input?.include || []),
+                    ...context.workload.inputArtifacts,
+                    candidateArtifact.summary || candidateArtifact.uri
+                ])
+            },
+            taskPrompt: [
+                config.judge.taskPrompt || 'Judge the candidates and select the winner(s).',
+                '',
+                `Strategy: ${config.strategy || 'single_round'}.`,
+                `Winner count: ${config.winnerCount || 1}.`,
+                `Tie breaker: ${config.tieBreaker || 'judge_again'}.`,
+                ...(config.criteria?.length ? ['', 'Criteria:', ...config.criteria.map(item => `- ${item}`)] : [])
+            ].join('\n')
+        };
+        const judgeResult = await this.executePrimitiveStep(context, judgeStateId, judgeState, {
+            candidateCount: candidates.length,
+            parentStateId: context.workload.stateId,
+            strategy: config.strategy || 'single_round'
+        });
+        const aggregate = {
+            type: 'tournament',
+            stateId: context.workload.stateId,
+            candidateCount: candidates.length,
+            strategy: config.strategy || 'single_round',
+            winnerCount: config.winnerCount || 1,
+            tieBreaker: config.tieBreaker || 'judge_again',
+            criteria: config.criteria || [],
+            judge: primitiveResultSummary(judgeResult)
+        };
+        const aggregatePath = context.state.outputs?.[0] || `tournament/${context.workload.stateId}/result.json`;
+        const aggregateArtifactUri = await this.writePrimitiveAggregateArtifact(context, aggregatePath, aggregate);
+        this.registerPrimitiveAggregateSignals(context, 'tournament', candidates.length, judgeResult.failed ? 0 : 1, judgeResult.failed ? 1 : 0);
+        for (const issue of primitiveIssues([judgeResult])) {
+            if (!context.workload.issues.includes(issue)) {
+                context.workload.issues.push(issue);
+            }
+        }
+        context.workload.outputEnvelope = primitiveOutputEnvelope(context, judgeResult.failed ? 'failed' : 'completed', aggregatePath, aggregate);
+        return this.completeWorkloadWithArtifacts(context, [aggregateArtifactUri], {
+            effectSummary: judgeResult.failed
+                ? `Tournament "${context.workload.stateId}" judge failed.`
+                : `Tournament "${context.workload.stateId}" selected winner(s) from ${candidates.length} candidate(s).`,
+            completionStatus: judgeResult.failed ? 'failed' : 'completed'
+        });
+    }
+
     async executeAgentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
-        const provider = await this.resolveLlmProvider();
-        if (!provider) {
-            return this.executeDeterministicFallbackWorkload(context, {
-                artifactKind: 'other',
-                effectKind: 'notification',
-                effectSummary: `No LLM provider configured for agent execution (${context.state.id || context.workload.stateId}).`
+        let provider: FlowLlmProviderConfig;
+        try {
+            provider = await this.resolveLlmProvider(context);
+        } catch (error) {
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" failed before execution: ${errorToMessage(error)}`,
+                completionStatus: 'failed'
             });
         }
         const policy = context.state.retry;
@@ -248,17 +403,15 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
                             completionStatus: 'failed'
                         });
                     }
-                    return this.executeDeterministicFallbackWorkload(context, {
-                        artifactKind: 'other',
-                        effectKind: 'notification',
-                        effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" used deterministic fallback: ${message}`
+                    return this.completeWorkloadWithArtifacts(context, [], {
+                        effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" failed: ${message}`,
+                        completionStatus: 'failed'
                     });
                 }
             }
-            return this.executeDeterministicFallbackWorkload(context, {
-                artifactKind: 'other',
-                effectKind: 'notification',
-                effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" retry limit reached (${maxRetries}).`
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" failed: retry limit reached (${maxRetries}).`,
+                completionStatus: 'failed'
             });
         } catch (error) {
             const message = errorToMessage(error);
@@ -281,10 +434,9 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
                     completionStatus: 'failed'
                 });
             }
-            return this.executeDeterministicFallbackWorkload(context, {
-                artifactKind: 'other',
-                effectKind: 'notification',
-                effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" used deterministic fallback: ${message}`
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Agent workload "${context.state.id || context.workload.stateId}" failed: ${message}`,
+                completionStatus: 'failed'
             });
         }
     }
@@ -301,19 +453,15 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         const providerPayload = this.buildProviderPayload(context, agentMarkdown.content, inputArtifacts);
         const rawResult = await this.invokeLlmProvider(context, providerPayload, provider, workloadDir);
         const resolvedResult = await resolveAgentResultPayload(rawResult, workloadDir);
-        const expectedOutputs = context.state.outputs && context.state.outputs.length > 0 ? context.state.outputs : ['report.md'];
+        const expectedOutputs = expectedOutputPaths(context.state);
         const generation = parseAgentGenerationResult(resolvedResult, expectedOutputs, context, { allowFallback: false });
         normalizeContractPackageGeneration(context, generation, expectedOutputs, inputArtifacts);
         await normalizeQaGeneration(context, generation, inputArtifacts);
         const generatedEnvelope = buildWorkloadOutputEnvelope(context, generation);
         validateWorkloadOutputEnvelope(generatedEnvelope, context);
         const resultJsonArtifactUri = await writeValidatedWorkloadResultJson(workloadDir, generatedEnvelope, context);
-        const outputArtifactUris = await writeAgentOutputs(
-            workloadDir,
-            expectedOutputs,
-            generation.artifacts,
-            buildFallbackArtifactContentByPath(expectedOutputs, generation.report)
-        );
+        validateGeneratedArtifactCoverage(generation.artifacts, expectedOutputs, context);
+        const outputArtifactUris = await writeAgentOutputs(workloadDir, expectedOutputs, generation.artifacts);
         const blockingEffectFailures = await this.applyProviderGenerationToRun(context, generation);
         const completionStatus = blockingEffectFailures.length > 0 ? 'failed' : generation.status;
         const completionSummary = blockingEffectFailures.length > 0
@@ -331,22 +479,36 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         inputArtifacts: InputArtifact[]
     ): Record<string, unknown> {
         const parsedAgentMarkdown = parseAgentMarkdownSections(agentMarkdown);
-        const expectedOutputs = context.state.outputs && context.state.outputs.length > 0 ? context.state.outputs : ['report.md'];
+        const expectedOutputs = expectedOutputPaths(context.state);
         return {
             role: parsedAgentMarkdown.role,
             qualityCriteria: parsedAgentMarkdown.qualityCriteria,
+            instructions: {
+                systemPrompt: toOptionalTrimmedString(context.state.systemPrompt),
+                taskPrompt: toOptionalTrimmedString(context.state.taskPrompt)
+            },
+            modelExecution: context.state.modelExecution,
+            orchestrationPrimitive: {
+                type: context.state.type,
+                dynamicParallel: context.state.dynamicParallel,
+                tournament: context.state.tournament
+            },
             context: {
                 prompt: truncateFlowText(context.run.prompt, FlowSizeLimits.promptBytes, 'prompt'),
                 workflow: { id: context.workflow.id, name: context.workflow.name },
                 stateId: context.workload.stateId,
                 workloadId: context.workload.id,
                 contextPack: renderContextPack(resolveContextPackForWorkload(context.run, context.workflow, context.workload), context.workflow, context.workload),
-                inputArtifacts: inputArtifacts.map(artifact => artifact.path)
+                inputArtifacts: inputArtifacts.map(artifact => ({
+                    path: artifact.path,
+                    content: artifact.content
+                }))
             },
-            workOrder: renderWorkOrder(context.workflow, context.workload),
+            workOrder: renderWorkOrder(context.workflow, context.workload, context.state),
             expectedOutput: {
                 format: parsedAgentMarkdown.outputFormat || buildDefaultExpectedOutputFormat(expectedOutputs),
-                allowedPaths: expectedOutputs
+                allowedPaths: expectedOutputs,
+                deliverables: normalizedDeliverables(context.state)
             }
         };
     }
@@ -360,7 +522,7 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         await fs.writeFile(path.join(inputDir, 'prompt.md'), truncateFlowText(context.run.prompt, FlowSizeLimits.promptBytes, 'prompt'), 'utf8');
         await this.ensureWorkloadContextPack(context);
         await fs.writeFile(path.join(inputDir, 'context-pack.md'), renderContextPack(resolveContextPackForWorkload(context.run, context.workflow, context.workload), context.workflow, context.workload), 'utf8');
-        await fs.writeFile(path.join(inputDir, 'work-order.md'), renderWorkOrder(context.workflow, context.workload), 'utf8');
+        await fs.writeFile(path.join(inputDir, 'work-order.md'), renderWorkOrder(context.workflow, context.workload, context.state), 'utf8');
         return this.copyInputArtifacts(context, path.join(inputDir, 'artifacts'));
     }
 
@@ -383,15 +545,185 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         for (const included of context.workload.inputArtifacts) {
             const targetFile = path.join(artifactDir, ...safeArtifactPathParts(included));
             const sourceArtifact = findInputArtifactPath(context.run, included);
-            const content = sourceArtifact
-                ? await readTextFile(sourceArtifact)
-                : `Input artifact not found: ${included}`;
-            const normalizedContent = truncateFlowText(content ?? `Empty artifact content for ${included}`, FlowSizeLimits.artifactBytes, `input artifact ${included}`);
+            if (!sourceArtifact) {
+                throw new Error(`Required input artifact "${included}" could not be resolved from run artifacts.`);
+            }
+            const content = await readTextFile(sourceArtifact);
+            if (content === undefined) {
+                throw new Error(`Required input artifact "${included}" could not be read from ${sourceArtifact}.`);
+            }
             await fs.mkdir(path.dirname(targetFile), { recursive: true });
-            await fs.writeFile(targetFile, normalizeText(normalizedContent), 'utf8');
-            copied.push({ path: included, content: normalizedContent });
+            await fs.writeFile(targetFile, normalizeText(content), 'utf8');
+            copied.push({ path: included, content });
         }
         return copied;
+    }
+
+    protected async resolvePrimitiveItems(context: FlowWorkloadExecutionContext, source: string, maxItems?: number): Promise<FlowPrimitiveItem[]> {
+        const limit = boundedInteger(maxItems, 1, 100, 25);
+        const directArtifactPath = findInputArtifactPath(context.run, source);
+        if (directArtifactPath) {
+            const content = await readTextFile(directArtifactPath);
+            const parsed = primitiveItemsFromText(content || '', source);
+            if (parsed.length > 0) {
+                return parsed.slice(0, limit).map((value, index) => ({ index: index + 1, value, source }));
+            }
+        }
+        const matchingArtifacts = findPrimitiveSourceArtifacts(context.run, source);
+        if (matchingArtifacts.length > 0) {
+            const values: unknown[] = [];
+            for (const artifact of matchingArtifacts) {
+                const filePath = artifactPathFromUri(artifact.uri);
+                const content = filePath ? await readTextFile(filePath) : undefined;
+                values.push({
+                    path: artifact.summary || artifact.uri,
+                    content: content || ''
+                });
+            }
+            return values.slice(0, limit).map((value, index) => ({ index: index + 1, value, source }));
+        }
+        const signal = context.run.signals.find(candidate => candidate.key === source);
+        if (signal) {
+            const parsed = primitiveItemsFromText(String(signal.value), source);
+            if (parsed.length > 0) {
+                return parsed.slice(0, limit).map((value, index) => ({ index: index + 1, value, source }));
+            }
+            return [{ index: 1, value: signal.value, source }];
+        }
+        if (source === 'prompt' || source === 'input/request.md') {
+            return [{ index: 1, value: context.run.prompt, source }];
+        }
+        return [];
+    }
+
+    protected async materializePrimitiveInputArtifact(
+        context: FlowWorkloadExecutionContext,
+        relativePath: string,
+        content: string
+    ): Promise<FlowArtifact> {
+        const workloadDir = workloadOutputDir(context.workspaceRootUri, context.run.id, context.workload.id);
+        const artifactPath = path.join(workloadDir, 'primitive-inputs', ...safeArtifactPathParts(relativePath));
+        const artifactUri = await writeOutputFile(artifactPath, content);
+        const artifact: FlowArtifact = {
+            id: stableId('artifact', context.run.id, context.workload.id, relativePath),
+            runId: context.run.id,
+            stateId: context.workload.stateId,
+            uri: artifactUri,
+            kind: 'input',
+            summary: relativePath,
+            createdAt: timestamp()
+        };
+        upsertArtifact(context.run.artifacts, artifact);
+        pushEvent(context.run, {
+            type: 'artifact.created',
+            stateId: context.workload.stateId,
+            workloadId: context.workload.id,
+            message: `Primitive input "${relativePath}" created.`
+        });
+        return artifact;
+    }
+
+    protected async writePrimitiveAggregateArtifact(
+        context: FlowWorkloadExecutionContext,
+        relativePath: string,
+        payload: Record<string, unknown>
+    ): Promise<string> {
+        const workloadDir = workloadOutputDir(context.workspaceRootUri, context.run.id, context.workload.id);
+        const artifactPath = path.join(workloadDir, 'output', 'artifacts', ...safeArtifactPathParts(relativePath));
+        return writeOutputFile(artifactPath, JSON.stringify(payload, undefined, 2));
+    }
+
+    protected async executePrimitiveStep(
+        parentContext: FlowWorkloadExecutionContext,
+        stateId: string,
+        state: FlowWorkflowState,
+        metadata?: Record<string, unknown>
+    ): Promise<FlowPrimitiveStepResult> {
+        const now = timestamp();
+        const workload: FlowWorkload = {
+            id: stableId('primitive-workload', parentContext.workload.id, stateId),
+            runId: parentContext.run.id,
+            stateId,
+            branchId: parentContext.workload.stateId,
+            agent: state.agent,
+            status: 'running',
+            inputArtifacts: state.input?.include || [],
+            outputArtifacts: [],
+            issues: [],
+            effectIds: [],
+            createdAt: now,
+            updatedAt: now
+        };
+        parentContext.run.workloads.push(workload);
+        parentContext.run.stateStatuses[stateId] = 'running';
+        pushEvent(parentContext.run, {
+            type: 'workload.created',
+            stateId,
+            workloadId: workload.id,
+            message: `Primitive workload "${workload.id}" created.`
+        });
+        try {
+            const stepContext: FlowWorkloadExecutionContext = {
+                workflow: parentContext.workflow,
+                run: parentContext.run,
+                state,
+                workload
+            };
+            if (parentContext.workspaceRootUri) {
+                stepContext.workspaceRootUri = parentContext.workspaceRootUri;
+            }
+            await this.execute(stepContext);
+        } catch (error) {
+            const message = errorToMessage(error);
+            workload.status = 'failed';
+            workload.updatedAt = timestamp();
+            workload.issues.push(message);
+            parentContext.run.stateStatuses[stateId] = 'failed';
+            pushEvent(parentContext.run, {
+                type: 'workload.failed',
+                stateId,
+                workloadId: workload.id,
+                message,
+                payload: { parentStateId: parentContext.workload.stateId, metadata }
+            });
+        }
+        const result: FlowPrimitiveStepResult = {
+            stateId,
+            workloadId: workload.id,
+            failed: workload.status === 'failed',
+            artifacts: parentContext.run.artifacts.filter(artifact => artifact.stateId === stateId),
+            effects: parentContext.run.effects.filter(effect => effect.stateId === stateId),
+            signals: parentContext.run.signals.filter(signal => signal.stateId === stateId),
+            issues: workload.issues
+        };
+        if (metadata) {
+            result.metadata = metadata;
+        }
+        return result;
+    }
+
+    protected registerPrimitiveAggregateSignals(
+        context: FlowWorkloadExecutionContext,
+        primitive: 'dynamic_parallel' | 'tournament',
+        itemCount: number,
+        successCount: number,
+        failureCount: number
+    ): void {
+        const now = timestamp();
+        const base = `${context.workload.stateId}.${primitive}`;
+        for (const [key, value] of Object.entries({
+            [`${base}.item_count`]: itemCount,
+            [`${base}.success_count`]: successCount,
+            [`${base}.failure_count`]: failureCount
+        })) {
+            context.run.signals.push({
+                key,
+                value,
+                stateId: context.workload.stateId,
+                runId: context.run.id,
+                createdAt: now
+            });
+        }
     }
 
     protected async loadAgentMarkdown(context: FlowWorkloadExecutionContext, agentPath: string) {
@@ -665,98 +997,39 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         }
     }
 
-    protected async resolveLlmProvider(): Promise<FlowLlmProviderConfig | undefined> {
-        if (e2eMockLlmProviderEnabled()) {
-            return { mock: 'e2e' };
-        }
-        const mode = resolveLlmProviderMode();
-        if (mode === 'none') {
-            return undefined;
-        }
-        if (mode === 'chat') {
-            return this.resolveChatLlmProvider();
-        }
-        if (mode === 'codex') {
-            return this.resolveCodexProviderProvider();
-        }
-        if (mode === 'command') {
-            return resolveCommandLlmProvider();
-        }
-        const chatProvider = await this.resolveChatLlmProvider();
-        if (chatProvider) {
-            return chatProvider;
-        }
-        const codexProviderProvider = await this.resolveCodexProviderProvider();
-        if (codexProviderProvider) {
-            return codexProviderProvider;
-        }
-        return resolveCommandLlmProvider();
-    }
-
-    protected async resolveCodexProviderProvider(): Promise<LlmCodexProviderProviderConfig | undefined> {
-        if (!this.codexProviderService) {
-            return undefined;
-        }
-        try {
-            const status = await this.codexProviderService.getStatus({ cwd: process.cwd() });
-            if (status.available && status.authenticated !== false) {
-                return { codexProvider: this.codexProviderService };
-            }
-        } catch {
-            return undefined;
-        }
-        return undefined;
-    }
-
-    protected async resolveChatLlmProvider(): Promise<LlmChatProviderConfig | undefined> {
-        if (!this.languageModelRegistry || !this.languageModelService) {
-            return undefined;
-        }
-        const hints = resolveLlmChatHints();
-        const modelId = hints.modelId;
-        if (modelId) {
-            const modelById = await this.resolveChatModelByConfig({ modelId, agentId: hints.agentId, purpose: hints.purpose });
-            if (modelById) {
-                return { model: modelById, ...hints };
-            }
-        }
-        const selectedByPurpose = await this.resolveChatModelByConfig(hints);
-        if (selectedByPurpose) {
-            return { model: selectedByPurpose, ...hints };
-        }
-        const selectedByChat = await this.resolveChatModelByConfig({ agentId: hints.agentId, purpose: 'chat' });
-        if (selectedByChat) {
-            return { model: selectedByChat, agentId: hints.agentId, purpose: 'chat' };
-        }
-        const fallbackModels = await this.languageModelRegistry.getLanguageModels();
-        const readyModel = fallbackModels.find(model => model.status.status === 'ready');
-        if (readyModel) {
-            return { model: readyModel, agentId: hints.agentId, purpose: 'chat' };
-        }
-        return undefined;
-    }
-
-    protected async resolveChatModelByConfig(
-        hints: { modelId?: string; agentId: string; purpose: string; }
-    ): Promise<LanguageModel | undefined> {
-        if (!this.languageModelRegistry) {
-            return undefined;
-        }
-        if (hints.modelId) {
-            const model = await this.languageModelRegistry.getLanguageModel(hints.modelId);
-            if (model && model.status.status === 'ready') {
-                return model;
-            }
-            return undefined;
-        }
-        const model = await this.languageModelRegistry.selectLanguageModel({ agent: hints.agentId, purpose: hints.purpose });
-        if (model && model.status.status === 'ready') {
-            return model;
-        }
-        return undefined;
+    protected async resolveLlmProvider(context: FlowWorkloadExecutionContext): Promise<FlowLlmProviderConfig> {
+        const resolver = this.agentProviderResolver || new FlowAgentProviderRegistry(
+            this.languageModelRegistry,
+            this.languageModelService,
+            this.codexProviderService
+        );
+        return resolver.resolveProvider(context);
     }
 
     protected async invokeLlmProvider(
+        context: FlowWorkloadExecutionContext,
+        providerPayload: Record<string, unknown>,
+        provider: FlowLlmProviderConfig,
+        workloadDir: string
+    ): Promise<string> {
+        const virtualReasoning = context.state.modelExecution?.virtualReasoning;
+        if (!('mock' in provider) && virtualReasoning?.enabled && virtualReasoning.mode && virtualReasoning.mode !== 'off') {
+            return runVirtualReasoningHarness({
+                mode: virtualReasoning.mode,
+                basePayload: providerPayload,
+                invoke: payload => this.invokeLlmProviderDirect(context, payload, provider, workloadDir),
+                onProgress: message => pushEvent(context.run, {
+                    type: 'virtual_reasoning.progress',
+                    stateId: context.workload.stateId,
+                    workloadId: context.workload.id,
+                    message
+                })
+            });
+        }
+        return this.invokeLlmProviderDirect(context, providerPayload, provider, workloadDir);
+    }
+
+    protected async invokeLlmProviderDirect(
         context: FlowWorkloadExecutionContext,
         providerPayload: Record<string, unknown>,
         provider: FlowLlmProviderConfig,
@@ -774,7 +1047,7 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
             );
         }
         if ('codexProvider' in provider) {
-            return invokeCodexProviderProvider(provider.codexProvider, context, providerPayload, workloadDir);
+            return invokeCodexProviderProvider(provider.codexProvider, context, providerPayload, workloadDir, provider.modelId);
         }
         return invokeChatProvider(
             this.languageModelService,
@@ -786,20 +1059,18 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
     }
 
     async executeContextWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
-        return this.executeDeterministicFallbackWorkload(context, {
-            artifactKind: 'other',
-            effectKind: 'notification',
-            effectSummary: `Deterministic fallback context workload for ${context.state.id || context.workload.stateId}.`
+        return this.completeWorkloadWithArtifacts(context, [], {
+            effectSummary: `Context workload "${context.state.id || context.workload.stateId}" cannot execute without an external context provider request.`,
+            completionStatus: 'failed'
         });
     }
 
     async executeCommandWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
         const command = toTrimmedString(context.state.command);
         if (!command) {
-            return this.completeWorkload(context, {
-                artifactKind: 'other',
-                effectKind: 'command',
-                effectSummary: `Command workload for ${context.state.id || context.workload.stateId} has no command configured.`
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: `Command workload "${context.state.id || context.workload.stateId}" has no command configured.`,
+                completionStatus: 'failed'
             });
         }
         const result = await this.commandEffectHostAdapter.apply(context.workspaceRootUri, {
@@ -916,75 +1187,10 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
     }
 
     async executeDefaultWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
-        return this.executeDeterministicFallbackWorkload(context, {
-            artifactKind: 'other',
-            effectKind: 'notification',
-            effectSummary: `Deterministic fallback workload for ${context.state.id || context.workload.stateId}.`
+        return this.completeWorkloadWithArtifacts(context, [], {
+            effectSummary: `Unsupported Flow workload type "${context.state.type}" for state "${context.state.id || context.workload.stateId}".`,
+            completionStatus: 'failed'
         });
-    }
-
-    protected executeDeterministicFallbackWorkload(
-        context: FlowWorkloadExecutionContext,
-        options: {
-            artifactKind: FlowArtifact['kind'];
-            effectKind: FlowEffect['kind'];
-            effectSummary: string;
-        }
-    ): FlowWorkloadExecutionResult {
-        return this.completeWorkload(context, options);
-    }
-
-    protected completeWorkload(
-        context: FlowWorkloadExecutionContext,
-        options: {
-            artifactKind: FlowArtifact['kind'];
-            effectKind: FlowEffect['kind'];
-            effectSummary: string;
-        }
-    ): FlowWorkloadExecutionResult {
-        const { run, workload } = context;
-        const now = timestamp();
-        const artifactUri = `flow://${run.id}/${workload.stateId}/report.md`;
-        const effectId = generateUuid();
-
-        workload.status = 'done';
-        workload.outputArtifacts = [...workload.outputArtifacts, artifactUri];
-        workload.effectIds = [...workload.effectIds, effectId];
-        workload.reportUri = artifactUri;
-        workload.updatedAt = now;
-        run.stateStatuses[workload.stateId] = 'done';
-
-        upsertArtifact(run.artifacts, {
-            id: generateUuid(),
-            runId: run.id,
-            stateId: workload.stateId,
-            uri: artifactUri,
-            kind: options.artifactKind,
-            summary: `Deterministic fallback artifact for ${workload.stateId}.`,
-            createdAt: now
-        });
-        run.effects.push({
-            id: effectId,
-            runId: run.id,
-            stateId: workload.stateId,
-            kind: options.effectKind,
-            status: 'proposed',
-            summary: options.effectSummary
-        });
-        run.signals.push({
-            key: `${workload.stateId}.status`,
-            value: 'completed',
-            stateId: workload.stateId,
-            runId: run.id,
-            createdAt: now
-        });
-
-        pushEvent(run, { type: 'artifact.created', stateId: workload.stateId, workloadId: workload.id, message: `Artifact created for "${workload.stateId}".` });
-        pushEvent(run, { type: 'effect.proposed', stateId: workload.stateId, workloadId: workload.id, message: `Effect proposed for "${workload.stateId}".` });
-        pushEvent(run, { type: 'signal.emitted', stateId: workload.stateId, workloadId: workload.id, message: `Signal emitted for "${workload.stateId}".` });
-        pushEvent(run, { type: 'workload.completed', stateId: workload.stateId, workloadId: workload.id, message: `Workload "${workload.id}" completed.` });
-        pushEvent(run, { type: 'state.completed', stateId: workload.stateId, workloadId: workload.id, message: `State "${workload.stateId}" completed.` });
-        return { artifactUri, effectId };
     }
 
     protected completeWorkloadWithArtifacts(
@@ -1222,17 +1428,55 @@ function isRelevantContextItem(
     return relevantAgents.some(agent => title.includes(agent.toLowerCase()));
 }
 
-function renderWorkOrder(workflow: FlowWorkflow, workload: FlowWorkload): string {
+function renderWorkOrder(workflow: FlowWorkflow, workload: FlowWorkload, state: FlowWorkflowState): string {
+    const systemPrompt = toOptionalTrimmedString(state.systemPrompt);
+    const taskPrompt = toOptionalTrimmedString(state.taskPrompt);
+    const deliverables = normalizedDeliverables(state);
     return [
         `# Work Order - ${workload.stateId}`,
         '',
         `Workflow: ${workflow.name || workflow.id}`,
         `Workload: ${workload.id}`,
         `Agent: ${workload.agent || workflow.agents?.[workload.agent || ''] || 'system'}`,
+        ...(systemPrompt ? ['', '## System Prompt', systemPrompt] : []),
+        ...(taskPrompt ? ['', '## Task Prompt', taskPrompt] : []),
+        ...(deliverables.length ? ['', '## Deliverables', ...deliverables.map(renderDeliverable)] : []),
         '',
         '## Inputs',
         ...(workload.inputArtifacts.length ? workload.inputArtifacts.map(input => `- ${input}`) : ['- none'])
     ].join('\n');
+}
+
+function expectedOutputPaths(state: FlowWorkflowState): string[] {
+    const explicitOutputs = state.outputs && state.outputs.length > 0 ? state.outputs : [];
+    const deliverableOutputs = normalizedDeliverables(state).map(deliverable => deliverable.path);
+    const outputs = [...explicitOutputs];
+    for (const deliverablePath of deliverableOutputs) {
+        if (!outputs.includes(deliverablePath)) {
+            outputs.push(deliverablePath);
+        }
+    }
+    return outputs.length > 0 ? outputs : ['report.md'];
+}
+
+function normalizedDeliverables(state: FlowWorkflowState): Array<{ path: string; description?: string; required: boolean; kind?: string }> {
+    return (state.deliverables || [])
+        .map(deliverable => ({
+            path: normalizeArtifactPath(deliverable.path),
+            description: toOptionalTrimmedString(deliverable.description),
+            required: deliverable.required !== false,
+            kind: toOptionalTrimmedString(deliverable.kind)
+        }))
+        .filter(deliverable => deliverable.path);
+}
+
+function renderDeliverable(deliverable: { path: string; description?: string; required: boolean; kind?: string }): string {
+    const details = [
+        deliverable.required ? 'required' : 'optional',
+        deliverable.kind ? `kind: ${deliverable.kind}` : undefined,
+        deliverable.description
+    ].filter(Boolean).join('; ');
+    return `- ${deliverable.path}${details ? ` (${details})` : ''}`;
 }
 
 function workloadOutputDir(workspaceRootUri: string | undefined, runId: string, workloadId: string): string {
@@ -1240,48 +1484,53 @@ function workloadOutputDir(workspaceRootUri: string | undefined, runId: string, 
     return path.join(resolveFlowRunDirectory(root, runId), 'workloads', sanitizeFlowPathSegment(workloadId, 'workload'));
 }
 
-function resolveLlmProviderMode(): LlmProviderMode {
-    const provider = (process.env.FLOW_AGENT_PROVIDER || 'auto').trim().toLowerCase();
-    if (provider === 'none' || provider === 'simulate' || provider === 'mock' || provider === 'off') {
-        return 'none';
-    }
-    if (provider === 'chat' || provider === 'llm') {
-        return 'chat';
-    }
-    if (provider === 'codex' || provider === 'codex-provider' || provider === 'codex_cli') {
-        return 'codex';
-    }
-    if (provider === 'command' || provider === 'provider' || provider === 'cli') {
-        return 'command';
-    }
-    return 'auto';
+export interface VirtualReasoningHarnessRequest {
+    mode: FlowReasoningMode;
+    basePayload: Record<string, unknown>;
+    invoke: (payload: Record<string, unknown>) => Promise<string>;
+    onProgress?: (message: string) => void;
 }
 
-function e2eMockLlmProviderEnabled(): boolean {
-    const provider = (process.env.FLOW_AGENT_PROVIDER || '').trim().toLowerCase();
-    return provider === 'e2e-mock' || provider === 'mock-llm' || provider === 'mock-llm-provider';
-}
-
-function resolveLlmChatHints(): { modelId?: string; agentId: string; purpose: string; } {
-    const modelId = (process.env.FLOW_AGENT_MODEL_ID || process.env.FLOW_AGENT_LLM_MODEL_ID || '').trim() || undefined;
-    const agentId = (process.env.FLOW_AGENT_CHAT_AGENT_ID || process.env.FLOW_AGENT_CHAT_AGENT || process.env.FLOW_AGENT_ID || 'Flow').trim();
-    const purpose = (process.env.FLOW_AGENT_CHAT_PURPOSE || process.env.FLOW_AGENT_PURPOSE || 'agent').trim();
-    return { modelId, agentId, purpose };
-}
-
-function resolveCommandLlmProvider(): LlmCommandProviderConfig | undefined {
-    const command = process.env.FLOW_AGENT_LLM_COMMAND || process.env.FLOW_AGENT_COMMAND;
-    if (!command) {
-        return undefined;
+export async function runVirtualReasoningHarness(request: VirtualReasoningHarnessRequest): Promise<string> {
+    const engine = new VirtualReasoningEngine();
+    const basePrompt = JSON.stringify(request.basePayload, undefined, 2);
+    const mode = request.mode as VirtualReasoningMode;
+    if (engine.resolveMode(basePrompt, mode) === 'off') {
+        return request.invoke(request.basePayload);
     }
-    return { command };
+    const result = await engine.execute({
+        mode,
+        basePrompt,
+        responseContract: 'workload-output envelope JSON. Return only a valid workload-output envelope and no prose outside it.',
+        onProgress: (_stage, message) => request.onProgress?.(message),
+        invokeStage: (stage, prompt) => request.invoke(reasoningStagePayload(request.basePayload, stage, prompt))
+    });
+    return result.finalAnswer.trim() || request.invoke(request.basePayload);
+}
+
+function reasoningStagePayload(
+    basePayload: Record<string, unknown>,
+    stage: ReasoningStage,
+    prompt: string
+): Record<string, unknown> {
+    return {
+        ...basePayload,
+        virtualReasoning: {
+            stage,
+            internal: true,
+            instructions: [
+                truncateFlowText(prompt, FlowSizeLimits.resultJsonBytes, `virtual reasoning ${stage}`)
+            ]
+        }
+    };
 }
 
 async function invokeCodexProviderProvider(
     codexProvider: CodexProviderService,
     context: FlowWorkloadExecutionContext,
     payload: Record<string, unknown>,
-    cwd: string
+    cwd: string,
+    modelId?: string
 ): Promise<string> {
     const prompt = [
         'You are an execution agent for the Flow workflow engine.',
@@ -1301,6 +1550,7 @@ async function invokeCodexProviderProvider(
         sessionId: `flow-workload-${context.run.id}`,
         options: {
             cwd,
+            model: modelId,
             approvalPolicy: 'never',
             sandboxMode: 'read-only'
         }
@@ -1343,7 +1593,7 @@ async function invokeChatProvider(
                 '  "artifacts": [ { "path": "file.md", "content": "..." } ],',
                 '  "memoryCandidates": [ { "content": "text", "reason": "...", "kind": "fact", "source": "artifact", "scope": "ide|workspace|project|workflow|run|agent" } ]',
                 '}',
-                'Top-level "artifacts", "signals", "issues" and nested result fields are aliases if you need backward compatibility.',
+                'Top-level "signals" and "issues" may mirror nested result fields. If you include top-level artifacts, every generated artifact must include both path and content.',
                 'Allowed artifact paths must be relative and map to expected workload outputs.',
                 'Do not invent files or perform workflow control operations.'
                 ].join(' ')
@@ -1598,6 +1848,7 @@ function parseAgentGenerationResult(
         }
         throw new Error(`${workloadOutputContractErrorPrefix} invalid JSON in result payload for "${context.state.id || context.workload.stateId}".`);
     }
+    validateRawProviderOutputShape(payload, context);
     const primary = hasObjectKey(payload, 'result') && isRecord(payload.result) ? payload.result : payload;
     const alias = payload.result && isRecord(payload.result) ? payload.result : {};
     const normalizedStatus = normalizeResultStatus(primary.status ?? alias.status ?? 'completed');
@@ -1622,17 +1873,21 @@ function parseAgentGenerationResult(
         });
     }
 
-    const fallbackArtifact = parseSingleContentArtifact(payload, expectedOutputs);
-    return limitAgentGenerationResult({
-        artifacts: [fallbackArtifact],
-        summary,
-        report,
-        status: normalizedStatus,
-        effects,
-        signals,
-        issues,
-        memoryCandidates
-    });
+    if (options.allowFallback !== false) {
+        const fallbackArtifact = parseSingleContentArtifact(payload, expectedOutputs);
+        return limitAgentGenerationResult({
+            artifacts: [fallbackArtifact],
+            summary,
+            report,
+            status: normalizedStatus,
+            effects,
+            signals,
+            issues,
+            memoryCandidates
+        });
+    }
+
+    throw new Error(`${workloadOutputContractErrorPrefix} ${context.state.id || context.workload.stateId}: result.artifacts must include at least one generated artifact with path and content.`);
 }
 
 function fallbackGeneration(expectedOutputs: string[], context: FlowWorkloadExecutionContext, rawContent?: string): AgentGenerationResult {
@@ -2336,6 +2591,74 @@ function workloadOutputValidationErrors(errors: unknown): string {
         .join('; ');
 }
 
+function validateRawProviderOutputShape(payload: Record<string, unknown>, context: FlowWorkloadExecutionContext): void {
+    validateRawEffectOutputShape(payload.effects, context, 'effects');
+    validateRawArtifactOutputShape(payload.artifacts, context, 'artifacts');
+    if (isRecord(payload.result)) {
+        validateRawEffectOutputShape(payload.result.effects, context, 'result.effects');
+        validateRawArtifactOutputShape(payload.result.artifacts, context, 'result.artifacts');
+    }
+}
+
+function validateRawEffectOutputShape(value: unknown, context: FlowWorkloadExecutionContext, pathLabel: string): void {
+    if (value === undefined) {
+        return;
+    }
+    if (!Array.isArray(value)) {
+        throwRawProviderShapeError(context, `${pathLabel} must be an array when provided.`);
+    }
+    value.forEach((item, index) => {
+        if (!isRecord(item)) {
+            throwRawProviderShapeError(context, `${pathLabel}[${index}] must be an object.`);
+        }
+        const type = item.type ?? item.kind;
+        if (type !== undefined && typeof type !== 'string') {
+            throwRawProviderShapeError(context, `${pathLabel}[${index}].type must be a string when provided.`);
+        }
+        if (typeof type === 'string' && !type.trim()) {
+            throwRawProviderShapeError(context, `${pathLabel}[${index}].type must be a non-empty string when provided.`);
+        }
+    });
+}
+
+function validateRawArtifactOutputShape(value: unknown, context: FlowWorkloadExecutionContext, pathLabel: string): void {
+    if (value === undefined) {
+        return;
+    }
+    if (!Array.isArray(value) && !isRecord(value)) {
+        throwRawProviderShapeError(context, `${pathLabel} must be an array or object map when provided.`);
+    }
+    if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+            if (!isRecord(item)) {
+                throwRawProviderShapeError(context, `${pathLabel}[${index}] must be an object.`);
+            }
+            const artifactPath = toTrimmedString(item.path);
+            if (!artifactPath) {
+                throwRawProviderShapeError(context, `${pathLabel}[${index}].path must be a non-empty string.`);
+            }
+            const content = toTrimmedString(item.content);
+            if (!content) {
+                throwRawProviderShapeError(context, `${pathLabel}[${index}].content must be a non-empty string.`);
+            }
+        });
+        return;
+    }
+    for (const [artifactPath, content] of Object.entries(value)) {
+        if (!toTrimmedString(artifactPath)) {
+            throwRawProviderShapeError(context, `${pathLabel} keys must be non-empty strings.`);
+        }
+        if (!toTrimmedString(content)) {
+            throwRawProviderShapeError(context, `${pathLabel}[${artifactPath}] must be a non-empty string.`);
+        }
+    }
+}
+
+function throwRawProviderShapeError(context: FlowWorkloadExecutionContext, detail: string): never {
+    const stateId = context.state.id || context.workload.stateId;
+    throw new Error(`${workloadOutputContractErrorPrefix} ${stateId}: ${detail}`);
+}
+
 function parseArtifactOutput(value: unknown): Array<{ path: string; content: string }> {
     if (Array.isArray(value)) {
         return value
@@ -2849,7 +3172,7 @@ function buildStructuredRunReport(context: FlowWorkloadExecutionContext): Record
         capabilities: {
             required: [...new Set(workflow.requires?.capabilities || [])].sort(),
             executionMode: run.executionMode,
-            deterministicFallback: run.executionMode === 'kernel_simulated' || run.executionMode === 'kernel_simulated_fallback_error'
+            deterministicFallback: run.executionMode === 'kernel_simulated'
         },
         pending,
         secondRunSuggestion: run.secondRunSuggestion,
@@ -3082,6 +3405,20 @@ function flowEffectToWorkloadResultEffect(effect: FlowEffect): FlowWorkloadResul
     });
 }
 
+function validateGeneratedArtifactCoverage(
+    generatedArtifacts: Array<{ path: string; content: string }>,
+    expectedOutputs: string[],
+    context: FlowWorkloadExecutionContext
+): void {
+    const generatedPaths = new Set(generatedArtifacts.map(artifact => normalizeArtifactPath(artifact.path)));
+    const missingOutputs = expectedOutputs
+        .map(normalizeArtifactPath)
+        .filter(output => !generatedPaths.has(output));
+    if (missingOutputs.length > 0) {
+        throw new Error(`${workloadOutputContractErrorPrefix} ${context.state.id || context.workload.stateId}: missing generated artifacts for expected outputs: ${missingOutputs.join(', ')}.`);
+    }
+}
+
 function buildEnvelopeArtifacts(
     context: FlowWorkloadExecutionContext,
     generatedArtifacts: Array<{ path: string; content: string }>,
@@ -3107,20 +3444,6 @@ function buildEnvelopeArtifacts(
         emitArtifact(generatedArtifact.path);
     }
     return [...byPath.values()];
-}
-
-function buildFallbackArtifactContentByPath(expectedOutputs: string[], report: string): Record<string, string> {
-    const defaults: Record<string, string> = {};
-    const selected = expectedOutputs
-        .map(output => ({ output, normalized: normalizeArtifactPath(output) }))
-        .find(entry => entry.normalized.endsWith('report.md') || entry.normalized.endsWith('/report.md'));
-    if (!selected) {
-        return defaults;
-    }
-    if (report) {
-        defaults[selected.normalized] = report;
-    }
-    return defaults;
 }
 
 function normalizeEffectKind(type: string, path?: string, command?: string): FlowEffect['kind'] {
@@ -3259,6 +3582,10 @@ function buildDefaultExpectedOutputFormat(expectedOutputs: string[]): string {
     }
     return [
         'Return exactly JSON in this shape:',
+        'Put generated file contents in result.artifacts entries with both path and content.',
+        'If you include top-level artifacts, every generated artifact entry must include both path and content.',
+        'Only use effects for explicit side effects beyond the normal generated outputs.',
+        'Do not represent normal expected outputs as file.created or file.edited effects.',
         '{',
         '  "result": {',
         '    "status": "completed|failed|ready|running|waiting|review|done|pending",',
@@ -3268,10 +3595,10 @@ function buildDefaultExpectedOutputFormat(expectedOutputs: string[]): string {
         '    "issues": [ { "severity": "non_blocking", "type": "workload_issue", "summary": "text" } ]',
         '  },',
         '  "report": "human-readable report text",',
-        '  "effects": [ { "type": "file.created|file.edited|file.deleted|command|image.generate|memory_write|notification|other", "summary": "string", "path": "optional", "prompt": "required for image.generate", "artifactPath": "images/name.png", "hashBefore": "sha256:...", "hashAfter": "sha256:...", "patch": "unified diff", "approvalPolicy": "human_gate_required", "status": "proposed", "command": "optional" } ],',
+        '  "effects": [],',
         '  "signals": { "key": "value" },',
         '  "issues": [ { "severity": "non_blocking", "type": "workload_issue", "summary": "text" } ],',
-        '  "artifacts": [ { "path": "string", "type": "report|input|..." } ],',
+        '  "artifacts": [ { "path": "string", "content": "string" } ],',
         '  "memoryCandidates": [ { "content": "string", "kind": "fact", "source": "artifact|effect|signal|workflow_state", "scope": "ide|workspace|project|workflow|run|agent" } ]',
         '}',
         `Allowed paths: ${expectedOutputs.join(', ')}.`
@@ -3704,6 +4031,184 @@ function uniqueStrings(values: string[]): string[] {
         result.push(value);
     }
     return result;
+}
+
+function boundedInteger(value: unknown, min: number, max: number, fallback: number): number {
+    const parsed = typeof value === 'number' ? value : Number.parseInt(toTrimmedString(value), 10);
+    if (!Number.isFinite(parsed)) {
+        return Math.max(min, Math.min(max, fallback));
+    }
+    return Math.max(min, Math.min(max, Math.floor(parsed)));
+}
+
+async function mapWithConcurrency<T, R>(items: T[], concurrency: number, run: (item: T) => Promise<R>): Promise<R[]> {
+    const results: R[] = [];
+    let cursor = 0;
+    const worker = async (): Promise<void> => {
+        for (;;) {
+            const index = cursor;
+            cursor += 1;
+            if (index >= items.length) {
+                return;
+            }
+            results[index] = await run(items[index] as T);
+        }
+    };
+    await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, items.length)) }, () => worker()));
+    return results;
+}
+
+function dynamicParallelFailed(
+    results: FlowPrimitiveStepResult[],
+    failurePolicy: unknown,
+    failureThreshold: unknown
+): boolean {
+    const failures = results.filter(result => result.failed).length;
+    if (failures === 0) {
+        return false;
+    }
+    const policy = toTrimmedString(failurePolicy) || 'best_effort';
+    if (policy === 'fail_fast') {
+        return true;
+    }
+    if (policy === 'threshold') {
+        const threshold = typeof failureThreshold === 'number' ? failureThreshold : Number.parseFloat(toTrimmedString(failureThreshold));
+        if (Number.isFinite(threshold)) {
+            if (threshold > 0 && threshold < 1) {
+                return failures / Math.max(1, results.length) > threshold;
+            }
+            return failures > Math.floor(threshold);
+        }
+    }
+    return failures >= results.length;
+}
+
+function primitiveResultSummary(result: FlowPrimitiveStepResult): Record<string, unknown> {
+    return {
+        stateId: result.stateId,
+        workloadId: result.workloadId,
+        status: result.failed ? 'failed' : 'completed',
+        metadata: result.metadata,
+        artifacts: result.artifacts.map(artifact => ({
+            id: artifact.id,
+            path: artifact.summary || artifact.uri,
+            uri: artifact.uri,
+            kind: artifact.kind
+        })),
+        effects: result.effects.map(effect => ({
+            id: effect.id,
+            type: effect.type || effect.kind,
+            status: effect.status,
+            summary: effect.summary
+        })),
+        signals: result.signals.map(signal => ({
+            key: signal.key,
+            value: signal.value
+        })),
+        issues: result.issues
+    };
+}
+
+function primitiveIssues(results: FlowPrimitiveStepResult[]): string[] {
+    return uniqueStrings(results.flatMap(result => result.issues.map(issue => `${result.stateId}: ${issue}`)));
+}
+
+function primitiveOutputEnvelope(
+    context: FlowWorkloadExecutionContext,
+    status: string,
+    artifactPath: string,
+    payload: Record<string, unknown>
+): FlowWorkloadOutputEnvelope {
+    const summary = `${context.state.type} ${status} for ${context.workload.stateId}.`;
+    const artifact = {
+        id: stableId('artifact', context.run.id, context.workload.id, artifactPath),
+        path: artifactPath,
+        type: artifactKindFromPath(artifactPath)
+    };
+    const issues = context.workload.issues.map(summaryText => ({
+        severity: status === 'failed' ? 'blocking' : 'non_blocking',
+        type: 'primitive_issue',
+        summary: summaryText
+    }));
+    return {
+        status,
+        result: {
+            status,
+            summary,
+            artifacts: [artifact],
+            signals: {
+                [`${context.workload.stateId}.status`]: status
+            },
+            issues
+        },
+        artifacts: [artifact],
+        effects: [],
+        signals: {
+            [`${context.workload.stateId}.status`]: status
+        },
+        issues,
+        report: JSON.stringify(payload, undefined, 2)
+    };
+}
+
+function primitiveItemsFromText(content: string, source: string): unknown[] {
+    const text = (content || '').trim();
+    if (!text) {
+        return [];
+    }
+    const parsed = parseJsonValue(text);
+    if (Array.isArray(parsed)) {
+        return parsed;
+    }
+    if (isRecord(parsed)) {
+        for (const key of ['items', 'candidates', 'tasks', 'files', 'results']) {
+            const value = parsed[key];
+            if (Array.isArray(value)) {
+                return value;
+            }
+        }
+        return [parsed];
+    }
+    const lines = text
+        .split(/\r?\n/)
+        .map(line => line.trim().replace(/^[-*]\s+/, '').replace(/^\d+[.)]\s+/, ''))
+        .filter(line => line && !line.startsWith('#'));
+    if (lines.length > 1) {
+        return lines;
+    }
+    return [{ source, content: text }];
+}
+
+function parseJsonValue(text: string): unknown {
+    try {
+        return JSON.parse(text);
+    } catch {
+        const match = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+        if (match?.[1]) {
+            try {
+                return JSON.parse(match[1].trim());
+            } catch {
+                return undefined;
+            }
+        }
+        return undefined;
+    }
+}
+
+function findPrimitiveSourceArtifacts(run: FlowRun, source: string): FlowArtifact[] {
+    const normalizedSource = normalizeArtifactPath(source).toLowerCase();
+    if (!normalizedSource) {
+        return [];
+    }
+    return run.artifacts.filter(artifact => {
+        const summary = normalizeArtifactPath(artifact.summary || '').toLowerCase();
+        const uri = normalizeArtifactPath(artifact.uri || '').toLowerCase();
+        return summary === normalizedSource
+            || summary.endsWith(`/${normalizedSource}`)
+            || uri.endsWith(`/${normalizedSource}`)
+            || summary.startsWith(`${normalizedSource.replace(/\/?$/, '/')}`)
+            || uri.includes(`/${normalizedSource.replace(/\/?$/, '/')}`);
+    });
 }
 
 function errorToMessage(error: unknown): string {

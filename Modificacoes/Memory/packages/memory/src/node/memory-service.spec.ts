@@ -903,6 +903,7 @@ describe('MemoryServiceImpl', () => {
         expect(updated.graphEnabled).to.equal(true);
         expect(updated.memoryEnabled).to.equal(true);
         expect(updated.skillSuggestionsEnabled).to.equal(false);
+        expect(updated.chatLearningEnabled).to.equal(false);
         expect(updated.editorHoverEnabled).to.equal(false);
         expect(updated.optIn).to.deep.include({
             codeGraph: true,
@@ -917,6 +918,36 @@ describe('MemoryServiceImpl', () => {
         expect(event?.payload).to.contain('"granted":["codeGraph","contextCart","projectMemory"]');
         expect(event?.payload).to.contain('"revoked":["editorHover"]');
         expect(event?.payload).not.to.contain(workspacePath);
+    });
+
+    it('enables minimized chat learning for skill and event consent without transcript search', async () => {
+        const repository = new InMemoryStoreRepository();
+        const service = new MemoryServiceImpl();
+        attachRepository(service, repository);
+        const workspacePath = '/workspace';
+
+        const skillsOnly = await service.updateWorkspaceConsent({
+            workspacePath,
+            capabilities: {
+                skills: true
+            }
+        });
+        expect(skillsOnly.skillSuggestionsEnabled).to.equal(true);
+        expect(skillsOnly.chatLearningEnabled).to.equal(true);
+        expect(skillsOnly.optIn?.skills).to.equal(true);
+        expect(skillsOnly.optIn?.transcriptSearch).to.equal(false);
+
+        const eventsOnly = await service.updateWorkspaceConsent({
+            workspacePath,
+            capabilities: {
+                skills: false,
+                events: true
+            }
+        });
+        expect(eventsOnly.skillSuggestionsEnabled).to.equal(false);
+        expect(eventsOnly.chatLearningEnabled).to.equal(true);
+        expect(eventsOnly.optIn?.events).to.equal(true);
+        expect(eventsOnly.optIn?.transcriptSearch).to.equal(false);
     });
 
     it('records sanitized audit events for memory, feedback, embeddings, export, and import', async () => {
@@ -1937,7 +1968,7 @@ describe('MemoryServiceImpl', () => {
                 workspacePath: sameRepositoryClone,
                 scope: 'session',
                 sessionId: 'session_alpha',
-                expiresAt: '2026-06-01T00:00:00.000Z',
+                expiresAt: '2099-06-01T00:00:00.000Z',
                 retentionPolicy: 'ttl',
                 title: 'Scope contract session',
                 content: 'Scope contract active session memory.'
@@ -1947,7 +1978,7 @@ describe('MemoryServiceImpl', () => {
                 workspacePath: sameRepositoryClone,
                 scope: 'task',
                 taskId: 'task_alpha',
-                expiresAt: '2026-06-01T00:00:00.000Z',
+                expiresAt: '2099-06-01T00:00:00.000Z',
                 retentionPolicy: 'task',
                 title: 'Scope contract task',
                 content: 'Scope contract active task memory.'

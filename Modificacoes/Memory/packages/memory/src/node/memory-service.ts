@@ -1387,7 +1387,7 @@ export class MemoryServiceImpl {
             graphEnabled: optIn.codeGraph === true || optIn.documentGraph === true,
             memoryEnabled: optIn.projectMemory === true || optIn.preferences === true || optIn.transcriptSearch === true,
             skillSuggestionsEnabled: optIn.skills === true,
-            chatLearningEnabled: optIn.transcriptSearch === true,
+            chatLearningEnabled: optIn.events === true || optIn.skills === true || optIn.transcriptSearch === true || optIn.promptSnippets === true,
             editorHoverEnabled: optIn.editorHover === true,
             optIn,
             updatedAt: now

@@ -22,7 +22,7 @@ FrontendApplicationConfigProvider.set({});
 
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { parseSkillFile, combineSkillDirectories } from '../common/skill';
+import { Skill, parseSkillFile, combineSkillDirectories } from '../common/skill';
 import { Path } from '@theia/core/lib/common/path';
 import { Disposable, Emitter, ILogger, Logger, PreferenceScope, URI } from '@theia/core';
 import { FileChangesEvent } from '@theia/filesystem/lib/common/files';
@@ -499,6 +499,23 @@ Test skill content`
             expect(service.getSkill(enabledSkill.name)?.name).to.equal(enabledSkill.name);
             expect(service.getSkill(disabledSkill.name)).to.be.undefined;
             expect(service.getAllSkills().map(skill => skill.name)).to.deep.equal([enabledSkill.name, disabledSkill.name]);
+        });
+
+        it('excludes manual-only skills from auto-discovery while keeping explicit lookup available', () => {
+            const service = createService();
+            const autoSkill: Skill = { name: 'auto-skill', description: 'Auto', discovery: 'auto', location: '/skills/Auto/auto-skill/SKILL.md' };
+            const systemSkill: Skill = { name: 'system-skill', description: 'System', discovery: 'system', location: '/skills/System/system-skill/SKILL.md' };
+            const manualSkill: Skill = { name: 'manual-skill', description: 'Manual', discovery: 'manual', location: '/skills/Manual/manual-skill/SKILL.md' };
+
+            (service as unknown as { skills: Map<string, Skill> }).skills = new Map([
+                [autoSkill.name, autoSkill],
+                [systemSkill.name, systemSkill],
+                [manualSkill.name, manualSkill]
+            ]);
+
+            expect(service.getSkills().map(skill => skill.name)).to.deep.equal([autoSkill.name, systemSkill.name]);
+            expect(service.getSkill(manualSkill.name)?.name).to.equal(manualSkill.name);
+            expect(service.getAllSkills().map(skill => skill.name)).to.deep.equal([autoSkill.name, systemSkill.name, manualSkill.name]);
         });
 
         it('persists skill enablement changes', async () => {

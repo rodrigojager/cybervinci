@@ -1,0 +1,2 @@
+var e=`3326157269`,t=`2900529421`,n=`816842483`;function r({isExternalAgentImportEnabled:e,isExternalAgentOnboardingImportEnabled:t}){return e||t}export{r as i,e as n,t as r,n as t};
+//# sourceMappingURL=external-agent-config-gates-Driij-8M.js.map

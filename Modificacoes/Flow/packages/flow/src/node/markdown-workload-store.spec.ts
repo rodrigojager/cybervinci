@@ -63,6 +63,18 @@ describe('MarkdownWorkloadStore', () => {
         });
     });
 
+    it('materializes included input artifact contents into input/artifacts', async () => {
+        const run = sampleRun();
+        await addRunArtifact(run, tempDir, 'request.md', '# Request\n\nImplement the feature.');
+
+        const materialized = await store.materializeRun(workspaceRootUri, workflow, run);
+        const workload = materialized.workloads[0];
+        const workloadDir = path.join(tempDir, '.theia', 'flow', 'runs', materialized.id, 'workloads', workload.id);
+        const inputArtifact = await fs.readFile(path.join(workloadDir, 'input', 'artifacts', 'request.md'), 'utf8');
+
+        expect(inputArtifact).to.equal('# Request\n\nImplement the feature.');
+    });
+
     it('aggregates workload issues by normalized severity and dedupes repeated findings', async () => {
         const run = await store.materializeRun(workspaceRootUri, workflow, issueRun());
         const issuesDir = path.join(tempDir, '.theia', 'flow', 'runs', run.id, 'issues');
@@ -295,6 +307,21 @@ function outputEnvelope(issues: Array<{ severity: string; type: string; summary:
         issues,
         report: 'Completed with findings.'
     };
+}
+
+async function addRunArtifact(run: FlowRun, workspaceDir: string, artifactPath: string, content: string): Promise<void> {
+    const filePath = path.join(workspaceDir, 'seed-artifacts', ...artifactPath.split('/'));
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, content, 'utf8');
+    run.artifacts.push({
+        id: `artifact-${artifactPath.replace(/[^a-zA-Z0-9]/g, '-')}`,
+        runId: run.id,
+        stateId: 'build',
+        uri: FileUri.create(filePath).toString(),
+        kind: 'report',
+        summary: artifactPath,
+        createdAt: '2026-05-19T00:00:00.000Z'
+    });
 }
 
 async function readJsonLines(file: string): Promise<Array<Record<string, string>>> {

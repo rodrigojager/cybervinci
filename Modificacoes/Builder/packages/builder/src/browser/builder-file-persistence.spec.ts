@@ -83,6 +83,22 @@ describe('persistBuilderJsonFile', () => {
         expect(fileService.files.get(target.toString())).to.equal('{"schemaVersion":"1.0.0"}\n');
     });
 
+    it('persists .cvpage.json files as the current Page Builder format', async () => {
+        const fileService = new FakeFileService();
+        const cvpageTarget = new URI('file:///workspace/home.cvpage.json');
+
+        await persistBuilderJsonFile(fileService, cvpageTarget, '{"schemaVersion":"1.0.0"}\n');
+
+        expect(fileService.writes).to.have.length(1);
+        expect(fileService.writes[0]).to.contain('/workspace/.home.cvpage.json.');
+        expect(fileService.moves).to.deep.include({
+            source: fileService.writes[0],
+            target: cvpageTarget.toString(),
+            overwrite: true
+        });
+        expect(fileService.files.get(cvpageTarget.toString())).to.equal('{"schemaVersion":"1.0.0"}\n');
+    });
+
     it('falls back to direct write when atomic move is unavailable', async () => {
         const fileService = new FakeFileService();
         fileService.failMove = true;

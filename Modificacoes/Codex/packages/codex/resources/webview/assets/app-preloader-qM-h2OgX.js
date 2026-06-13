@@ -1,0 +1,2 @@
+import{t as e}from"./jsx-runtime-CiQ1k8xo.js";import{t}from"./compiler-runtime-b9_ems4H.js";import{t as n}from"./loading-page-NSPlIscl.js";var r=t(),i=e();function a(e){let t=(0,r.c)(2),{debugName:a}=e,o;return t[0]===a?o=t[1]:(o=(0,i.jsx)(n,{debugName:a}),t[0]=a,t[1]=o),o}export{a as t};
+//# sourceMappingURL=app-preloader-qM-h2OgX.js.map

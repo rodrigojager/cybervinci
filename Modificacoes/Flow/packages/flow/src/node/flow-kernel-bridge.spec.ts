@@ -6,7 +6,14 @@ import * as os from 'os';
 import * as path from 'path';
 import { Duplex } from 'stream';
 import { FileUri } from '@theia/core/lib/common/file-uri';
-import { FlowGateDecisionRequest, FlowWorkflow } from '../common';
+import { CodexProviderServiceImpl } from '@cybervinci/ai-providers/lib/node/ai-providers-service-impl';
+import {
+    FlowGateDecisionRequest,
+    FlowWorkflow,
+    getBuiltInFlowPipelinePreset,
+    instantiateFlowPipelinePreset,
+    SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID
+} from '../common';
 import { FLOW_CAPABILITIES } from '../common/flow-capabilities';
 import { resolveFlowWorkflowCapabilities } from '../common/flow-capability-resolution';
 import { instantiateFlowWorkflowTemplate } from '../common/flow-templates';
@@ -59,6 +66,45 @@ class StateMappedMockLlmExecutor extends ProviderBackedFlowWorkloadExecutor {
             return Promise.reject(new Error(`No mocked LLM response configured for ${stateId}.`));
         }
         return Promise.resolve(response);
+    }
+}
+
+function summarizeRunForFailure(run: { status: string; events?: Array<{ type: string; message?: string; stateId?: string; workloadId?: string; payload?: unknown }>; workloads?: Array<{ id: string; stateId: string; status: string; summary?: string; issues?: string[] }> }): string {
+    const events = (run.events || []).slice(-8).map(event => `${event.type}${event.stateId ? ` state=${event.stateId}` : ''}${event.message ? `: ${event.message}` : ''}`);
+    const workloads = (run.workloads || []).map(workload => `${workload.stateId}/${workload.id}=${workload.status}${workload.summary ? ` ${workload.summary}` : ''}${workload.issues?.length ? ` issues=${workload.issues.join(' | ')}` : ''}`);
+    return [`status=${run.status}`, ...workloads, ...events].join('\n');
+}
+function createNoopLogger(): { debug: (...args: unknown[]) => void; info: (...args: unknown[]) => void; warn: (...args: unknown[]) => void; error: (...args: unknown[]) => void; trace: (...args: unknown[]) => void; } {
+    return {
+        debug: () => undefined,
+        info: () => undefined,
+        warn: () => undefined,
+        error: () => undefined,
+        trace: () => undefined
+    };
+}
+
+function configureHelloWorldSisyphusSmokeWorkflow(workflow: FlowWorkflow): void {
+    const ultraworker = workflow.states.sisyphus_ultraworker;
+    if (ultraworker === undefined) {
+        return;
+    }
+
+    if (ultraworker.outputs === undefined) {
+        ultraworker.outputs = [];
+    }
+    if (!ultraworker.outputs.includes('hello-world.txt')) {
+        ultraworker.outputs = [...ultraworker.outputs, 'hello-world.txt'];
+    }
+
+    if (ultraworker.deliverables === undefined) {
+        ultraworker.deliverables = [];
+    }
+    if (!ultraworker.deliverables.some(deliverable => deliverable.path === 'hello-world.txt')) {
+        ultraworker.deliverables = [
+            ...ultraworker.deliverables,
+            { path: 'hello-world.txt', description: 'Deterministic hello-world artifact', required: true, kind: 'text' }
+        ];
     }
 }
 
@@ -131,11 +177,18 @@ describe('SimulatedFlowKernelBridge', () => {
                     { path: 'schemas/api.json', content: '{"type":"object"}' },
                     { path: 'schemas/assets.json', content: '{"type":"object"}' }
                 ], { 'contract.status': 'ready' })],
-                backend_work: [workloadOutput('completed', 'Backend delivered.', [{ path: 'delivery/backend.md', content: 'Backend exposes GET /feature for FeatureRequest.' }])],
-                frontend_work: [workloadOutput('completed', 'Frontend delivered.', [{ path: 'delivery/frontend.md', content: 'Frontend calls GET /feature with FeatureRequest fields.' }])],
+                backend_work: [workloadOutput('completed', 'Backend delivered.', [
+                    { path: 'delivery/backend.md', content: 'Backend exposes GET /feature for FeatureRequest.' },
+                    { path: 'issues/backend.json', content: '[]' }
+                ])],
+                frontend_work: [workloadOutput('completed', 'Frontend delivered.', [
+                    { path: 'delivery/frontend.md', content: 'Frontend calls GET /feature with FeatureRequest fields.' },
+                    { path: 'issues/frontend.json', content: '[]' }
+                ])],
                 designer_work: [workloadOutput('completed', 'Design delivered.', [
                     { path: 'delivery/design-assets.md', content: 'Designer delivered public/assets/login-hero.png.' },
-                    { path: 'public/assets/login-hero.png', content: 'mock image bytes' }
+                    { path: 'public/assets/login-hero.png', content: 'mock image bytes' },
+                    { path: 'issues/designer.json', content: '[]' }
                 ])],
                 qa: [
                     workloadOutput('failed', 'QA failed before repair.', [{ path: 'qa/report.md', content: '# QA\n\nStatus: failed\nMissing repaired integration note.' }], { 'qa.status': 'failed' }),
@@ -165,7 +218,7 @@ describe('SimulatedFlowKernelBridge', () => {
                 }
             }
 
-            expect(run.status).to.equal('completed');
+            expect(run.status, summarizeRunForFailure(run)).to.equal('completed');
             expect(run.gates.find(gate => gate.id === 'contract_approval')?.status).to.equal('approved');
             expect(executor.calls).to.include.members(['architecture', 'contract_design', 'backend_work', 'frontend_work', 'designer_work', 'qa', 'repair_loop']);
             expect(executor.calls.filter(call => call === 'qa')).to.have.length(2);
@@ -336,6 +389,256 @@ describe('FlowKernelBridge external transport', () => {
             setEnv('FLOW_KERNEL_HTTP', previousEndpoint);
             setEnv('FLOW_KERNEL_MODE', previousMode);
             await server.stop();
+        }
+    });
+
+    it('auto-detecta e executa o Flow Kernel Go local via stdio', async function () {
+        this.timeout(20000);
+        const workflow: FlowWorkflow = {
+            version: 'flow.workflow/v1',
+            id: 'local_kernel_smoke',
+            name: 'Local Kernel Smoke',
+            states: {
+                intake: { type: 'input' },
+                report: { type: 'report', outputs: ['final.md'] }
+            },
+            transitions: [
+                { from: 'intake', to: 'report', on: 'run.started' }
+            ]
+        };
+        const repositoryRoot = path.resolve(__dirname, '..', '..', '..', '..');
+        const kernelMain = path.join(repositoryRoot, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
+        const previousCwd = process.cwd();
+        const previousEndpoint = process.env.FLOW_KERNEL_HTTP;
+        const previousCli = process.env.FLOW_KERNEL_CLI;
+        const previousMode = process.env.FLOW_KERNEL_MODE;
+        let bridge: ExternalFlowKernelBridge | undefined;
+
+        try {
+            await fs.access(kernelMain);
+            process.chdir(repositoryRoot);
+            setEnv('FLOW_KERNEL_HTTP', undefined);
+            setEnv('FLOW_KERNEL_CLI', undefined);
+            process.env.FLOW_KERNEL_MODE = 'external';
+
+            bridge = new ExternalFlowKernelBridge();
+            const run = await bridge.startRun(workflow, 'produce final report', 'project summary');
+
+            expect(run.status, summarizeRunForFailure(run)).to.equal('completed');
+            expect(run.externalKernelMetadata?.kernelRunId).to.match(/^run_/);
+            expect(run.artifacts.map(artifact => artifact.uri)).to.include('final.md');
+            expect(run.events.map(event => event.type)).to.include.members(['run.started', 'run.completed']);
+        } finally {
+            await bridge?.shutdownKernelProcess();
+            process.chdir(previousCwd);
+            setEnv('FLOW_KERNEL_HTTP', previousEndpoint);
+            setEnv('FLOW_KERNEL_CLI', previousCli);
+            setEnv('FLOW_KERNEL_MODE', previousMode);
+        }
+    });
+
+    it('auto-detecta e executa o Sisyphus ultraworker hello-world smoke via stdio', async function () {
+        this.timeout(30000);
+        const repositoryRoot = path.resolve(__dirname, '..', '..', '..', '..');
+        const kernelMain = path.join(repositoryRoot, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
+        const preset = getBuiltInFlowPipelinePreset(SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID);
+        expect(preset).to.not.equal(undefined);
+        const workflow = instantiateFlowPipelinePreset(preset!, {
+            id: 'sisyphus_hello_world_smoke',
+            name: 'Sisyphus Hello World Smoke'
+        });
+        configureHelloWorldSisyphusSmokeWorkflow(workflow);
+        const workspaceRootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sisyphus-hello-world-smoke-'));
+        const workspaceRootUri = FileUri.create(workspaceRootDir).toString();
+        const previousCwd = process.cwd();
+        const previousEndpoint = process.env.FLOW_KERNEL_HTTP;
+        const previousCli = process.env.FLOW_KERNEL_CLI;
+        const previousMode = process.env.FLOW_KERNEL_MODE;
+        let bridge: ExternalFlowKernelBridge | undefined;
+
+        try {
+            await fs.access(kernelMain);
+            process.chdir(repositoryRoot);
+            setEnv('FLOW_KERNEL_HTTP', undefined);
+            setEnv('FLOW_KERNEL_CLI', undefined);
+            process.env.FLOW_KERNEL_MODE = 'external';
+
+            const executor = new StateMappedMockLlmExecutor({
+                sisyphus_coordinator: [workloadOutput('completed', 'Sisyphus plan prepared.', [
+                    { path: 'plan/plan.md', content: '# Plan\n\n1. Approve the work order.\n2. Create hello-world.txt with `Hello, world!`.\n3. Review the result.' },
+                    { path: 'plan/acceptance-criteria.md', content: '# Acceptance Criteria\n\n- plan/plan.md exists.\n- plan/work-order.md instructs creation of hello-world.txt.\n- hello-world.txt contains `Hello, world!`.\n- The reviewer passes.' },
+                    { path: 'plan/work-order.md', content: '# Work Order\n\nCreate `hello-world.txt` containing `Hello, world!` and record the evidence in the work artifacts.' }
+                ])],
+                sisyphus_ultraworker: [workloadOutput('completed', 'Hello world implementation completed.', [
+                    { path: 'work/summary.md', content: '# Summary\n\nCreated the requested hello-world artifact.' },
+                    { path: 'work/changes.md', content: '# Changes\n\n- Added hello-world.txt\n' },
+                    { path: 'work/evidence.md', content: '# Evidence\n\n- hello-world.txt created with the expected content.\n' },
+                    { path: 'hello-world.txt', content: 'Hello, world!\n' }
+                ], {
+                    'work.status': 'completed'
+                })],
+                sisyphus_reviewer: [workloadOutput('completed', 'Review passed.', [
+                    { path: 'review/review.md', content: '# Review\n\nStatus: passed\n\nThe ultraworker produced the requested hello-world artifact.' },
+                    { path: 'review/status.json', content: '{"status":"passed"}' }
+                ], {
+                    'review.status': 'passed'
+                })]
+            });
+
+            bridge = new ExternalFlowKernelBridge(executor);
+            let run = await bridge.startRun(workflow, 'Create a deterministic hello-world artifact.', 'Mock project summary for the Sisyphus smoke.', workspaceRootUri);
+
+            for (let i = 0; i < 20 && run.status !== 'completed'; i += 1) {
+                run = await bridge.tickRun(workflow, run, workspaceRootUri);
+                if (run.status === 'waiting_gate') {
+                    const gate = run.gates.find(candidate => candidate.id === 'sisyphus_plan_approval');
+                    expect(gate?.status).to.equal('pending');
+                    run = await bridge.approveGate(workflow, run, {
+                        runId: run.id,
+                        gateId: gate!.id,
+                        decision: 'approved',
+                        note: 'Approved deterministically in smoke test.'
+                    });
+                }
+            }
+
+            expect(run.status, summarizeRunForFailure(run)).to.equal('completed');
+            expect(executor.calls).to.include.members(['sisyphus_coordinator', 'sisyphus_ultraworker', 'sisyphus_reviewer']);
+            expect(run.gates.find(gate => gate.id === 'sisyphus_plan_approval')?.status).to.equal('approved');
+            const artifactUris = run.artifacts.map(artifact => artifact.uri);
+            expect(artifactUris.some(uri => uri.includes('plan/plan.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('work/summary.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('work/evidence.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('review/review.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('final/report.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('hello-world.txt'))).to.equal(true);
+            const helloWorldArtifact = run.artifacts.find(artifact => artifact.uri.includes('hello-world.txt'));
+            expect(helloWorldArtifact).to.not.equal(undefined);
+            const helloWorldContent = await fs.readFile(FileUri.fsPath(helloWorldArtifact!.uri), 'utf8');
+            expect(helloWorldContent.trim()).to.equal('Hello, world!');
+            expect(run.events.map(event => event.type)).to.include.members(['gate.created', 'gate.approved', 'run.completed']);
+        } finally {
+            await bridge?.shutdownKernelProcess();
+            process.chdir(previousCwd);
+            setEnv('FLOW_KERNEL_HTTP', previousEndpoint);
+            setEnv('FLOW_KERNEL_CLI', previousCli);
+            setEnv('FLOW_KERNEL_MODE', previousMode);
+            await fs.rm(workspaceRootDir, { recursive: true, force: true });
+        }
+    });
+
+    it('manual opt-in @real-codex-smoke for the Sisyphus hello-world pipeline', async function () {
+        if (process.env.FLOW_REAL_CODEX_SMOKE !== '1') {
+            this.skip();
+        }
+        this.timeout(300000);
+        const repositoryRoot = path.resolve(__dirname, '..', '..', '..', '..');
+        const kernelMain = path.join(repositoryRoot, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
+        const preset = getBuiltInFlowPipelinePreset(SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID);
+        expect(preset).to.not.equal(undefined);
+        const workflow = instantiateFlowPipelinePreset(preset!, {
+            id: 'sisyphus_real_codex_hello_world_smoke',
+            name: 'Sisyphus Real Codex Hello World Smoke'
+        });
+        configureHelloWorldSisyphusSmokeWorkflow(workflow);
+        const workspaceRootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sisyphus-real-codex-smoke-'));
+        const workspaceRootUri = FileUri.create(workspaceRootDir).toString();
+        const previousCwd = process.cwd();
+        const previousKernelHttp = process.env.FLOW_KERNEL_HTTP;
+        const previousKernelCli = process.env.FLOW_KERNEL_CLI;
+        const previousKernelMode = process.env.FLOW_KERNEL_MODE;
+        const previousProvider = process.env.FLOW_AGENT_PROVIDER;
+        const previousModelId = process.env.FLOW_AGENT_MODEL_ID;
+        const previousLegacyModelId = process.env.FLOW_AGENT_LLM_MODEL_ID;
+        const previousCommand = process.env.FLOW_AGENT_COMMAND;
+        const previousLegacyCommand = process.env.FLOW_AGENT_LLM_COMMAND;
+        let bridge: ExternalFlowKernelBridge | undefined;
+        let codexProviderService: CodexProviderServiceImpl | undefined;
+        let removeWorkspaceRootDir = true;
+
+        try {
+            await fs.access(kernelMain);
+            process.chdir(repositoryRoot);
+            setEnv('FLOW_KERNEL_HTTP', undefined);
+            setEnv('FLOW_KERNEL_CLI', undefined);
+            process.env.FLOW_KERNEL_MODE = 'external';
+            process.env.FLOW_AGENT_PROVIDER = 'ai-providers';
+            setEnv('FLOW_AGENT_MODEL_ID', undefined);
+            setEnv('FLOW_AGENT_LLM_MODEL_ID', undefined);
+            setEnv('FLOW_AGENT_COMMAND', undefined);
+            setEnv('FLOW_AGENT_LLM_COMMAND', undefined);
+
+            const agentMarkdownStore = new AgentMarkdownStore();
+            for (const agent of preset!.agentMarkdown || []) {
+                await agentMarkdownStore.writeAgent(workspaceRootUri, agent.relativePath, agent.content);
+            }
+
+            codexProviderService = new CodexProviderServiceImpl();
+            (codexProviderService as unknown as { logger: ReturnType<typeof createNoopLogger>; }).logger = createNoopLogger();
+
+            const status = await codexProviderService.getStatus({ cwd: workspaceRootDir });
+            expect(status.available, status.message || 'Codex provider must be available for the manual smoke test.').to.equal(true);
+
+            const executor = new ProviderBackedFlowWorkloadExecutor(
+                agentMarkdownStore,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                codexProviderService
+            );
+
+            bridge = new ExternalFlowKernelBridge(executor);
+            let run = await bridge.startRun(workflow, 'Create a deterministic hello-world artifact through the real Codex provider.', 'Mock project summary for the real Codex smoke.', workspaceRootUri);
+
+            for (let i = 0; i < 30 && run.status !== 'completed'; i += 1) {
+                run = await bridge.tickRun(workflow, run, workspaceRootUri);
+                if (run.status === 'waiting_gate') {
+                    const gate = run.gates.find(candidate => candidate.id === 'sisyphus_plan_approval');
+                    expect(gate?.status).to.equal('pending');
+                    run = await bridge.approveGate(workflow, run, {
+                        runId: run.id,
+                        gateId: gate!.id,
+                        decision: 'approved',
+                        note: 'Approved manually in the real-Codex smoke test.'
+                    }, workspaceRootUri);
+                }
+            }
+
+            if (run.status !== 'completed') {
+                removeWorkspaceRootDir = false;
+                throw new Error('Real Codex Sisyphus smoke did not complete. Workspace preserved at ' + workspaceRootDir + '.\n' + summarizeRunForFailure(run));
+            }
+            expect(run.status).to.equal('completed');
+            expect(run.gates.find(gate => gate.id === 'sisyphus_plan_approval')?.status).to.equal('approved');
+            const artifactUris = run.artifacts.map(artifact => artifact.uri);
+            expect(artifactUris.some(uri => uri.includes('plan/plan.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('work/summary.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('work/evidence.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('review/review.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('final/report.md'))).to.equal(true);
+            expect(artifactUris.some(uri => uri.includes('hello-world.txt'))).to.equal(true);
+            const helloWorldArtifact = run.artifacts.find(artifact => artifact.uri.includes('hello-world.txt'));
+            expect(helloWorldArtifact).to.not.equal(undefined);
+            const helloWorldContent = await fs.readFile(FileUri.fsPath(helloWorldArtifact!.uri), 'utf8');
+            expect(helloWorldContent).to.contain('Hello, world');
+            expect(run.events.map(event => event.type)).to.include.members(['gate.created', 'gate.approved', 'run.completed']);
+        } finally {
+            codexProviderService?.dispose();
+            await bridge?.shutdownKernelProcess();
+            process.chdir(previousCwd);
+            setEnv('FLOW_KERNEL_HTTP', previousKernelHttp);
+            setEnv('FLOW_KERNEL_CLI', previousKernelCli);
+            setEnv('FLOW_KERNEL_MODE', previousKernelMode);
+            setEnv('FLOW_AGENT_PROVIDER', previousProvider);
+            setEnv('FLOW_AGENT_MODEL_ID', previousModelId);
+            setEnv('FLOW_AGENT_LLM_MODEL_ID', previousLegacyModelId);
+            setEnv('FLOW_AGENT_COMMAND', previousCommand);
+            setEnv('FLOW_AGENT_LLM_COMMAND', previousLegacyCommand);
+            if (removeWorkspaceRootDir) {
+                await fs.rm(workspaceRootDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
+            }
         }
     });
 
@@ -1234,6 +1537,10 @@ describe('FlowKernelBridge external transport', () => {
                 expect(request.workloadId).to.equal('wl_review');
                 return { type: 'workload_started.ok', run: initialRun };
             },
+            artifact_created: request => {
+                expect(request.artifactType).to.equal('input');
+                return { type: 'artifact_created.ok', run: initialRun };
+            },
             issue_recorded: request => {
                 expect(request.workloadId).to.equal('wl_review');
                 expect(request.issue).to.deep.equal({
@@ -1265,6 +1572,7 @@ describe('FlowKernelBridge external transport', () => {
                 'start_run',
                 'workload_started',
                 'list_events',
+                'artifact_created',
                 'issue_recorded',
                 'workload_failed',
                 'list_events'
@@ -1349,7 +1657,7 @@ describe('FlowKernelBridge external transport', () => {
         }
     });
 
-    it('faz fallback para simulacao quando o kernel externo falha', async () => {
+    it('falha claramente quando o kernel externo falha sem fallback para simulacao', async () => {
         const workflow = sampleWorkflow();
         let externalCalls = 0;
 
@@ -1385,11 +1693,16 @@ describe('FlowKernelBridge external transport', () => {
         process.env.FLOW_KERNEL_MODE = 'external';
 
         try {
-            const run = await bridge.startRun(workflow, 'review this', 'project summary');
+            let failure: Error | undefined;
+            try {
+                await bridge.startRun(workflow, 'review this', 'project summary');
+            } catch (error) {
+                failure = error instanceof Error ? error : new Error(String(error));
+            }
 
             expect(externalCalls).to.equal(1);
-            expect(run.executionMode).to.equal('kernel_simulated_fallback_error');
-            expect(run.events.some(event => event.type === 'transition.evaluated' && event.message.includes('External Flow Kernel startRun failed'))).to.equal(true);
+            expect(failure?.message).to.contain('External Flow Kernel startRun failed: Kernel unavailable');
+            expect(failure?.message).to.contain('Simulated fallback is disabled');
         } finally {
             setEnv('FLOW_KERNEL_MODE', previousMode);
         }
@@ -1408,11 +1721,12 @@ describe('FlowKernelBridge external transport', () => {
         expect(run.events.map(event => event.type)).to.include('run.started');
     });
 
-    it('alterna dinamicamente entre capability simulated/external', async () => {
+    it('alterna capability simulated apenas em modo explicito e falha sem kernel externo no padrao', async () => {
+        let externalAvailable = true;
         let externalModeChecks = 0;
         const workflow = sampleWorkflow();
         const fakeExternal: FlowKernelBridge = {
-            available: () => true,
+            available: () => externalAvailable,
             getBridgeMode: async () => {
                 externalModeChecks += 1;
                 return 'external';
@@ -1453,6 +1767,28 @@ describe('FlowKernelBridge external transport', () => {
 
             process.env.FLOW_KERNEL_MODE = 'auto';
             expect(await bridge.getBridgeMode()).to.equal('external');
+            expect(externalModeChecks).to.equal(1);
+
+            externalAvailable = false;
+            setEnv('FLOW_KERNEL_MODE', undefined);
+            let defaultFailure: Error | undefined;
+            try {
+                await bridge.startRun(workflow, 'x', 'y');
+            } catch (error) {
+                defaultFailure = error instanceof Error ? error : new Error(String(error));
+            }
+            expect(defaultFailure?.message).to.contain('External Flow Kernel startRun is unavailable');
+            expect(defaultFailure?.message).to.contain('Simulated fallback is disabled');
+
+            process.env.FLOW_KERNEL_MODE = 'auto';
+            let autoModeFailure: Error | undefined;
+            try {
+                await bridge.getBridgeMode();
+            } catch (error) {
+                autoModeFailure = error instanceof Error ? error : new Error(String(error));
+            }
+            expect(autoModeFailure?.message).to.contain('External Flow Kernel getBridgeMode is unavailable');
+            expect(autoModeFailure?.message).to.contain('Simulated fallback is disabled');
             expect(externalModeChecks).to.equal(1);
         } finally {
             setEnv('FLOW_KERNEL_MODE', previousMode);

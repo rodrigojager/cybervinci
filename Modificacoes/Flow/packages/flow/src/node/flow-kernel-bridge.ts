@@ -41,6 +41,7 @@ import {
 } from './flow-workload-executor';
 import { CommandEffectHostAdapter, LocalCommandEffectHostAdapter } from './command-effect-host-adapter';
 import { MemoryAdapter } from './memory-adapter';
+import { resolveFlowRunDirectory, splitFlowRelativePath } from './flow-path-policy';
 import contractsSchema = require('./schemas/contracts.schema.json');
 
 interface KernelMessage {
@@ -114,7 +115,7 @@ export interface FlowKernelBridge {
     supportsRunEventStream?(): boolean | Promise<boolean>;
     startRun(workflow: FlowWorkflow, prompt: string, projectSummary: string, workspaceRootUri?: string): Promise<FlowRun>;
     tickRun(workflow: FlowWorkflow, run: FlowRun, workspaceRootUri?: string): Promise<FlowRun>;
-    approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest): Promise<FlowRun>;
+    approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest, workspaceRootUri?: string): Promise<FlowRun>;
     pauseRun(workflow: FlowWorkflow, run: FlowRun, reason?: string): Promise<FlowRun>;
     resumeRun(workflow: FlowWorkflow, run: FlowRun, reason?: string): Promise<FlowRun>;
     cancelRun(workflow: FlowWorkflow, run: FlowRun, reason?: string): Promise<FlowRun>;
@@ -142,23 +143,21 @@ function resolveKernelBridgePreference(): KernelBridgePreference {
     return 'auto';
 }
 
-function isExplicitSimulatedKernelMode(): boolean {
-    return resolveKernelBridgePreference() === 'simulated';
-}
-
 function formatKernelBridgeError(operation: string, error: unknown): string {
     const message = error instanceof Error ? error.message : String(error);
     return `External Flow Kernel ${operation} failed: ${message}`;
 }
 
-function fallbackExecutionMode(): FlowRunExecutionMode {
-    return isExplicitSimulatedKernelMode() ? 'kernel_simulated' : 'kernel_simulated_fallback_error';
+function simulatedExecutionMessage(operation: string): string {
+    return `Explicitly using simulated execution for ${operation}.`;
 }
 
-function fallbackExecutionMessage(operation: string): string {
-    return isExplicitSimulatedKernelMode()
-        ? `Explicitly using simulated execution for ${operation}.`
-        : `External protocol was unavailable; ${operation} continued in degraded simulated mode.`;
+function externalKernelUnavailableError(operation: string): Error {
+    return new Error(`External Flow Kernel ${operation} is unavailable. Simulated fallback is disabled; set FLOW_KERNEL_MODE=simulated only for explicit test/dev simulation.`);
+}
+
+function externalKernelOperationError(operation: string, error: unknown): Error {
+    return new Error(`${formatKernelBridgeError(operation, error)}. Simulated fallback is disabled.`);
 }
 
 class PersistentStdioTransport implements KernelTransport {
@@ -818,31 +817,44 @@ export class HybridFlowKernelBridge implements FlowKernelBridge {
         this.simulated = new SimulatedFlowKernelBridge(workloadExecutor);
     }
 
-    protected async shouldUseExternalKernel(): Promise<boolean> {
+    protected async shouldUseExternalKernel(operation: string, requireExternal = false): Promise<boolean> {
         const preference = resolveKernelBridgePreference();
         if (preference === 'simulated') {
+            if (requireExternal) {
+                throw new Error(`External Flow Kernel ${operation} is required for this run, but simulated mode was explicitly selected.`);
+            }
             return false;
         }
         if (!this.external.available?.()) {
-            return false;
+            throw externalKernelUnavailableError(operation);
         }
-        if (preference === 'external') {
-            return true;
+        let mode: FlowKernelBridgeMode;
+        try {
+            mode = await this.external.getBridgeMode();
+        } catch (error) {
+            throw externalKernelOperationError(`${operation} availability check`, error);
         }
-        return (await this.external.getBridgeMode()) === 'external';
+        if (mode !== 'external') {
+            throw externalKernelUnavailableError(operation);
+        }
+        return true;
     }
 
     async getBridgeMode(): Promise<FlowKernelBridgeMode> {
-        if (!this.external.available?.()) {
-            return 'simulated';
-        }
         if (resolveKernelBridgePreference() === 'simulated') {
             return 'simulated';
         }
+        if (!this.external.available?.()) {
+            throw externalKernelUnavailableError('getBridgeMode');
+        }
         try {
-            return await this.external.getBridgeMode();
-        } catch {
-            return 'simulated';
+            const mode = await this.external.getBridgeMode();
+            if (mode !== 'external') {
+                throw externalKernelUnavailableError('getBridgeMode');
+            }
+            return mode;
+        } catch (error) {
+            throw externalKernelOperationError('getBridgeMode', error);
         }
     }
 
@@ -858,87 +870,57 @@ export class HybridFlowKernelBridge implements FlowKernelBridge {
     }
 
     async startRun(workflow: FlowWorkflow, prompt: string, projectSummary: string, workspaceRootUri?: string): Promise<FlowRun> {
-        if (await this.shouldUseExternalKernel()) {
+        if (await this.shouldUseExternalKernel('startRun')) {
             try {
                 const run = await this.external.startRun(workflow, prompt, projectSummary, workspaceRootUri);
                 return setExecutionMode(run, 'kernel_external', 'Execution by external kernel daemon.');
             } catch (error) {
-                const fallback = await this.simulated.startRun(workflow, prompt, projectSummary, workspaceRootUri);
-                pushEvent(fallback, {
-                    type: 'transition.evaluated',
-                    workflowId: workflow.id,
-                    message: formatKernelBridgeError('startRun', error),
-                    payload: { error: error instanceof Error ? error.message : String(error) }
-                });
-                return setExecutionMode(fallback, fallbackExecutionMode(), fallbackExecutionMessage('startRun'));
+                throw externalKernelOperationError('startRun', error);
             }
         }
-        const fallback = await this.simulated.startRun(workflow, prompt, projectSummary, workspaceRootUri);
-        return setExecutionMode(fallback, fallbackExecutionMode(), fallbackExecutionMessage('startRun'));
+        const run = await this.simulated.startRun(workflow, prompt, projectSummary, workspaceRootUri);
+        return setExecutionMode(run, 'kernel_simulated', simulatedExecutionMessage('startRun'));
     }
 
     async tickRun(workflow: FlowWorkflow, run: FlowRun, workspaceRootUri?: string): Promise<FlowRun> {
         const runUsesDurableKernel = shouldUseExternalKernel(run);
         if (runUsesDurableKernel) {
-            if (await this.shouldUseExternalKernel()) {
-                try {
-                    const updated = await this.external.tickRun(workflow, run, workspaceRootUri);
-                    return setExecutionMode(updated, 'kernel_external', 'Execution mode set to external kernel.');
-                } catch (error) {
-                    const fallback = await this.simulated.tickRun(workflow, run, workspaceRootUri);
-                    pushEvent(fallback, {
-                        type: 'transition.evaluated',
-                        workflowId: workflow.id,
-                        message: formatKernelBridgeError('tickRun', error),
-                        payload: { error: error instanceof Error ? error.message : String(error) }
-                    });
-                    return setExecutionMode(fallback, fallbackExecutionMode(), fallbackExecutionMessage('tickRun'));
-                }
+            await this.shouldUseExternalKernel('tickRun', true);
+            try {
+                const updated = await this.external.tickRun(workflow, run, workspaceRootUri);
+                return setExecutionMode(updated, 'kernel_external', 'Execution mode set to external kernel.');
+            } catch (error) {
+                throw externalKernelOperationError('tickRun', error);
             }
-            const fallback = await this.simulated.tickRun(workflow, run, workspaceRootUri);
-            return setExecutionMode(
-                fallback,
-                fallbackExecutionMode(),
-                fallbackExecutionMessage('tickRun')
-            );
         }
         const updated = await this.simulated.tickRun(workflow, run, workspaceRootUri);
         return ensureExecutionMode(updated, run);
     }
 
-    async approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest): Promise<FlowRun> {
+    async approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest, workspaceRootUri?: string): Promise<FlowRun> {
         const runUsesDurableKernel = shouldUseExternalKernel(run);
         if (runUsesDurableKernel) {
-            if (await this.shouldUseExternalKernel()) {
-                try {
-                    const updated = await this.external.approveGate(workflow, run, request);
-                    return setExecutionMode(updated, 'kernel_external', 'Execution mode set to external kernel.');
-                } catch (error) {
-                    const fallback = await this.simulated.approveGate(workflow, run, request);
-                    pushEvent(fallback, {
-                        type: 'transition.evaluated',
-                        workflowId: workflow.id,
-                        message: formatKernelBridgeError('approveGate', error),
-                        payload: { error: error instanceof Error ? error.message : String(error) }
-                    });
-                    return setExecutionMode(fallback, fallbackExecutionMode(), fallbackExecutionMessage('approveGate'));
-                }
+            await this.shouldUseExternalKernel('approveGate', true);
+            try {
+                const updated = await this.external.approveGate(workflow, run, request, workspaceRootUri);
+                return setExecutionMode(updated, 'kernel_external', 'Execution mode set to external kernel.');
+            } catch (error) {
+                throw externalKernelOperationError('approveGate', error);
             }
-            const fallback = await this.simulated.approveGate(workflow, run, request);
-            return setExecutionMode(
-                fallback,
-                fallbackExecutionMode(),
-                fallbackExecutionMessage('approveGate')
-            );
         }
-        const updated = await this.simulated.approveGate(workflow, run, request);
+        const updated = await this.simulated.approveGate(workflow, run, request, workspaceRootUri);
         return ensureExecutionMode(updated, run);
     }
 
     async refreshRun(workflow: FlowWorkflow, run: FlowRun): Promise<FlowRun> {
-        if (this.external.available?.() && shouldUseExternalKernel(run)) {
-            const refreshed = await this.external.refreshRun(workflow, run);
-            return setExecutionMode(refreshed, 'kernel_external', 'Execution mode set to external kernel.');
+        if (shouldUseExternalKernel(run)) {
+            await this.shouldUseExternalKernel('refreshRun', true);
+            try {
+                const refreshed = await this.external.refreshRun(workflow, run);
+                return setExecutionMode(refreshed, 'kernel_external', 'Execution mode set to external kernel.');
+            } catch (error) {
+                throw externalKernelOperationError('refreshRun', error);
+            }
         }
         return this.simulated.refreshRun(workflow, run);
     }
@@ -950,16 +932,16 @@ export class HybridFlowKernelBridge implements FlowKernelBridge {
         listener: (run: FlowRun) => void,
         errorListener?: (error: Error) => void
     ): Promise<() => void> {
-        if (this.external.available?.() && shouldUseExternalKernel(run) && await this.shouldUseExternalKernel() && await this.supportsRunEventStream()) {
+        if (shouldUseExternalKernel(run) && await this.shouldUseExternalKernel('subscribeRunEvents', true) && await this.supportsRunEventStream()) {
             try {
                 return await this.external.subscribeRunEvents?.(workflow, run, workspaceRootUri, async updated => {
                     listener(setExecutionMode(updated, 'kernel_external', 'Execution mode set to external kernel.'));
                 }, errorListener) || (() => undefined);
             } catch (error) {
-                errorListener?.(error instanceof Error ? error : new Error(String(error)));
+                errorListener?.(externalKernelOperationError('subscribeRunEvents', error));
             }
         }
-        errorListener?.(new Error('Kernel event stream is unavailable; manual refresh/tick remains an explicit fallback.'));
+        errorListener?.(new Error('Kernel event stream is unavailable for the current execution mode.'));
         return () => undefined;
     }
 
@@ -976,19 +958,13 @@ export class HybridFlowKernelBridge implements FlowKernelBridge {
     }
 
     protected async lifecycleRun(operation: 'pauseRun' | 'resumeRun' | 'cancelRun', workflow: FlowWorkflow, run: FlowRun, reason?: string): Promise<FlowRun> {
-        if (shouldUseExternalKernel(run) && await this.shouldUseExternalKernel()) {
+        if (shouldUseExternalKernel(run)) {
+            await this.shouldUseExternalKernel(operation, true);
             try {
                 const updated = await this.external[operation](workflow, run, reason);
                 return setExecutionMode(updated, 'kernel_external', 'Execution mode set to external kernel.');
             } catch (error) {
-                const fallback = await this.simulated[operation](workflow, run, reason);
-                pushEvent(fallback, {
-                    type: 'transition.evaluated',
-                    workflowId: workflow.id,
-                    message: formatKernelBridgeError(operation, error),
-                    payload: { error: error instanceof Error ? error.message : String(error) }
-                });
-                return setExecutionMode(fallback, fallbackExecutionMode(), fallbackExecutionMessage(operation));
+                throw externalKernelOperationError(operation, error);
             }
         }
         const updated = await this.simulated[operation](workflow, run, reason);
@@ -1104,7 +1080,7 @@ export class ExternalFlowKernelBridge implements FlowKernelBridge {
         return mapKernelRunToFlowRun(workflow, run.prompt, kernelRun, events, metadata, run);
     }
 
-    async approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest): Promise<FlowRun> {
+    async approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest, workspaceRootUri?: string): Promise<FlowRun> {
         const metadata = kernelMetadata(run);
         if (!metadata) {
             throw new Error('External Flow Kernel metadata is missing.');
@@ -1122,7 +1098,7 @@ export class ExternalFlowKernelBridge implements FlowKernelBridge {
         });
         ensureResponseType(response, `${requestType}.ok`);
         let kernelRun = getKernelRun(response);
-        kernelRun = await this.processHostRequests(workflow, run.prompt, kernelRun, metadata.storeDir, undefined, metadata, response.requests, run);
+        kernelRun = await this.processHostRequests(workflow, run.prompt, kernelRun, metadata.storeDir, workspaceRootUri, metadata, response.requests, run);
         const events = await this.getKernelEvents({ runId: kernelRun.id, storeDir: metadata.storeDir });
         return mapKernelRunToFlowRun(workflow, run.prompt, kernelRun, events, metadata, run);
     }
@@ -1303,6 +1279,7 @@ export class ExternalFlowKernelBridge implements FlowKernelBridge {
         if (!isolatedWorkload) {
             throw new Error(`Kernel workload "${workload.id}" was not available in isolated execution context.`);
         }
+        await materializeWorkflowInputArtifacts(workflow, isolatedRun, workspaceRootUri);
         await this.workloadExecutor.execute({
             workflow,
             run: isolatedRun,
@@ -1583,7 +1560,11 @@ export class ExternalFlowKernelBridge implements FlowKernelBridge {
                 if (!this.transport.restart || attempt >= 1) {
                     break;
                 }
-                await this.transport.restart(`Kernel transport reconnection after ${message.type} failure.`);
+                try {
+                    await this.transport.restart(`Kernel transport reconnection after ${message.type} failure.`);
+                } catch {
+                    break;
+                }
             }
         }
         throw lastError || new Error('Kernel request failed after reconnect attempt.');
@@ -1651,7 +1632,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                 projectSummary: truncateFlowText(projectSummary, FlowSizeLimits.contextPackBytes, 'project summary')
             }
         });
-        enterState(workflow, run, startStateId);
+        await enterState(workflow, run, startStateId, workspaceRootUri);
         return run;
     }
 
@@ -1713,7 +1694,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                     stateId: activeParent,
                     message: `Parallel state "${activeParent}" completed.`
                 });
-                advanceFromState(workflow, run, activeParent);
+                await advanceFromState(workflow, run, activeParent, workspaceRootUri);
                 return touch(run);
             }
         } else {
@@ -1730,7 +1711,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                 context.workspaceRootUri = workspaceRootUri;
             }
             await this.workloadExecutor.execute(context);
-            if (activeWorkload.status === 'failed') {
+            if (activeWorkload.status === 'failed' && !hasMatchingTransition(workflow, run, activeWorkload.stateId)) {
                 run.status = 'failed';
                 run.stateStatuses[activeWorkload.stateId] = 'failed';
                 return touch(run);
@@ -1742,11 +1723,11 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
             return touch(run);
         }
 
-        advanceFromState(workflow, run, activeStateId);
+        await advanceFromState(workflow, run, activeStateId, workspaceRootUri);
         return touch(run);
     }
 
-    async approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest): Promise<FlowRun> {
+    async approveGate(workflow: FlowWorkflow, run: FlowRun, request: FlowGateDecisionRequest, workspaceRootUri?: string): Promise<FlowRun> {
         const gate = run.gates.find(candidate => candidate.id === request.gateId);
         if (!gate) {
             throw new Error(`Unknown gate "${request.gateId}".`);
@@ -1772,7 +1753,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                 runId: run.id,
                 createdAt: timestamp()
             });
-            advanceFromState(workflow, run, gateStateId);
+            await advanceFromState(workflow, run, gateStateId, workspaceRootUri);
         } else {
             run.status = request.decision === 'rejected' ? 'failed' : 'waiting_gate';
             if (gateStateId) {
@@ -1822,7 +1803,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
     }
 }
 
-function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string): void {
+async function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string, workspaceRootUri?: string): Promise<void> {
     const state = getState(workflow, stateId);
     if (state.type === 'parallel' && state.branches) {
         run.currentStateIds = Object.keys(state.branches);
@@ -1838,6 +1819,18 @@ function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string): void
 
     if (state.type === 'gate') {
         createGate(workflow, run, stateId);
+        return;
+    }
+
+    if (state.type === 'input') {
+        await materializeInputStateArtifacts(run, stateId, state, workspaceRootUri);
+        run.stateStatuses[stateId] = 'done';
+        pushEvent(run, {
+            type: 'state.completed',
+            stateId,
+            message: `State "${stateId}" completed.`
+        });
+        await advanceFromState(workflow, run, stateId, workspaceRootUri);
         return;
     }
 
@@ -1880,7 +1873,7 @@ function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string): void
     });
 }
 
-function advanceFromState(workflow: FlowWorkflow, run: FlowRun, stateId: string): void {
+async function advanceFromState(workflow: FlowWorkflow, run: FlowRun, stateId: string, workspaceRootUri?: string): Promise<void> {
     const transitions = (workflow.transitions || [])
         .filter(transition => transition.from === stateId)
         .sort((left, right) => (right.priority || 0) - (left.priority || 0));
@@ -1919,13 +1912,75 @@ function advanceFromState(workflow: FlowWorkflow, run: FlowRun, stateId: string)
         message: `Transition "${transition.from}" -> "${transition.to}" fired.`,
         payload: { loopCounter: transitionLoopCounter(transition.guard) }
     });
-    enterState(workflow, run, transition.to);
+    await enterState(workflow, run, transition.to, workspaceRootUri);
 }
 
 function hasMatchingTransition(workflow: FlowWorkflow, run: FlowRun, stateId: string): boolean {
     return (workflow.transitions || [])
         .filter(transition => transition.from === stateId)
         .some(transition => evaluateGuard(workflow, run, transition.guard));
+}
+
+async function materializeInputStateArtifacts(
+    run: FlowRun,
+    stateId: string,
+    state: FlowWorkflowState,
+    workspaceRootUri?: string
+): Promise<void> {
+    const outputs = state.outputs && state.outputs.length > 0 ? state.outputs : ['input/request.md'];
+    const workspaceRoot = path.resolve(workspaceRootUri ? FileUri.fsPath(workspaceRootUri) : os.homedir());
+    const inputDir = path.join(resolveFlowRunDirectory(workspaceRoot, run.id), 'input');
+    for (const output of outputs) {
+        const relativeParts = splitFlowRelativePath(output);
+        const artifactPath = path.join(inputDir, ...relativeParts);
+        const content = inputArtifactContent(output, run.prompt);
+        await fs.mkdir(path.dirname(artifactPath), { recursive: true });
+        await fs.writeFile(artifactPath, content, 'utf8');
+        const artifactUri = FileUri.create(artifactPath).toString();
+        upsertRunArtifact(run, {
+            id: stableId('artifact', run.id, stateId, output),
+            runId: run.id,
+            stateId,
+            uri: artifactUri,
+            kind: 'input',
+            summary: output,
+            createdAt: timestamp()
+        });
+        pushEvent(run, {
+            type: 'artifact.created',
+            stateId,
+            message: `Input artifact "${output}" created.`,
+            payload: { uri: artifactUri }
+        });
+    }
+}
+
+async function materializeWorkflowInputArtifacts(
+    workflow: FlowWorkflow,
+    run: FlowRun,
+    workspaceRootUri?: string
+): Promise<void> {
+    for (const [stateId, state] of Object.entries(workflow.states)) {
+        if (state.type === 'input') {
+            await materializeInputStateArtifacts(run, stateId, state, workspaceRootUri);
+        }
+    }
+}
+
+function inputArtifactContent(output: string, prompt: string): string {
+    if (output.toLowerCase().endsWith('.json')) {
+        return JSON.stringify({ prompt }, undefined, 2);
+    }
+    return ['# Request', '', prompt || 'No prompt was provided.'].join('\n');
+}
+
+function upsertRunArtifact(run: FlowRun, artifact: FlowRun['artifacts'][number]): void {
+    const index = run.artifacts.findIndex(item => item.id === artifact.id);
+    if (index === -1) {
+        run.artifacts.push(artifact);
+        return;
+    }
+    run.artifacts[index] = artifact;
 }
 
 function findActiveParallelParent(workflow: FlowWorkflow, activeStateIds: string[]): string | undefined {
@@ -2814,11 +2869,16 @@ function toKernelState(state: FlowWorkflowState): FlowWorkflowState {
     return {
         type: state.type,
         agent: state.agent,
+        agentRole: state.agentRole,
+        provider: state.provider,
+        modelExecution: state.modelExecution,
         input: state.input,
         timeoutMs: state.timeoutMs,
         outputs: state.outputs,
         waitFor: state.waitFor,
         branches: Object.keys(branches).length ? branches : undefined,
+        dynamicParallel: state.dynamicParallel,
+        tournament: state.tournament,
         gateId: state.gates?.[0]?.id,
         retry: state.retry,
         signals: state.signals as Record<string, unknown> | undefined,

@@ -11,7 +11,7 @@ import {
     WidgetFactory,
     bindViewContribution
 } from '@theia/core/lib/browser';
-import { ContainerModule } from '@theia/core/shared/inversify';
+import { ContainerModule, interfaces } from '@theia/core/shared/inversify';
 import { CodexSidebarContribution } from './codex-sidebar-contribution';
 import { CodexWebviewWidget } from './webview/codex-webview-widget';
 import { CodexWebviewHostService } from './host/codex-webview-host-service';
@@ -22,7 +22,7 @@ import { CodexCodeLensContribution, CodexCodeLensProvider } from './codex-codele
 import { CodexExtensionPreferencesSchema } from '../common/codex-preferences';
 import '../../src/browser/style/codex-webview.css';
 
-export default new ContainerModule(bind => {
+export function bindCodexFrontend(bind: interfaces.Bind): void {
     bind(CodexWebviewHostService).toSelf().inSingletonScope();
     bind(CodexFrontendRpcService).toSelf().inSingletonScope();
 
@@ -49,4 +49,8 @@ export default new ContainerModule(bind => {
     bind(FrontendApplicationContribution).toService(CodexSidebarContribution);
 
     bind(PreferenceContribution).toConstantValue({ schema: CodexExtensionPreferencesSchema });
+}
+
+export default new ContainerModule(bind => {
+    bindCodexFrontend(bind);
 });

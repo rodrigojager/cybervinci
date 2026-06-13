@@ -7,6 +7,16 @@ export namespace FlowCommands {
         label: 'Flow: Open',
         iconClass: CYBERVINCI_MENU_ITEMS.FLOW.iconClass
     };
+    export const START_WORKFLOW: Command = {
+        id: 'cybervinci.flow.startWorkflow',
+        label: 'Flow: Start Workflow',
+        iconClass: CYBERVINCI_MENU_ITEMS.FLOW.iconClass
+    };
+    export const RUN_DYNAMIC_WORKFLOW: Command = {
+        id: 'cybervinci.flow.runDynamicWorkflow',
+        label: 'Flow: Run Dynamic Workflow',
+        iconClass: CYBERVINCI_MENU_ITEMS.FLOW.iconClass
+    };
     export namespace Legacy {
         export const OPEN: Command = { id: 'agency-studio.open' };
     }

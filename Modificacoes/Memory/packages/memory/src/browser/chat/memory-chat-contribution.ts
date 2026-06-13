@@ -118,12 +118,14 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
                 const session = this.chatService.getSession(event.sessionId);
                 if (session) {
                     this.bindSession(session);
+                    this.installChatSuggestion();
                 }
             }
         }));
         for (const session of this.chatService.getSessions()) {
             this.bindSession(session);
         }
+        this.installChatSuggestion();
     }
 
     @preDestroy()
@@ -139,6 +141,7 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
         for (const session of this.chatService.getSessions()) {
             this.bindSession(session);
         }
+        this.installChatSuggestion();
     }
 
     override registerCommands(registry: CommandRegistry): void {
@@ -305,6 +308,8 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
         }
         const settings = await this.memoryService.getSettings(workspacePath);
         if (!this.canCaptureChatLearning(settings)) {
+            this.dynamicSuggestions = [];
+            this.installChatSuggestion();
             return;
         }
 
@@ -350,12 +355,17 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
                     .slice(0, 6);
             }
         }
+        this.installChatSuggestion();
     }
 
     protected canCaptureChatLearning(settings: MemoryWorkspaceSettings): boolean {
+        const optIn = settings.optIn ?? {};
         return settings.enabled === true
             && settings.chatLearningEnabled === true
-            && settings.optIn?.transcriptSearch === true;
+            && (optIn.events === true
+                || optIn.skills === true
+                || optIn.transcriptSearch === true
+                || optIn.promptSnippets === true);
     }
 
     protected async deterministicSuggestions(workspacePath: string, prompt: string, settings: MemoryWorkspaceSettings): Promise<InlineChatSuggestion[]> {
@@ -368,11 +378,13 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
             });
         }
         const dashboard = await this.memoryService.getDashboard(workspacePath);
-        const candidate = dashboard.skillCandidates.find(item => item.status === 'suggested' || item.status === 'tracking');
-        if (settings.skillSuggestionsEnabled && candidate && settings.optIn?.skills !== false) {
+        const candidate = dashboard.skillCandidates
+            .filter(item => item.status === 'suggested')
+            .sort((left, right) => right.triggerCount - left.triggerCount || right.updatedAt.localeCompare(left.updatedAt))[0];
+        if (settings.skillSuggestionsEnabled && candidate && settings.optIn?.skills === true) {
             suggestions.push({
                 id: `skill-${candidate.id}`,
-                label: nls.localize('theia/memory/chat/skillChip', 'CyberVinci: review skill "{0}"', candidate.title),
+                label: nls.localize('theia/memory/chat/skillChip', 'CyberVinci: criar skill "{0}"', candidate.title),
                 callback: () => this.commandRegistry.executeCommand(MemoryCommands.OPEN_SKILLS_REVIEW.id)
             });
         }
@@ -693,7 +705,11 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
         const snapshot = await this.memoryService.getWorkspaceSnapshot({ workspaceRoot: workspacePath });
         const stale = snapshot ? Date.now() - Date.parse(snapshot.scannedAt) > 5 * 60 * 1000 : true;
         if (stale) {
-            await this.memoryService.indexWorkspace({ workspacePath });
+            await this.memoryService.indexWorkspace({
+                workspacePath,
+                scope: snapshot ? 'changed-files' : 'workspace',
+                maxFiles: snapshot ? 120 : 300
+            });
         }
     }
 
@@ -740,6 +756,9 @@ export class MemoryChatContribution extends AbstractViewContribution<MemoryConte
         }
         const workspacePath = FileUri.fsPath(root.resource.toString());
         const settings = await this.memoryService.getSettings(workspacePath);
+        if (!this.canCaptureChatLearning(settings)) {
+            return;
+        }
         await this.memoryService.recordEvent({
             workspacePath,
             eventType: 'prompt.submitted',

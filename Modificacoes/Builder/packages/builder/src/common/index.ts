@@ -1,9 +1,10 @@
 import type { BuilderAiPatch } from '@cybervinci/builder-ai';
 
 export const BUILDER_EXTENSION_ID = 'cybervinci.builder';
-export const Builder_FILE_EXTENSION = '.builder.json';
-export const BUILDER_LEGACY_FILE_EXTENSION = '.cvui.json';
-export const BUILDER_FILE_EXTENSIONS = [Builder_FILE_EXTENSION, BUILDER_LEGACY_FILE_EXTENSION] as const;
+export const Builder_FILE_EXTENSION = '.cvpage.json';
+export const BUILDER_LEGACY_FILE_EXTENSION = '.builder.json';
+export const BUILDER_V0_FILE_EXTENSION = '.cvui.json';
+export const BUILDER_FILE_EXTENSIONS = [Builder_FILE_EXTENSION, BUILDER_LEGACY_FILE_EXTENSION, BUILDER_V0_FILE_EXTENSION] as const;
 export const BUILDER_SERVICE_PATH = '/services/cybervinci/builder';
 
 export function isBuilderFileName(path: string): boolean {
@@ -167,17 +168,37 @@ export interface BuilderPageHistoryResult {
 export namespace BuilderCommands {
     export const OPEN = {
         id: 'builder.open',
-        label: 'CyberVinci: Open UI Builder'
+        label: 'CyberVinci: Open Page Builder'
     };
 
     export const NEW_PAGE = {
         id: 'cybervinci.newUiPage',
-        label: 'CyberVinci: New UI Page'
+        label: 'CyberVinci: New Page'
+    };
+
+    export const OPEN_PAGE_JSON = {
+        id: 'builder.openPageJson',
+        label: 'CyberVinci: Open Page JSON'
+    };
+
+    export const SAVE_PAGE = {
+        id: 'builder.savePage',
+        label: 'CyberVinci: Save Page'
+    };
+
+    export const PREVIEW_PAGE = {
+        id: 'builder.previewPage',
+        label: 'CyberVinci: Preview Page'
     };
 
     export const EXPORT_HTML = {
         id: 'builder.exportHtml',
         label: 'CyberVinci: Export UI to HTML'
+    };
+
+    export const EXPORT_REACT = {
+        id: 'builder.exportReact',
+        label: 'CyberVinci: Export React Component'
     };
 
     export const GENERATE_UI_WITH_AI = {
@@ -186,8 +207,8 @@ export namespace BuilderCommands {
     };
 
     export namespace Legacy {
-        export const OPEN = { id: 'cvui-builder.open' };
-        export const EXPORT_HTML = { id: 'cvui-builder.exportHtml' };
-        export const GENERATE_UI_WITH_AI = { id: 'cvui-builder.generateUiWithAi' };
+        export const CVUI_OPEN = { id: 'cvui-builder.open' };
+        export const CVUI_EXPORT_HTML = { id: 'cvui-builder.exportHtml' };
+        export const CVUI_GENERATE_UI_WITH_AI = { id: 'cvui-builder.generateUiWithAi' };
     }
 }

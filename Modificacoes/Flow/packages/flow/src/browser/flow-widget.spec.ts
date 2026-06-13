@@ -7,7 +7,7 @@ FrontendApplicationConfigProvider.set({});
 import { expect } from 'chai';
 import { artifactUriToOpenUri } from './flow-artifacts';
 import { FlowClientImpl } from './flow-client';
-import { FlowWidget } from './flow-widget';
+import { FlowWidget, deliverablesToText, textToDeliverables } from './flow-widget';
 import { FLOW_CAPABILITIES } from '../common/flow-capabilities';
 import { FlowService } from '../common/flow-protocol';
 import { deriveFlowCanvasModel, deriveFlowKanbanColumns } from '../common/flow-derivation';
@@ -123,6 +123,26 @@ describe('Flow browser integration', () => {
         expect(filterFlowEvents(events, { artifact: 'reports/final.md' }).map(event => event.id)).to.deep.equal(['3']);
         expect(filterFlowEvents(events, { effect: 'effect-1' }).map(event => event.id)).to.deep.equal(['4']);
         expect(filterFlowEvents(events, { severity: 'high' }).map(event => event.id)).to.deep.equal(['5']);
+    });
+
+    it('converts agent deliverable text to workflow deliverables and back', () => {
+        const deliverables = textToDeliverables([
+            'reports/final.md | Final report | report | required',
+            'patches/ui.diff | UI changes | patch | false',
+            'logs/run.log'
+        ].join('\n'));
+
+        expect(deliverables).to.deep.equal([
+            { path: 'reports/final.md', description: 'Final report', kind: 'report', required: true },
+            { path: 'patches/ui.diff', description: 'UI changes', kind: 'patch', required: false },
+            { path: 'logs/run.log' }
+        ]);
+        expect(deliverablesToText(deliverables)).to.equal([
+            'reports/final.md | Final report | report | true',
+            'patches/ui.diff | UI changes | patch | false',
+            'logs/run.log'
+        ].join('\n'));
+        expect(textToDeliverables('')).to.equal(undefined);
     });
 
     it('sends memory approval UI decisions with edited content, scope, and target', async () => {

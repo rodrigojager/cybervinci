@@ -11,7 +11,8 @@ import {
     MemoryCandidate
 } from '../common';
 import { AgentMarkdownStore } from './agent-markdown-store';
-import { FlowWorkloadExecutionContext, ProviderBackedFlowWorkloadExecutor } from './flow-workload-executor';
+import { FlowWorkloadExecutionContext, ProviderBackedFlowWorkloadExecutor, runVirtualReasoningHarness } from './flow-workload-executor';
+import { FlowLlmProviderConfig } from './flow-agent-provider-registry';
 import { MemoryAdapter } from './memory-adapter';
 
 class MockLlmProviderExecutor extends ProviderBackedFlowWorkloadExecutor {
@@ -33,9 +34,10 @@ class MockLlmProviderExecutor extends ProviderBackedFlowWorkloadExecutor {
         this.responses = [...responses];
     }
 
-    protected override resolveLlmProvider(): Promise<any> {
+    protected override resolveLlmProvider(_context: FlowWorkloadExecutionContext): Promise<FlowLlmProviderConfig> {
         return Promise.resolve({
-            command: 'mock-llm-provider'
+            command: 'mock-llm-provider',
+            providerId: 'command'
         });
     }
 
@@ -183,6 +185,21 @@ function validMockProviderResult(patch: Record<string, unknown> = {}): string {
     });
 }
 
+function validArtifactProviderResult(artifactPath: string, content: string, signals: Record<string, string | number | boolean> = {}): string {
+    return validMockProviderResult({
+        result: {
+            status: 'completed',
+            summary: `Generated ${artifactPath}.`,
+            artifacts: [{ path: artifactPath, content }],
+            signals,
+            issues: []
+        },
+        report: content,
+        effects: [],
+        memoryCandidates: []
+    });
+}
+
 function validContractPackage() {
     return {
         packageId: 'contracts-run-1',
@@ -279,6 +296,104 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', () => {
         await fs.rm(workspaceRootDir, { recursive: true, force: true });
     });
 
+    it('runs Fast Virtual Reasoning as draft, critique, and revise only', async () => {
+        const stages: string[] = [];
+        const result = await runVirtualReasoningHarness({
+            mode: 'fast',
+            basePayload: { request: 'solve' },
+            invoke: async payload => {
+                const stage = (payload.virtualReasoning as Record<string, unknown>).stage as string;
+                stages.push(stage);
+                return `result:${stage}`;
+            }
+        });
+
+        expect(stages).to.deep.equal(['draft', 'critique', 'revise']);
+        expect(result).to.equal('result:revise');
+    });
+
+    it('runs Balanced Virtual Reasoning within the six-call MVP budget', async () => {
+        const stages: string[] = [];
+        const result = await runVirtualReasoningHarness({
+            mode: 'balanced',
+            basePayload: { request: 'solve' },
+            invoke: async payload => {
+                const stage = (payload.virtualReasoning as Record<string, unknown>).stage as string;
+                stages.push(stage);
+                return `result:${stage}`;
+            }
+        });
+
+        expect(stages).to.deep.equal(['classify', 'plan', 'draft', 'critique', 'revise', 'verify']);
+        expect(result).to.equal('result:revise');
+    });
+
+    it('resolves Auto Virtual Reasoning to Fast for simple Flow work', async () => {
+        const stages: string[] = [];
+        const result = await runVirtualReasoningHarness({
+            mode: 'auto',
+            basePayload: { request: 'What is 2 + 2?' },
+            invoke: async payload => {
+                const stage = (payload.virtualReasoning as Record<string, unknown>).stage as string;
+                stages.push(stage);
+                return `result:${stage}`;
+            }
+        });
+
+        expect(stages).to.deep.equal(['draft', 'critique', 'revise']);
+        expect(result).to.equal('result:revise');
+    });
+
+    it('resolves Auto Virtual Reasoning to Balanced for coding Flow work', async () => {
+        const stages: string[] = [];
+        const result = await runVirtualReasoningHarness({
+            mode: 'auto',
+            basePayload: { request: 'Debug this TypeScript workflow error.' },
+            invoke: async payload => {
+                const stage = (payload.virtualReasoning as Record<string, unknown>).stage as string;
+                stages.push(stage);
+                return `result:${stage}`;
+            }
+        });
+
+        expect(stages).to.deep.equal(['classify', 'plan', 'draft', 'critique', 'revise', 'verify']);
+        expect(result).to.equal('result:revise');
+    });
+
+    it('falls back to the best available Virtual Reasoning draft on later-stage failure', async () => {
+        const stages: string[] = [];
+        const result = await runVirtualReasoningHarness({
+            mode: 'balanced',
+            basePayload: { request: 'solve' },
+            invoke: async payload => {
+                const stage = (payload.virtualReasoning as Record<string, unknown>).stage as string;
+                stages.push(stage);
+                if (stage === 'critique') {
+                    throw new Error('critic failed');
+                }
+                return `result:${stage}`;
+            }
+        });
+
+        expect(stages).to.deep.equal(['classify', 'plan', 'draft', 'critique', 'verify']);
+        expect(result).to.equal('result:draft');
+    });
+
+    it('passes the Flow workload-output envelope contract into Virtual Reasoning stage payloads', async () => {
+        const instructions: string[] = [];
+        await runVirtualReasoningHarness({
+            mode: 'fast',
+            basePayload: { request: 'solve' },
+            invoke: async payload => {
+                const virtualReasoning = payload.virtualReasoning as Record<string, unknown>;
+                instructions.push(String((virtualReasoning.instructions as string[])[0]));
+                return `result:${virtualReasoning.stage as string}`;
+            }
+        });
+
+        expect(instructions[0]).to.contain('workload-output envelope JSON');
+    });
+
     it('executa agente com sucesso e registra issues, signals e memory candidates', async () => {
         const context = createExecutionContext(workspaceRootUri);
         const executor = new MockLlmProviderExecutor(agentMarkdown, [validMockProviderResult()]);
@@ -316,6 +431,257 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', () => {
         expect(resultJson.result.status).to.equal('completed');
         expect(resultJson.artifacts[0]).to.deep.include({ path: 'report.md', type: 'report' });
         expect(context.run.workloads[0].outputArtifacts.some(uri => uri.endsWith('/output/result.json'))).to.equal(true);
+    });
+
+    it('executa dynamic_parallel como subworkloads agregados', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'fanout',
+            type: 'dynamic_parallel',
+            outputs: ['dynamic-parallel/fanout/results.json'],
+            dynamicParallel: {
+                itemsFrom: 'items.json',
+                maxItems: 2,
+                concurrency: 2,
+                failurePolicy: 'best_effort',
+                worker: {
+                    type: 'agent',
+                    agent: 'reviewer',
+                    outputs: ['report.md']
+                }
+            }
+        });
+        await addRunArtifact(context, workspaceRootDir, 'items.json', JSON.stringify(['alpha', 'beta']), 'input');
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [
+            validArtifactProviderResult('report.md', '# Alpha\n\nDone.', { 'worker.status': 'done' }),
+            validArtifactProviderResult('report.md', '# Beta\n\nDone.', { 'worker.status': 'done' })
+        ]);
+
+        await executor.execute(context);
+
+        expect(executor.calls).to.equal(2);
+        expect(context.workload.status).to.equal('done');
+        expect(context.run.workloads.filter(workload => workload.branchId === 'fanout')).to.have.length(2);
+        expect(context.run.signals.some(signal => signal.key === 'fanout.dynamic_parallel.item_count' && signal.value === 2)).to.equal(true);
+        expect(context.workload.outputEnvelope?.result.status).to.equal('completed');
+        const aggregatePath = path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.workload.id, 'output', 'artifacts', 'dynamic-parallel', 'fanout', 'results.json');
+        const aggregate = JSON.parse(await fs.readFile(aggregatePath, 'utf8')) as { itemCount: number; successCount: number };
+        expect(aggregate.itemCount).to.equal(2);
+        expect(aggregate.successCount).to.equal(2);
+    });
+
+    it('executa tournament com juiz configurado', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'contest',
+            type: 'tournament',
+            outputs: ['tournament/contest/result.json'],
+            tournament: {
+                candidatesFrom: 'candidates.json',
+                winnerCount: 1,
+                criteria: ['correctness', 'clarity'],
+                judge: {
+                    type: 'agent',
+                    agent: 'reviewer',
+                    outputs: ['ranking.json']
+                }
+            }
+        });
+        await addRunArtifact(context, workspaceRootDir, 'candidates.json', JSON.stringify([{ id: 'a' }, { id: 'b' }]), 'input');
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [
+            validArtifactProviderResult('ranking.json', '{ "winner": "a" }', { 'tournament.status': 'decided' })
+        ]);
+
+        await executor.execute(context);
+
+        expect(executor.calls).to.equal(1);
+        expect(context.workload.status).to.equal('done');
+        expect(context.run.workloads.some(workload => workload.stateId === 'contest.judge')).to.equal(true);
+        expect(context.run.signals.some(signal => signal.key === 'contest.tournament.item_count' && signal.value === 2)).to.equal(true);
+        expect(context.workload.outputEnvelope?.result.status).to.equal('completed');
+        const aggregatePath = path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.workload.id, 'output', 'artifacts', 'tournament', 'contest', 'result.json');
+        const aggregate = JSON.parse(await fs.readFile(aggregatePath, 'utf8')) as { candidateCount: number; strategy: string };
+        expect(aggregate.candidateCount).to.equal(2);
+        expect(aggregate.strategy).to.equal('single_round');
+    });
+
+    it('falha agent workload quando provider nao esta configurado', async () => {
+        await withCleanAgentProviderEnv(async () => {
+            const context = createExecutionContext(workspaceRootUri);
+            const executor = new ProviderBackedFlowWorkloadExecutor();
+
+            await executor.executeAgentWorkload(context);
+
+            expect(context.run.workloads[0].status).to.equal('failed');
+            expect(context.run.stateStatuses.agent).to.equal('failed');
+            expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+            expect(context.run.effects.some(effect => effect.summary.includes('provider is missing'))).to.equal(true);
+            expect(context.run.effects.some(effect => effect.summary.includes('Deterministic production fallback is disabled'))).to.equal(true);
+        });
+    });
+
+    it('falha agent workload com provider sem suporte e hint de comando customizado', async () => {
+        await withCleanAgentProviderEnv(async () => {
+            const context = createExecutionContext(workspaceRootUri, {
+                provider: {
+                    providerId: 'openrouter'
+                }
+            });
+            const executor = new ProviderBackedFlowWorkloadExecutor();
+
+            await executor.executeAgentWorkload(context);
+
+            expect(context.run.workloads[0].status).to.equal('failed');
+            expect(context.run.effects.some(effect => effect.summary.includes('"openrouter"'))).to.equal(true);
+            expect(context.run.effects.some(effect => effect.summary.includes('FLOW_AGENT_PROVIDER_OPENROUTER_COMMAND'))).to.equal(true);
+        });
+    });
+
+    it('falha context workload sem request externo de provedor de contexto', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'context_pack',
+            type: 'context'
+        });
+        const executor = new ProviderBackedFlowWorkloadExecutor();
+
+        await executor.executeContextWorkload(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.stateStatuses.context_pack).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('cannot execute without an external context provider request'))).to.equal(true);
+    });
+
+    it('falha command workload sem comando configurado', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'command_step',
+            type: 'command'
+        });
+        const executor = new ProviderBackedFlowWorkloadExecutor();
+
+        await executor.executeCommandWorkload(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.stateStatuses.command_step).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('has no command configured'))).to.equal(true);
+    });
+
+    it('falha tipos de workload sem suporte em vez de fallback deterministico', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'unsupported_step'
+        });
+        Object.assign(context.state, { type: 'unsupported_workload' });
+        const executor = new ProviderBackedFlowWorkloadExecutor();
+
+        await executor.execute(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.stateStatuses.unsupported_step).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('Unsupported Flow workload type'))).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('Deterministic fallback'))).to.equal(false);
+    });
+
+    it('envia prompts e deliverables configurados ao provider e ao work order', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            systemPrompt: 'Act as the implementation coordinator.',
+            taskPrompt: 'Produce the implementation evidence.',
+            outputs: ['work/summary.md'],
+            deliverables: [
+                { path: 'work/summary.md', description: 'Implementation summary', required: true, kind: 'markdown' },
+                { path: 'work/evidence.md', description: 'Verification evidence', required: true, kind: 'markdown' }
+            ]
+        });
+        context.workload.inputArtifacts = ['request.md'];
+        await addRunArtifact(context, workspaceRootDir, 'request.md', '# Request\n\nImplement the feature.');
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [validMockProviderResult({
+            result: {
+                status: 'completed',
+                summary: 'Configured execution completed.',
+                artifacts: [
+                    { path: 'work/summary.md', content: '# Summary' },
+                    { path: 'work/evidence.md', content: '# Evidence' }
+                ],
+                signals: {},
+                issues: []
+            }
+        })]);
+
+        await executor.executeAgentWorkload(context);
+
+        const payload = executor.providerPayloads[0];
+        const instructions = payload.instructions as Record<string, unknown>;
+        const expectedOutput = payload.expectedOutput as Record<string, unknown>;
+        const deliverables = expectedOutput.deliverables as Array<Record<string, unknown>>;
+        const contextPayload = payload.context as Record<string, unknown>;
+        const inputArtifacts = contextPayload.inputArtifacts as Array<Record<string, unknown>>;
+        expect(instructions.systemPrompt).to.equal('Act as the implementation coordinator.');
+        expect(instructions.taskPrompt).to.equal('Produce the implementation evidence.');
+        expect(expectedOutput.allowedPaths).to.deep.equal(['work/summary.md', 'work/evidence.md']);
+        expect(deliverables).to.deep.include({
+            path: 'work/evidence.md',
+            description: 'Verification evidence',
+            required: true,
+            kind: 'markdown'
+        });
+        expect(inputArtifacts).to.deep.equal([
+            {
+                path: 'request.md',
+                content: '# Request\n\nImplement the feature.'
+            }
+        ]);
+        const workOrder = await fs.readFile(path.join(
+            workspaceRootDir,
+            '.theia',
+            'flow',
+            'runs',
+            context.run.id,
+            'workloads',
+            context.workload.id,
+            'input',
+            'work-order.md'
+        ), 'utf8');
+        expect(workOrder).to.contain('## System Prompt');
+        expect(workOrder).to.contain('Act as the implementation coordinator.');
+        expect(workOrder).to.contain('## Task Prompt');
+        expect(workOrder).to.contain('Produce the implementation evidence.');
+        expect(workOrder).to.contain('- work/evidence.md (required; kind: markdown; Verification evidence)');
+    });
+
+    it('falha antes de invocar provider quando input artifact requerido nao existe', async () => {
+        const context = createExecutionContext(workspaceRootUri);
+        context.workload.inputArtifacts = ['missing/request.md'];
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [validMockProviderResult()]);
+
+        await executor.executeAgentWorkload(context);
+
+        expect(executor.calls).to.equal(0);
+        expect(executor.providerPayloads).to.have.length(0);
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('Required input artifact "missing/request.md" could not be resolved'))).to.equal(true);
+    });
+
+    it('descreve artifacts gerados com path e content no formato default do provider', async () => {
+        const context = createExecutionContext(workspaceRootUri);
+        const defaultFormatAgentMarkdown = [
+            '# Reviewer',
+            '',
+            '## Role',
+            'You are a mockable reviewer.',
+            '',
+            '## Quality Criteria',
+            '1. Preserve compatibility.'
+        ].join('\\n');
+        const executor = new MockLlmProviderExecutor(defaultFormatAgentMarkdown, [validMockProviderResult()]);
+
+        await executor.executeAgentWorkload(context);
+
+        const payload = executor.providerPayloads[0];
+        const expectedOutput = payload.expectedOutput as Record<string, unknown>;
+        const outputFormat = String(expectedOutput.format);
+        expect(outputFormat).to.contain('"artifacts": [ { "path": "string", "content": "string" } ]');
+        expect(outputFormat).to.not.contain('backward compatibility');
+        expect(outputFormat).to.not.contain('"path": "string", "type"');
     });
 
     it('rebaixa memory candidates importados como written para candidate review', async () => {
@@ -1177,6 +1543,8 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', () => {
                 ]
             }]
         };
+        await addRunArtifact(context, workspaceRootDir, 'contracts/shared.md', '# Shared Contract\n\nUse the approved API and assets.', 'contract_design');
+        await addRunArtifact(context, workspaceRootDir, 'contracts/work-orders/backend.md', '# Backend Work Order\n\nImplement the backend route.', 'contract_design');
         const executor = new MockLlmProviderExecutor(agentMarkdown, [JSON.stringify({
             result: {
                 status: 'completed',
@@ -1425,7 +1793,7 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', () => {
             },
             report: 'Execution finished.',
             effects: [{
-                type: 'notification',
+                type: 42,
                 summary: 'Notification effects need a path or command in the workload output contract.'
             }]
         })]);
@@ -1439,17 +1807,112 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', () => {
         await expectRejected(fs.access(path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.run.workloads[0].id, 'output', 'result.json')));
     });
 
-    it('faz fallback seguro em timeout quando não há retry', async () => {
+    it('rejeita result.artifacts sem content e nao gera fallback', async () => {
+        const context = createExecutionContext(workspaceRootUri);
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [JSON.stringify({
+            result: {
+                status: 'completed',
+                summary: 'Missing content should fail.',
+                artifacts: [{ path: 'report.md' }],
+                signals: {},
+                issues: []
+            },
+            report: 'Execution finished.',
+            effects: []
+        })]);
+
+        await executor.executeAgentWorkload(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('result.artifacts[0].content must be a non-empty string'))).to.equal(true);
+        expect(context.run.workloads[0].outputArtifacts).to.deep.equal([]);
+        await expectRejected(fs.access(path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.run.workloads[0].id, 'output', 'artifacts', 'report.md')));
+    });
+
+    it('rejeita artifacts top-level sem content e nao gera fallback', async () => {
+        const context = createExecutionContext(workspaceRootUri);
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [JSON.stringify({
+            result: {
+                status: 'completed',
+                summary: 'Top-level artifacts should also fail.',
+                artifacts: [{ path: 'report.md', content: '# Report' }],
+                signals: {},
+                issues: []
+            },
+            report: 'Execution finished.',
+            artifacts: [{ path: 'report.md' }],
+            effects: []
+        })]);
+
+        await executor.executeAgentWorkload(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('artifacts[0].content must be a non-empty string'))).to.equal(true);
+        expect(context.run.workloads[0].outputArtifacts).to.deep.equal([]);
+        await expectRejected(fs.access(path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.run.workloads[0].id, 'output', 'artifacts', 'report.md')));
+    });
+
+    it('rejeita JSON sem artifacts e nao sintetiza report como fallback', async () => {
+        const context = createExecutionContext(workspaceRootUri);
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [JSON.stringify({
+            result: {
+                status: 'completed',
+                summary: 'Report-only output should fail.',
+                signals: {},
+                issues: []
+            },
+            report: 'This report must not become report.md.',
+            effects: []
+        })]);
+
+        await executor.executeAgentWorkload(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('result.artifacts must include at least one generated artifact with path and content'))).to.equal(true);
+        expect(context.run.workloads[0].outputArtifacts).to.deep.equal([]);
+        await expectRejected(fs.access(path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.run.workloads[0].id, 'output', 'artifacts', 'report.md')));
+    });
+
+    it('rejeita artifacts vazios e nao sintetiza expected outputs ausentes', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            outputs: ['work/summary.md', 'work/evidence.md']
+        });
+        const executor = new MockLlmProviderExecutor(agentMarkdown, [JSON.stringify({
+            result: {
+                status: 'completed',
+                summary: 'Partial outputs should fail.',
+                artifacts: [{ path: 'work/summary.md', content: '# Summary' }],
+                signals: {},
+                issues: []
+            },
+            report: 'This report must not fill work/evidence.md.',
+            effects: []
+        })]);
+
+        await executor.executeAgentWorkload(context);
+
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('missing generated artifacts for expected outputs: work/evidence.md'))).to.equal(true);
+        expect(context.run.workloads[0].outputArtifacts).to.deep.equal([]);
+        await expectRejected(fs.access(path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.run.workloads[0].id, 'output', 'artifacts', 'work', 'evidence.md')));
+    });
+
+    it('falha em timeout quando não há retry sem fallback deterministico', async () => {
         const context = createExecutionContext(workspaceRootUri);
         const executor = new MockLlmProviderExecutor(agentMarkdown, [new Error('LLM command provider timed out after 120000ms.')]);
 
         const result = await executor.executeAgentWorkload(context);
 
         expect(result.artifactUri).to.contain('flow://');
-        expect(context.run.workloads[0].status).to.equal('done');
-        expect(context.run.effects.some(effect => effect.summary.includes('used deterministic fallback'))).to.equal(true);
+        expect(context.run.workloads[0].status).to.equal('failed');
+        expect(context.run.effects.some(effect => effect.summary.includes('LLM command provider timed out'))).to.equal(true);
+        expect(context.run.effects.some(effect => effect.summary.includes('used deterministic fallback'))).to.equal(false);
         expect(context.run.events.some(event => event.type === 'workload.retry')).to.equal(false);
-        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(false);
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
     });
 
     it('reexecuta após retry em erro temporário e conclui com sucesso', async () => {
@@ -1503,4 +1966,31 @@ async function expectRejected(action: Promise<unknown>): Promise<void> {
         return;
     }
     throw new Error('Expected promise to be rejected.');
+}
+
+async function withCleanAgentProviderEnv(action: () => Promise<void>): Promise<void> {
+    const keys = [
+        'FLOW_AGENT_PROVIDER',
+        'FLOW_AGENT_LLM_COMMAND',
+        'FLOW_AGENT_COMMAND',
+        'FLOW_AGENT_MODEL_ID',
+        'FLOW_AGENT_LLM_MODEL_ID',
+        'FLOW_AGENT_PROVIDER_OPENROUTER_COMMAND'
+    ];
+    const snapshot = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+    for (const key of keys) {
+        delete process.env[key];
+    }
+    try {
+        await action();
+    } finally {
+        for (const key of keys) {
+            const value = snapshot[key];
+            if (value === undefined) {
+                delete process.env[key];
+            } else {
+                process.env[key] = value;
+            }
+        }
+    }
 }

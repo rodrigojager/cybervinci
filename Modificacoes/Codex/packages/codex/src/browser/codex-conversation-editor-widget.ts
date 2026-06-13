@@ -45,12 +45,25 @@ export class CodexConversationEditorWidget extends BaseWidget implements CodexWe
 
     setRoute(path: string, _state?: unknown): void {
         this.route = path;
-        this.iframe.src = this.hostService.buildShellUrl(this.webviewId, path);
+        if (this.isSettingsRoute(path)) {
+            this.title.label = 'Codex Settings';
+            this.title.caption = 'Codex Settings';
+        } else {
+            this.title.label = CodexConversationEditorWidget.LABEL;
+            this.title.caption = CodexConversationEditorWidget.LABEL;
+        }
+        this.iframe.src = this.hostService.buildShellUrl(this.webviewId, path, 'editor');
+    }
+
+    getRoute(): string | undefined {
+        return this.route;
     }
 
     setResourceUri(uri: URI): void {
         this.resourceUri = uri;
-        this.title.label = uri.path.base || CodexConversationEditorWidget.LABEL;
+        if (!this.isSettingsRoute(this.route)) {
+            this.title.label = uri.path.base || CodexConversationEditorWidget.LABEL;
+        }
     }
 
     getResourceUri(): URI | undefined {
@@ -64,7 +77,7 @@ export class CodexConversationEditorWidget extends BaseWidget implements CodexWe
     @postConstruct()
     protected init(): void {
         this.hostService.registerSurface(this);
-        this.iframe.src = this.hostService.buildShellUrl(this.webviewId, this.route);
+        this.iframe.src = this.hostService.buildShellUrl(this.webviewId, this.route, 'editor');
         const wrapper = new BaseWidget();
         wrapper.addClass('codex-webview-iframe-wrapper');
         wrapper.node.appendChild(this.iframe);
@@ -83,6 +96,10 @@ export class CodexConversationEditorWidget extends BaseWidget implements CodexWe
     override onActivateRequest(msg: Message): void {
         super.onActivateRequest(msg);
         this.iframe.focus();
+    }
+
+    protected isSettingsRoute(path: string): boolean {
+        return path === '/settings' || path.startsWith('/settings/');
     }
 }
 

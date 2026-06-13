@@ -113,8 +113,8 @@ export async function persistBuilderJsonFile(
 }
 
 export function createBuilderCopyUri(target: URI, timestamp = new Date()): URI {
-    const extension = Builder_FILE_EXTENSION;
     const base = target.path.base;
+    const extension = BUILDER_FILE_EXTENSIONS.find(candidate => base.endsWith(candidate)) ?? Builder_FILE_EXTENSION;
     const stem = base.endsWith(extension) ? base.slice(0, -extension.length) : base;
     const stamp = timestamp.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
     return target.parent.resolve(`${stem}.copy-${stamp}${extension}`);

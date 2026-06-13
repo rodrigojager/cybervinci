@@ -1,0 +1,2 @@
+import{v as e,zo as t}from"./app-server-manager-signals-B8yJv95l.js";import{L as n}from"./vscode-api-CjIlXYxl.js";function r(){return t(n(e)).kind!==`local`}export{r as t};
+//# sourceMappingURL=use-is-remote-host-DlIKJ03R.js.map

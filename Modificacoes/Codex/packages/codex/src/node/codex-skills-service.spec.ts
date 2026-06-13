@@ -32,6 +32,27 @@ describe('CodexSkillsService', () => {
         expect(result.skills).to.have.length(1);
         expect(result.skills[0].id).to.equal('demo-skill');
         expect(result.skills[0].name).to.equal('Demo Skill');
+        expect(result.skills[0].discovery).to.equal('auto');
+    });
+
+    it('excludes manual skills unless explicitly requested', async () => {
+        const manualSkillDir = path.join(tempHome, 'skills', 'manual-skill');
+        await fs.ensureDir(manualSkillDir);
+        await fs.writeFile(path.join(manualSkillDir, 'SKILL.md'), `---
+name: manual-skill
+description: Manual skill
+discovery: manual
+---
+# Manual Skill
+
+Only load after explicit selection.`);
+
+        const defaultResult = await service.recommendedSkills({ params: { codexHome: tempHome } });
+        const manualResult = await service.recommendedSkills({ params: { codexHome: tempHome, includeManual: true } });
+
+        expect(defaultResult.skills.map(skill => skill.id)).to.deep.equal(['demo-skill']);
+        expect(manualResult.skills.map(skill => skill.id)).to.deep.equal(['demo-skill', 'manual-skill']);
+        expect(manualResult.skills.find(skill => skill.id === 'manual-skill')?.discovery).to.equal('manual');
     });
 
     it('reads plugin skill content', async () => {

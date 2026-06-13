@@ -190,13 +190,13 @@ describe('Flow capability resolution', () => {
         expect(resolution.provided).to.deep.equal([
             'host.deterministic_fallback',
             'kernel.bridge.simulated',
-            'memory.write.explicit',
-            'memory.context.local'
+            'memory.context.local',
+            'memory.write.explicit'
         ]);
         expect(resolution.missing).to.deep.equal([
             'llm.agent.execute',
-            'memory.write.provider',
-            'memory.context'
+            'memory.context',
+            'memory.write.provider'
         ]);
     });
 
@@ -292,9 +292,9 @@ describe('Flow capability resolution', () => {
 
         expect(resolution.provided).to.deep.equal(['memory.write.explicit']);
         expect(resolution.missing).to.deep.equal([
-            'memory.write.provider',
             'memory.context',
-            'memory.context.local'
+            'memory.context.local',
+            'memory.write.provider'
         ]);
     });
 

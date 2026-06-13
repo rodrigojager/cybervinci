@@ -1,13 +1,13 @@
 {
   "name": "@cybervinci/library",
-  "version": "1.71.0",
+  "version": "1.72.0",
   "description": "Theia - Versioned AI documentation context manager",
   "dependencies": {
-    "@theia/ai-core": "1.71.0",
-    "@theia/ai-mcp-server": "1.71.0",
-    "@theia/core": "1.71.0",
-    "@cybervinci/branding": "1.71.0",
-    "@theia/workspace": "1.71.0",
+    "@theia/ai-core": "1.72.0",
+    "@theia/ai-mcp-server": "1.72.0",
+    "@theia/core": "1.72.0",
+    "@cybervinci/branding": "1.72.0",
+    "@theia/workspace": "1.72.0",
     "adm-zip": "^0.5.16",
     "ajv": "^6.15.0",
     "js-yaml": "^4.1.1",
@@ -52,7 +52,7 @@
     "watch": "theiaext watch"
   },
   "devDependencies": {
-    "@theia/ext-scripts": "1.71.0"
+    "@theia/ext-scripts": "1.72.0"
   },
   "nyc": {
     "extends": "../../configs/nyc.json"

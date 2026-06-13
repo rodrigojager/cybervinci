@@ -116,6 +116,7 @@ export interface AvailableSkill {
     id: string;
     name: string;
     description: string;
+    discovery?: 'auto' | 'manual' | 'system';
     tags?: readonly string[];
 }
 

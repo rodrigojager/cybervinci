@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "defaultDiscovery": "manual",
+  "rules": [
+    {
+      "path": "System/**",
+      "discovery": "system",
+      "autoContext": true,
+      "manualSelection": true,
+      "description": "CyberVinci and bundled-extension internals. These may be loaded automatically by system features."
+    },
+    {
+      "path": "Auto/**",
+      "discovery": "auto",
+      "autoContext": true,
+      "manualSelection": true,
+      "description": "User-facing utility skills that are safe to expose through automatic topic or intent matching."
+    },
+    {
+      "path": "Manual/**",
+      "discovery": "manual",
+      "autoContext": false,
+      "manualSelection": true,
+      "description": "User-facing utility skills and large catalogs. These must enter model context only after explicit user selection or naming."
+    }
+  ]
+}

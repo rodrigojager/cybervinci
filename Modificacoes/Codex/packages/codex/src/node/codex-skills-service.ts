@@ -18,6 +18,7 @@ export interface CodexRecommendedSkill {
     path: string;
     installed: boolean;
     source: 'bundled' | 'user' | 'curated';
+    discovery: 'auto' | 'manual' | 'system';
 }
 
 @injectable()
@@ -26,9 +27,10 @@ export class CodexSkillsService {
     async recommendedSkills(params: unknown): Promise<{ skills: CodexRecommendedSkill[]; error: string | null }> {
         const record = parseCodexRpcParams(params);
         const refresh = record.refresh === true;
+        const includeManual = record.includeManual === true;
         const codexHome = await this.resolveCodexHome(record);
         try {
-            const skills = await this.scanSkills(codexHome, refresh);
+            const skills = await this.scanSkills(codexHome, refresh, includeManual);
             return { skills, error: null };
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
@@ -88,7 +90,7 @@ export class CodexSkillsService {
         return candidate;
     }
 
-    protected async scanSkills(codexHome: string, _refresh: boolean): Promise<CodexRecommendedSkill[]> {
+    protected async scanSkills(codexHome: string, _refresh: boolean, includeManual: boolean): Promise<CodexRecommendedSkill[]> {
         const roots = [
             { root: path.join(codexHome, 'skills'), source: 'user' as const },
             { root: path.join(codexHome, 'vendor_imports', 'skills'), source: 'bundled' as const }
@@ -111,6 +113,9 @@ export class CodexSkillsService {
                 seen.add(skillId);
                 const skillDir = path.join(root, skillId);
                 const metadata = await this.readSkillMetadata(skillDir, skillId, source);
+                if (!includeManual && metadata.discovery === 'manual') {
+                    continue;
+                }
                 skills.push(metadata);
             }
         }
@@ -125,8 +130,10 @@ export class CodexSkillsService {
         const skillFile = path.join(skillDir, 'SKILL.md');
         let description = '';
         let name = skillId;
+        let discovery: CodexRecommendedSkill['discovery'] = this.resolveDiscoveryMode('', skillDir);
         if (await fs.pathExists(skillFile)) {
             const content = await fs.readFile(skillFile, 'utf8');
+            discovery = this.resolveDiscoveryMode(content, skillDir);
             const titleMatch = content.match(/^#\s+(.+)$/m);
             if (titleMatch?.[1]) {
                 name = titleMatch[1].trim();
@@ -144,7 +151,24 @@ export class CodexSkillsService {
             description,
             path: skillDir,
             installed: source === 'user',
-            source
+            source,
+            discovery
         };
+    }
+
+    protected resolveDiscoveryMode(content: string, skillDir: string): CodexRecommendedSkill['discovery'] {
+        const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+        const discoveryMatch = frontmatterMatch?.[1].match(/^\s*discovery\s*:\s*(auto|manual|system)\s*$/mi);
+        if (discoveryMatch?.[1]) {
+            return discoveryMatch[1] as CodexRecommendedSkill['discovery'];
+        }
+        const normalizedPath = skillDir.replace(/\\/g, '/');
+        if (/(^|\/)Manual(\/|$)/i.test(normalizedPath)) {
+            return 'manual';
+        }
+        if (/(^|\/)System(\/|$)/i.test(normalizedPath)) {
+            return 'system';
+        }
+        return 'auto';
     }
 }

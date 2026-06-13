@@ -4,6 +4,7 @@ Separated packages/vendor:
 
 - `packages/openpencil-cybervinci-extension` → `@cybervinci/openpencil-extension`
 - `vendor/openpencil` → vendored OpenPencil source from `https://github.com/ZSeven-W/openpencil`
+- `Modificacoes/Skills/System/OpenPencil/pen-ai-skills` → canonical Markdown source for OpenPencil system skills
 
 Documentation:
 
@@ -22,3 +23,5 @@ Requires:
 - `Branding/packages/branding`
 
 Apply by copying package and vendor folder to the same relative locations in a baseline Theia tree, adding `@cybervinci/openpencil-extension`, then rebuilding.
+
+The installer also copies `Modificacoes/Skills/System/OpenPencil` into the target root as `Skills/System/OpenPencil` for environments that are not built directly inside this CyberVinci workspace.

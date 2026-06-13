@@ -304,37 +304,46 @@ export class ProjectMemoryRetrievalSource extends JsonStoreRetrievalSource {
     }
 
     protected memoryResult(memory: MemoryItem, needle: string, query: RetrievalQuery): RetrievalResult | undefined {
-        const haystack = `${memory.title} ${memory.content} ${memory.memoryType}`.toLowerCase();
+        const rankedMemory = this.rankableMemory(memory);
+        const haystack = `${rankedMemory.title} ${rankedMemory.content} ${rankedMemory.memoryType}`.toLowerCase();
         const score = this.score(haystack, needle);
         if (needle && score <= 0) {
             return undefined;
         }
         return {
-            id: memory.id,
+            id: rankedMemory.id,
             sourceKind: this.sourceKind,
-            title: memory.title,
-            snippet: memory.content,
-            score: (score + 0.15) * this.memoryLifecycleMultiplier(memory),
-            evidence: memory.evidence ? `${memory.evidence}; pi_memory_items:${memory.staleStatus}` : `pi_memory_items:${memory.staleStatus}`,
-            rankingSignals: this.memoryRankingSignals(memory, query, {
+            title: rankedMemory.title,
+            snippet: rankedMemory.content,
+            score: (score + 0.15) * this.memoryLifecycleMultiplier(rankedMemory),
+            evidence: rankedMemory.evidence ? `${rankedMemory.evidence}; pi_memory_items:${rankedMemory.staleStatus}` : `pi_memory_items:${rankedMemory.staleStatus}`,
+            rankingSignals: this.memoryRankingSignals(rankedMemory, query, {
                 bm25Score: score
             })
         };
     }
 
     protected memorySearchResult(memory: MemorySearchHit, query: RetrievalQuery): RetrievalResult {
-        const haystack = `${memory.title} ${memory.content} ${memory.memoryType}`.toLowerCase();
+        const rankedMemory = this.rankableMemory(memory);
+        const haystack = `${rankedMemory.title} ${rankedMemory.content} ${rankedMemory.memoryType}`.toLowerCase();
         return {
-            id: memory.id,
+            id: rankedMemory.id,
             sourceKind: this.sourceKind,
-            title: memory.title,
-            snippet: memory.snippet ?? memory.content,
-            score: (memory.score ?? this.score(haystack, '')) * this.memoryLifecycleMultiplier(memory),
-            evidence: memory.evidence ?? `pi_memory_items_fts:${memory.staleStatus}`,
-            rankingSignals: this.memoryRankingSignals(memory, query, {
+            title: rankedMemory.title,
+            snippet: memory.snippet ?? rankedMemory.content,
+            score: (memory.score ?? this.score(haystack, '')) * this.memoryLifecycleMultiplier(rankedMemory),
+            evidence: memory.evidence ?? `pi_memory_items_fts:${rankedMemory.staleStatus}`,
+            rankingSignals: this.memoryRankingSignals(rankedMemory, query, {
                 bm25Score: memory.score ?? this.score(haystack, '')
             })
         };
+    }
+
+    protected rankableMemory(memory: MemoryItem): MemoryItem {
+        const normalized = this.memoryService.normalize(memory);
+        return normalized.staleStatus === 'unknown'
+            ? this.memoryService.markStaleness([normalized])[0]
+            : normalized;
     }
 
     protected memoryRankingSignals(memory: MemoryItem, query: RetrievalQuery, signals: { bm25Score?: number; vectorScore?: number }): RetrievalResult['rankingSignals'] {
@@ -453,18 +462,19 @@ export class ProjectMemoryRetrievalSource extends JsonStoreRetrievalSource {
         if (!memory) {
             return undefined;
         }
+        const rankedMemory = this.rankableMemory(memory);
         const similarity = Math.max(0, precomputedSimilarity ?? this.vectorService.cosineSimilarity(queryVector, vector.vector));
         if (similarity <= 0) {
             return undefined;
         }
         return {
-            id: memory.id,
+            id: rankedMemory.id,
             sourceKind: this.sourceKind,
-            title: memory.title,
-            snippet: memory.content,
-            score: Number((similarity * this.memoryLifecycleMultiplier(memory) * Math.max(0.1, memory.weight)).toFixed(6)),
+            title: rankedMemory.title,
+            snippet: rankedMemory.content,
+            score: Number((similarity * this.memoryLifecycleMultiplier(rankedMemory) * Math.max(0.1, rankedMemory.weight)).toFixed(6)),
             evidence: `pi_memory_vectors:${vector.modelId}`,
-            rankingSignals: this.memoryRankingSignals(memory, query, {
+            rankingSignals: this.memoryRankingSignals(rankedMemory, query, {
                 vectorScore: similarity
             })
         };

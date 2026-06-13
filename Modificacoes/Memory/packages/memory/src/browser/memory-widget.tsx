@@ -1651,9 +1651,9 @@ export class MemoryWidget extends ReactWidget {
             {this.renderToggle(settings, 'graphEnabled', 'Enable local code indexing', 'Indexes local files into file, symbol, chunk, and relation data after code graph consent is granted.')}
             {this.renderToggle(settings, 'memoryEnabled', 'Enable approved memory storage', 'Stores only explicit or review-approved IDE/project memories locally. Prompt learning remains controlled separately.')}
             {this.renderToggle(settings, 'skillSuggestionsEnabled', 'Enable skill suggestion learning', 'Learns repeated minimized prompt patterns to propose reusable skills. It does not store raw prompts unless prompt snippets are separately enabled.')}
-            {this.renderChatToggle(settings, 'chatLearningEnabled', 'Enable minimized AI Chat learning', 'Records minimized prompt hashes, intent, language, target, action, and metadata as local learning events.')}
+            {this.renderChatToggle(settings, 'chatLearningEnabled', 'Enable minimized AI Chat learning', 'Records minimized prompt hashes, intent, language, target, action, and metadata for skill/event learning without requiring transcript search.')}
             {this.renderChatToggle(settings, 'chatInlineSuggestionsEnabled', 'Enable AI Chat suggestion chips', 'Detects relevant context, skill, memory, and graph suggestions in AI Chat. Chips do not insert context until the user approves it.')}
-            {this.renderChatToggle(settings, 'chatAutoIndexEnabled', 'Auto-index for repository questions', 'Refreshes the local workspace index when a chat prompt appears to need files, code, tests, or repository context.')}
+            {this.renderChatToggle(settings, 'chatAutoIndexEnabled', 'Auto-index for repository questions', 'Refreshes the local index incrementally when a chat prompt appears to need files, code, tests, or repository context.')}
             {this.renderChatToggle(settings, 'chatLearningLlmEnabled', 'Enable LLM-assisted learning', 'Allows deterministic learning triggers and optional frequency rules to request suggestions from the active LLM. Context insertion still requires user approval.')}
             <label className='memory-settings-card'>
                 <span>

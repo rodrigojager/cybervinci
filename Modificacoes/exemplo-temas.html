@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CyberVinci IDE Theme Lab</title>
+
+<link rel="stylesheet" href="https://microsoft.github.io/vscode-codicons/dist/codicon.css">
+
+<style>
+:root{
+    --font:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+    --radius-sm:3px;
+    --radius-md:6px;
+    --radius-lg:10px;
+    --shadow-dialog:0 18px 60px rgba(0,0,0,.45);
+    --shadow-soft:0 10px 32px rgba(0,0,0,.18);
+    --transition:120ms ease;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);font-size:13px;background:var(--workbench);color:var(--fg)}
+button,select,input{font:inherit}
+button{cursor:pointer}
+
+body{
+    --window:#1f1f1f;
+    --titlebar:#181818;
+    --menubar:#181818;
+    --command:#242424;
+    --command-border:#3a3a3a;
+    --activity:#181818;
+    --activity-hover:#2a2a2a;
+    --activity-active:#ffffff;
+    --sidebar:#181818;
+    --sidebar-header:#181818;
+    --side-section:#181818;
+    --editor:#1e1e1e;
+    --editor-grid:rgba(255,255,255,.025);
+    --tabs:#181818;
+    --tab:#2d2d2d;
+    --tab-active:#1e1e1e;
+    --tab-hover:#333333;
+    --panel:#181818;
+    --panel-header:#202020;
+    --status:#007acc;
+    --status-fg:#fff;
+    --input:#2b2b2b;
+    --button:#0e639c;
+    --button-hover:#1177bb;
+    --button-secondary:#3a3d41;
+    --button-secondary-hover:#45494e;
+    --accent:#007acc;
+    --accent-2:#4fc1ff;
+    --danger:#f14c4c;
+    --warning:#cca700;
+    --success:#89d185;
+    --fg:#cccccc;
+    --fg-muted:#8d8d8d;
+    --fg-faint:#6a6a6a;
+    --border:#2b2b2b;
+    --border-soft:#252525;
+    --hover:rgba(255,255,255,.075);
+    --selection:rgba(0,122,204,.28);
+    --glow:none;
+    --dialog:#252526;
+    --dialog-header:#2d2d30;
+    --list-active:rgba(0,122,204,.25);
+    --list-hover:rgba(255,255,255,.06);
+    --scrollbar:rgba(121,121,121,.35);
+    --contrast-level:1;
+}
+
+/* ===========================
+   THEME FAMILIES + VARIANTS
+   =========================== */
+
+body[data-theme="blue-v1"]{
+    --accent:#00a8ff;--accent-2:#66d9ff;--button:#007acc;--button-hover:#0698f2;--status:#007acc;
+    --titlebar:#141821;--activity:#141821;--sidebar:#181c26;--editor:#171b24;--tabs:#151923;--panel:#161a22;
+    --tab:#202634;--tab-active:#171b24;--border:#30394b;--hover:rgba(0,168,255,.12);--selection:rgba(0,168,255,.26);
+    --glow:0 0 18px rgba(0,168,255,.18);
+}
+body[data-theme="blue-v2"]{
+    --accent:#4b9eff;--accent-2:#8fc5ff;--button:#2f75d6;--button-hover:#3f85e5;--status:#285b9a;
+    --titlebar:#171b22;--activity:#171b22;--sidebar:#1b2028;--editor:#1b1f26;--tabs:#181d24;--panel:#1a1f27;
+    --tab:#222833;--tab-active:#1b1f26;--border:#2a3340;--hover:rgba(255,255,255,.055);--selection:rgba(75,158,255,.18);
+    --glow:none;
+}
+body[data-theme="blue-v3"]{
+    --accent:#6aa9ff;--accent-2:#a5cdfb;--button:#365f98;--button-hover:#416da9;--status:#243c5e;
+    --titlebar:#1b1e23;--activity:#1b1e23;--sidebar:#1e2228;--editor:#20242b;--tabs:#1c2026;--panel:#1d2127;
+    --tab:#242a32;--tab-active:#20242b;--border:#252b33;--hover:rgba(255,255,255,.04);--selection:rgba(106,169,255,.14);
+    --glow:none;
+}
+
+body[data-theme="copper-v1"]{
+    --accent:#d7823b;--accent-2:#ffbd7a;--button:#a85e25;--button-hover:#c06b2a;--status:#9a531e;
+    --titlebar:#1f1712;--activity:#1b130f;--sidebar:#211812;--editor:#1d1814;--tabs:#1b140f;--panel:#201711;
+    --tab:#2d2119;--tab-active:#1d1814;--border:#463225;--hover:rgba(215,130,59,.12);--selection:rgba(215,130,59,.24);
+    --glow:0 0 18px rgba(215,130,59,.16);
+}
+body[data-theme="copper-v2"]{
+    --accent:#bf8a62;--accent-2:#d9b18f;--button:#8e6448;--button-hover:#9e7152;--status:#76513b;
+    --titlebar:#1d1a17;--activity:#1d1a17;--sidebar:#211f1c;--editor:#22201d;--tabs:#1e1b18;--panel:#211e1b;
+    --tab:#2a2621;--tab-active:#22201d;--border:#332c26;--hover:rgba(255,255,255,.05);--selection:rgba(191,138,98,.16);
+    --glow:none;
+}
+body[data-theme="copper-v3"]{
+    --accent:#c9a27e;--accent-2:#e1c0a1;--button:#70533e;--button-hover:#7f6048;--status:#574132;
+    --titlebar:#201e1b;--activity:#201e1b;--sidebar:#25221f;--editor:#272421;--tabs:#211f1c;--panel:#24211e;
+    --tab:#2c2925;--tab-active:#272421;--border:#2f2b26;--hover:rgba(255,255,255,.035);--selection:rgba(201,162,126,.13);
+    --glow:none;
+}
+
+body[data-theme="emerald-v1"]{
+    --accent:#00c889;--accent-2:#7fffd4;--button:#00875f;--button-hover:#00a776;--status:#007d5c;
+    --titlebar:#101b18;--activity:#101b18;--sidebar:#14211d;--editor:#121d1a;--tabs:#101a17;--panel:#121f1b;
+    --tab:#1d2d28;--tab-active:#121d1a;--border:#28443b;--hover:rgba(0,200,137,.12);--selection:rgba(0,200,137,.24);
+    --glow:0 0 18px rgba(0,200,137,.14);
+}
+body[data-theme="emerald-v2"]{
+    --accent:#55c49b;--accent-2:#91d9bd;--button:#3e876e;--button-hover:#4b9a7f;--status:#356f5c;
+    --titlebar:#171d1b;--activity:#171d1b;--sidebar:#1b2320;--editor:#1c2220;--tabs:#181f1d;--panel:#1a211f;
+    --tab:#242d2a;--tab-active:#1c2220;--border:#2b3934;--hover:rgba(255,255,255,.05);--selection:rgba(85,196,155,.16);
+    --glow:none;
+}
+body[data-theme="emerald-v3"]{
+    --accent:#84cdb0;--accent-2:#b4e1cf;--button:#4b6f61;--button-hover:#587e6e;--status:#344d44;
+    --titlebar:#1d211f;--activity:#1d211f;--sidebar:#212724;--editor:#232925;--tabs:#1f2421;--panel:#202622;
+    --tab:#29302c;--tab-active:#232925;--border:#2b332f;--hover:rgba(255,255,255,.035);--selection:rgba(132,205,176,.12);
+    --glow:none;
+}
+
+body[data-theme="purple-v1"]{
+    --accent:#9d5cff;--accent-2:#66e0ff;--button:#6f42c1;--button-hover:#8251dc;--status:#5c3ba0;
+    --titlebar:#171222;--activity:#171222;--sidebar:#1d1728;--editor:#1a1722;--tabs:#171321;--panel:#1b1625;
+    --tab:#282037;--tab-active:#1a1722;--border:#3c3150;--hover:rgba(157,92,255,.13);--selection:rgba(157,92,255,.24);
+    --glow:0 0 18px rgba(157,92,255,.16);
+}
+body[data-theme="purple-v2"]{
+    --accent:#8f7bdc;--accent-2:#a99ee8;--button:#6658a8;--button-hover:#7466b9;--status:#554b86;
+    --titlebar:#1b1922;--activity:#1b1922;--sidebar:#201e28;--editor:#201f27;--tabs:#1c1a22;--panel:#1f1d25;
+    --tab:#292733;--tab-active:#201f27;--border:#302d3d;--hover:rgba(255,255,255,.05);--selection:rgba(143,123,220,.16);
+    --glow:none;
+}
+body[data-theme="purple-v3"]{
+    --accent:#aaa0d8;--accent-2:#c5bff0;--button:#5d5578;--button-hover:#6c638a;--status:#46405c;
+    --titlebar:#202027;--activity:#202027;--sidebar:#24242d;--editor:#262630;--tabs:#21212a;--panel:#23232b;
+    --tab:#2d2d37;--tab-active:#262630;--border:#2e2e38;--hover:rgba(255,255,255,.035);--selection:rgba(170,160,216,.12);
+    --glow:none;
+}
+
+body[data-theme="arctic-v1"]{
+    --accent:#6ea8ff;--accent-2:#b7d4ff;--button:#376fb7;--button-hover:#4580cc;--status:#315f9b;
+    --titlebar:#1c2128;--activity:#1c2128;--sidebar:#222832;--editor:#242b34;--tabs:#1f252d;--panel:#202731;
+    --tab:#2c3541;--tab-active:#242b34;--border:#3b4653;--hover:rgba(110,168,255,.12);--selection:rgba(110,168,255,.22);
+    --glow:0 0 16px rgba(110,168,255,.13);
+}
+body[data-theme="arctic-v2"]{
+    --accent:#8db6ef;--accent-2:#bed7f7;--button:#557497;--button-hover:#6686aa;--status:#465e7a;
+    --titlebar:#21252b;--activity:#21252b;--sidebar:#262b32;--editor:#292f36;--tabs:#23282f;--panel:#252b32;
+    --tab:#303741;--tab-active:#292f36;--border:#333b45;--hover:rgba(255,255,255,.05);--selection:rgba(141,182,239,.15);
+    --glow:none;
+}
+body[data-theme="arctic-v3"]{
+    --accent:#a9bfdc;--accent-2:#ccd9ea;--button:#5b6878;--button-hover:#687687;--status:#434c58;
+    --titlebar:#26292e;--activity:#26292e;--sidebar:#2b2f35;--editor:#30343a;--tabs:#282c31;--panel:#2a2f35;
+    --tab:#353a41;--tab-active:#30343a;--border:#373d44;--hover:rgba(255,255,255,.035);--selection:rgba(169,191,220,.12);
+    --glow:none;
+}
+
+body[data-theme="terminal-v1"]{
+    --accent:#00d26a;--accent-2:#8cffb6;--button:#008f49;--button-hover:#00aa58;--status:#007a3e;
+    --titlebar:#0e1812;--activity:#0d160f;--sidebar:#111c14;--editor:#0f1711;--tabs:#0e160f;--panel:#101a13;
+    --tab:#1a2a1e;--tab-active:#0f1711;--border:#284632;--hover:rgba(0,210,106,.13);--selection:rgba(0,210,106,.23);
+    --glow:0 0 18px rgba(0,210,106,.13);
+}
+body[data-theme="terminal-v2"]{
+    --accent:#67c98f;--accent-2:#a6ddb9;--button:#4a805e;--button-hover:#58936d;--status:#3d684e;
+    --titlebar:#171d18;--activity:#171d18;--sidebar:#1b231d;--editor:#1c221d;--tabs:#181f19;--panel:#1a211c;
+    --tab:#242d26;--tab-active:#1c221d;--border:#2b392e;--hover:rgba(255,255,255,.05);--selection:rgba(103,201,143,.15);
+    --glow:none;
+}
+body[data-theme="terminal-v3"]{
+    --accent:#96c7a7;--accent-2:#bddfc8;--button:#526c5a;--button-hover:#607c68;--status:#3f5246;
+    --titlebar:#1f221f;--activity:#1f221f;--sidebar:#242824;--editor:#262b26;--tabs:#212521;--panel:#232823;
+    --tab:#2d332d;--tab-active:#262b26;--border:#303730;--hover:rgba(255,255,255,.035);--selection:rgba(150,199,167,.12);
+    --glow:none;
+}
+
+/* style presets */
+body[data-style="classic"]{
+    --radius-sm:2px;--radius-md:3px;--radius-lg:4px;
+}
+body[data-style="modern"]{
+    --radius-sm:4px;--radius-md:7px;--radius-lg:12px;
+}
+body[data-style="linear"]{
+    --radius-sm:6px;--radius-md:9px;--radius-lg:14px;
+    --shadow-dialog:0 18px 70px rgba(0,0,0,.38);
+}
+body[data-style="arc"]{
+    --radius-sm:8px;--radius-md:12px;--radius-lg:18px;
+}
+body[data-style="fluent"]{
+    --radius-sm:5px;--radius-md:10px;--radius-lg:16px;
+}
+body[data-style="fluent"] .dialog,
+body[data-style="fluent"] .command-center,
+body[data-style="fluent"] .floating-card{
+    backdrop-filter:blur(18px);
+}
+body[data-style="minimal"]{
+    --radius-sm:2px;--radius-md:4px;--radius-lg:6px;
+    --shadow-dialog:0 10px 42px rgba(0,0,0,.28);
+}
+
+/* ===========================
+   APP SHELL
+   =========================== */
+
+.theme-lab{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:var(--window);
+}
+
+.designer-toolbar{
+    height:44px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:0 14px;
+    background:#0f0f0f;
+    border-bottom:1px solid #2c2c2c;
+    color:#ddd;
+    flex-shrink:0;
+}
+.designer-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:600;
+    white-space:nowrap;
+}
+.designer-title .codicon{color:var(--accent)}
+.select-group{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#aaa;
+}
+select{
+    height:28px;
+    border:1px solid #3a3a3a;
+    background:#1d1d1d;
+    color:#ddd;
+    border-radius:var(--radius-sm);
+    padding:0 28px 0 8px;
+}
+.designer-hint{
+    margin-left:auto;
+    color:#8d8d8d;
+    font-size:12px;
+}
+
+.window{
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    background:var(--window);
+    color:var(--fg);
+}
+
+/* Title Bar */
+.titlebar{
+    height:35px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    background:var(--titlebar);
+    border-bottom:1px solid var(--border-soft);
+    user-select:none;
+}
+.menu-area{
+    height:100%;
+    display:flex;
+    align-items:center;
+    gap:2px;
+    padding-left:8px;
+}
+.logo{
+    width:28px;height:28px;display:grid;place-items:center;color:var(--accent);
+}
+.menu-item{
+    height:28px;
+    padding:0 9px;
+    display:flex;
+    align-items:center;
+    border-radius:var(--radius-sm);
+    color:var(--fg);
+}
+.menu-item:hover{background:var(--hover)}
+.command-wrap{
+    display:flex;
+    justify-content:center;
+    min-width:0;
+}
+.command-center{
+    height:27px;
+    width:min(620px,70%);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:0 10px;
+    border:1px solid var(--command-border);
+    background:var(--command);
+    border-radius:var(--radius-md);
+    color:var(--fg-muted);
+    box-shadow:var(--glow);
+}
+.command-center .codicon{font-size:14px}
+.command-text{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    flex:1;text-align:center;font-size:12px;
+}
+.window-actions{
+    display:flex;height:100%;
+}
+.window-action{
+    width:46px;display:grid;place-items:center;color:var(--fg-muted);
+}
+.window-action:hover{background:var(--hover)}
+.window-action.close:hover{background:#c42b1c;color:#fff}
+
+/* Main area */
+.workbench{
+    flex:1;
+    display:grid;
+    grid-template-columns:48px 282px 1fr;
+    min-height:0;
+}
+
+/* Activity bar */
+.activitybar{
+    background:var(--activity);
+    border-right:1px solid var(--border-soft);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:6px;
+}
+.activity-item{
+    width:48px;height:48px;
+    display:grid;place-items:center;
+    color:var(--fg-muted);
+    position:relative;
+}
+.activity-item .codicon{font-size:24px}
+.activity-item:hover{background:var(--activity-hover);color:var(--fg)}
+.activity-item.active{color:var(--activity-active)}
+.activity-item.active:before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;background:var(--accent);
+}
+.activity-spacer{flex:1}
+.badge{
+    position:absolute;
+    right:7px;
+    bottom:8px;
+    min-width:16px;
+    height:16px;
+    padding:0 4px;
+    border-radius:8px;
+    background:var(--accent);
+    color:white;
+    font-size:10px;
+    display:grid;
+    place-items:center;
+}
+
+/* Sidebar */
+.sidebar{
+    min-width:0;
+    background:var(--sidebar);
+    border-right:1px solid var(--border-soft);
+    display:flex;
+    flex-direction:column;
+}
+.sidebar-title{
+    height:35px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px 0 20px;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--fg);
+}
+.sidebar-actions{display:flex;gap:8px;color:var(--fg-muted)}
+.side-section{
+    border-top:1px solid var(--border-soft);
+}
+.section-header{
+    height:24px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:0 8px;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    color:var(--fg);
+}
+.explorer-tree{padding:2px 0 8px}
+.tree-row{
+    height:22px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:0 8px 0 calc(8px + var(--level,0) * 14px);
+    color:var(--fg);
+    white-space:nowrap;
+}
+.tree-row:hover{background:var(--list-hover)}
+.tree-row.active{background:var(--list-active)}
+.tree-row .codicon{font-size:16px;color:var(--fg-muted)}
+.tree-row.folder .codicon-folder-opened,
+.tree-row.folder .codicon-folder{color:var(--accent-2)}
+.file-html .codicon{color:#e37933}
+.file-css .codicon{color:#42a5f5}
+.file-js .codicon{color:#f5d76e}
+.file-json .codicon{color:#dcdcaa}
+.file-md .codicon{color:#7aa2f7}
+
+.search-box{
+    margin:8px 10px;
+    height:28px;
+    background:var(--input);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:0 8px;
+    color:var(--fg-muted);
+}
+.search-box input{
+    flex:1;min-width:0;background:transparent;border:none;color:var(--fg);outline:none;
+}
+.outline-item{
+    height:24px;
+    display:flex;align-items:center;gap:6px;
+    padding:0 12px;
+    color:var(--fg-muted);
+}
+.outline-item:hover{background:var(--list-hover)}
+.outline-item strong{color:var(--fg);font-weight:500}
+
+/* Editor area */
+.editor-shell{
+    min-width:0;min-height:0;
+    display:grid;
+    grid-template-rows:35px 1fr 196px 22px;
+    background:var(--editor);
+}
+.tabs{
+    background:var(--tabs);
+    border-bottom:1px solid var(--border-soft);
+    display:flex;
+    align-items:stretch;
+    min-width:0;
+}
+.tab{
+    min-width:136px;
+    max-width:210px;
+    height:35px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:0 10px;
+    background:var(--tab);
+    border-right:1px solid var(--border-soft);
+    color:var(--fg-muted);
+    position:relative;
+}
+.tab:hover{background:var(--tab-hover);color:var(--fg)}
+.tab.active{
+    background:var(--tab-active);
+    color:var(--fg);
+}
+.tab.active:before{
+    content:"";position:absolute;top:0;left:0;right:0;height:1px;background:var(--accent);
+}
+.tab .label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.tab .close{opacity:0}
+.tab:hover .close,.tab.active .close{opacity:1}
+.tab-add{
+    width:34px;display:grid;place-items:center;color:var(--fg-muted);
+}
+.tab-add:hover{background:var(--hover);color:var(--fg)}
+
+.editor-main{
+    min-height:0;
+    display:grid;
+    grid-template-rows:28px 1fr;
+    background:
+      linear-gradient(var(--editor-grid) 1px, transparent 1px),
+      linear-gradient(90deg,var(--editor-grid) 1px, transparent 1px),
+      var(--editor);
+    background-size:24px 24px;
+}
+.breadcrumbs{
+    height:28px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:0 12px;
+    color:var(--fg-muted);
+    border-bottom:1px solid var(--border-soft);
+    background:color-mix(in srgb, var(--editor) 92%, #fff 8%);
+}
+.breadcrumbs .codicon{font-size:14px}
+.code-and-preview{
+    min-height:0;
+    display:grid;
+    grid-template-columns:minmax(400px,1fr) 420px;
+}
+.code-pane{
+    min-width:0;
+    overflow:auto;
+    padding:12px 0 28px;
+    font-family:Consolas,"Courier New",monospace;
+    line-height:20px;
+}
+.line{
+    display:grid;
+    grid-template-columns:54px 1fr;
+    min-height:20px;
+}
+.ln{
+    text-align:right;
+    padding-right:16px;
+    color:var(--fg-faint);
+    user-select:none;
+}
+.code{
+    white-space:pre;
+    padding-right:20px;
+}
+.kw{color:#c586c0}
+.tag{color:#569cd6}
+.attr{color:#9cdcfe}
+.str{color:#ce9178}
+.txt{color:#d4d4d4}
+.cm{color:#6a9955}
+.fn{color:#dcdcaa}
+.num{color:#b5cea8}
+.preview-pane{
+    border-left:1px solid var(--border-soft);
+    background:color-mix(in srgb, var(--editor) 86%, #000 14%);
+    padding:16px;
+    overflow:hidden;
+    position:relative;
+}
+.preview-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:12px;
+}
+.preview-title{font-weight:600;color:var(--fg)}
+.preview-chips{display:flex;gap:6px}
+.chip{
+    height:22px;padding:0 8px;display:flex;align-items:center;gap:5px;
+    border:1px solid var(--border);border-radius:999px;color:var(--fg-muted);
+    background:rgba(255,255,255,.035);
+}
+.floating-card{
+    background:color-mix(in srgb, var(--panel) 92%, #fff 8%);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-soft);
+    padding:14px;
+}
+.pipeline{
+    display:grid;
+    gap:10px;
+}
+.node{
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.035);
+    border-radius:var(--radius-md);
+    padding:10px;
+}
+.node-title{
+    display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:6px;
+}
+.node-title .codicon{color:var(--accent)}
+.progress{
+    height:6px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;
+}
+.progress span{display:block;height:100%;width:62%;background:var(--accent);box-shadow:var(--glow)}
+.node-meta{margin-top:7px;color:var(--fg-muted);font-size:12px;display:flex;gap:8px}
+
+/* Panel */
+.panel{
+    min-height:0;
+    background:var(--panel);
+    border-top:1px solid var(--border-soft);
+    display:grid;
+    grid-template-rows:34px 1fr;
+}
+.panel-tabs{
+    height:34px;
+    background:var(--panel-header);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--border-soft);
+}
+.panel-tab-group{display:flex;height:100%}
+.panel-tab{
+    height:34px;padding:0 12px;
+    display:flex;align-items:center;gap:6px;
+    color:var(--fg-muted);
+    text-transform:uppercase;
+    font-size:11px;
+    position:relative;
+}
+.panel-tab:hover{color:var(--fg)}
+.panel-tab.active{color:var(--fg)}
+.panel-tab.active:after{
+    content:"";position:absolute;left:12px;right:12px;bottom:0;height:1px;background:var(--accent);
+}
+.panel-actions{display:flex;gap:10px;padding-right:10px;color:var(--fg-muted)}
+.terminal{
+    min-height:0;
+    overflow:auto;
+    padding:10px 14px;
+    font-family:Consolas,"Courier New",monospace;
+    line-height:20px;
+}
+.term-line .ok{color:var(--success)}
+.term-line .warn{color:var(--warning)}
+.term-line .cmd{color:var(--accent-2)}
+.term-line .muted{color:var(--fg-muted)}
+
+/* status */
+.statusbar{
+    height:22px;
+    background:var(--status);
+    color:var(--status-fg);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 8px;
+    font-size:12px;
+}
+.status-left,.status-right{display:flex;align-items:center;gap:12px}
+.status-item{display:flex;align-items:center;gap:4px;white-space:nowrap}
+
+/* Dialog */
+.dialog-backdrop{
+    position:absolute;
+    inset:35px 0 22px 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+}
+.dialog{
+    pointer-events:auto;
+    width:520px;
+    background:var(--dialog);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-dialog);
+    overflow:hidden;
+}
+.dialog-header{
+    height:42px;
+    background:var(--dialog-header);
+    border-bottom:1px solid var(--border-soft);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 14px;
+}
+.dialog-title{
+    display:flex;align-items:center;gap:9px;font-weight:600;
+}
+.dialog-title .codicon{color:var(--accent);font-size:18px}
+.dialog-close{color:var(--fg-muted)}
+.dialog-body{
+    padding:18px;
+    display:grid;
+    grid-template-columns:44px 1fr;
+    gap:14px;
+}
+.dialog-icon{
+    width:44px;height:44px;border-radius:50%;
+    display:grid;place-items:center;
+    background:color-mix(in srgb,var(--accent) 16%,transparent);
+    color:var(--accent);
+    border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);
+}
+.dialog-icon .codicon{font-size:24px}
+.dialog-content h3{
+    margin:0 0 8px;
+    font-size:16px;
+    font-weight:600;
+    color:var(--fg);
+}
+.dialog-content p{
+    margin:0 0 14px;
+    color:var(--fg-muted);
+    line-height:1.45;
+}
+.dialog-options{
+    display:grid;
+    gap:8px;
+}
+.option-row{
+    display:flex;align-items:center;gap:8px;color:var(--fg-muted);
+}
+.checkbox{
+    width:16px;height:16px;border:1px solid var(--border);border-radius:3px;background:var(--input);
+    display:grid;place-items:center;color:var(--accent);
+}
+.dialog-footer{
+    height:58px;
+    border-top:1px solid var(--border-soft);
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+    padding:0 14px;
+    background:color-mix(in srgb,var(--dialog) 85%,#000 15%);
+}
+.btn{
+    height:30px;
+    min-width:86px;
+    border:none;
+    border-radius:var(--radius-sm);
+    color:#fff;
+    background:var(--button);
+    padding:0 12px;
+}
+.btn:hover{background:var(--button-hover)}
+.btn.secondary{
+    background:var(--button-secondary);
+    color:var(--fg);
+}
+.btn.secondary:hover{background:var(--button-secondary-hover)}
+.btn.ghost{
+    background:transparent;
+    color:var(--fg-muted);
+    border:1px solid var(--border);
+}
+.btn.ghost:hover{
+    color:var(--fg);
+    background:var(--hover);
+}
+
+/* dropdown menus */
+.menu-popover{
+    position:absolute;
+    top:34px;
+    left:72px;
+    width:248px;
+    background:var(--dialog);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-soft);
+    border-radius:var(--radius-md);
+    padding:6px 0;
+    z-index:10;
+}
+.menu-row{
+    height:28px;
+    display:grid;
+    grid-template-columns:24px 1fr auto;
+    align-items:center;
+    gap:8px;
+    padding:0 12px;
+    color:var(--fg);
+}
+.menu-row:hover{background:var(--list-hover)}
+.menu-row .shortcut{color:var(--fg-muted);font-size:12px}
+.menu-separator{
+    height:1px;background:var(--border);margin:5px 0;
+}
+
+@supports not (color: color-mix(in srgb, red, blue)){
+    .breadcrumbs,.floating-card{background:var(--panel)}
+}
+
+/* scrollbars */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+
+<body data-theme="blue-v2" data-style="modern">
+<div class="theme-lab">
+
+    <div class="designer-toolbar">
+        <div class="designer-title">
+            <i class="codicon codicon-symbol-color"></i>
+            CyberVinci Theme Lab
+        </div>
+
+        <div class="select-group">
+            <span>Tema</span>
+            <select id="themeSelect">
+                <optgroup label="Cyber Blue">
+                    <option value="blue-v1">Cyber Blue V1 — Expressivo</option>
+                    <option value="blue-v2" selected>Cyber Blue V2 — Soft</option>
+                    <option value="blue-v3">Cyber Blue V3 — Minimal</option>
+                </optgroup>
+                <optgroup label="Renaissance Copper">
+                    <option value="copper-v1">Copper V1 — Rich</option>
+                    <option value="copper-v2">Copper V2 — Soft</option>
+                    <option value="copper-v3">Copper V3 — Minimal</option>
+                </optgroup>
+                <optgroup label="Emerald">
+                    <option value="emerald-v1">Emerald V1 — Saturado</option>
+                    <option value="emerald-v2">Emerald V2 — Profissional</option>
+                    <option value="emerald-v3">Emerald V3 — Muted</option>
+                </optgroup>
+                <optgroup label="Purple Neon">
+                    <option value="purple-v1">Purple V1 — Neon</option>
+                    <option value="purple-v2">Purple V2 — Balanced</option>
+                    <option value="purple-v3">Purple V3 — Premium</option>
+                </optgroup>
+                <optgroup label="Arctic Silver">
+                    <option value="arctic-v1">Arctic V1 — Crisp</option>
+                    <option value="arctic-v2">Arctic V2 — Soft</option>
+                    <option value="arctic-v3">Arctic V3 — Flat</option>
+                </optgroup>
+                <optgroup label="Terminal Green">
+                    <option value="terminal-v1">Terminal V1 — Hacker</option>
+                    <option value="terminal-v2">Terminal V2 — Enterprise</option>
+                    <option value="terminal-v3">Terminal V3 — Muted</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="select-group">
+            <span>Estilo</span>
+            <select id="styleSelect">
+                <option value="classic">Classic VS Code</option>
+                <option value="modern" selected>Modern</option>
+                <option value="linear">Linear</option>
+                <option value="arc">Arc</option>
+                <option value="fluent">Fluent</option>
+                <option value="minimal">Minimal</option>
+            </select>
+        </div>
+
+        <div class="designer-hint">Compare paleta + estilo visual sem perder a referência do VS Code</div>
+    </div>
+
+    <div class="window">
+        <div class="titlebar">
+            <div class="menu-area">
+                <div class="logo" title="CyberVinci">
+                    <i class="codicon codicon-vscode"></i>
+                </div>
+                <div class="menu-item">File</div>
+                <div class="menu-item">Edit</div>
+                <div class="menu-item">Selection</div>
+                <div class="menu-item">View</div>
+                <div class="menu-item">Go</div>
+                <div class="menu-item">Run</div>
+                <div class="menu-item">Terminal</div>
+                <div class="menu-item">Help</div>
+            </div>
+
+            <div class="command-wrap">
+                <div class="command-center">
+                    <i class="codicon codicon-search"></i>
+                    <div class="command-text">cybervinci-agent-pipeline — Ctrl+P para pesquisar arquivos, comandos e agentes</div>
+                    <i class="codicon codicon-layout-sidebar-right"></i>
+                </div>
+            </div>
+
+            <div class="window-actions">
+                <div class="window-action"><i class="codicon codicon-chrome-minimize"></i></div>
+                <div class="window-action"><i class="codicon codicon-chrome-restore"></i></div>
+                <div class="window-action close"><i class="codicon codicon-chrome-close"></i></div>
+            </div>
+        </div>
+
+        <div class="workbench">
+            <div class="activitybar">
+                <div class="activity-item active" title="Explorer"><i class="codicon codicon-files"></i></div>
+                <div class="activity-item" title="Search"><i class="codicon codicon-search"></i></div>
+                <div class="activity-item" title="Source Control"><i class="codicon codicon-source-control"></i><span class="badge">8</span></div>
+                <div class="activity-item" title="Run and Debug"><i class="codicon codicon-debug-alt"></i></div>
+                <div class="activity-item" title="Extensions"><i class="codicon codicon-extensions"></i></div>
+                <div class="activity-item" title="CyberVinci Agents"><i class="codicon codicon-hubot"></i><span class="badge">3</span></div>
+                <div class="activity-item" title="Canvas"><i class="codicon codicon-symbol-color"></i></div>
+                <div class="activity-spacer"></div>
+                <div class="activity-item" title="Accounts"><i class="codicon codicon-account"></i></div>
+                <div class="activity-item" title="Manage"><i class="codicon codicon-gear"></i></div>
+            </div>
+
+            <aside class="sidebar">
+                <div class="sidebar-title">
+                    <span>Explorer</span>
+                    <div class="sidebar-actions">
+                        <i class="codicon codicon-new-file"></i>
+                        <i class="codicon codicon-new-folder"></i>
+                        <i class="codicon codicon-refresh"></i>
+                        <i class="codicon codicon-collapse-all"></i>
+                    </div>
+                </div>
+
+                <div class="side-section">
+                    <div class="section-header">
+                        <i class="codicon codicon-chevron-down"></i>
+                        CYBERVINCI
+                    </div>
+                    <div class="explorer-tree">
+                        <div class="tree-row folder" style="--level:0"><i class="codicon codicon-chevron-down"></i><i class="codicon codicon-folder-opened"></i><span>src</span></div>
+                        <div class="tree-row folder" style="--level:1"><i class="codicon codicon-chevron-down"></i><i class="codicon codicon-folder-opened"></i><span>pages</span></div>
+                        <div class="tree-row file-html active" style="--level:2"><i class="codicon codicon-file-code"></i><span>Home.cshtml</span></div>
+                        <div class="tree-row file-html" style="--level:2"><i class="codicon codicon-file-code"></i><span>PipelineDesigner.tsx</span></div>
+                        <div class="tree-row folder" style="--level:1"><i class="codicon codicon-chevron-right"></i><i class="codicon codicon-folder"></i><span>components</span></div>
+                        <div class="tree-row folder" style="--level:1"><i class="codicon codicon-chevron-down"></i><i class="codicon codicon-folder-opened"></i><span>themes</span></div>
+                        <div class="tree-row file-json" style="--level:2"><i class="codicon codicon-json"></i><span>theme.schema.json</span></div>
+                        <div class="tree-row file-css" style="--level:2"><i class="codicon codicon-symbol-color"></i><span>cyber-blue.css</span></div>
+                        <div class="tree-row file-css" style="--level:2"><i class="codicon codicon-symbol-color"></i><span>copper.css</span></div>
+                        <div class="tree-row file-md" style="--level:0"><i class="codicon codicon-markdown"></i><span>README.md</span></div>
+                    </div>
+                </div>
+
+                <div class="side-section">
+                    <div class="section-header">
+                        <i class="codicon codicon-chevron-down"></i>
+                        Search
+                    </div>
+                    <div class="search-box">
+                        <i class="codicon codicon-search"></i>
+                        <input value="dialog buttons" />
+                    </div>
+                </div>
+
+                <div class="side-section">
+                    <div class="section-header">
+                        <i class="codicon codicon-chevron-down"></i>
+                        Outline
+                    </div>
+                    <div class="outline-item"><i class="codicon codicon-symbol-class"></i><strong>ThemeLab</strong></div>
+                    <div class="outline-item"><i class="codicon codicon-symbol-method"></i>renderWorkbench()</div>
+                    <div class="outline-item"><i class="codicon codicon-symbol-event"></i>onThemeChanged()</div>
+                    <div class="outline-item"><i class="codicon codicon-symbol-property"></i>dialogOptions</div>
+                </div>
+            </aside>
+
+            <main class="editor-shell">
+                <div class="tabs">
+                    <div class="tab active">
+                        <i class="codicon codicon-file-code file-html"></i>
+                        <span class="label">Home.cshtml</span>
+                        <i class="codicon codicon-close close"></i>
+                    </div>
+                    <div class="tab">
+                        <i class="codicon codicon-symbol-color"></i>
+                        <span class="label">cyber-blue.css</span>
+                        <i class="codicon codicon-close close"></i>
+                    </div>
+                    <div class="tab">
+                        <i class="codicon codicon-json"></i>
+                        <span class="label">theme.schema.json</span>
+                        <i class="codicon codicon-close close"></i>
+                    </div>
+                    <div class="tab">
+                        <i class="codicon codicon-hubot"></i>
+                        <span class="label">agents.pipeline.json</span>
+                        <i class="codicon codicon-close close"></i>
+                    </div>
+                    <div class="tab-add"><i class="codicon codicon-add"></i></div>
+                </div>
+
+                <section class="editor-main">
+                    <div class="breadcrumbs">
+                        <i class="codicon codicon-home"></i>
+                        <span>src</span><i class="codicon codicon-chevron-right"></i>
+                        <span>pages</span><i class="codicon codicon-chevron-right"></i>
+                        <span>Home.cshtml</span><i class="codicon codicon-chevron-right"></i>
+                        <span>ThemeDialog</span>
+                    </div>
+
+                    <div class="code-and-preview">
+                        <div class="code-pane" aria-label="Editor code preview">
+                            <div class="line"><div class="ln">1</div><div class="code"><span class="cm">@* CyberVinci default workspace *@</span></div></div>
+                            <div class="line"><div class="ln">2</div><div class="code"><span class="kw">@model</span> <span class="txt">WorkspaceViewModel</span></div></div>
+                            <div class="line"><div class="ln">3</div><div class="code"></div></div>
+                            <div class="line"><div class="ln">4</div><div class="code"><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="str">"agent-workspace"</span><span class="tag">&gt;</span></div></div>
+                            <div class="line"><div class="ln">5</div><div class="code">  <span class="tag">&lt;header</span> <span class="attr">class</span>=<span class="str">"hero"</span><span class="tag">&gt;</span></div></div>
+                            <div class="line"><div class="ln">6</div><div class="code">    <span class="tag">&lt;i</span> <span class="attr">class</span>=<span class="str">"codicon codicon-hubot"</span><span class="tag">&gt;&lt;/i&gt;</span></div></div>
+                            <div class="line"><div class="ln">7</div><div class="code">    <span class="tag">&lt;h1&gt;</span><span class="txt">Agent Pipeline</span><span class="tag">&lt;/h1&gt;</span></div></div>
+                            <div class="line"><div class="ln">8</div><div class="code">  <span class="tag">&lt;/header&gt;</span></div></div>
+                            <div class="line"><div class="ln">9</div><div class="code"></div></div>
+                            <div class="line"><div class="ln">10</div><div class="code">  <span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="str">"btn btn-primary"</span><span class="tag">&gt;</span></div></div>
+                            <div class="line"><div class="ln">11</div><div class="code">    <span class="txt">Executar agentes</span></div></div>
+                            <div class="line"><div class="ln">12</div><div class="code">  <span class="tag">&lt;/button&gt;</span></div></div>
+                            <div class="line"><div class="ln">13</div><div class="code"></div></div>
+                            <div class="line"><div class="ln">14</div><div class="code">  <span class="kw">@foreach</span> (<span class="kw">var</span> <span class="txt">step</span> <span class="kw">in</span> <span class="txt">Model.Steps</span>) {</div></div>
+                            <div class="line"><div class="ln">15</div><div class="code">    <span class="tag">&lt;agent-node</span> <span class="attr">status</span>=<span class="str">"@step.Status"</span> <span class="tag">/&gt;</span></div></div>
+                            <div class="line"><div class="ln">16</div><div class="code">  }</div></div>
+                            <div class="line"><div class="ln">17</div><div class="code"><span class="tag">&lt;/div&gt;</span></div></div>
+                        </div>
+
+                        <aside class="preview-pane">
+                            <div class="preview-header">
+                                <div class="preview-title">Agent Pipeline Preview</div>
+                                <div class="preview-chips">
+                                    <div class="chip"><i class="codicon codicon-eye"></i> Live</div>
+                                    <div class="chip"><i class="codicon codicon-check"></i> 4/6</div>
+                                </div>
+                            </div>
+
+                            <div class="floating-card pipeline">
+                                <div class="node">
+                                    <div class="node-title"><i class="codicon codicon-check"></i> Análise da codebase</div>
+                                    <div class="progress"><span style="width:100%"></span></div>
+                                    <div class="node-meta"><span>Concluído</span><span>12 arquivos</span></div>
+                                </div>
+                                <div class="node">
+                                    <div class="node-title"><i class="codicon codicon-sync codicon-modifier-spin"></i> Geração de documentação</div>
+                                    <div class="progress"><span style="width:62%"></span></div>
+                                    <div class="node-meta"><span>Executando</span><span>HTML portátil</span></div>
+                                </div>
+                                <div class="node">
+                                    <div class="node-title"><i class="codicon codicon-warning"></i> Gate de aprovação</div>
+                                    <div class="progress"><span style="width:0%"></span></div>
+                                    <div class="node-meta"><span>Aguardando usuário</span><span>2 sugestões</span></div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-tabs">
+                        <div class="panel-tab-group">
+                            <div class="panel-tab"><i class="codicon codicon-error"></i> Problems <span>3</span></div>
+                            <div class="panel-tab"><i class="codicon codicon-output"></i> Output</div>
+                            <div class="panel-tab active"><i class="codicon codicon-terminal"></i> Terminal</div>
+                            <div class="panel-tab"><i class="codicon codicon-debug-console"></i> Debug Console</div>
+                        </div>
+                        <div class="panel-actions">
+                            <i class="codicon codicon-add"></i>
+                            <i class="codicon codicon-split-horizontal"></i>
+                            <i class="codicon codicon-trash"></i>
+                            <i class="codicon codicon-chevron-down"></i>
+                            <i class="codicon codicon-close"></i>
+                        </div>
+                    </div>
+                    <div class="terminal">
+                        <div class="term-line"><span class="muted">PS C:\CyberVinci&gt;</span> <span class="cmd">dotnet run --project CyberVinci.ThemeLab</span></div>
+                        <div class="term-line"><span class="ok">info:</span> Loading theme matrix: 18 palettes × 6 component styles</div>
+                        <div class="term-line"><span class="ok">info:</span> Codicons stylesheet loaded from Microsoft CDN</div>
+                        <div class="term-line"><span class="warn">warn:</span> Visual identity is being previewed against VS Code-like controls</div>
+                        <div class="term-line"><span class="muted">[agent]</span> aguardando aprovação do diálogo de execução...</div>
+                    </div>
+                </section>
+
+                <div class="statusbar">
+                    <div class="status-left">
+                        <div class="status-item"><i class="codicon codicon-source-control"></i> main</div>
+                        <div class="status-item"><i class="codicon codicon-sync"></i></div>
+                        <div class="status-item"><i class="codicon codicon-error"></i> 1</div>
+                        <div class="status-item"><i class="codicon codicon-warning"></i> 2</div>
+                    </div>
+                    <div class="status-right">
+                        <div class="status-item">Ln 10, Col 18</div>
+                        <div class="status-item">Spaces: 4</div>
+                        <div class="status-item">UTF-8</div>
+                        <div class="status-item">CRLF</div>
+                        <div class="status-item">Razor</div>
+                        <div class="status-item"><i class="codicon codicon-bell"></i></div>
+                    </div>
+                </div>
+
+                <div class="dialog-backdrop">
+                    <div class="dialog">
+                        <div class="dialog-header">
+                            <div class="dialog-title">
+                                <i class="codicon codicon-question"></i>
+                                Executar fluxo de agentes?
+                            </div>
+                            <div class="dialog-close"><i class="codicon codicon-close"></i></div>
+                        </div>
+                        <div class="dialog-body">
+                            <div class="dialog-icon"><i class="codicon codicon-hubot"></i></div>
+                            <div class="dialog-content">
+                                <h3>CyberVinci quer iniciar um pipeline automatizado</h3>
+                                <p>O fluxo irá ler os arquivos abertos, gerar artefatos intermediários e solicitar aprovação nos gates configurados.</p>
+                                <div class="dialog-options">
+                                    <div class="option-row"><span class="checkbox"><i class="codicon codicon-check"></i></span> Mostrar arquivos gerados após cada etapa</div>
+                                    <div class="option-row"><span class="checkbox"></span> Permitir execução paralela entre agentes independentes</div>
+                                    <div class="option-row"><span class="checkbox"><i class="codicon codicon-check"></i></span> Pausar em gates de aprovação</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dialog-footer">
+                            <button class="btn ghost">Configurar</button>
+                            <button class="btn secondary">Cancelar</button>
+                            <button class="btn">Executar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-popover" id="menuPopover">
+                    <div class="menu-row"><i class="codicon codicon-new-file"></i><span>New Text File</span><span class="shortcut">Ctrl+N</span></div>
+                    <div class="menu-row"><i class="codicon codicon-folder-opened"></i><span>Open Folder...</span><span class="shortcut">Ctrl+K Ctrl+O</span></div>
+                    <div class="menu-row"><i class="codicon codicon-save"></i><span>Save</span><span class="shortcut">Ctrl+S</span></div>
+                    <div class="menu-separator"></div>
+                    <div class="menu-row"><i class="codicon codicon-hubot"></i><span>Run Agent Pipeline</span><span class="shortcut">Ctrl+Alt+R</span></div>
+                    <div class="menu-row"><i class="codicon codicon-symbol-color"></i><span>Open Theme Lab</span><span class="shortcut"></span></div>
+                    <div class="menu-separator"></div>
+                    <div class="menu-row"><i class="codicon codicon-close"></i><span>Exit</span><span class="shortcut">Alt+F4</span></div>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+
+<script>
+const themeSelect = document.getElementById('themeSelect');
+const styleSelect = document.getElementById('styleSelect');
+
+themeSelect.addEventListener('change', function(){
+    document.body.dataset.theme = this.value;
+});
+
+styleSelect.addEventListener('change', function(){
+    document.body.dataset.style = this.value;
+});
+
+document.querySelectorAll('.menu-item').forEach((item, index) => {
+    item.addEventListener('mouseenter', () => {
+        const pop = document.getElementById('menuPopover');
+        pop.style.left = (58 + index * 44) + 'px';
+    });
+});
+
+document.querySelector('.dialog-close').addEventListener('click', () => {
+    document.querySelector('.dialog-backdrop').style.display = 'none';
+});
+</script>
+</body>
+</html>

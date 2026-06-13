@@ -381,40 +381,230 @@ const Builder_MVP_COMPONENT_TYPES = [
     'Group',
     'SimpleGrid',
     'Grid',
+    'GridCol',
     'Card',
+    'CardSection',
+    'Paper',
+    'Center',
+    'Flex',
+    'AspectRatio',
+    'Affix',
+    'AppShell',
+    'AppShellHeader',
+    'AppShellNavbar',
+    'AppShellAside',
+    'AppShellMain',
+    'AppShellFooter',
+    'AppShellSection',
+    'Collapse',
+    'Indicator',
+    'ScrollArea',
+    'Spoiler',
+    'ScrollAreaAutosize',
+    'TableScrollContainer',
+    'VisuallyHidden',
     'Divider',
     'Space',
     'Box',
     'Title',
     'Text',
     'Badge',
+    'Code',
+    'Kbd',
+    'Mark',
+    'Pill',
+    'PillGroup',
+    'TypographyStylesProvider',
+    'NumberFormatter',
+    'Blockquote',
+    'Highlight',
     'List',
+    'ListItem',
     'Markdown',
     'Button',
+    'ButtonGroup',
+    'ButtonGroupSection',
+    'ActionIcon',
+    'ActionIconGroup',
+    'ActionIconGroupSection',
+    'UnstyledButton',
+    'Burger',
+    'CloseButton',
+    'CopyButton',
+    'Input',
+    'InputBase',
+    'InputWrapper',
+    'InputLabel',
+    'InputDescription',
+    'InputPlaceholder',
+    'InputClearButton',
+    'InputError',
     'TextInput',
+    'Autocomplete',
+    'PasswordInput',
     'Textarea',
     'Select',
+    'MultiSelect',
+    'NativeSelect',
+    'Combobox',
+    'ComboboxTarget',
+    'ComboboxDropdownTarget',
+    'ComboboxEventsTarget',
+    'ComboboxDropdown',
+    'ComboboxOptions',
+    'ComboboxOption',
+    'ComboboxSearch',
+    'ComboboxEmpty',
+    'ComboboxGroup',
+    'ComboboxHeader',
+    'ComboboxFooter',
+    'ComboboxChevron',
+    'ComboboxClearButton',
+    'ComboboxHiddenInput',
     'Checkbox',
+    'CheckboxGroup',
+    'CheckboxCard',
+    'CheckboxIndicator',
+    'Switch',
+    'SwitchGroup',
     'RadioGroup',
+    'Radio',
+    'RadioCard',
+    'RadioIndicator',
     'NumberInput',
     'DateInput',
+    'Chip',
+    'ChipGroup',
+    'Slider',
+    'RangeSlider',
+    'SegmentedControl',
+    'PinInput',
+    'ColorInput',
+    'ColorPicker',
+    'HueSlider',
+    'AlphaSlider',
+    'AngleSlider',
+    'ColorSwatch',
+    'JsonInput',
+    'TagsInput',
+    'FileInput',
+    'FileButton',
+    'Fieldset',
+    'PillsInput',
+    'PillsInputField',
+    'Rating',
     'DynamicForm',
     'Table',
+    'TableCaption',
+    'TableThead',
+    'TableTbody',
+    'TableTfoot',
+    'TableTr',
+    'TableTh',
+    'TableTd',
     'DataTable',
+    'Accordion',
+    'AccordionItem',
+    'AccordionControl',
+    'AccordionPanel',
+    'Timeline',
+    'TimelineItem',
+    'Tree',
     'MetricCard',
     'StatCard',
     'Anchor',
     'NavLink',
     'Breadcrumbs',
+    'Menu',
+    'MenuTarget',
+    'MenuDropdown',
+    'MenuItem',
+    'MenuLabel',
+    'MenuDivider',
     'Tabs',
+    'TabsList',
+    'TabsTab',
+    'TabsPanel',
+    'Stepper',
+    'StepperStep',
+    'StepperCompleted',
+    'Pagination',
+    'PaginationRoot',
+    'PaginationControl',
+    'PaginationDots',
+    'PaginationFirst',
+    'PaginationItems',
+    'PaginationLast',
+    'PaginationNext',
+    'PaginationPrevious',
+    'TableOfContents',
     'Modal',
+    'ModalRoot',
+    'ModalOverlay',
+    'ModalContent',
+    'ModalHeader',
+    'ModalTitle',
+    'ModalCloseButton',
+    'ModalBody',
+    'ModalStack',
+    'ModalBase',
+    'ModalBaseOverlay',
+    'ModalBaseContent',
+    'ModalBaseHeader',
+    'ModalBaseTitle',
+    'ModalBaseCloseButton',
+    'ModalBaseBody',
     'Drawer',
+    'DrawerRoot',
+    'DrawerOverlay',
+    'DrawerContent',
+    'DrawerHeader',
+    'DrawerTitle',
+    'DrawerCloseButton',
+    'DrawerBody',
+    'DrawerStack',
+    'Tooltip',
+    'TooltipFloating',
+    'TooltipGroup',
+    'Popover',
+    'PopoverTarget',
+    'PopoverDropdown',
+    'HoverCard',
+    'HoverCardTarget',
+    'HoverCardDropdown',
+    'Dialog',
+    'Overlay',
+    'Portal',
+    'OptionalPortal',
+    'Transition',
+    'FocusTrap',
+    'FocusTrapInitialFocus',
+    'FloatingArrow',
+    'FloatingIndicator',
+    'NativeScrollArea',
+    'RemoveScroll',
     'Alert',
+    'Notification',
     'NotificationBlock',
+    'LoadingOverlay',
     'Loader',
+    'Progress',
+    'ProgressRoot',
+    'ProgressSection',
+    'ProgressLabel',
+    'RingProgress',
+    'SemiCircleProgress',
+    'Skeleton',
     'Image',
+    'BackgroundImage',
     'Avatar',
+    'AvatarGroup',
+    'ThemeIcon',
     'Icon',
+    'CheckIcon',
+    'CloseIcon',
+    'RadioIcon',
+    'AccordionChevron',
     'HeroSection',
     'FeatureGrid',
     'PricingSection',
@@ -426,13 +616,13 @@ const Builder_MVP_COMPONENT_TYPES = [
 ] as const;
 
 const Builder_LAYOUT_CHILDREN = [...Builder_MVP_COMPONENT_TYPES];
-const Builder_GRID_CHILDREN = ['Grid', 'Card', 'Box', 'Stack', 'Group', 'Container', 'Section', 'MetricCard', 'StatCard', 'ChartPlaceholder'] as const;
-const Builder_CARD_SLOT_CHILDREN = ['Title', 'Text', 'Badge', 'Button', 'Group', 'Stack', 'Anchor', 'Icon', 'Avatar'] as const;
-const Builder_ACTION_SLOT_CHILDREN = ['Button', 'Anchor', 'Group'] as const;
-const Builder_SECTION_SLOT_CHILDREN = ['Container', 'Stack', 'Group', 'Card', 'Title', 'Text', 'Badge', 'Button', 'Anchor', 'NavLink', 'Breadcrumbs'] as const;
-const Builder_INPUT_SECTION_SLOT_CHILDREN = ['Icon', 'Avatar', 'Badge', 'Text'] as const;
-const Builder_TEXT_INLINE_CHILDREN = ['Badge', 'Icon', 'Anchor'] as const;
-const Builder_FORM_FIELD_TYPES = ['TextInput', 'Textarea', 'Select', 'Checkbox', 'RadioGroup', 'NumberInput', 'DateInput', 'Button'] as const;
+const Builder_GRID_CHILDREN = ['GridCol', 'Grid', 'Card', 'Paper', 'Box', 'Stack', 'Group', 'Center', 'Flex', 'ScrollArea', 'ScrollAreaAutosize', 'Spoiler', 'Collapse', 'Indicator', 'Container', 'Section', 'MetricCard', 'StatCard', 'ChartPlaceholder'] as const;
+const Builder_CARD_SLOT_CHILDREN = ['Title', 'Text', 'Badge', 'Code', 'Kbd', 'Mark', 'Pill', 'Button', 'ActionIcon', 'UnstyledButton', 'CloseButton', 'Burger', 'Group', 'Stack', 'Anchor', 'Icon', 'ThemeIcon', 'Avatar'] as const;
+const Builder_ACTION_SLOT_CHILDREN = ['Button', 'ActionIcon', 'UnstyledButton', 'CloseButton', 'Burger', 'CopyButton', 'FileButton', 'Anchor', 'Group'] as const;
+const Builder_SECTION_SLOT_CHILDREN = ['Container', 'Stack', 'Group', 'Card', 'Paper', 'Title', 'Text', 'Badge', 'Button', 'ActionIcon', 'Anchor', 'NavLink', 'Breadcrumbs', 'Menu', 'TableOfContents'] as const;
+const Builder_INPUT_SECTION_SLOT_CHILDREN = ['Icon', 'Avatar', 'Badge', 'Text', 'Code', 'Kbd'] as const;
+const Builder_TEXT_INLINE_CHILDREN = ['Badge', 'Code', 'Kbd', 'Mark', 'Highlight', 'Pill', 'NumberFormatter', 'Icon', 'ThemeIcon', 'Anchor', 'VisuallyHidden'] as const;
+const Builder_FORM_FIELD_TYPES = ['Fieldset', 'InputWrapper', 'Input', 'InputBase', 'InputLabel', 'InputDescription', 'InputPlaceholder', 'InputClearButton', 'InputError', 'TextInput', 'Autocomplete', 'PasswordInput', 'Textarea', 'Select', 'MultiSelect', 'NativeSelect', 'Combobox', 'ComboboxTarget', 'ComboboxDropdownTarget', 'ComboboxEventsTarget', 'ComboboxDropdown', 'ComboboxOptions', 'ComboboxOption', 'ComboboxSearch', 'ComboboxEmpty', 'ComboboxGroup', 'ComboboxHeader', 'ComboboxFooter', 'ComboboxChevron', 'ComboboxClearButton', 'ComboboxHiddenInput', 'CheckboxGroup', 'Checkbox', 'CheckboxCard', 'SwitchGroup', 'Switch', 'RadioGroup', 'Radio', 'RadioCard', 'NumberInput', 'DateInput', 'ChipGroup', 'Chip', 'Slider', 'RangeSlider', 'SegmentedControl', 'PinInput', 'ColorInput', 'ColorPicker', 'HueSlider', 'AlphaSlider', 'AngleSlider', 'ColorSwatch', 'JsonInput', 'TagsInput', 'FileInput', 'FileButton', 'PillsInput', 'PillsInputField', 'Rating', 'Button', 'ActionIcon', 'UnstyledButton', 'Burger', 'CloseButton', 'CopyButton'] as const;
 const Builder_FORM_ALLOWED_EVENTS = ['onSubmit', 'onReset', 'onChange'] as const;
 const Builder_FIELD_ALLOWED_EVENTS = ['onChange', 'onFocus', 'onBlur'] as const;
 const Builder_BUTTON_ALLOWED_EVENTS = ['onClick'] as const;
@@ -472,6 +662,11 @@ const integerSchema = {
 
 const numberSchema = {
     type: 'number'
+} as const;
+
+const numberArraySchema = {
+    type: 'array',
+    items: numberSchema
 } as const;
 
 const objectSchema = {
@@ -549,6 +744,22 @@ const navItemArraySchema = {
     }
 } as const;
 
+const menuItemArraySchema = {
+    type: 'array',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['label'],
+        properties: {
+            label: stringSchema,
+            href: stringSchema,
+            color: colorSchema,
+            disabled: booleanSchema,
+            divider: booleanSchema
+        }
+    }
+} as const;
+
 const breadcrumbItemArraySchema = {
     type: 'array',
     items: {
@@ -558,6 +769,85 @@ const breadcrumbItemArraySchema = {
         properties: {
             label: stringSchema,
             href: stringSchema
+        }
+    }
+} as const;
+
+const accordionItemArraySchema = {
+    type: 'array',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['label', 'content'],
+        properties: {
+            label: stringSchema,
+            value: stringSchema,
+            content: stringSchema,
+            disabled: booleanSchema
+        }
+    }
+} as const;
+
+const timelineItemArraySchema = {
+    type: 'array',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['title'],
+        properties: {
+            title: stringSchema,
+            description: stringSchema,
+            time: stringSchema,
+            color: colorSchema
+        }
+    }
+} as const;
+
+const stepperStepArraySchema = {
+    type: 'array',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['label'],
+        properties: {
+            label: stringSchema,
+            description: stringSchema,
+            content: stringSchema,
+            disabled: booleanSchema
+        }
+    }
+} as const;
+
+const tocItemArraySchema = {
+    type: 'array',
+    items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['label', 'href'],
+        properties: {
+            label: stringSchema,
+            href: stringSchema,
+            active: booleanSchema
+        }
+    }
+} as const;
+
+const treeNodeArraySchema = {
+    type: 'array',
+    items: {
+        type: 'object',
+        additionalProperties: true,
+        required: ['label', 'value'],
+        properties: {
+            label: stringSchema,
+            value: stringSchema,
+            children: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    additionalProperties: true
+                }
+            }
         }
     }
 } as const;
@@ -837,6 +1127,25 @@ export const Builder_LAYOUT_COMPONENTS: BuilderComponentDefinition[] = [
         allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
     },
     {
+        type: 'GridCol',
+        displayName: 'Grid Column',
+        category: 'Layout',
+        description: 'Mantine grid column for controlled spans inside a Grid.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                span: integerSchema,
+                offset: integerSchema,
+                order: integerSchema
+            }
+        },
+        defaultProps: {
+            span: 6
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
         type: 'Card',
         displayName: 'Card',
         category: 'Layout',
@@ -894,6 +1203,463 @@ export const Builder_LAYOUT_COMPONENTS: BuilderComponentDefinition[] = [
         }
     },
     {
+        type: 'CardSection',
+        displayName: 'Card Section',
+        category: 'Layout',
+        description: 'Mantine Card section for edge-to-edge media or grouped card content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                inheritPadding: booleanSchema,
+                withBorder: booleanSchema,
+                padding: spacingSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            inheritPadding: true,
+            withBorder: false
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Paper',
+        displayName: 'Paper',
+        category: 'Layout',
+        description: 'Mantine surface wrapper for lightweight framed content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                padding: spacingSchema,
+                radius: sizeSchema,
+                shadow: { type: 'string', enum: ['none', 'xs', 'sm', 'md', 'lg', 'xl'] },
+                withBorder: booleanSchema,
+                background: colorSchema
+            }
+        },
+        defaultProps: {
+            padding: 'md',
+            radius: 'sm',
+            shadow: 'none',
+            withBorder: true
+        },
+        uiSchema: {
+            'ui:order': ['padding', 'radius', 'shadow', 'withBorder', 'background'],
+            padding: {
+                'ui:widget': 'select'
+            },
+            radius: {
+                'ui:widget': 'select'
+            },
+            shadow: {
+                'ui:widget': 'select'
+            },
+            background: {
+                'ui:placeholder': 'transparent, white, gray.0, #fff'
+            }
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Center',
+        displayName: 'Center',
+        category: 'Layout',
+        description: 'Centers children on both axes.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                inline: booleanSchema,
+                padding: spacingSchema,
+                width: { type: ['string', 'number'] },
+                height: { type: ['string', 'number'] },
+                minHeight: { type: ['string', 'number'] }
+            }
+        },
+        defaultProps: {
+            minHeight: 120
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Flex',
+        displayName: 'Flex',
+        category: 'Layout',
+        description: 'Flexible row or column layout with Mantine spacing tokens.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                direction: { type: 'string', enum: ['row', 'column', 'row-reverse', 'column-reverse'] },
+                gap: spacingSchema,
+                align: { type: 'string', enum: ['stretch', 'flex-start', 'center', 'flex-end', 'baseline'] },
+                justify: { type: 'string', enum: ['flex-start', 'center', 'flex-end', 'space-between', 'space-around', 'space-evenly'] },
+                wrap: booleanSchema
+            }
+        },
+        defaultProps: {
+            direction: 'row',
+            gap: 'md',
+            align: 'stretch',
+            wrap: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'AspectRatio',
+        displayName: 'Aspect Ratio',
+        category: 'Layout',
+        description: 'Keeps media or embedded content at a fixed visual ratio.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                ratio: numberSchema,
+                width: { type: ['string', 'number'] },
+                maxWidth: { type: ['string', 'number'] }
+            }
+        },
+        defaultProps: {
+            ratio: 1.7777777777777777
+        },
+        allowedChildren: ['Image', 'Box', 'Card', 'Paper', 'Stack', 'Text']
+    },
+    {
+        type: 'Affix',
+        displayName: 'Affix',
+        category: 'Layout',
+        description: 'Fixed-position floating wrapper.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                position: objectSchema,
+                zIndex: integerSchema
+            }
+        },
+        defaultProps: {
+            position: {
+                bottom: 24,
+                right: 24
+            },
+            zIndex: 200
+        },
+        allowedChildren: ['Button', 'ActionIcon', 'Card', 'Paper', 'Group', 'Text']
+    },
+    {
+        type: 'AppShell',
+        displayName: 'App Shell',
+        category: 'Layout',
+        description: 'Application frame with optional header, navbar, aside, main, and footer slots.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                padding: spacingSchema,
+                headerHeight: integerSchema,
+                navbarWidth: integerSchema,
+                asideWidth: integerSchema,
+                footerHeight: integerSchema
+            }
+        },
+        defaultProps: {
+            padding: 'md',
+            headerHeight: 56,
+            navbarWidth: 240
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page'),
+        slots: {
+            header: {
+                displayName: 'Header',
+                allowedChildren: [...Builder_SECTION_SLOT_CHILDREN]
+            },
+            navbar: {
+                displayName: 'Navbar',
+                allowedChildren: [...Builder_SECTION_SLOT_CHILDREN]
+            },
+            aside: {
+                displayName: 'Aside',
+                allowedChildren: [...Builder_SECTION_SLOT_CHILDREN]
+            },
+            footer: {
+                displayName: 'Footer',
+                allowedChildren: [...Builder_SECTION_SLOT_CHILDREN]
+            }
+        }
+    },
+    {
+        type: 'AppShellHeader',
+        displayName: 'App Shell Header',
+        category: 'Layout',
+        description: 'Header region inside a Mantine AppShell.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                height: { type: ['string', 'number'] },
+                padding: spacingSchema,
+                withBorder: booleanSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            height: 56,
+            padding: 'md',
+            withBorder: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'AppShellNavbar',
+        displayName: 'App Shell Navbar',
+        category: 'Layout',
+        description: 'Navigation sidebar region inside a Mantine AppShell.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                width: { type: ['string', 'number'] },
+                padding: spacingSchema,
+                withBorder: booleanSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            width: 240,
+            padding: 'md',
+            withBorder: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'AppShellAside',
+        displayName: 'App Shell Aside',
+        category: 'Layout',
+        description: 'Secondary aside region inside a Mantine AppShell.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                width: { type: ['string', 'number'] },
+                padding: spacingSchema,
+                withBorder: booleanSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            width: 240,
+            padding: 'md',
+            withBorder: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'AppShellMain',
+        displayName: 'App Shell Main',
+        category: 'Layout',
+        description: 'Main content region inside a Mantine AppShell.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                padding: spacingSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            padding: 'md'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'AppShellFooter',
+        displayName: 'App Shell Footer',
+        category: 'Layout',
+        description: 'Footer region inside a Mantine AppShell.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                height: { type: ['string', 'number'] },
+                padding: spacingSchema,
+                withBorder: booleanSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            height: 56,
+            padding: 'md',
+            withBorder: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'AppShellSection',
+        displayName: 'App Shell Section',
+        category: 'Layout',
+        description: 'Flexible section inside an AppShell header, navbar, aside, or footer.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                grow: booleanSchema,
+                padding: spacingSchema,
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            grow: false,
+            padding: 'md'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Collapse',
+        displayName: 'Collapse',
+        category: 'Layout',
+        description: 'Collapsible content wrapper controlled by a boolean opened prop.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                opened: booleanSchema,
+                transitionDuration: integerSchema
+            }
+        },
+        defaultProps: {
+            opened: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Indicator',
+        displayName: 'Indicator',
+        category: 'Layout',
+        description: 'Badge-like indicator attached to a child element.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                color: colorSchema,
+                size: integerSchema,
+                position: { type: 'string', enum: ['top-start', 'top-center', 'top-end', 'middle-start', 'middle-center', 'middle-end', 'bottom-start', 'bottom-center', 'bottom-end'] },
+                withBorder: booleanSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            label: '',
+            color: 'red',
+            position: 'top-end',
+            withBorder: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'ScrollArea',
+        displayName: 'Scroll Area',
+        category: 'Layout',
+        description: 'Scrollable content region with stable dimensions.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                width: { type: ['string', 'number'] },
+                height: { type: ['string', 'number'] },
+                type: { type: 'string', enum: ['auto', 'always', 'scroll', 'hover', 'never'] },
+                offsetScrollbars: booleanSchema
+            }
+        },
+        defaultProps: {
+            height: 240,
+            type: 'hover',
+            offsetScrollbars: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Spoiler',
+        displayName: 'Spoiler',
+        category: 'Layout',
+        description: 'Collapsible content preview with show and hide labels.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                maxHeight: integerSchema,
+                showLabel: stringSchema,
+                hideLabel: stringSchema,
+                expanded: booleanSchema
+            }
+        },
+        defaultProps: {
+            maxHeight: 120,
+            showLabel: 'Show more',
+            hideLabel: 'Show less'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'ScrollAreaAutosize',
+        displayName: 'Auto Scroll Area',
+        category: 'Layout',
+        description: 'Scroll area that grows until max height or max width is reached.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                maxHeight: { type: ['string', 'number'] },
+                maxWidth: { type: ['string', 'number'] },
+                type: { type: 'string', enum: ['auto', 'always', 'scroll', 'hover', 'never'] },
+                offsetScrollbars: booleanSchema
+            }
+        },
+        defaultProps: {
+            maxHeight: 320,
+            type: 'hover',
+            offsetScrollbars: true
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'TableScrollContainer',
+        displayName: 'Table Scroll Container',
+        category: 'Layout',
+        description: 'Responsive horizontal scroll wrapper for tables.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                minWidth: { type: ['string', 'number'] },
+                type: { type: 'string', enum: ['native', 'scrollarea'] }
+            }
+        },
+        defaultProps: {
+            minWidth: 640
+        },
+        allowedChildren: ['Table', 'DataTable', 'Box']
+    },
+    {
+        type: 'VisuallyHidden',
+        displayName: 'Visually Hidden',
+        category: 'Layout',
+        description: 'Accessible text or content hidden visually but available to assistive technology.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Accessible label'
+        },
+        allowedChildren: ['Text', 'Code', 'Kbd']
+    },
+    {
         type: 'Divider',
         displayName: 'Divider',
         category: 'Layout',
@@ -912,7 +1678,7 @@ export const Builder_LAYOUT_COMPONENTS: BuilderComponentDefinition[] = [
             orientation: 'horizontal',
             variant: 'solid'
         },
-        allowedChildren: []
+        allowedChildren: ['TimelineItem']
     },
     {
         type: 'Space',
@@ -1101,6 +1867,223 @@ export const Builder_TYPOGRAPHY_COMPONENTS: BuilderComponentDefinition[] = [
         allowedChildren: []
     },
     {
+        type: 'Code',
+        displayName: 'Code',
+        category: 'Typography',
+        description: 'Inline or block monospace code text.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                color: colorSchema,
+                block: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: 'npm run dev',
+            block: false
+        },
+        uiSchema: {
+            children: {
+                'ui:widget': 'textarea',
+                'ui:options': multilineTextUiOptions
+            }
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'Kbd',
+        displayName: 'Keyboard Key',
+        category: 'Typography',
+        description: 'Keyboard shortcut or keycap label.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            children: 'Ctrl K',
+            size: 'sm'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'Mark',
+        displayName: 'Mark',
+        category: 'Typography',
+        description: 'Highlighted inline text.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            children: 'Highlighted text',
+            color: 'yellow'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'Pill',
+        displayName: 'Pill',
+        category: 'Typography',
+        description: 'Compact pill-shaped label.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                size: sizeSchema,
+                radius: sizeSchema,
+                withRemoveButton: booleanSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: 'Pill',
+            size: 'md'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'PillGroup',
+        displayName: 'Pill Group',
+        category: 'Typography',
+        description: 'Group of Mantine Pill labels with consistent spacing.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'pill-group-item',
+                type: 'Pill',
+                props: {
+                    children: 'Pill'
+                }
+            }
+        ],
+        allowedChildren: ['Pill']
+    },
+    {
+        type: 'TypographyStylesProvider',
+        displayName: 'Typography Styles Provider',
+        category: 'Typography',
+        description: 'Typography wrapper for rich text or CMS content styled with Mantine defaults.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                component: { type: 'string', enum: ['div', 'article', 'section'] }
+            }
+        },
+        defaultProps: {
+            component: 'div'
+        },
+        defaultChildren: [
+            {
+                id: 'typography-provider-text',
+                type: 'Text',
+                props: {
+                    children: 'Rich text content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'NumberFormatter',
+        displayName: 'Number Formatter',
+        category: 'Typography',
+        description: 'Formatted numeric text with prefix, suffix, and separators.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: { type: ['string', 'number'] },
+                prefix: stringSchema,
+                suffix: stringSchema,
+                thousandSeparator: stringSchema,
+                decimalSeparator: stringSchema,
+                decimalScale: integerSchema,
+                fixedDecimalScale: booleanSchema
+            }
+        },
+        defaultProps: {
+            value: 1234,
+            thousandSeparator: ','
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'Blockquote',
+        displayName: 'Blockquote',
+        category: 'Typography',
+        description: 'Quoted content with optional citation.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                cite: stringSchema,
+                color: colorSchema,
+                radius: sizeSchema,
+                iconSize: numberSchema
+            }
+        },
+        defaultProps: {
+            children: 'A useful quote belongs here.',
+            cite: '',
+            color: 'blue',
+            radius: 'sm'
+        },
+        uiSchema: {
+            children: {
+                'ui:widget': 'textarea',
+                'ui:options': multilineTextUiOptions
+            },
+            radius: {
+                'ui:widget': 'select'
+            }
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'Highlight',
+        displayName: 'Highlight',
+        category: 'Typography',
+        description: 'Text with one highlighted phrase.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                highlight: stringSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            children: 'Highlight important words in this sentence.',
+            highlight: 'important',
+            color: 'yellow'
+        },
+        uiSchema: {
+            children: {
+                'ui:widget': 'textarea',
+                'ui:options': multilineTextUiOptions
+            }
+        },
+        allowedChildren: []
+    },
+    {
         type: 'List',
         displayName: 'List',
         category: 'Typography',
@@ -1122,7 +2105,25 @@ export const Builder_TYPOGRAPHY_COMPONENTS: BuilderComponentDefinition[] = [
             type: 'unordered',
             spacing: 'xs'
         },
-        allowedChildren: ['Text', 'Badge', 'Anchor', 'Icon']
+        allowedChildren: ['ListItem', 'Text', 'Badge', 'Anchor', 'Icon']
+    },
+    {
+        type: 'ListItem',
+        displayName: 'List Item',
+        category: 'Typography',
+        description: 'Item inside a Mantine List, with inline Builder children or text content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                icon: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'List item'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
     },
     {
         type: 'Markdown',
@@ -1223,6 +2224,389 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
         }
     },
     {
+        type: 'ButtonGroup',
+        displayName: 'Button Group',
+        category: 'Form',
+        description: 'Grouped Mantine buttons with shared borders.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                orientation: { type: 'string', enum: ['horizontal', 'vertical'] }
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'button-group-item',
+                type: 'Button',
+                props: {
+                    children: 'Button'
+                }
+            }
+        ],
+        allowedChildren: ['Button', 'ButtonGroupSection']
+    },
+    {
+        type: 'ButtonGroupSection',
+        displayName: 'Button Group Section',
+        category: 'Form',
+        description: 'Non-button section inside a Mantine Button group.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Section'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ActionIcon',
+        displayName: 'Action Icon',
+        category: 'Form',
+        description: 'Compact icon-sized button for toolbar and inline actions.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                children: stringSchema,
+                variant: { type: 'string', enum: ['filled', 'light', 'outline', 'subtle', 'default', 'transparent', 'white'] },
+                color: colorSchema,
+                size: sizeSchema,
+                radius: sizeSchema,
+                disabled: booleanSchema,
+                loading: booleanSchema
+            }
+        },
+        defaultProps: {
+            label: 'Action',
+            children: '+',
+            variant: 'subtle'
+        },
+        allowedChildren: ['Icon', 'ThemeIcon', 'Text'],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS],
+        aiHints: {
+            purpose: 'Triggers compact toolbar or inline actions. Always provide an accessible label.',
+            copyFields: ['label', 'children']
+        }
+    },
+    {
+        type: 'ActionIconGroup',
+        displayName: 'Action Icon Group',
+        category: 'Form',
+        description: 'Grouped icon buttons for compact toolbars.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                orientation: { type: 'string', enum: ['horizontal', 'vertical'] }
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'action-icon-group-item',
+                type: 'ActionIcon',
+                props: {
+                    label: 'Action',
+                    children: '+'
+                }
+            }
+        ],
+        allowedChildren: ['ActionIcon', 'ActionIconGroupSection']
+    },
+    {
+        type: 'ActionIconGroupSection',
+        displayName: 'Action Icon Group Section',
+        category: 'Form',
+        description: 'Section inside an ActionIcon group.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: '+'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'UnstyledButton',
+        displayName: 'Unstyled Button',
+        category: 'Form',
+        description: 'Button reset for fully custom clickable surfaces.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                component: { type: 'string', enum: ['button', 'a', 'div'] },
+                href: stringSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: 'Unstyled button',
+            component: 'button'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'Burger',
+        displayName: 'Burger',
+        category: 'Form',
+        description: 'Menu toggle button.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                opened: booleanSchema,
+                size: sizeSchema,
+                color: colorSchema,
+                disabled: booleanSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            opened: false,
+            label: 'Toggle navigation'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'CloseButton',
+        displayName: 'Close Button',
+        category: 'Form',
+        description: 'Compact close/dismiss button.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                'aria-label': stringSchema,
+                size: sizeSchema,
+                radius: sizeSchema,
+                variant: { type: 'string', enum: ['subtle', 'transparent', 'default'] },
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            'aria-label': 'Close'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'CopyButton',
+        displayName: 'Copy Button',
+        category: 'Form',
+        description: 'Button that copies a configured text value.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: stringSchema,
+                children: stringSchema,
+                copiedLabel: stringSchema,
+                timeout: integerSchema,
+                variant: { type: 'string', enum: ['filled', 'light', 'outline', 'subtle', 'default', 'transparent', 'white'] },
+                color: colorSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            value: 'Copied text',
+            children: 'Copy',
+            copiedLabel: 'Copied',
+            timeout: 1200,
+            variant: 'light'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'Input',
+        displayName: 'Input',
+        category: 'Form',
+        description: 'Low-level Mantine input control for custom field composition.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                placeholder: stringSchema,
+                defaultValue: stringSchema,
+                type: { type: 'string', enum: ['text', 'email', 'password', 'url', 'tel', 'search'] },
+                disabled: booleanSchema,
+                readOnly: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'input',
+            placeholder: 'Input',
+            type: 'text'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'InputBase',
+        displayName: 'Input Base',
+        category: 'Form',
+        description: 'Mantine InputBase for building custom input-like controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                placeholder: stringSchema,
+                defaultValue: stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'input-base',
+            label: 'Input base',
+            placeholder: 'Input base'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'InputWrapper',
+        displayName: 'Input Wrapper',
+        category: 'Form',
+        description: 'Mantine input wrapper for composing labels, descriptions, errors, and custom controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                id: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                error: stringSchema,
+                required: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            label: 'Input wrapper'
+        },
+        defaultChildren: [
+            {
+                id: 'input-wrapper-control',
+                type: 'Input',
+                props: {
+                    placeholder: 'Input'
+                }
+            }
+        ],
+        allowedChildren: ['Input', 'InputBase', 'InputLabel', 'InputDescription', 'InputPlaceholder', 'InputClearButton', 'InputError', 'TextInput', 'PasswordInput', 'Textarea', 'Select', 'MultiSelect', 'NativeSelect', 'Group', 'Stack']
+    },
+    {
+        type: 'InputLabel',
+        displayName: 'Input Label',
+        category: 'Form',
+        description: 'Label element inside a custom Mantine input composition.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                htmlFor: stringSchema,
+                required: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            children: 'Input label'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'InputDescription',
+        displayName: 'Input Description',
+        category: 'Form',
+        description: 'Description text inside a custom Mantine input composition.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            children: 'Input description'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'InputPlaceholder',
+        displayName: 'Input Placeholder',
+        category: 'Form',
+        description: 'Placeholder content inside a custom Mantine input composition.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Placeholder'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'InputClearButton',
+        displayName: 'Input Clear Button',
+        category: 'Form',
+        description: 'Clear button affordance inside a custom input.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                'aria-label': stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            'aria-label': 'Clear input'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'InputError',
+        displayName: 'Input Error',
+        category: 'Form',
+        description: 'Error text inside a custom Mantine input composition.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            children: 'Input error'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
         type: 'TextInput',
         displayName: 'Text Input',
         category: 'Form',
@@ -1247,6 +2631,83 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
             name: 'text',
             label: 'Text input',
             type: 'text'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS],
+        slots: {
+            leftSection: {
+                displayName: 'Left Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            },
+            rightSection: {
+                displayName: 'Right Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            }
+        }
+    },
+    {
+        type: 'Autocomplete',
+        displayName: 'Autocomplete',
+        category: 'Form',
+        description: 'Text input with suggestion data.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                data: stringArraySchema,
+                defaultValue: stringSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                readOnly: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'autocomplete',
+            label: 'Autocomplete',
+            data: ['Option 1', 'Option 2']
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS],
+        slots: {
+            leftSection: {
+                displayName: 'Left Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            },
+            rightSection: {
+                displayName: 'Right Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            }
+        }
+    },
+    {
+        type: 'PasswordInput',
+        displayName: 'Password Input',
+        category: 'Form',
+        description: 'Password field with optional visibility control in Mantine renderers.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                defaultValue: stringSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                readOnly: booleanSchema,
+                visible: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'password',
+            label: 'Password'
         },
         allowedChildren: [],
         allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS],
@@ -1346,6 +2807,446 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
         }
     },
     {
+        type: 'MultiSelect',
+        displayName: 'Multi Select',
+        category: 'Form',
+        description: 'Multi-value selection field with canonical JSON options.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                data: optionArraySchema,
+                defaultValue: stringArraySchema,
+                searchable: booleanSchema,
+                clearable: booleanSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'multi-select',
+            label: 'Multi select',
+            data: [
+                { label: 'Option 1', value: 'option-1' },
+                { label: 'Option 2', value: 'option-2' }
+            ],
+            defaultValue: []
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS],
+        slots: {
+            leftSection: {
+                displayName: 'Left Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            },
+            rightSection: {
+                displayName: 'Right Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            }
+        }
+    },
+    {
+        type: 'NativeSelect',
+        displayName: 'Native Select',
+        category: 'Form',
+        description: 'Native select field with Builder JSON options.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                data: optionArraySchema,
+                defaultValue: stringSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'native-select',
+            label: 'Native select',
+            data: [
+                { label: 'Option 1', value: 'option-1' },
+                { label: 'Option 2', value: 'option-2' }
+            ]
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS],
+        slots: {
+            leftSection: {
+                displayName: 'Left Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            },
+            rightSection: {
+                displayName: 'Right Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            }
+        }
+    },
+    {
+        type: 'Combobox',
+        displayName: 'Combobox',
+        category: 'Form',
+        description: 'Composable Mantine combobox root with target, dropdown, search, groups, and options.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                opened: booleanSchema,
+                disabled: booleanSchema,
+                position: { type: 'string', enum: ['top', 'right', 'bottom', 'left', 'top-start', 'top-end', 'bottom-start', 'bottom-end'] },
+                width: { type: ['string', 'number'] },
+                shadow: { type: 'string', enum: ['none', 'xs', 'sm', 'md', 'lg', 'xl'] },
+                withinPortal: booleanSchema
+            }
+        },
+        defaultProps: {
+            label: 'Combobox',
+            position: 'bottom',
+            shadow: 'md'
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-target',
+                type: 'ComboboxTarget'
+            },
+            {
+                id: 'combobox-dropdown',
+                type: 'ComboboxDropdown'
+            }
+        ],
+        allowedChildren: ['ComboboxTarget', 'ComboboxDropdownTarget', 'ComboboxEventsTarget', 'ComboboxDropdown', 'ComboboxOptions', 'ComboboxOption', 'ComboboxSearch', 'ComboboxEmpty', 'ComboboxGroup', 'ComboboxHeader', 'ComboboxFooter', 'ComboboxChevron', 'ComboboxClearButton', 'ComboboxHiddenInput'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ComboboxTarget',
+        displayName: 'Combobox Target',
+        category: 'Form',
+        description: 'Clickable target inside a Mantine Combobox.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-target-button',
+                type: 'Button',
+                props: {
+                    children: 'Choose option',
+                    variant: 'default'
+                }
+            }
+        ],
+        allowedChildren: ['Button', 'ActionIcon', 'Input', 'InputBase', 'TextInput', 'Group', 'Text']
+    },
+    {
+        type: 'ComboboxDropdownTarget',
+        displayName: 'Combobox Dropdown Target',
+        category: 'Form',
+        description: 'Input-like dropdown target inside a Mantine Combobox.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-dropdown-target-input',
+                type: 'InputBase',
+                props: {
+                    placeholder: 'Search option'
+                }
+            }
+        ],
+        allowedChildren: ['Input', 'InputBase', 'TextInput', 'Group']
+    },
+    {
+        type: 'ComboboxEventsTarget',
+        displayName: 'Combobox Events Target',
+        category: 'Form',
+        description: 'Events-only target used for custom Combobox controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-events-target-input',
+                type: 'InputBase',
+                props: {
+                    placeholder: 'Custom target'
+                }
+            }
+        ],
+        allowedChildren: ['Input', 'InputBase', 'TextInput', 'Group']
+    },
+    {
+        type: 'ComboboxDropdown',
+        displayName: 'Combobox Dropdown',
+        category: 'Form',
+        description: 'Dropdown content region inside a Mantine Combobox.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-options',
+                type: 'ComboboxOptions'
+            }
+        ],
+        allowedChildren: ['ComboboxHeader', 'ComboboxSearch', 'ComboboxOptions', 'ComboboxOption', 'ComboboxGroup', 'ComboboxEmpty', 'ComboboxFooter']
+    },
+    {
+        type: 'ComboboxOptions',
+        displayName: 'Combobox Options',
+        category: 'Form',
+        description: 'Options list inside a Mantine Combobox dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-option',
+                type: 'ComboboxOption',
+                props: {
+                    value: 'option-1',
+                    children: 'Option 1'
+                }
+            }
+        ],
+        allowedChildren: ['ComboboxOption', 'ComboboxGroup', 'ComboboxEmpty']
+    },
+    {
+        type: 'ComboboxOption',
+        displayName: 'Combobox Option',
+        category: 'Form',
+        description: 'Single selectable option inside a Mantine Combobox.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['value'],
+            properties: {
+                value: stringSchema,
+                children: stringSchema,
+                disabled: booleanSchema,
+                active: booleanSchema,
+                selected: booleanSchema
+            }
+        },
+        defaultProps: {
+            value: 'option',
+            children: 'Option'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ComboboxSearch',
+        displayName: 'Combobox Search',
+        category: 'Form',
+        description: 'Search input inside a Mantine Combobox dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                placeholder: stringSchema,
+                defaultValue: stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'combobox-search',
+            placeholder: 'Search'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ComboboxEmpty',
+        displayName: 'Combobox Empty',
+        category: 'Form',
+        description: 'Empty-state content inside a Mantine Combobox options list.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'No options'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ComboboxGroup',
+        displayName: 'Combobox Group',
+        category: 'Form',
+        description: 'Grouped Combobox options under a label.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            label: 'Group'
+        },
+        defaultChildren: [
+            {
+                id: 'combobox-group-option',
+                type: 'ComboboxOption',
+                props: {
+                    value: 'group-option',
+                    children: 'Grouped option'
+                }
+            }
+        ],
+        allowedChildren: ['ComboboxOption']
+    },
+    {
+        type: 'ComboboxHeader',
+        displayName: 'Combobox Header',
+        category: 'Form',
+        description: 'Header content inside a Mantine Combobox dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Combobox header'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ComboboxFooter',
+        displayName: 'Combobox Footer',
+        category: 'Form',
+        description: 'Footer content inside a Mantine Combobox dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Combobox footer'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ComboboxChevron',
+        displayName: 'Combobox Chevron',
+        category: 'Form',
+        description: 'Dropdown chevron affordance for custom Combobox targets.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                size: sizeSchema,
+                error: booleanSchema
+            }
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'ComboboxClearButton',
+        displayName: 'Combobox Clear Button',
+        category: 'Form',
+        description: 'Clear button affordance for custom Combobox targets.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                'aria-label': stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            'aria-label': 'Clear combobox'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ComboboxHiddenInput',
+        displayName: 'Combobox Hidden Input',
+        category: 'Form',
+        description: 'Hidden input used to submit Combobox values in forms.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                value: stringSchema,
+                values: stringArraySchema
+            }
+        },
+        defaultProps: {
+            name: 'combobox-value',
+            value: 'option'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'CheckboxGroup',
+        displayName: 'Checkbox Group',
+        category: 'Form',
+        description: 'Grouped checkbox options composed from Checkbox or CheckboxCard children.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                defaultValue: stringArraySchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'checkbox-group',
+            label: 'Checkbox group',
+            defaultValue: []
+        },
+        defaultChildren: [
+            {
+                id: 'checkbox-group-option',
+                type: 'Checkbox',
+                props: {
+                    label: 'Option',
+                    value: 'option'
+                }
+            }
+        ],
+        allowedChildren: ['Checkbox', 'CheckboxCard', 'Stack', 'Group'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
         type: 'Checkbox',
         displayName: 'Checkbox',
         category: 'Form',
@@ -1357,6 +3258,7 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
                 name: stringSchema,
                 label: stringSchema,
                 description: stringSchema,
+                value: stringSchema,
                 defaultChecked: booleanSchema,
                 required: booleanSchema,
                 disabled: booleanSchema,
@@ -1377,6 +3279,127 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
             },
             rightSection: {
                 displayName: 'Right Section',
+                allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
+            }
+        }
+    },
+    {
+        type: 'CheckboxCard',
+        displayName: 'Checkbox Card',
+        category: 'Form',
+        description: 'Card-style boolean checkbox option.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                value: stringSchema,
+                defaultChecked: booleanSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                radius: sizeSchema,
+                withBorder: booleanSchema
+            }
+        },
+        defaultProps: {
+            name: 'checkbox-card',
+            label: 'Checkbox card',
+            value: 'value',
+            defaultChecked: false,
+            withBorder: true
+        },
+        allowedChildren: ['Text', 'Group', 'Stack', 'Icon', 'ThemeIcon'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'CheckboxIndicator',
+        displayName: 'Checkbox Indicator',
+        category: 'Form',
+        description: 'Readonly checkbox indicator for custom option layouts.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                checked: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            checked: true
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'SwitchGroup',
+        displayName: 'Switch Group',
+        category: 'Form',
+        description: 'Grouped switch options composed from Switch children.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                defaultValue: stringArraySchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'switch-group',
+            label: 'Switch group',
+            defaultValue: []
+        },
+        defaultChildren: [
+            {
+                id: 'switch-group-option',
+                type: 'Switch',
+                props: {
+                    label: 'Option',
+                    value: 'option'
+                }
+            }
+        ],
+        allowedChildren: ['Switch', 'Stack', 'Group'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'Switch',
+        displayName: 'Switch',
+        category: 'Form',
+        description: 'Boolean toggle field.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                value: stringSchema,
+                defaultChecked: booleanSchema,
+                onLabel: stringSchema,
+                offLabel: stringSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'switch',
+            label: 'Switch',
+            defaultChecked: false
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS],
+        slots: {
+            thumbIcon: {
+                displayName: 'Thumb Icon',
                 allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
             }
         }
@@ -1422,6 +3445,82 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
                 allowedChildren: [...Builder_INPUT_SECTION_SLOT_CHILDREN]
             }
         }
+    },
+    {
+        type: 'Radio',
+        displayName: 'Radio',
+        category: 'Form',
+        description: 'Single radio input, useful inside custom radio groups.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                value: stringSchema,
+                defaultChecked: booleanSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'radio',
+            label: 'Radio',
+            value: 'value'
+        },
+        allowedChildren: ['PillGroup', 'Pill', 'PillsInputField'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'RadioCard',
+        displayName: 'Radio Card',
+        category: 'Form',
+        description: 'Card-style single-choice radio option.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                value: stringSchema,
+                defaultChecked: booleanSchema,
+                required: booleanSchema,
+                disabled: booleanSchema,
+                radius: sizeSchema,
+                withBorder: booleanSchema
+            }
+        },
+        defaultProps: {
+            name: 'radio-card',
+            label: 'Radio card',
+            value: 'value',
+            withBorder: true
+        },
+        allowedChildren: ['Text', 'Group', 'Stack', 'Icon', 'ThemeIcon'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'RadioIndicator',
+        displayName: 'Radio Indicator',
+        category: 'Form',
+        description: 'Readonly radio indicator for custom option layouts.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                checked: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            checked: true
+        },
+        allowedChildren: []
     },
     {
         type: 'NumberInput',
@@ -1483,6 +3582,570 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
         allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
     },
     {
+        type: 'Chip',
+        displayName: 'Chip',
+        category: 'Form',
+        description: 'Compact selectable chip.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                value: stringSchema,
+                checked: booleanSchema,
+                defaultChecked: booleanSchema,
+                variant: { type: 'string', enum: ['filled', 'outline', 'light'] },
+                color: colorSchema,
+                size: sizeSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: 'Chip',
+            value: 'chip',
+            variant: 'filled'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ChipGroup',
+        displayName: 'Chip Group',
+        category: 'Form',
+        description: 'Grouped chip options for single or multiple selection.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                multiple: booleanSchema,
+                defaultValue: {
+                    type: ['string', 'array'],
+                    items: { type: 'string' }
+                },
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            name: 'chip-group',
+            label: 'Chip group',
+            multiple: false
+        },
+        defaultChildren: [
+            {
+                id: 'chip-group-option',
+                type: 'Chip',
+                props: {
+                    children: 'Option',
+                    value: 'option'
+                }
+            }
+        ],
+        allowedChildren: ['Chip', 'Group', 'Stack'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'Slider',
+        displayName: 'Slider',
+        category: 'Form',
+        description: 'Single-value numeric slider.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                defaultValue: numberSchema,
+                min: numberSchema,
+                max: numberSchema,
+                step: numberSchema,
+                marks: metricArraySchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'slider',
+            label: 'Slider',
+            defaultValue: 50,
+            min: 0,
+            max: 100,
+            step: 1
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'RangeSlider',
+        displayName: 'Range Slider',
+        category: 'Form',
+        description: 'Two-value numeric range slider.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                defaultValue: numberArraySchema,
+                min: numberSchema,
+                max: numberSchema,
+                step: numberSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'range-slider',
+            label: 'Range slider',
+            defaultValue: [20, 80],
+            min: 0,
+            max: 100,
+            step: 1
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'SegmentedControl',
+        displayName: 'Segmented Control',
+        category: 'Form',
+        description: 'Compact segmented selection control.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                data: optionArraySchema,
+                defaultValue: stringSchema,
+                fullWidth: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'segmented-control',
+            label: 'Segmented control',
+            data: [
+                { label: 'One', value: 'one' },
+                { label: 'Two', value: 'two' }
+            ],
+            defaultValue: 'one'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'PinInput',
+        displayName: 'Pin Input',
+        category: 'Form',
+        description: 'Separated one-time-code input.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                length: integerSchema,
+                defaultValue: stringSchema,
+                placeholder: stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'pin',
+            label: 'Pin input',
+            length: 4
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ColorInput',
+        displayName: 'Color Input',
+        category: 'Form',
+        description: 'Text input with color picker affordance.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                placeholder: stringSchema,
+                defaultValue: colorSchema,
+                format: { type: 'string', enum: ['hex', 'hexa', 'rgb', 'rgba', 'hsl', 'hsla'] },
+                swatches: stringArraySchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'color',
+            label: 'Color input',
+            defaultValue: '#228be6',
+            format: 'hex'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ColorPicker',
+        displayName: 'Color Picker',
+        category: 'Form',
+        description: 'Inline color picker.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                defaultValue: colorSchema,
+                format: { type: 'string', enum: ['hex', 'hexa', 'rgb', 'rgba', 'hsl', 'hsla'] },
+                swatches: stringArraySchema,
+                withPicker: booleanSchema,
+                fullWidth: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'color-picker',
+            defaultValue: '#228be6',
+            format: 'hex',
+            withPicker: true
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'HueSlider',
+        displayName: 'Hue Slider',
+        category: 'Form',
+        description: 'Hue-only slider for custom color picking experiences.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                defaultValue: numberSchema,
+                min: numberSchema,
+                max: numberSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'hue',
+            defaultValue: 220,
+            min: 0,
+            max: 360
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'AlphaSlider',
+        displayName: 'Alpha Slider',
+        category: 'Form',
+        description: 'Alpha-channel slider for custom color picking experiences.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                color: colorSchema,
+                defaultValue: numberSchema,
+                min: numberSchema,
+                max: numberSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'alpha',
+            color: '#228be6',
+            defaultValue: 1,
+            min: 0,
+            max: 1
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'AngleSlider',
+        displayName: 'Angle Slider',
+        category: 'Form',
+        description: 'Circular angle slider for custom directional controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                defaultValue: numberSchema,
+                min: numberSchema,
+                max: numberSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'angle',
+            defaultValue: 90,
+            min: 0,
+            max: 360
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ColorSwatch',
+        displayName: 'Color Swatch',
+        category: 'Form',
+        description: 'Static color swatch that can be used in palettes and controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                color: colorSchema,
+                size: { type: ['string', 'number'] },
+                radius: sizeSchema,
+                withShadow: booleanSchema
+            }
+        },
+        defaultProps: {
+            color: '#228be6',
+            size: 28,
+            radius: 'xl',
+            withShadow: true
+        },
+        allowedChildren: ['Icon', 'Text']
+    },
+    {
+        type: 'JsonInput',
+        displayName: 'JSON Input',
+        category: 'Form',
+        description: 'Textarea-like JSON editor field.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                defaultValue: stringSchema,
+                minRows: integerSchema,
+                maxRows: integerSchema,
+                autosize: booleanSchema,
+                formatOnBlur: booleanSchema,
+                validationError: stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'json',
+            label: 'JSON input',
+            defaultValue: '{\\n  \"key\": \"value\"\\n}',
+            minRows: 4,
+            formatOnBlur: true
+        },
+        uiSchema: {
+            defaultValue: {
+                'ui:widget': 'textarea',
+                'ui:options': multilineTextUiOptions
+            }
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'TagsInput',
+        displayName: 'Tags Input',
+        category: 'Form',
+        description: 'Free-form tag entry field.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                data: stringArraySchema,
+                defaultValue: stringArraySchema,
+                clearable: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'tags',
+            label: 'Tags input',
+            placeholder: 'Add tag',
+            data: ['alpha', 'beta'],
+            defaultValue: []
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'FileInput',
+        displayName: 'File Input',
+        category: 'Form',
+        description: 'File picker field. Saved props describe the picker, not selected local files.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                placeholder: stringSchema,
+                description: stringSchema,
+                accept: stringSchema,
+                multiple: booleanSchema,
+                clearable: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'file',
+            label: 'File input',
+            placeholder: 'Select file'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'FileButton',
+        displayName: 'File Button',
+        category: 'Form',
+        description: 'Button-style file picker. Saved props describe accepted files, not selected local files.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                accept: stringSchema,
+                multiple: booleanSchema,
+                resetRef: stringSchema,
+                variant: { type: 'string', enum: ['filled', 'light', 'outline', 'subtle', 'default', 'transparent', 'white'] },
+                color: colorSchema,
+                size: sizeSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: 'Select file',
+            variant: 'light'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'PillsInput',
+        displayName: 'Pills Input',
+        category: 'Form',
+        description: 'Pill-based input display backed by a JSON string array.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                description: stringSchema,
+                placeholder: stringSchema,
+                values: stringArraySchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'pills',
+            label: 'Pills input',
+            values: ['Alpha', 'Beta']
+        },
+        allowedChildren: ['PillGroup', 'Pill', 'PillsInputField'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'PillsInputField',
+        displayName: 'Pills Input Field',
+        category: 'Form',
+        description: 'Text field area inside a Mantine PillsInput.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                placeholder: stringSchema,
+                defaultValue: stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'pills-field',
+            placeholder: 'Add item'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'Fieldset',
+        displayName: 'Fieldset',
+        category: 'Form',
+        description: 'Semantic form group with legend and description.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                legend: stringSchema,
+                variant: { type: 'string', enum: ['default', 'filled', 'unstyled'] },
+                radius: sizeSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            legend: 'Fieldset',
+            variant: 'default'
+        },
+        allowedChildren: [...Builder_FORM_FIELD_TYPES]
+    },
+    {
+        type: 'Rating',
+        displayName: 'Rating',
+        category: 'Form',
+        description: 'Star rating input or display control.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                name: stringSchema,
+                label: stringSchema,
+                defaultValue: numberSchema,
+                count: integerSchema,
+                fractions: integerSchema,
+                readOnly: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            name: 'rating',
+            label: 'Rating',
+            defaultValue: 3,
+            count: 5
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
         type: 'DynamicForm',
         displayName: 'Dynamic Form',
         category: 'Form',
@@ -1510,7 +4173,7 @@ export const Builder_FORM_COMPONENTS: BuilderComponentDefinition[] = [
         slots: {
             actions: {
                 displayName: 'Actions',
-                allowedChildren: ['Button', 'Group']
+                allowedChildren: ['Button', 'ActionIcon', 'Group']
             }
         },
         aiHints: {
@@ -1600,11 +4263,155 @@ export const Builder_DATA_DISPLAY_COMPONENTS: BuilderComponentDefinition[] = [
                 'ui:widget': 'select'
             }
         },
-        allowedChildren: [],
+        allowedChildren: ['TableCaption', 'TableThead', 'TableTbody', 'TableTfoot', 'TableTr'],
         aiHints: {
             purpose: 'Shows structured records in columns. Prefer node.data.sourceId and node.data.repeat for dynamic rows.',
             dataBinding: 'Bind rows from node.data.repeat.sourceId and map columns through node.data.fields.'
         }
+    },
+    {
+        type: 'TableCaption',
+        displayName: 'Table Caption',
+        category: 'Data Display',
+        description: 'Accessible caption for a Mantine Table.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Table caption'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'TableThead',
+        displayName: 'Table Head',
+        category: 'Data Display',
+        description: 'Header section inside a Mantine Table.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'table-head-row',
+                type: 'TableTr',
+                children: [
+                    {
+                        id: 'table-head-cell',
+                        type: 'TableTh',
+                        props: {
+                            children: 'Column'
+                        }
+                    }
+                ]
+            }
+        ],
+        allowedChildren: ['TableTr']
+    },
+    {
+        type: 'TableTbody',
+        displayName: 'Table Body',
+        category: 'Data Display',
+        description: 'Body section inside a Mantine Table.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'table-body-row',
+                type: 'TableTr',
+                children: [
+                    {
+                        id: 'table-body-cell',
+                        type: 'TableTd',
+                        props: {
+                            children: 'Cell'
+                        }
+                    }
+                ]
+            }
+        ],
+        allowedChildren: ['TableTr']
+    },
+    {
+        type: 'TableTfoot',
+        displayName: 'Table Foot',
+        category: 'Data Display',
+        description: 'Footer section inside a Mantine Table.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: ['TableTr']
+    },
+    {
+        type: 'TableTr',
+        displayName: 'Table Row',
+        category: 'Data Display',
+        description: 'Row inside a Mantine Table section.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'table-row-cell',
+                type: 'TableTd',
+                props: {
+                    children: 'Cell'
+                }
+            }
+        ],
+        allowedChildren: ['TableTh', 'TableTd']
+    },
+    {
+        type: 'TableTh',
+        displayName: 'Table Header Cell',
+        category: 'Data Display',
+        description: 'Header cell inside a Mantine Table row.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                colSpan: integerSchema,
+                rowSpan: integerSchema,
+                scope: { type: 'string', enum: ['col', 'row', 'colgroup', 'rowgroup'] }
+            }
+        },
+        defaultProps: {
+            children: 'Column',
+            scope: 'col'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'TableTd',
+        displayName: 'Table Cell',
+        category: 'Data Display',
+        description: 'Data cell inside a Mantine Table row.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                colSpan: integerSchema,
+                rowSpan: integerSchema
+            }
+        },
+        defaultProps: {
+            children: 'Cell'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
     },
     {
         type: 'DataTable',
@@ -1648,6 +4455,183 @@ export const Builder_DATA_DISPLAY_COMPONENTS: BuilderComponentDefinition[] = [
             purpose: 'Shows larger datasets with table affordances. Keep data canonical in props.rows or node.data binding.',
             dataBinding: 'Bind records through node.data.repeat.sourceId; use node.data.fields to map displayed columns.'
         }
+    },
+    {
+        type: 'Accordion',
+        displayName: 'Accordion',
+        category: 'Data Display',
+        description: 'Expandable list of sections backed by JSON items or child nodes.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                items: accordionItemArraySchema,
+                defaultValue: stringSchema,
+                variant: { type: 'string', enum: ['default', 'contained', 'filled', 'separated'] },
+                multiple: booleanSchema,
+                radius: sizeSchema,
+                chevronPosition: { type: 'string', enum: ['left', 'right'] }
+            }
+        },
+        defaultProps: {
+            variant: 'separated',
+            multiple: false,
+            items: [
+                { label: 'First item', value: 'item-1', content: 'Accordion content' },
+                { label: 'Second item', value: 'item-2', content: 'More content' }
+            ]
+        },
+        allowedChildren: [...Builder_LAYOUT_CHILDREN]
+    },
+    {
+        type: 'AccordionItem',
+        displayName: 'Accordion Item',
+        category: 'Data Display',
+        description: 'Container item inside a Mantine Accordion.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: stringSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            value: 'item-1'
+        },
+        defaultChildren: [
+            {
+                id: 'accordion-item-control',
+                type: 'AccordionControl',
+                props: {
+                    children: 'Accordion item'
+                }
+            },
+            {
+                id: 'accordion-item-panel',
+                type: 'AccordionPanel',
+                props: {
+                    children: 'Accordion content'
+                }
+            }
+        ],
+        allowedChildren: ['AccordionControl', 'AccordionPanel']
+    },
+    {
+        type: 'AccordionControl',
+        displayName: 'Accordion Control',
+        category: 'Data Display',
+        description: 'Clickable heading control for an Accordion item.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                disabled: booleanSchema,
+                icon: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Accordion item'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'AccordionPanel',
+        displayName: 'Accordion Panel',
+        category: 'Data Display',
+        description: 'Expandable content panel for an Accordion item.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Accordion content'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Timeline',
+        displayName: 'Timeline',
+        category: 'Data Display',
+        description: 'Vertical sequence of events or milestones.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                items: timelineItemArraySchema,
+                active: integerSchema,
+                color: colorSchema,
+                bulletSize: integerSchema,
+                lineWidth: integerSchema
+            }
+        },
+        defaultProps: {
+            active: 1,
+            color: 'blue',
+            bulletSize: 24,
+            lineWidth: 2,
+            items: [
+                { title: 'Created', description: 'Initial step', time: 'Today' },
+                { title: 'Reviewed', description: 'Quality check', time: 'Next' }
+            ]
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'TimelineItem',
+        displayName: 'Timeline Item',
+        category: 'Data Display',
+        description: 'Single event or milestone inside a Timeline.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                title: stringSchema,
+                children: stringSchema,
+                color: colorSchema,
+                bullet: stringSchema,
+                lineVariant: { type: 'string', enum: ['solid', 'dashed', 'dotted'] }
+            }
+        },
+        defaultProps: {
+            title: 'Timeline item',
+            children: 'Timeline content'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Tree',
+        displayName: 'Tree',
+        category: 'Data Display',
+        description: 'Hierarchical tree view backed by JSON nodes.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                data: treeNodeArraySchema,
+                levelOffset: integerSchema,
+                expandOnClick: booleanSchema,
+                selectOnClick: booleanSchema
+            }
+        },
+        defaultProps: {
+            data: [
+                {
+                    label: 'Root',
+                    value: 'root',
+                    children: [
+                        { label: 'Child', value: 'child' }
+                    ]
+                }
+            ],
+            expandOnClick: true,
+            selectOnClick: true
+        },
+        allowedChildren: []
     },
     {
         type: 'MetricCard',
@@ -1796,6 +4780,129 @@ export const Builder_NAVIGATION_COMPONENTS: BuilderComponentDefinition[] = [
         }
     },
     {
+        type: 'Menu',
+        displayName: 'Menu',
+        category: 'Navigation',
+        description: 'Dropdown menu with canonical JSON items.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                items: menuItemArraySchema,
+                trigger: { type: 'string', enum: ['click', 'hover'] },
+                position: { type: 'string', enum: ['bottom-start', 'bottom', 'bottom-end', 'top-start', 'top', 'top-end', 'left', 'right'] },
+                withArrow: booleanSchema,
+                width: { type: ['string', 'number'] }
+            }
+        },
+        defaultProps: {
+            label: 'Menu',
+            trigger: 'click',
+            position: 'bottom-start',
+            items: [
+                { label: 'Profile', href: '#' },
+                { label: 'Settings', href: '#' }
+            ]
+        },
+        allowedChildren: ['MenuTarget', 'MenuDropdown'],
+        allowedEvents: [...Builder_LINK_ALLOWED_EVENTS]
+    },
+    {
+        type: 'MenuTarget',
+        displayName: 'Menu Target',
+        category: 'Navigation',
+        description: 'Trigger target inside a Mantine Menu.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'menu-target-button',
+                type: 'Button',
+                props: {
+                    children: 'Menu'
+                }
+            }
+        ],
+        allowedChildren: [...Builder_ACTION_SLOT_CHILDREN]
+    },
+    {
+        type: 'MenuDropdown',
+        displayName: 'Menu Dropdown',
+        category: 'Navigation',
+        description: 'Dropdown content region inside a Mantine Menu.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'menu-item',
+                type: 'MenuItem',
+                props: {
+                    children: 'Menu item'
+                }
+            }
+        ],
+        allowedChildren: ['MenuItem', 'MenuLabel', 'MenuDivider', 'Text', 'Divider', 'Anchor', 'Button']
+    },
+    {
+        type: 'MenuItem',
+        displayName: 'Menu Item',
+        category: 'Navigation',
+        description: 'Action or link row inside a Mantine Menu dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                href: stringSchema,
+                color: colorSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: 'Menu item'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN],
+        allowedEvents: [...Builder_LINK_ALLOWED_EVENTS]
+    },
+    {
+        type: 'MenuLabel',
+        displayName: 'Menu Label',
+        category: 'Navigation',
+        description: 'Non-interactive section label inside a Mantine Menu dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Section'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'MenuDivider',
+        displayName: 'Menu Divider',
+        category: 'Navigation',
+        description: 'Divider line inside a Mantine Menu dropdown.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
         type: 'Tabs',
         displayName: 'Tabs',
         category: 'Navigation',
@@ -1830,6 +4937,315 @@ export const Builder_NAVIGATION_COMPONENTS: BuilderComponentDefinition[] = [
             purpose: 'Groups related page sections into switchable panels.',
             recommendedSlots: ['panels']
         }
+    },
+    {
+        type: 'TabsList',
+        displayName: 'Tabs List',
+        category: 'Navigation',
+        description: 'Tab button list inside Mantine Tabs.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                grow: booleanSchema,
+                justify: { type: 'string', enum: ['flex-start', 'center', 'flex-end', 'space-between'] }
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'tabs-tab',
+                type: 'TabsTab',
+                props: {
+                    value: 'tab-1',
+                    children: 'Tab'
+                }
+            }
+        ],
+        allowedChildren: ['TabsTab']
+    },
+    {
+        type: 'TabsTab',
+        displayName: 'Tabs Tab',
+        category: 'Navigation',
+        description: 'Single selectable tab inside a Mantine Tabs list.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: stringSchema,
+                children: stringSchema,
+                disabled: booleanSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            value: 'tab-1',
+            children: 'Tab'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'TabsPanel',
+        displayName: 'Tabs Panel',
+        category: 'Navigation',
+        description: 'Content panel associated with a Mantine Tabs tab value.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: stringSchema,
+                children: stringSchema,
+                keepMounted: booleanSchema
+            }
+        },
+        defaultProps: {
+            value: 'tab-1',
+            children: 'Tab panel content'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Stepper',
+        displayName: 'Stepper',
+        category: 'Navigation',
+        description: 'Progressive multi-step navigation indicator.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                steps: stepperStepArraySchema,
+                active: integerSchema,
+                orientation: { type: 'string', enum: ['horizontal', 'vertical'] },
+                iconPosition: { type: 'string', enum: ['left', 'right'] },
+                size: sizeSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            active: 1,
+            orientation: 'horizontal',
+            steps: [
+                { label: 'First step', description: 'Start here', content: 'Step one content' },
+                { label: 'Second step', description: 'Continue', content: 'Step two content' }
+            ]
+        },
+        allowedChildren: ['StepperStep', 'StepperCompleted']
+    },
+    {
+        type: 'StepperStep',
+        displayName: 'Stepper Step',
+        category: 'Navigation',
+        description: 'Single step inside a Mantine Stepper.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                description: stringSchema,
+                children: stringSchema,
+                disabled: booleanSchema,
+                loading: booleanSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            label: 'Step',
+            description: 'Step description',
+            children: 'Step content'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'StepperCompleted',
+        displayName: 'Stepper Completed',
+        category: 'Navigation',
+        description: 'Completion content shown after the final step.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Completed'
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Pagination',
+        displayName: 'Pagination',
+        category: 'Navigation',
+        description: 'Page navigation control for paged content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                total: integerSchema,
+                defaultValue: integerSchema,
+                siblings: integerSchema,
+                boundaries: integerSchema,
+                withEdges: booleanSchema,
+                disabled: booleanSchema,
+                size: sizeSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            total: 10,
+            defaultValue: 1,
+            siblings: 1,
+            boundaries: 1
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'PaginationRoot',
+        displayName: 'Pagination Root',
+        category: 'Navigation',
+        description: 'Composable root for Mantine Pagination subcomponents.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                total: integerSchema,
+                defaultValue: integerSchema,
+                siblings: integerSchema,
+                boundaries: integerSchema,
+                disabled: booleanSchema,
+                size: sizeSchema,
+                color: colorSchema
+            }
+        },
+        defaultProps: {
+            total: 10,
+            defaultValue: 1
+        },
+        defaultChildren: [
+            {
+                id: 'pagination-items',
+                type: 'PaginationItems'
+            }
+        ],
+        allowedChildren: ['PaginationFirst', 'PaginationPrevious', 'PaginationItems', 'PaginationNext', 'PaginationLast', 'PaginationControl', 'PaginationDots'],
+        allowedEvents: [...Builder_FIELD_ALLOWED_EVENTS]
+    },
+    {
+        type: 'PaginationControl',
+        displayName: 'Pagination Control',
+        category: 'Navigation',
+        description: 'Single page control inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                active: booleanSchema,
+                disabled: booleanSchema
+            }
+        },
+        defaultProps: {
+            children: '1'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'PaginationDots',
+        displayName: 'Pagination Dots',
+        category: 'Navigation',
+        description: 'Ellipsis marker inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'PaginationFirst',
+        displayName: 'Pagination First',
+        category: 'Navigation',
+        description: 'First page control inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'PaginationItems',
+        displayName: 'Pagination Items',
+        category: 'Navigation',
+        description: 'Automatically generated page item controls inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'PaginationLast',
+        displayName: 'Pagination Last',
+        category: 'Navigation',
+        description: 'Last page control inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'PaginationNext',
+        displayName: 'Pagination Next',
+        category: 'Navigation',
+        description: 'Next page control inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'PaginationPrevious',
+        displayName: 'Pagination Previous',
+        category: 'Navigation',
+        description: 'Previous page control inside PaginationRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'TableOfContents',
+        displayName: 'Table Of Contents',
+        category: 'Navigation',
+        description: 'Document outline or section jump list.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                items: tocItemArraySchema,
+                variant: { type: 'string', enum: ['light', 'filled'] },
+                color: colorSchema,
+                size: sizeSchema,
+                radius: sizeSchema
+            }
+        },
+        defaultProps: {
+            items: [
+                { label: 'Overview', href: '#overview', active: true },
+                { label: 'Details', href: '#details' }
+            ],
+            variant: 'light'
+        },
+        allowedChildren: ['Anchor', 'NavLink', 'Text']
     }
 ];
 
@@ -1866,6 +5282,299 @@ export const Builder_OVERLAY_COMPONENTS: BuilderComponentDefinition[] = [
         }
     },
     {
+        type: 'ModalRoot',
+        displayName: 'Modal Root',
+        category: 'Overlay',
+        description: 'Composable root for Mantine Modal subcomponents.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                opened: booleanSchema,
+                size: sizeSchema,
+                centered: booleanSchema,
+                closeOnClickOutside: booleanSchema
+            }
+        },
+        defaultProps: {
+            opened: false,
+            size: 'md',
+            centered: true
+        },
+        defaultChildren: [
+            { id: 'modal-overlay', type: 'ModalOverlay' },
+            {
+                id: 'modal-content',
+                type: 'ModalContent',
+                children: [
+                    {
+                        id: 'modal-header',
+                        type: 'ModalHeader'
+                    },
+                    {
+                        id: 'modal-body',
+                        type: 'ModalBody'
+                    }
+                ]
+            }
+        ],
+        allowedChildren: ['ModalOverlay', 'ModalContent', 'ModalHeader', 'ModalTitle', 'ModalCloseButton', 'ModalBody'],
+        allowedEvents: [...Builder_OVERLAY_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ModalOverlay',
+        displayName: 'Modal Overlay',
+        category: 'Overlay',
+        description: 'Backdrop overlay inside a ModalRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                backgroundOpacity: numberSchema,
+                blur: numberSchema
+            }
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'ModalContent',
+        displayName: 'Modal Content',
+        category: 'Overlay',
+        description: 'Content surface inside a ModalRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: ['ModalHeader', 'ModalTitle', 'ModalCloseButton', 'ModalBody', 'Stack', 'Group', 'Text', 'Button']
+    },
+    {
+        type: 'ModalHeader',
+        displayName: 'Modal Header',
+        category: 'Overlay',
+        description: 'Header row inside a ModalContent.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'modal-title',
+                type: 'ModalTitle'
+            },
+            {
+                id: 'modal-close',
+                type: 'ModalCloseButton'
+            }
+        ],
+        allowedChildren: ['ModalTitle', 'ModalCloseButton', 'Group', 'Text']
+    },
+    {
+        type: 'ModalTitle',
+        displayName: 'Modal Title',
+        category: 'Overlay',
+        description: 'Title text inside a ModalHeader.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Modal title'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ModalCloseButton',
+        displayName: 'Modal Close Button',
+        category: 'Overlay',
+        description: 'Close button inside a ModalHeader.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                'aria-label': stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            'aria-label': 'Close modal'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ModalBody',
+        displayName: 'Modal Body',
+        category: 'Overlay',
+        description: 'Body content area inside a ModalContent.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'modal-body-text',
+                type: 'Text',
+                props: {
+                    children: 'Modal content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'ModalStack',
+        displayName: 'Modal Stack',
+        category: 'Overlay',
+        description: 'Mantine modal stack manager for multiple modal roots.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: ['ModalRoot', 'Modal']
+    },
+    {
+        type: 'ModalBase',
+        displayName: 'Modal Base',
+        category: 'Overlay',
+        description: 'Low-level Mantine modal primitive for custom overlay composition.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                opened: booleanSchema,
+                centered: booleanSchema,
+                closeOnClickOutside: booleanSchema,
+                withinPortal: booleanSchema
+            }
+        },
+        defaultProps: {
+            opened: false,
+            centered: true
+        },
+        defaultChildren: [
+            { id: 'modal-base-overlay', type: 'ModalBaseOverlay' },
+            {
+                id: 'modal-base-content',
+                type: 'ModalBaseContent',
+                children: [
+                    { id: 'modal-base-header', type: 'ModalBaseHeader' },
+                    { id: 'modal-base-body', type: 'ModalBaseBody' }
+                ]
+            }
+        ],
+        allowedChildren: ['ModalBaseOverlay', 'ModalBaseContent', 'ModalBaseHeader', 'ModalBaseTitle', 'ModalBaseCloseButton', 'ModalBaseBody'],
+        allowedEvents: [...Builder_OVERLAY_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ModalBaseOverlay',
+        displayName: 'Modal Base Overlay',
+        category: 'Overlay',
+        description: 'Backdrop overlay inside a ModalBase.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                backgroundOpacity: numberSchema,
+                blur: numberSchema
+            }
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'ModalBaseContent',
+        displayName: 'Modal Base Content',
+        category: 'Overlay',
+        description: 'Content surface inside a ModalBase.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: ['ModalBaseHeader', 'ModalBaseTitle', 'ModalBaseCloseButton', 'ModalBaseBody', 'Stack', 'Group', 'Text', 'Button']
+    },
+    {
+        type: 'ModalBaseHeader',
+        displayName: 'Modal Base Header',
+        category: 'Overlay',
+        description: 'Header row inside a ModalBaseContent.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            { id: 'modal-base-title', type: 'ModalBaseTitle' },
+            { id: 'modal-base-close', type: 'ModalBaseCloseButton' }
+        ],
+        allowedChildren: ['ModalBaseTitle', 'ModalBaseCloseButton', 'Group', 'Text']
+    },
+    {
+        type: 'ModalBaseTitle',
+        displayName: 'Modal Base Title',
+        category: 'Overlay',
+        description: 'Title text inside a ModalBaseHeader.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Modal base title'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'ModalBaseCloseButton',
+        displayName: 'Modal Base Close Button',
+        category: 'Overlay',
+        description: 'Close button inside a ModalBaseHeader.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                'aria-label': stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            'aria-label': 'Close modal'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'ModalBaseBody',
+        displayName: 'Modal Base Body',
+        category: 'Overlay',
+        description: 'Body content area inside a ModalBaseContent.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'modal-base-body-text',
+                type: 'Text',
+                props: {
+                    children: 'Modal base content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
         type: 'Drawer',
         displayName: 'Drawer',
         category: 'Overlay',
@@ -1888,6 +5597,651 @@ export const Builder_OVERLAY_COMPONENTS: BuilderComponentDefinition[] = [
         },
         allowedChildren: [...Builder_LAYOUT_CHILDREN],
         allowedEvents: [...Builder_OVERLAY_ALLOWED_EVENTS]
+    },
+    {
+        type: 'DrawerRoot',
+        displayName: 'Drawer Root',
+        category: 'Overlay',
+        description: 'Composable root for Mantine Drawer subcomponents.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                opened: booleanSchema,
+                position: { type: 'string', enum: ['left', 'right', 'top', 'bottom'] },
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            opened: false,
+            position: 'right',
+            size: 'md'
+        },
+        defaultChildren: [
+            { id: 'drawer-overlay', type: 'DrawerOverlay' },
+            {
+                id: 'drawer-content',
+                type: 'DrawerContent',
+                children: [
+                    { id: 'drawer-header', type: 'DrawerHeader' },
+                    { id: 'drawer-body', type: 'DrawerBody' }
+                ]
+            }
+        ],
+        allowedChildren: ['DrawerOverlay', 'DrawerContent', 'DrawerHeader', 'DrawerTitle', 'DrawerCloseButton', 'DrawerBody'],
+        allowedEvents: [...Builder_OVERLAY_ALLOWED_EVENTS]
+    },
+    {
+        type: 'DrawerOverlay',
+        displayName: 'Drawer Overlay',
+        category: 'Overlay',
+        description: 'Backdrop overlay inside a DrawerRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                backgroundOpacity: numberSchema,
+                blur: numberSchema
+            }
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'DrawerContent',
+        displayName: 'Drawer Content',
+        category: 'Overlay',
+        description: 'Content surface inside a DrawerRoot.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: ['DrawerHeader', 'DrawerTitle', 'DrawerCloseButton', 'DrawerBody', 'Stack', 'Group', 'Text', 'Button']
+    },
+    {
+        type: 'DrawerHeader',
+        displayName: 'Drawer Header',
+        category: 'Overlay',
+        description: 'Header row inside a DrawerContent.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            { id: 'drawer-title', type: 'DrawerTitle' },
+            { id: 'drawer-close', type: 'DrawerCloseButton' }
+        ],
+        allowedChildren: ['DrawerTitle', 'DrawerCloseButton', 'Group', 'Text']
+    },
+    {
+        type: 'DrawerTitle',
+        displayName: 'Drawer Title',
+        category: 'Overlay',
+        description: 'Title text inside a DrawerHeader.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: 'Drawer title'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'DrawerCloseButton',
+        displayName: 'Drawer Close Button',
+        category: 'Overlay',
+        description: 'Close button inside a DrawerHeader.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                'aria-label': stringSchema,
+                disabled: booleanSchema,
+                size: sizeSchema
+            }
+        },
+        defaultProps: {
+            'aria-label': 'Close drawer'
+        },
+        allowedChildren: [],
+        allowedEvents: [...Builder_BUTTON_ALLOWED_EVENTS]
+    },
+    {
+        type: 'DrawerBody',
+        displayName: 'Drawer Body',
+        category: 'Overlay',
+        description: 'Body content area inside a DrawerContent.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'drawer-body-text',
+                type: 'Text',
+                props: {
+                    children: 'Drawer content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'DrawerStack',
+        displayName: 'Drawer Stack',
+        category: 'Overlay',
+        description: 'Mantine drawer stack manager for multiple drawer roots.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: ['DrawerRoot', 'Drawer']
+    },
+    {
+        type: 'Tooltip',
+        displayName: 'Tooltip',
+        category: 'Overlay',
+        description: 'Hover or focus helper label around one child.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                position: { type: 'string', enum: ['top', 'right', 'bottom', 'left'] },
+                color: colorSchema,
+                withArrow: booleanSchema,
+                multiline: booleanSchema
+            }
+        },
+        defaultProps: {
+            label: 'Tooltip',
+            position: 'top',
+            withArrow: true
+        },
+        allowedChildren: ['Button', 'ActionIcon', 'Anchor', 'Badge', 'Text', 'Icon', 'ThemeIcon']
+    },
+    {
+        type: 'TooltipFloating',
+        displayName: 'Tooltip Floating',
+        category: 'Overlay',
+        description: 'Tooltip variant that follows the pointer while hovering a child.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                color: colorSchema,
+                withArrow: booleanSchema,
+                multiline: booleanSchema
+            }
+        },
+        defaultProps: {
+            label: 'Floating tooltip',
+            withArrow: true
+        },
+        allowedChildren: ['Button', 'ActionIcon', 'Anchor', 'Badge', 'Text', 'Icon', 'ThemeIcon']
+    },
+    {
+        type: 'TooltipGroup',
+        displayName: 'Tooltip Group',
+        category: 'Overlay',
+        description: 'Shared open and close delay settings for nested Tooltips.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                openDelay: integerSchema,
+                closeDelay: integerSchema
+            }
+        },
+        defaultProps: {
+            openDelay: 100,
+            closeDelay: 100
+        },
+        defaultChildren: [
+            {
+                id: 'tooltip-group-item',
+                type: 'Tooltip',
+                props: {
+                    label: 'Tooltip'
+                },
+                children: [
+                    {
+                        id: 'tooltip-group-button',
+                        type: 'Button',
+                        props: {
+                            children: 'Hover'
+                        }
+                    }
+                ]
+            }
+        ],
+        allowedChildren: ['Tooltip', 'TooltipFloating', 'Group', 'Stack']
+    },
+    {
+        type: 'Popover',
+        displayName: 'Popover',
+        category: 'Overlay',
+        description: 'Click-triggered floating panel with target and dropdown content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                opened: booleanSchema,
+                position: { type: 'string', enum: ['top', 'right', 'bottom', 'left', 'top-start', 'top-end', 'bottom-start', 'bottom-end'] },
+                withArrow: booleanSchema,
+                width: { type: ['string', 'number'] },
+                shadow: { type: 'string', enum: ['none', 'xs', 'sm', 'md', 'lg', 'xl'] }
+            }
+        },
+        defaultProps: {
+            label: 'Open popover',
+            position: 'bottom',
+            withArrow: true,
+            shadow: 'md'
+        },
+        allowedChildren: [...Builder_LAYOUT_CHILDREN],
+        slots: {
+            target: {
+                displayName: 'Target',
+                allowedChildren: ['Button', 'ActionIcon', 'Anchor', 'Badge', 'Text']
+            }
+        }
+    },
+    {
+        type: 'PopoverTarget',
+        displayName: 'Popover Target',
+        category: 'Overlay',
+        description: 'Trigger target inside a Mantine Popover.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'popover-target-button',
+                type: 'Button',
+                props: {
+                    children: 'Open popover'
+                }
+            }
+        ],
+        allowedChildren: ['Button', 'ActionIcon', 'Anchor', 'Badge', 'Text', 'Icon', 'ThemeIcon']
+    },
+    {
+        type: 'PopoverDropdown',
+        displayName: 'Popover Dropdown',
+        category: 'Overlay',
+        description: 'Dropdown content region inside a Mantine Popover.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'popover-dropdown-text',
+                type: 'Text',
+                props: {
+                    children: 'Popover content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'HoverCard',
+        displayName: 'Hover Card',
+        category: 'Overlay',
+        description: 'Hover-triggered floating content panel.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                label: stringSchema,
+                openDelay: integerSchema,
+                closeDelay: integerSchema,
+                position: { type: 'string', enum: ['top', 'right', 'bottom', 'left'] },
+                withArrow: booleanSchema,
+                width: { type: ['string', 'number'] },
+                shadow: { type: 'string', enum: ['none', 'xs', 'sm', 'md', 'lg', 'xl'] }
+            }
+        },
+        defaultProps: {
+            label: 'Hover card',
+            openDelay: 100,
+            closeDelay: 100,
+            position: 'bottom',
+            withArrow: true,
+            shadow: 'md'
+        },
+        allowedChildren: [...Builder_LAYOUT_CHILDREN],
+        slots: {
+            target: {
+                displayName: 'Target',
+                allowedChildren: ['Button', 'ActionIcon', 'Anchor', 'Badge', 'Text']
+            }
+        }
+    },
+    {
+        type: 'HoverCardTarget',
+        displayName: 'Hover Card Target',
+        category: 'Overlay',
+        description: 'Trigger target inside a Mantine HoverCard.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'hover-card-target',
+                type: 'Anchor',
+                props: {
+                    children: 'Hover target',
+                    href: '#'
+                }
+            }
+        ],
+        allowedChildren: ['Button', 'ActionIcon', 'Anchor', 'Badge', 'Text', 'Icon', 'ThemeIcon']
+    },
+    {
+        type: 'HoverCardDropdown',
+        displayName: 'Hover Card Dropdown',
+        category: 'Overlay',
+        description: 'Dropdown content region inside a Mantine HoverCard.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        defaultChildren: [
+            {
+                id: 'hover-card-dropdown-text',
+                type: 'Text',
+                props: {
+                    children: 'Hover card content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Dialog',
+        displayName: 'Dialog',
+        category: 'Overlay',
+        description: 'Floating non-modal dialog panel.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                opened: booleanSchema,
+                position: objectSchema,
+                size: sizeSchema,
+                radius: sizeSchema,
+                shadow: { type: 'string', enum: ['none', 'xs', 'sm', 'md', 'lg', 'xl'] },
+                withBorder: booleanSchema
+            }
+        },
+        defaultProps: {
+            opened: true,
+            position: {
+                bottom: 24,
+                right: 24
+            },
+            size: 'md',
+            shadow: 'md',
+            withBorder: true
+        },
+        allowedChildren: [...Builder_LAYOUT_CHILDREN]
+    },
+    {
+        type: 'Overlay',
+        displayName: 'Overlay',
+        category: 'Overlay',
+        description: 'Visual overlay layer for dimming or emphasizing a region.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                color: colorSchema,
+                backgroundOpacity: numberSchema,
+                blur: numberSchema,
+                fixed: booleanSchema,
+                zIndex: integerSchema
+            }
+        },
+        defaultProps: {
+            color: '#000',
+            backgroundOpacity: 0.35,
+            fixed: false
+        },
+        allowedChildren: ['Loader', 'Text', 'Group', 'Stack']
+    },
+    {
+        type: 'Portal',
+        displayName: 'Portal',
+        category: 'Overlay',
+        description: 'Render children in a portal while keeping them in Builder JSON.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                target: stringSchema,
+                reuseTargetNode: booleanSchema
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'portal-content',
+                type: 'Text',
+                props: {
+                    children: 'Portal content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'OptionalPortal',
+        displayName: 'Optional Portal',
+        category: 'Overlay',
+        description: 'Conditionally render children in a portal.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                withinPortal: booleanSchema,
+                target: stringSchema,
+                reuseTargetNode: booleanSchema
+            }
+        },
+        defaultProps: {
+            withinPortal: true
+        },
+        defaultChildren: [
+            {
+                id: 'optional-portal-content',
+                type: 'Text',
+                props: {
+                    children: 'Optional portal content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'Transition',
+        displayName: 'Transition',
+        category: 'Overlay',
+        description: 'Animate mounting and unmounting of a visual region.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                mounted: booleanSchema,
+                transition: { type: 'string', enum: ['fade', 'scale', 'scale-y', 'scale-x', 'skew-up', 'skew-down', 'rotate-left', 'rotate-right', 'slide-down', 'slide-up', 'slide-left', 'slide-right', 'pop', 'pop-bottom-left', 'pop-bottom-right', 'pop-top-left', 'pop-top-right'] },
+                duration: integerSchema,
+                timingFunction: stringSchema
+            }
+        },
+        defaultProps: {
+            mounted: true,
+            transition: 'fade',
+            duration: 150
+        },
+        defaultChildren: [
+            {
+                id: 'transition-content',
+                type: 'Text',
+                props: {
+                    children: 'Animated content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'FocusTrap',
+        displayName: 'Focus Trap',
+        category: 'Overlay',
+        description: 'Trap keyboard focus within nested interactive content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                active: booleanSchema
+            }
+        },
+        defaultProps: {
+            active: true
+        },
+        defaultChildren: [
+            {
+                id: 'focus-trap-button',
+                type: 'Button',
+                props: {
+                    children: 'Focusable action'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'FocusTrapInitialFocus',
+        displayName: 'Focus Trap Initial Focus',
+        category: 'Overlay',
+        description: 'Initial focus marker for a FocusTrap region.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {}
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'FloatingArrow',
+        displayName: 'Floating Arrow',
+        category: 'Overlay',
+        description: 'Arrow element for custom floating panels.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                position: { type: 'string', enum: ['top', 'right', 'bottom', 'left'] },
+                arrowSize: integerSchema,
+                arrowRadius: integerSchema,
+                arrowOffset: integerSchema
+            }
+        },
+        defaultProps: {
+            position: 'bottom',
+            arrowSize: 8
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'FloatingIndicator',
+        displayName: 'Floating Indicator',
+        category: 'Overlay',
+        description: 'Animated indicator surface for custom segmented or tab-like controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                transitionDuration: integerSchema
+            }
+        },
+        defaultProps: {
+            transitionDuration: 150
+        },
+        allowedChildren: ['Box', 'Text']
+    },
+    {
+        type: 'NativeScrollArea',
+        displayName: 'Native Scroll Area',
+        category: 'Overlay',
+        description: 'Native scrolling container exported by Mantine.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                h: { type: ['string', 'number'] },
+                w: { type: ['string', 'number'] },
+                offsetScrollbars: booleanSchema
+            }
+        },
+        defaultProps: {
+            h: 160
+        },
+        defaultChildren: [
+            {
+                id: 'native-scroll-area-text',
+                type: 'Text',
+                props: {
+                    children: 'Scrollable content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
+        type: 'RemoveScroll',
+        displayName: 'Remove Scroll',
+        category: 'Overlay',
+        description: 'Scroll-lock wrapper for modal or drawer compositions.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                enabled: booleanSchema,
+                removeScrollBar: booleanSchema,
+                allowPinchZoom: booleanSchema
+            }
+        },
+        defaultProps: {
+            enabled: true,
+            removeScrollBar: false
+        },
+        defaultChildren: [
+            {
+                id: 'remove-scroll-content',
+                type: 'Text',
+                props: {
+                    children: 'Scroll locked content'
+                }
+            }
+        ],
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
     }
 ];
 
@@ -1918,6 +6272,32 @@ export const Builder_FEEDBACK_COMPONENTS: BuilderComponentDefinition[] = [
         allowedChildren: ['Text', 'Anchor', 'Button', 'Group']
     },
     {
+        type: 'Notification',
+        displayName: 'Notification',
+        category: 'Feedback',
+        description: 'Mantine notification-style message block.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                title: stringSchema,
+                message: stringSchema,
+                color: colorSchema,
+                icon: stringSchema,
+                withCloseButton: booleanSchema,
+                loading: booleanSchema,
+                radius: sizeSchema
+            }
+        },
+        defaultProps: {
+            title: 'Notification',
+            message: 'Notification message',
+            color: 'blue',
+            withCloseButton: false
+        },
+        allowedChildren: ['Text', 'Anchor', 'Button', 'Group']
+    },
+    {
         type: 'NotificationBlock',
         displayName: 'Notification Block',
         category: 'Feedback',
@@ -1942,6 +6322,27 @@ export const Builder_FEEDBACK_COMPONENTS: BuilderComponentDefinition[] = [
         allowedChildren: ['Text', 'Anchor', 'Button', 'Group']
     },
     {
+        type: 'LoadingOverlay',
+        displayName: 'Loading Overlay',
+        category: 'Feedback',
+        description: 'Overlay indicating that enclosed or surrounding content is loading.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                visible: booleanSchema,
+                loaderProps: objectSchema,
+                overlayProps: objectSchema,
+                zIndex: integerSchema
+            }
+        },
+        defaultProps: {
+            visible: true,
+            zIndex: 100
+        },
+        allowedChildren: []
+    },
+    {
         type: 'Loader',
         displayName: 'Loader',
         category: 'Feedback',
@@ -1959,6 +6360,183 @@ export const Builder_FEEDBACK_COMPONENTS: BuilderComponentDefinition[] = [
         defaultProps: {
             size: 'md',
             variant: 'oval'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'Progress',
+        displayName: 'Progress',
+        category: 'Feedback',
+        description: 'Linear progress indicator.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: numberSchema,
+                color: colorSchema,
+                radius: sizeSchema,
+                size: sizeSchema,
+                striped: booleanSchema,
+                animated: booleanSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            value: 60,
+            color: 'blue',
+            radius: 'sm',
+            size: 'md'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'ProgressRoot',
+        displayName: 'Progress Root',
+        category: 'Feedback',
+        description: 'Container for segmented Mantine progress sections.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                size: sizeSchema,
+                radius: sizeSchema,
+                transitionDuration: integerSchema
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'progress-root-section',
+                type: 'ProgressSection',
+                props: {
+                    value: 60,
+                    color: 'blue'
+                },
+                children: [
+                    {
+                        id: 'progress-root-label',
+                        type: 'ProgressLabel',
+                        props: {
+                            children: '60%'
+                        }
+                    }
+                ]
+            }
+        ],
+        allowedChildren: ['ProgressSection']
+    },
+    {
+        type: 'ProgressSection',
+        displayName: 'Progress Section',
+        category: 'Feedback',
+        description: 'Segment inside a Mantine segmented Progress root.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: numberSchema,
+                color: colorSchema,
+                striped: booleanSchema,
+                animated: booleanSchema
+            }
+        },
+        defaultProps: {
+            value: 60,
+            color: 'blue'
+        },
+        allowedChildren: ['ProgressLabel']
+    },
+    {
+        type: 'ProgressLabel',
+        displayName: 'Progress Label',
+        category: 'Feedback',
+        description: 'Label inside a Mantine Progress section.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema
+            }
+        },
+        defaultProps: {
+            children: '60%'
+        },
+        allowedChildren: [...Builder_TEXT_INLINE_CHILDREN]
+    },
+    {
+        type: 'RingProgress',
+        displayName: 'Ring Progress',
+        category: 'Feedback',
+        description: 'Circular progress indicator.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: numberSchema,
+                color: colorSchema,
+                size: integerSchema,
+                thickness: integerSchema,
+                roundCaps: booleanSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            value: 72,
+            color: 'blue',
+            size: 120,
+            thickness: 12,
+            roundCaps: true
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'SemiCircleProgress',
+        displayName: 'Semi Circle Progress',
+        category: 'Feedback',
+        description: 'Semi-circular progress indicator.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                value: numberSchema,
+                color: colorSchema,
+                size: integerSchema,
+                thickness: integerSchema,
+                label: stringSchema,
+                orientation: { type: 'string', enum: ['up', 'down'] },
+                fillDirection: { type: 'string', enum: ['left-to-right', 'right-to-left'] }
+            }
+        },
+        defaultProps: {
+            value: 64,
+            color: 'blue',
+            size: 160,
+            thickness: 12,
+            orientation: 'up',
+            fillDirection: 'left-to-right'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'Skeleton',
+        displayName: 'Skeleton',
+        category: 'Feedback',
+        description: 'Placeholder block for loading content.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                visible: booleanSchema,
+                animate: booleanSchema,
+                radius: sizeSchema,
+                width: { type: ['string', 'number'] },
+                height: { type: ['string', 'number'] }
+            }
+        },
+        defaultProps: {
+            visible: true,
+            animate: true,
+            radius: 'sm',
+            height: 40
         },
         allowedChildren: []
     }
@@ -2012,6 +6590,41 @@ export const Builder_MEDIA_COMPONENTS: BuilderComponentDefinition[] = [
         allowedChildren: []
     },
     {
+        type: 'BackgroundImage',
+        displayName: 'Background Image',
+        category: 'Media',
+        description: 'Image-backed content region with children over the background.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                src: stringSchema,
+                radius: sizeSchema,
+                padding: spacingSchema,
+                minHeight: { type: ['string', 'number'] }
+            }
+        },
+        defaultProps: {
+            src: '',
+            radius: 'sm',
+            padding: 'lg',
+            minHeight: 220
+        },
+        uiSchema: {
+            src: {
+                'ui:widget': 'uri',
+                'ui:placeholder': 'https://example.com/background.jpg'
+            },
+            radius: {
+                'ui:widget': 'select'
+            },
+            padding: {
+                'ui:widget': 'select'
+            }
+        },
+        allowedChildren: Builder_LAYOUT_CHILDREN.filter(type => type !== 'Page')
+    },
+    {
         type: 'Avatar',
         displayName: 'Avatar',
         category: 'Media',
@@ -2036,6 +6649,55 @@ export const Builder_MEDIA_COMPONENTS: BuilderComponentDefinition[] = [
         allowedChildren: []
     },
     {
+        type: 'AvatarGroup',
+        displayName: 'Avatar Group',
+        category: 'Media',
+        description: 'Grouped avatars for people or entities.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                spacing: spacingSchema
+            }
+        },
+        defaultChildren: [
+            {
+                id: 'avatar-group-item',
+                type: 'Avatar',
+                props: {
+                    name: 'User'
+                }
+            }
+        ],
+        allowedChildren: ['Avatar']
+    },
+    {
+        type: 'ThemeIcon',
+        displayName: 'Theme Icon',
+        category: 'Media',
+        description: 'Mantine theme-colored icon container.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                children: stringSchema,
+                label: stringSchema,
+                color: colorSchema,
+                variant: { type: 'string', enum: ['filled', 'light', 'outline', 'transparent', 'white', 'default'] },
+                size: { type: ['string', 'number'] },
+                radius: sizeSchema
+            }
+        },
+        defaultProps: {
+            children: '*',
+            label: 'Icon',
+            color: 'blue',
+            variant: 'light',
+            size: 'md'
+        },
+        allowedChildren: ['Icon', 'Text']
+    },
+    {
         type: 'Icon',
         displayName: 'Icon',
         category: 'Media',
@@ -2054,6 +6716,90 @@ export const Builder_MEDIA_COMPONENTS: BuilderComponentDefinition[] = [
         defaultProps: {
             name: 'circle',
             size: 20
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'CheckIcon',
+        displayName: 'Check Icon',
+        category: 'Media',
+        description: 'Mantine check icon used by checkbox, chip, and status affordances.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                size: { type: ['string', 'number'] },
+                color: colorSchema,
+                strokeWidth: numberSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            size: 20,
+            label: 'Check'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'CloseIcon',
+        displayName: 'Close Icon',
+        category: 'Media',
+        description: 'Mantine close icon used by dismiss and clear actions.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                size: { type: ['string', 'number'] },
+                color: colorSchema,
+                strokeWidth: numberSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            size: 20,
+            label: 'Close'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'RadioIcon',
+        displayName: 'Radio Icon',
+        category: 'Media',
+        description: 'Mantine radio icon for selected single-choice states.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                size: { type: ['string', 'number'] },
+                color: colorSchema,
+                strokeWidth: numberSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            size: 20,
+            label: 'Radio'
+        },
+        allowedChildren: []
+    },
+    {
+        type: 'AccordionChevron',
+        displayName: 'Accordion Chevron',
+        category: 'Media',
+        description: 'Mantine accordion chevron icon for expandable controls.',
+        propsSchema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+                size: { type: ['string', 'number'] },
+                color: colorSchema,
+                strokeWidth: numberSchema,
+                label: stringSchema
+            }
+        },
+        defaultProps: {
+            size: 20,
+            label: 'Accordion chevron'
         },
         allowedChildren: []
     }

@@ -1,6 +1,9 @@
 import { JsonRpcServer } from '@theia/core';
-import { FlowGateStatus, FlowMemoryScope, FlowRun, FlowCapabilities, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowVersion } from './flow-types';
+import { FlowGateStatus, FlowMemoryScope, FlowModelProfile, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowCapabilities, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowVersion } from './flow-types';
+import { FlowPatternCompileRequest, FlowWorkflowPattern } from './flow-patterns';
+import { FlowDynamicWorkflowPlan } from './flow-dynamic-workflow';
 import { FlowWorkflowTemplate } from './flow-templates';
+import { FlowAiAuthoringDraft, FlowAiAuthoringSpec } from './flow-authoring-spec';
 
 export const FLOW_SERVICE_PATH = '/services/flow';
 export const LEGACY_FLOW_SERVICE_PATH = '/services/agency-studio';
@@ -122,6 +125,52 @@ export interface FlowCreateWorkflowFromTemplateRequest extends FlowWorkspaceRequ
     description?: string;
 }
 
+export interface FlowListPipelinePresetsRequest extends FlowWorkspaceRequest {
+    includeBuiltIn?: boolean;
+    includeWorkspace?: boolean;
+}
+
+export interface FlowCreateWorkflowFromPresetRequest extends FlowWorkspaceRequest {
+    presetId: string;
+    workflowId?: string;
+    name?: string;
+    description?: string;
+    agentNodeOverrides?: Record<string, FlowPipelinePresetAgentNodeConfiguration>;
+}
+
+export interface FlowCreateWorkflowFromPatternRequest extends FlowWorkspaceRequest, FlowPatternCompileRequest {
+}
+
+export interface FlowRunWorkflowPatternRequest extends FlowCreateWorkflowFromPatternRequest {
+    prompt: string;
+    persist?: boolean;
+}
+
+export interface FlowCreateWorkflowFromAiAuthoringDraftRequest extends FlowWorkspaceRequest {
+    draft: FlowAiAuthoringDraft;
+}
+
+export interface FlowPlanDynamicWorkflowRequest extends FlowWorkspaceRequest {
+    prompt: string;
+    preferSaved?: boolean;
+}
+
+export interface FlowRunDynamicWorkflowRequest extends FlowPlanDynamicWorkflowRequest {
+    parameters?: Record<string, unknown>;
+    roleOverrides?: FlowPatternCompileRequest['roleOverrides'];
+    authoringDraft?: FlowAiAuthoringDraft;
+}
+
+export interface FlowSavePipelinePresetRequest extends FlowWorkspaceRequest {
+    id?: string;
+    name?: string;
+    description?: string;
+    workflow: FlowWorkflow;
+    agentMarkdown?: FlowPipelinePresetAgentMarkdown[];
+    tags?: string[];
+    overwrite?: boolean;
+}
+
 export interface FlowStartRunRequest extends FlowWorkspaceRequest {
     workflowId: string;
     prompt: string;
@@ -190,15 +239,26 @@ export interface FlowClient {
 
 export interface FlowService extends JsonRpcServer<FlowClient> {
     getCapabilities(): Promise<FlowCapabilities>;
+    getAiAuthoringSpec(): Promise<FlowAiAuthoringSpec>;
     getSnapshot(request: FlowWorkspaceRequest): Promise<FlowSnapshot>;
     listWorkflows(request: FlowWorkspaceRequest): Promise<FlowWorkflow[]>;
     listWorkflowTemplates(): Promise<FlowWorkflowTemplate[]>;
+    listWorkflowPatterns(): Promise<FlowWorkflowPattern[]>;
+    listModelProfiles(): Promise<FlowModelProfile[]>;
+    listPipelinePresets(request: FlowListPipelinePresetsRequest): Promise<FlowPipelinePreset[]>;
     listAgentMarkdownFiles(request: FlowWorkspaceRequest): Promise<FlowAgentMarkdownSummary[]>;
     getAgentMarkdownFile(request: FlowAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
     createAgentMarkdownFile(request: FlowCreateAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
     duplicateAgentMarkdownFile(request: FlowDuplicateAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
     renameAgentMarkdownFile(request: FlowRenameAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
     createWorkflowFromTemplate(request: FlowCreateWorkflowFromTemplateRequest): Promise<FlowWorkflow>;
+    createWorkflowFromPreset(request: FlowCreateWorkflowFromPresetRequest): Promise<FlowWorkflow>;
+    createWorkflowFromPattern(request: FlowCreateWorkflowFromPatternRequest): Promise<FlowWorkflow>;
+    createWorkflowFromAiAuthoringDraft(request: FlowCreateWorkflowFromAiAuthoringDraftRequest): Promise<FlowWorkflow>;
+    runWorkflowPattern(request: FlowRunWorkflowPatternRequest): Promise<FlowRun>;
+    planDynamicWorkflow(request: FlowPlanDynamicWorkflowRequest): Promise<FlowDynamicWorkflowPlan>;
+    runDynamicWorkflow(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun>;
+    savePipelinePreset(request: FlowSavePipelinePresetRequest): Promise<FlowPipelinePreset>;
     getWorkflow(request: FlowWorkflowRequest): Promise<FlowWorkflow>;
     openWorkflowFile(request: FlowWorkflowFileRequest): Promise<FlowWorkflow>;
     importWorkflow(request: FlowImportWorkflowRequest): Promise<FlowWorkflow>;
@@ -211,6 +271,7 @@ export interface FlowService extends JsonRpcServer<FlowClient> {
     listWorkflowVersions(request: FlowWorkflowRequest): Promise<FlowWorkflowVersion[]>;
     restoreWorkflowVersion(request: FlowWorkflowVersionRequest): Promise<FlowWorkflow>;
     validateWorkflow(workflow: FlowWorkflow): Promise<FlowValidationResult>;
+    listRuns(request: FlowWorkspaceRequest): Promise<FlowRun[]>;
     startRun(request: FlowStartRunRequest): Promise<FlowRun>;
     getRun(request: FlowRunRequest): Promise<FlowRun>;
     tickRun(request: FlowRunRequest): Promise<FlowRun>;

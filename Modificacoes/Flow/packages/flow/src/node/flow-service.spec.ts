@@ -1,12 +1,20 @@
 import { expect } from 'chai';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
+import { FileUri } from '@theia/core/lib/common/file-uri';
 import {
     FLOW_CAPABILITIES,
+    SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID,
     FlowRun,
     FlowCapabilities,
+    FlowStartRunRequest,
     FlowWorkflow
 } from '../common';
 import { MemoryAdapter } from './memory-adapter';
 import { FlowServiceImpl } from './flow-service';
+import { FlowStore } from './flow-store';
+import { AgentMarkdownStore } from './agent-markdown-store';
 
 class TestFlowService extends FlowServiceImpl {
     constructor(
@@ -161,7 +169,55 @@ class SecondRunFlowService extends FlowServiceImpl {
     }
 }
 
+class PresetFlowService extends FlowServiceImpl {
+    constructor(store: FlowStore, agentMarkdownStore: AgentMarkdownStore) {
+        super();
+        Object.defineProperty(this, 'store', { value: store });
+        Object.defineProperty(this, 'agentMarkdownStore', { value: agentMarkdownStore });
+    }
+}
+
+class AiAuthoringDraftFlowService extends FlowServiceImpl {
+    constructor(store: FlowStore, agentMarkdownStore: AgentMarkdownStore) {
+        super();
+        Object.defineProperty(this, 'store', { value: store });
+        Object.defineProperty(this, 'agentMarkdownStore', { value: agentMarkdownStore });
+    }
+
+    override async startRun(request: FlowStartRunRequest): Promise<FlowRun> {
+        return {
+            id: 'run-ai-authoring',
+            workflowId: request.workflowId,
+            prompt: request.prompt,
+            status: 'running',
+            createdAt: '2026-06-05T00:00:00.000Z',
+            updatedAt: '2026-06-05T00:00:00.000Z',
+            currentStateIds: ['input'],
+            stateStatuses: { input: 'running' },
+            workloads: [],
+            events: [],
+            artifacts: [],
+            effects: [],
+            signals: [],
+            gates: [],
+            tick: 0
+        };
+    }
+}
+
 describe('FlowServiceImpl capability gates', () => {
+
+    let tempDir: string;
+    let workspaceRootUri: string;
+
+    beforeEach(async () => {
+        tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'flow-service-'));
+        workspaceRootUri = FileUri.create(tempDir).toString();
+    });
+
+    afterEach(async () => {
+        await fs.rm(tempDir, { recursive: true, force: true });
+    });
 
     it('blocks command.execute workflows when the host does not declare command execution', async () => {
         const service = new TestFlowService({
@@ -196,6 +252,113 @@ describe('FlowServiceImpl capability gates', () => {
                 + 'action: configure command execution policy with allowlisted commands/env/cwd, timeout, output redaction, and approvals).'
             );
         }
+    });
+
+    it('lists pipeline presets and materializes built-in preset agents when creating workflows', async () => {
+        const store = new FlowStore();
+        const agentMarkdownStore = new AgentMarkdownStore();
+        const service = new PresetFlowService(store, agentMarkdownStore);
+
+        const presets = await service.listPipelinePresets({ workspaceRootUri });
+        const workflow = await service.createWorkflowFromPreset({
+            workspaceRootUri,
+            presetId: SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID,
+            workflowId: 'sisyphus_created'
+        });
+        const coordinatorAgent = await agentMarkdownStore.readAgent(workspaceRootUri, 'sisyphus/coordinator.md');
+        const coordinatorState = workflow.states.sisyphus_coordinator;
+
+        expect(presets.map(preset => preset.id)).to.include(SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID);
+        expect(workflow.id).to.equal('sisyphus_created');
+        expect(coordinatorAgent?.content).to.contain('# Sisyphus Coordinator');
+        expect(coordinatorState.provider).to.equal(undefined);
+        expect(coordinatorState.systemPrompt).to.contain('Sisyphus coordinator');
+        expect(coordinatorState.taskPrompt).to.contain('plan/plan.md');
+        expect(coordinatorState.deliverables?.map(deliverable => deliverable.path)).to.deep.equal([
+            'plan/plan.md',
+            'plan/acceptance-criteria.md',
+            'plan/work-order.md'
+        ]);
+    });
+
+    it('materializes and runs AI-authored dynamic workflows without manual JSON editing', async () => {
+        const store = new FlowStore();
+        const agentMarkdownStore = new AgentMarkdownStore();
+        const service = new AiAuthoringDraftFlowService(store, agentMarkdownStore);
+
+        const run = await service.runDynamicWorkflow({
+            workspaceRootUri,
+            prompt: 'Create a focused reporting workflow.',
+            authoringDraft: {
+                version: 'flow.ai-authoring/v1',
+                action: 'create_workflow',
+                reason: 'No saved workflow or built-in pattern is specific enough.',
+                promptMarkdown: 'Create a focused reporting workflow.',
+                workflow: {
+                    version: 'flow.workflow/v1',
+                    id: 'AI Generated Report',
+                    name: 'AI Generated Report',
+                    agents: {
+                        reviewer: 'ai/reviewer.md'
+                    },
+                    states: {
+                        input: { type: 'input', outputs: ['input/request.md'] },
+                        reviewer: {
+                            type: 'agent',
+                            agent: 'reviewer',
+                            agentRole: 'verifier',
+                            systemPrompt: 'Review the user request before the report is finalized.',
+                            taskPrompt: 'Produce a concise review artifact.',
+                            outputs: ['review/review.md']
+                        },
+                        final_report: { type: 'report', input: { include: ['input/request.md', 'review/review.md'] }, outputs: ['final/report.md'] }
+                    },
+                    transitions: [
+                        { id: 'input_to_reviewer', from: 'input', to: 'reviewer', on: 'run.started' },
+                        { id: 'reviewer_to_final', from: 'reviewer', to: 'final_report', on: 'workload.completed' }
+                    ]
+                }
+            }
+        });
+        const workflow = await store.getWorkflow(workspaceRootUri, run.workflowId);
+        const agent = await agentMarkdownStore.readAgent(workspaceRootUri, 'ai/reviewer.md');
+
+        expect(run.workflowId).to.equal('ai_generated_report');
+        expect(run.prompt).to.equal('Create a focused reporting workflow.');
+        expect(run.events.find(event => event.type === 'dynamic_workflow.selected')).to.deep.include({
+            workflowId: 'ai_generated_report',
+            type: 'dynamic_workflow.selected',
+            message: 'AI authoring create_workflow generated workflow "ai_generated_report": No saved workflow or built-in pattern is specific enough.'
+        });
+        expect(run.events.find(event => event.type === 'dynamic_workflow.selected')?.payload).to.deep.include({
+            kind: 'generated_workflow',
+            authoringAction: 'create_workflow',
+            workflowId: 'ai_generated_report',
+            reason: 'No saved workflow or built-in pattern is specific enough.'
+        });
+        expect(workflow?.name).to.equal('AI Generated Report');
+        expect(workflow?.file?.format).to.equal('json');
+        expect(agent?.content).to.contain('Act as the verifier stage');
+    });
+
+    it('records the selected built-in pattern when dynamic workflow planning instantiates one', async () => {
+        const store = new FlowStore();
+        const agentMarkdownStore = new AgentMarkdownStore();
+        const service = new AiAuthoringDraftFlowService(store, agentMarkdownStore);
+
+        const run = await service.runDynamicWorkflow({
+            workspaceRootUri,
+            prompt: 'Compare three implementation options and choose the winner.'
+        });
+        const decision = run.events.find(event => event.type === 'dynamic_workflow.selected');
+
+        expect(run.workflowId).to.equal('simple_tournament');
+        expect(decision?.message).to.contain('selected pattern "simple_tournament"');
+        expect(decision?.payload).to.deep.include({
+            kind: 'pattern',
+            patternId: 'simple_tournament',
+            workflowId: 'simple_tournament'
+        });
     });
 
     it('reflects the Memory provider reported by the adapter', async () => {
@@ -254,7 +417,7 @@ describe('FlowServiceImpl capability gates', () => {
         }
     });
 
-    it('uses available Codex Provider as the default Flow LLM provider', async () => {
+    it('does not advertise Codex as configured when FLOW_AGENT_PROVIDER is unset or auto', async () => {
         const previousEnv = snapshotFlowCapabilityEnv();
         try {
             delete process.env.FLOW_AGENT_PROVIDER;
@@ -275,10 +438,48 @@ describe('FlowServiceImpl capability gates', () => {
 
             const capabilities = await service.readCapabilities();
 
+            expect(capabilities.llmAgentExecution).to.equal('unavailable');
+            expect(capabilities.llmAgentProvider).to.equal('missing');
+            expect(capabilities.imageGeneration).to.equal('unavailable');
+            expect(capabilities.imageProvider).to.equal('missing');
+
+            process.env.FLOW_AGENT_PROVIDER = 'auto';
+
+            const autoCapabilities = await service.readCapabilities();
+
+            expect(autoCapabilities.llmAgentExecution).to.equal('unavailable');
+            expect(autoCapabilities.llmAgentProvider).to.equal('missing');
+            expect(autoCapabilities.imageGeneration).to.equal('unavailable');
+            expect(autoCapabilities.imageProvider).to.equal('missing');
+        } finally {
+            restoreFlowCapabilityEnv(previousEnv);
+        }
+    });
+
+    it('reports Codex capabilities only when FLOW_AGENT_PROVIDER=codex-provider is set explicitly', async () => {
+        const previousEnv = snapshotFlowCapabilityEnv();
+        try {
+            process.env.FLOW_AGENT_PROVIDER = 'codex-provider';
+
+            const service = new RuntimeCapabilitiesFlowService();
+            Object.defineProperty(service, 'codexProviderService', {
+                value: {
+                    getStatus: async () => ({
+                        available: true,
+                        authenticated: true,
+                        executablePath: 'codex',
+                        capabilities: { imageGeneration: true }
+                    })
+                }
+            });
+
+            const capabilities = await service.readCapabilities();
+
             expect(capabilities.llmAgentExecution).to.equal('available');
             expect(capabilities.llmAgentProvider).to.equal('configured');
             expect(capabilities.imageGeneration).to.equal('available');
             expect(capabilities.imageProvider).to.equal('configured');
+            expect(capabilities.demoMode).to.equal('off');
         } finally {
             restoreFlowCapabilityEnv(previousEnv);
         }

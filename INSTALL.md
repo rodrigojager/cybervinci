@@ -35,9 +35,11 @@ Generated folders are skipped during copy: `node_modules`, `lib`, `coverage`, `.
 
 - `Distribution` is the private CyberVinci patch layer applied before feature packages.
 - `Branding` depends on `Distribution`.
+- `CSharp Kit` depends on `Distribution`, `Branding`, `Memory`, `Razor Visual Editor` and contributes provider-neutral Theia AI Core C# context variables/commands.
 - `Codex` depends on `Distribution`, `Branding`, `Codex-Provider`.
 - `Flow` depends on `Distribution`, `Branding`, `Codex-Provider`, `Library`, `Memory`.
 - `Memory` depends on `Distribution`, `Branding`, `Library`.
+- `Razor Visual Editor` depends on `Distribution`.
 
 ## After installing
 

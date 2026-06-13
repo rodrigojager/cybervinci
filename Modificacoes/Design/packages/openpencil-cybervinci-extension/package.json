@@ -1,6 +1,6 @@
 {
   "name": "@cybervinci/openpencil-extension",
-  "version": "1.71.0",
+  "version": "1.72.0",
   "description": "Embedded OpenPencil visual design editor for Theia",
   "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
   "repository": {
@@ -20,12 +20,12 @@
     "@radix-ui/react-switch": "^1.2.0",
     "@radix-ui/react-toggle": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.2.0",
-    "@theia/ai-core": "1.71.0",
-    "@theia/core": "1.71.0",
-    "@cybervinci/branding": "1.71.0",
-    "@theia/editor": "1.71.0",
-    "@theia/filesystem": "1.71.0",
-    "@theia/workspace": "1.71.0",
+    "@theia/ai-core": "1.72.0",
+    "@theia/core": "1.72.0",
+    "@cybervinci/branding": "1.72.0",
+    "@theia/editor": "1.72.0",
+    "@theia/filesystem": "1.72.0",
+    "@theia/workspace": "1.72.0",
     "@zseven-w/pen-codegen": "file:../../vendor/openpencil/packages/pen-codegen",
     "@zseven-w/pen-core": "file:../../vendor/openpencil/packages/pen-core",
     "@zseven-w/pen-engine": "file:../../vendor/openpencil/packages/pen-engine",
@@ -37,8 +37,8 @@
     "lucide-react": "^0.511.0"
   },
   "devDependencies": {
-    "@theia/cli": "1.71.0",
-    "@theia/test": "1.71.0"
+    "@theia/cli": "1.72.0",
+    "@theia/test": "1.72.0"
   },
   "theiaExtensions": [
     {
@@ -63,4 +63,3 @@
     "extends": "../../configs/nyc.json"
   }
 }
-

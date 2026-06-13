@@ -11,7 +11,8 @@ import {
     MemoryDashboard,
     MemoryRelation,
     MemoryService,
-    MemorySymbol
+    MemorySymbol,
+    MemoryWorkspaceSettings
 } from '../common';
 import { MemoryCommands } from './memory-commands';
 
@@ -189,6 +190,10 @@ export class MemoryEditorContribution implements FrontendApplicationContribution
         if (!workspacePath || !uri.startsWith('file:')) {
             return;
         }
+        const settings = await this.memoryService.getSettings(workspacePath);
+        if (!this.canRecordFileEvent(eventType, settings)) {
+            return;
+        }
         const relativePath = this.relativePath(workspacePath, FileUri.fsPath(uri));
         if (!relativePath || relativePath === FileUri.fsPath(uri)) {
             return;
@@ -283,6 +288,10 @@ export class MemoryEditorContribution implements FrontendApplicationContribution
         if (!workspacePath || !relativePath) {
             return;
         }
+        const settings = await this.memoryService.getSettings(workspacePath);
+        if (!this.canRecordFileEvent(eventType, settings)) {
+            return;
+        }
         const dedupeKey = `${eventType}:${workspacePath}:${relativePath}`;
         const now = Date.now();
         const last = this.lastFileSystemEvent.get(dedupeKey) ?? 0;
@@ -296,6 +305,24 @@ export class MemoryEditorContribution implements FrontendApplicationContribution
             relativePath,
             payload: JSON.stringify(payload)
         }).catch(() => undefined);
+    }
+
+    protected canRecordFileEvent(
+        eventType: 'file.opened' | 'file.read' | 'file.edited' | 'file.saved' | 'file.created' | 'file.deleted' | 'file.renamed',
+        settings: MemoryWorkspaceSettings
+    ): boolean {
+        if (settings.enabled !== true) {
+            return false;
+        }
+        if (settings.optIn?.events === true) {
+            return true;
+        }
+        return settings.optIn?.codeGraph === true
+            && (eventType === 'file.created'
+                || eventType === 'file.edited'
+                || eventType === 'file.saved'
+                || eventType === 'file.deleted'
+                || eventType === 'file.renamed');
     }
 
     protected async relativePathForUri(uri: string, workspacePath?: string): Promise<string | undefined> {

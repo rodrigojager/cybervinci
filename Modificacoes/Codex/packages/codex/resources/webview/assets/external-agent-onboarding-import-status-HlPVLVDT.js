@@ -1,0 +1,2 @@
+import{G as e,g as t}from"./vscode-api-CjIlXYxl.js";var n=e(t,{status:`idle`});function r(e,t){i(e,t).catch(()=>void 0)}async function i(e,t){e.set(n,{status:`importing`,startedAtMs:Date.now()});try{await t(),e.set(n,{status:`success`,completedAtMs:Date.now()})}catch(t){throw e.set(n,{status:`error`,completedAtMs:Date.now()}),t}}export{i as n,r,n as t};
+//# sourceMappingURL=external-agent-onboarding-import-status-HlPVLVDT.js.map

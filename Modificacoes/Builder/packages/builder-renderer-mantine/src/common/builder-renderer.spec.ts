@@ -97,7 +97,7 @@ describe('BuilderRenderer', () => {
             defaultRadius: 0,
             fontFamily: 'Inter, sans-serif',
             spacing: {
-                md: 20
+                md: '20px'
             },
             colors: {
                 brand: [
@@ -535,29 +535,71 @@ describe('BuilderRenderer', () => {
 
     it('provides Mantine adapters for every MVP layout component', () => {
         const components = createBuilderMantineLayoutComponents({
+            Affix: 'mantine-affix',
+            AppShell: 'mantine-app-shell',
+            AppShellAside: 'mantine-app-shell-aside',
+            AppShellFooter: 'mantine-app-shell-footer',
+            AppShellHeader: 'mantine-app-shell-header',
+            AppShellMain: 'mantine-app-shell-main',
+            AppShellNavbar: 'mantine-app-shell-navbar',
+            AppShellSection: 'mantine-app-shell-section',
+            AspectRatio: 'mantine-aspect-ratio',
             Box: 'mantine-box',
             Card: 'mantine-card',
+            CardSection: 'mantine-card-section',
+            Center: 'mantine-center',
+            Collapse: 'mantine-collapse',
             Container: 'mantine-container',
             Divider: 'mantine-divider',
+            Flex: 'mantine-flex',
             Grid: 'mantine-grid',
+            GridCol: 'mantine-grid-col',
             Group: 'mantine-group',
+            Indicator: 'mantine-indicator',
+            Paper: 'mantine-paper',
+            ScrollArea: 'mantine-scroll-area',
+            ScrollAreaAutosize: 'mantine-scroll-area-autosize',
             SimpleGrid: 'mantine-simple-grid',
             Space: 'mantine-space',
-            Stack: 'mantine-stack'
+            Spoiler: 'mantine-spoiler',
+            Stack: 'mantine-stack',
+            TableScrollContainer: 'mantine-table-scroll-container',
+            VisuallyHidden: 'mantine-visually-hidden'
         });
 
         expect(Object.keys(components).sort()).to.deep.equal([
+            'Affix',
+            'AppShell',
+            'AppShellAside',
+            'AppShellFooter',
+            'AppShellHeader',
+            'AppShellMain',
+            'AppShellNavbar',
+            'AppShellSection',
+            'AspectRatio',
             'Box',
             'Card',
+            'CardSection',
+            'Center',
+            'Collapse',
             'Container',
             'Divider',
+            'Flex',
             'Grid',
+            'GridCol',
             'Group',
+            'Indicator',
             'Page',
+            'Paper',
+            'ScrollArea',
+            'ScrollAreaAutosize',
             'Section',
             'SimpleGrid',
             'Space',
-            'Stack'
+            'Spoiler',
+            'Stack',
+            'TableScrollContainer',
+            'VisuallyHidden'
         ]);
 
         const page = renderAdapter(components.Page, { background: 'gray.0', fullWidth: true });
@@ -568,6 +610,14 @@ describe('BuilderRenderer', () => {
         const simpleGrid = renderAdapter(components.SimpleGrid, { cols: 3, spacing: 'md' });
         const grid = renderAdapter(components.Grid, { columns: 12, gutter: 'lg', span: 6 });
         const card = renderAdapter(components.Card, { padding: 'xl', background: 'white' });
+        const cardSection = renderAdapter(components.CardSection, { padding: 'sm', withBorder: true });
+        const paper = renderAdapter(components.Paper, { padding: 'lg', background: 'gray.0' });
+        const center = renderAdapter(components.Center, { minHeight: 160, padding: 'sm' });
+        const flex = renderAdapter(components.Flex, { direction: 'column', gap: 'lg', wrap: false });
+        const appShellHeader = renderAdapter(components.AppShellHeader, { height: 56, padding: 'sm' });
+        const aspectRatio = renderAdapter(components.AspectRatio, { ratio: 4 / 3, width: '100%' });
+        const scrollArea = renderAdapter(components.ScrollArea, { height: 180 });
+        const spoiler = renderAdapter(components.Spoiler, { maxHeight: 100, showLabel: 'More', hideLabel: 'Less' });
         const divider = renderAdapter(components.Divider, { label: 'Details', variant: 'dashed' });
         const space = renderAdapter(components.Space, { size: 'xl' });
         const box = renderAdapter(components.Box, { component: 'aside', padding: 'sm', margin: 'md', background: 'gray.1' });
@@ -596,6 +646,24 @@ describe('BuilderRenderer', () => {
         expect(grid.props.span).to.equal(6);
         expect(card.type).to.equal('mantine-card');
         expect(card.props.bg).to.equal('white');
+        expect(cardSection.type).to.equal('mantine-card-section');
+        expect(cardSection.props.p).to.equal('sm');
+        expect(cardSection.props.withBorder).to.equal(true);
+        expect(paper.type).to.equal('mantine-paper');
+        expect(paper.props.bg).to.equal('gray.0');
+        expect(center.type).to.equal('mantine-center');
+        expect(center.props.mih).to.equal(160);
+        expect(flex.type).to.equal('mantine-flex');
+        expect(flex.props.wrap).to.equal('nowrap');
+        expect(appShellHeader.type).to.equal('mantine-app-shell-header');
+        expect(appShellHeader.props.h).to.equal(56);
+        expect(appShellHeader.props.p).to.equal('sm');
+        expect(aspectRatio.type).to.equal('mantine-aspect-ratio');
+        expect(aspectRatio.props.ratio).to.equal(4 / 3);
+        expect(scrollArea.type).to.equal('mantine-scroll-area');
+        expect(scrollArea.props.h).to.equal(180);
+        expect(spoiler.type).to.equal('mantine-spoiler');
+        expect(spoiler.props.showLabel).to.equal('More');
         expect(divider.type).to.equal('mantine-divider');
         expect(divider.props.label).to.equal('Details');
         expect(space.type).to.equal('mantine-space');
@@ -612,23 +680,49 @@ describe('BuilderRenderer', () => {
             Title: 'mantine-title',
             Text: 'mantine-text',
             Badge: 'mantine-badge',
+            Blockquote: 'mantine-blockquote',
+            Code: 'mantine-code',
+            Highlight: 'mantine-highlight',
+            Kbd: 'mantine-kbd',
             List: 'mantine-list',
             ListItem: 'mantine-list-item',
+            Mark: 'mantine-mark',
+            NumberFormatter: 'mantine-number-formatter',
+            Pill: 'mantine-pill',
+            PillGroup: 'mantine-pill-group',
             TypographyStylesProvider: 'mantine-typography'
         });
 
         expect(Object.keys(components).sort()).to.deep.equal([
             'Badge',
+            'Blockquote',
+            'Code',
+            'Highlight',
+            'Kbd',
             'List',
+            'ListItem',
+            'Mark',
             'Markdown',
+            'NumberFormatter',
+            'Pill',
+            'PillGroup',
             'Text',
-            'Title'
+            'Title',
+            'TypographyStylesProvider'
         ]);
 
         const title = renderAdapter(components.Title, { children: 'Heading', order: 1, align: 'center', weight: 700 });
         const text = renderAdapter(components.Text, { children: 'Body', component: 'span', align: 'right', weight: 500 });
         const badge = renderAdapter(components.Badge, { children: 'Live', color: 'green', variant: 'light' });
+        const code = renderAdapter(components.Code, { children: 'npm test', block: true });
+        const kbd = renderAdapter(components.Kbd, { children: 'Ctrl K' });
+        const mark = renderAdapter(components.Mark, { children: 'Marked' });
+        const blockquote = renderAdapter(components.Blockquote, { children: 'Quote', cite: 'Ada' });
+        const highlight = renderAdapter(components.Highlight, { children: 'Important words', highlight: 'Important' });
         const list = renderAdapter(components.List, { items: ['One', 'Two'], type: 'ordered' });
+        const listItem = renderAdapter(components.ListItem, { children: 'Manual item' });
+        const pillGroup = renderAdapter(components.PillGroup, { children: React.createElement('span') });
+        const typographyProvider = renderAdapter(components.TypographyStylesProvider, { children: React.createElement('p') });
 
         expect(title.type).to.equal('mantine-title');
         expect(title.props.ta).to.equal('center');
@@ -638,12 +732,21 @@ describe('BuilderRenderer', () => {
         expect(text.props.ta).to.equal('right');
         expect(badge.type).to.equal('mantine-badge');
         expect(badge.props.color).to.equal('green');
+        expect(code.type).to.equal('mantine-code');
+        expect(code.props.style).to.deep.equal({ display: 'block', whiteSpace: 'pre-wrap' });
+        expect(kbd.type).to.equal('mantine-kbd');
+        expect(mark.type).to.equal('mantine-mark');
+        expect(blockquote.type).to.equal('mantine-blockquote');
+        expect(highlight.type).to.equal('mantine-highlight');
         expect(list.type).to.equal('mantine-list');
         expect(list.props.type).to.equal('ordered');
         expect(list.props.component).to.equal('ol');
         const items = React.Children.toArray(list.props.children) as React.ReactElement[];
         expect(items.map(item => item.type)).to.deep.equal(['mantine-list-item', 'mantine-list-item']);
         expect(items.map(item => item.props.children)).to.deep.equal(['One', 'Two']);
+        expect(listItem.type).to.equal('mantine-list-item');
+        expect(pillGroup.type).to.equal('mantine-pill-group');
+        expect(typographyProvider.type).to.equal('mantine-typography');
     });
 
     it('renders sanitized Markdown without unsafe scripts, handlers, or URLs', () => {
@@ -671,55 +774,255 @@ describe('BuilderRenderer', () => {
 
     it('provides Mantine adapters for every MVP Form component and keeps events action-bound', () => {
         const components = createBuilderMantineFormComponents({
+            ActionIcon: 'mantine-action-icon',
+            ActionIconGroup: 'mantine-action-icon-group',
+            ActionIconGroupSection: 'mantine-action-icon-group-section',
+            Autocomplete: 'mantine-autocomplete',
+            Burger: 'mantine-burger',
             Button: 'mantine-button',
+            ButtonGroup: 'mantine-button-group',
+            ButtonGroupSection: 'mantine-button-group-section',
+            AlphaSlider: 'mantine-alpha-slider',
+            AngleSlider: 'mantine-angle-slider',
+            CheckboxGroup: 'mantine-checkbox-group',
+            CheckboxCard: 'mantine-checkbox-card',
+            CheckboxIndicator: 'mantine-checkbox-indicator',
+            Chip: 'mantine-chip',
+            ChipGroup: 'mantine-chip-group',
+            CloseButton: 'mantine-close-button',
+            ColorInput: 'mantine-color-input',
+            ColorPicker: 'mantine-color-picker',
+            ColorSwatch: 'mantine-color-swatch',
+            Combobox: 'mantine-combobox',
+            ComboboxChevron: 'mantine-combobox-chevron',
+            ComboboxClearButton: 'mantine-combobox-clear-button',
+            ComboboxDropdown: 'mantine-combobox-dropdown',
+            ComboboxDropdownTarget: 'mantine-combobox-dropdown-target',
+            ComboboxEmpty: 'mantine-combobox-empty',
+            ComboboxEventsTarget: 'mantine-combobox-events-target',
+            ComboboxFooter: 'mantine-combobox-footer',
+            ComboboxGroup: 'mantine-combobox-group',
+            ComboboxHeader: 'mantine-combobox-header',
+            ComboboxHiddenInput: 'mantine-combobox-hidden-input',
+            ComboboxOption: 'mantine-combobox-option',
+            ComboboxOptions: 'mantine-combobox-options',
+            ComboboxSearch: 'mantine-combobox-search',
+            ComboboxTarget: 'mantine-combobox-target',
+            CopyButton: 'mantine-copy-button',
+            HueSlider: 'mantine-hue-slider',
+            Input: 'mantine-input',
+            InputBase: 'mantine-input-base',
+            InputWrapper: 'mantine-input-wrapper',
+            InputLabel: 'mantine-input-label',
+            InputDescription: 'mantine-input-description',
+            InputPlaceholder: 'mantine-input-placeholder',
+            InputClearButton: 'mantine-input-clear-button',
+            InputError: 'mantine-input-error',
+            Fieldset: 'mantine-fieldset',
+            FileButton: 'mantine-file-button',
             TextInput: 'mantine-text-input',
+            PasswordInput: 'mantine-password-input',
             Textarea: 'mantine-textarea',
             Select: 'mantine-select',
+            MultiSelect: 'mantine-multi-select',
+            NativeSelect: 'mantine-native-select',
             Checkbox: 'mantine-checkbox',
+            FileInput: 'mantine-file-input',
+            JsonInput: 'mantine-json-input',
+            Pill: 'mantine-pill',
+            PillGroup: 'mantine-pill-group',
+            PillsInput: 'mantine-pills-input',
+            PillsInputField: 'mantine-pills-input-field',
+            PinInput: 'mantine-pin-input',
+            RadioCard: 'mantine-radio-card',
             RadioGroup: 'mantine-radio-group',
             Radio: 'mantine-radio',
+            RadioIndicator: 'mantine-radio-indicator',
+            RangeSlider: 'mantine-range-slider',
+            Rating: 'mantine-rating',
+            SegmentedControl: 'mantine-segmented-control',
+            Slider: 'mantine-slider',
+            SwitchGroup: 'mantine-switch-group',
+            Switch: 'mantine-switch',
+            TagsInput: 'mantine-tags-input',
             NumberInput: 'mantine-number-input',
             DateInput: 'mantine-date-input',
             DynamicForm: 'mantine-form',
+            UnstyledButton: 'mantine-unstyled-button',
             Stack: 'mantine-stack',
             Group: 'mantine-group'
         });
 
         expect(Object.keys(components).sort()).to.deep.equal([
+            'ActionIcon',
+            'ActionIconGroup',
+            'ActionIconGroupSection',
+            'AlphaSlider',
+            'AngleSlider',
+            'Autocomplete',
+            'Burger',
             'Button',
+            'ButtonGroup',
+            'ButtonGroupSection',
             'Checkbox',
+            'CheckboxCard',
+            'CheckboxGroup',
+            'CheckboxIndicator',
+            'Chip',
+            'ChipGroup',
+            'CloseButton',
+            'ColorInput',
+            'ColorPicker',
+            'ColorSwatch',
+            'Combobox',
+            'ComboboxChevron',
+            'ComboboxClearButton',
+            'ComboboxDropdown',
+            'ComboboxDropdownTarget',
+            'ComboboxEmpty',
+            'ComboboxEventsTarget',
+            'ComboboxFooter',
+            'ComboboxGroup',
+            'ComboboxHeader',
+            'ComboboxHiddenInput',
+            'ComboboxOption',
+            'ComboboxOptions',
+            'ComboboxSearch',
+            'ComboboxTarget',
+            'CopyButton',
             'DateInput',
             'DynamicForm',
+            'Fieldset',
+            'FileButton',
+            'FileInput',
+            'HueSlider',
+            'Input',
+            'InputBase',
+            'InputClearButton',
+            'InputDescription',
+            'InputError',
+            'InputLabel',
+            'InputPlaceholder',
+            'InputWrapper',
+            'JsonInput',
+            'MultiSelect',
+            'NativeSelect',
             'NumberInput',
+            'PasswordInput',
+            'PillsInput',
+            'PillsInputField',
+            'PinInput',
+            'Radio',
+            'RadioCard',
             'RadioGroup',
+            'RadioIndicator',
+            'RangeSlider',
+            'Rating',
+            'SegmentedControl',
             'Select',
+            'Slider',
+            'Switch',
+            'SwitchGroup',
+            'TagsInput',
             'TextInput',
-            'Textarea'
+            'Textarea',
+            'UnstyledButton'
         ]);
 
+        const actionIcon = renderAdapter(components.ActionIcon, { label: 'Add', children: '+' });
+        const actionIconGroup = renderAdapter(components.ActionIconGroup, { orientation: 'vertical' });
+        const actionIconGroupSection = renderAdapter(components.ActionIconGroupSection, { children: '+' });
         const button = renderAdapter(components.Button, { children: 'Save', variant: 'light' });
+        const buttonGroup = renderAdapter(components.ButtonGroup, { orientation: 'vertical' });
+        const buttonGroupSection = renderAdapter(components.ButtonGroupSection, { children: 'or' });
+        const input = renderAdapter(components.Input, { placeholder: 'Name' });
+        const inputWrapper = renderAdapter(components.InputWrapper, { label: 'Name', children: React.createElement('span') });
+        const inputClearButton = renderAdapter(components.InputClearButton, { 'aria-label': 'Clear name' });
+        const inputError = renderAdapter(components.InputError, { children: 'Required' });
+        const autocomplete = renderAdapter(components.Autocomplete, { label: 'Search', data: ['One'] });
         const textInput = renderAdapter(components.TextInput, { label: 'Email', children: 'Email', type: 'email' });
+        const passwordInput = renderAdapter(components.PasswordInput, { label: 'Password' });
         const textarea = renderAdapter(components.Textarea, { label: 'Bio', minRows: 4, children: 'Bio' });
         const select = renderAdapter(components.Select, { data: [{ label: 'Admin', value: 'admin' }], clearable: true });
+        const multiSelect = renderAdapter(components.MultiSelect, { data: [{ label: 'Admin', value: 'admin' }], defaultValue: ['admin'] });
+        const nativeSelect = renderAdapter(components.NativeSelect, { data: [{ label: 'Admin', value: 'admin' }] });
+        const combobox = renderAdapter(components.Combobox, { children: React.createElement('span') });
+        const comboboxOption = renderAdapter(components.ComboboxOption, { value: 'admin', children: 'Admin' });
+        const comboboxSearch = renderAdapter(components.ComboboxSearch, { placeholder: 'Search' });
+        const comboboxClearButton = renderAdapter(components.ComboboxClearButton, { 'aria-label': 'Clear option' });
+        const comboboxHiddenInput = renderAdapter(components.ComboboxHiddenInput, { name: 'role', values: ['admin', 'editor'] });
+        const checkboxGroup = renderAdapter(components.CheckboxGroup, { label: 'Choices', children: React.createElement('span') });
         const checkbox = renderAdapter(components.Checkbox, { label: 'Accept', defaultChecked: true });
+        const switchGroup = renderAdapter(components.SwitchGroup, { label: 'Toggles', children: React.createElement('span') });
+        const switchInput = renderAdapter(components.Switch, { label: 'Enabled', defaultChecked: true });
         const radioGroup = renderAdapter(components.RadioGroup, { name: 'role', data: [{ label: 'User', value: 'user' }] });
         const numberInput = renderAdapter(components.NumberInput, { label: 'Amount', step: 2 });
         const dateInput = renderAdapter(components.DateInput, { label: 'Due', minDate: '2026-01-01', maxDate: '2026-12-31' });
+        const chipGroup = renderAdapter(components.ChipGroup, { multiple: true, defaultValue: ['one'] });
+        const slider = renderAdapter(components.Slider, { label: 'Volume', defaultValue: 40 });
+        const rangeSlider = renderAdapter(components.RangeSlider, { label: 'Range', defaultValue: [20, 80] });
+        const segmented = renderAdapter(components.SegmentedControl, { label: 'Mode', data: [{ label: 'One', value: 'one' }] });
+        const pin = renderAdapter(components.PinInput, { label: 'PIN', length: 6 });
+        const colorInput = renderAdapter(components.ColorInput, { label: 'Color', defaultValue: '#228be6' });
+        const colorPicker = renderAdapter(components.ColorPicker, { defaultValue: '#228be6' });
+        const hueSlider = renderAdapter(components.HueSlider, { defaultValue: 220 });
+        const alphaSlider = renderAdapter(components.AlphaSlider, { color: '#228be6', defaultValue: 0.5 });
+        const angleSlider = renderAdapter(components.AngleSlider, { defaultValue: 90 });
+        const jsonInput = renderAdapter(components.JsonInput, { label: 'JSON', defaultValue: '{}' });
+        const tagsInput = renderAdapter(components.TagsInput, { label: 'Tags', data: ['alpha'] });
+        const fileInput = renderAdapter(components.FileInput, { label: 'File', accept: 'image/*' });
+        const pillsInputField = renderAdapter(components.PillsInputField, { placeholder: 'Add item' });
+        const rating = renderAdapter(components.Rating, { label: 'Rating', defaultValue: 4, count: 5 });
         const dynamicForm = renderAdapter(components.DynamicForm, { layout: 'horizontal', gap: 'sm', children: React.createElement('span') });
 
+        expect(actionIcon.type).to.equal('mantine-action-icon');
+        expect(actionIcon.props['aria-label']).to.equal('Add');
+        expect(actionIconGroup.type).to.equal('mantine-action-icon-group');
+        expect(actionIconGroup.props.orientation).to.equal('vertical');
+        expect(actionIconGroupSection.type).to.equal('mantine-action-icon-group-section');
         expect(button.type).to.equal('mantine-button');
         expect(button.props.children).to.equal('Save');
         expect(button.props.type).to.equal('button');
+        expect(buttonGroup.type).to.equal('mantine-button-group');
+        expect(buttonGroup.props.orientation).to.equal('vertical');
+        expect(buttonGroupSection.type).to.equal('mantine-button-group-section');
+        expect(input.type).to.equal('mantine-input');
+        expect(input.props.type).to.equal('text');
+        expect(inputWrapper.type).to.equal('mantine-input-wrapper');
+        expect(inputClearButton.type).to.equal('mantine-input-clear-button');
+        expect(inputClearButton.props.type).to.equal('button');
+        expect(inputError.type).to.equal('mantine-input-error');
+        expect(autocomplete.type).to.equal('mantine-autocomplete');
+        expect(autocomplete.props.data).to.deep.equal(['One']);
         expect(textInput.type).to.equal('mantine-text-input');
         expect(textInput.props.type).to.equal('email');
         expect(textInput.props['aria-label']).to.equal('Email');
         expect(textInput.props.children).to.equal(undefined);
+        expect(passwordInput.type).to.equal('mantine-password-input');
+        expect(passwordInput.props.type).to.equal('password');
         expect(textarea.type).to.equal('mantine-textarea');
         expect(textarea.props.minRows).to.equal(4);
         expect(select.type).to.equal('mantine-select');
         expect(select.props.data).to.deep.equal([{ label: 'Admin', value: 'admin' }]);
+        expect(multiSelect.type).to.equal('mantine-multi-select');
+        expect(multiSelect.props.defaultValue).to.deep.equal(['admin']);
+        expect(nativeSelect.type).to.equal('mantine-native-select');
+        expect(combobox.type).to.equal('mantine-combobox');
+        expect(React.Children.toArray(combobox.props.children)[0]).to.not.equal(undefined);
+        expect(comboboxOption.type).to.equal('mantine-combobox-option');
+        expect(comboboxOption.props.value).to.equal('admin');
+        expect(comboboxSearch.type).to.equal('mantine-combobox-search');
+        expect(comboboxSearch.props.type).to.equal('text');
+        expect(comboboxClearButton.type).to.equal('mantine-combobox-clear-button');
+        expect(comboboxClearButton.props.type).to.equal('button');
+        expect(comboboxHiddenInput.type).to.equal('mantine-combobox-hidden-input');
+        expect(comboboxHiddenInput.props.value).to.equal('admin,editor');
+        expect(checkboxGroup.type).to.equal('mantine-checkbox-group');
         expect(checkbox.type).to.equal('mantine-checkbox');
         expect(checkbox.props.type).to.equal('checkbox');
+        expect(switchGroup.type).to.equal('mantine-switch-group');
+        expect(switchInput.type).to.equal('mantine-switch');
+        expect(switchInput.props.type).to.equal('checkbox');
         expect(radioGroup.type).to.equal('mantine-radio-group');
         expect(React.Children.toArray(radioGroup.props.children).map(child => (child as React.ReactElement).type)).to.deep.equal(['mantine-radio']);
         expect(numberInput.type).to.equal('mantine-number-input');
@@ -727,6 +1030,25 @@ describe('BuilderRenderer', () => {
         expect(dateInput.type).to.equal('mantine-date-input');
         expect(dateInput.props.min).to.equal('2026-01-01');
         expect(dateInput.props.max).to.equal('2026-12-31');
+        expect(chipGroup.type).to.equal('mantine-chip-group');
+        expect(chipGroup.props.multiple).to.equal(true);
+        expect(slider.type).to.equal('mantine-slider');
+        expect(slider.props.defaultValue).to.equal(40);
+        expect(rangeSlider.type).to.equal('mantine-range-slider');
+        expect(rangeSlider.props.defaultValue).to.deep.equal([20, 80]);
+        expect(segmented.type).to.equal('mantine-segmented-control');
+        expect(pin.type).to.equal('mantine-pin-input');
+        expect(pin.props.length).to.equal(6);
+        expect(colorInput.type).to.equal('mantine-color-input');
+        expect(colorPicker.type).to.equal('mantine-color-picker');
+        expect(hueSlider.type).to.equal('mantine-hue-slider');
+        expect(alphaSlider.type).to.equal('mantine-alpha-slider');
+        expect(angleSlider.type).to.equal('mantine-angle-slider');
+        expect(jsonInput.type).to.equal('mantine-json-input');
+        expect(tagsInput.type).to.equal('mantine-tags-input');
+        expect(fileInput.type).to.equal('mantine-file-input');
+        expect(pillsInputField.type).to.equal('mantine-pills-input-field');
+        expect(rating.type).to.equal('mantine-rating');
         expect(dynamicForm.type).to.equal('mantine-form');
         expect((React.Children.toArray(dynamicForm.props.children)[0] as React.ReactElement).type).to.equal('mantine-group');
 
@@ -795,25 +1117,67 @@ describe('BuilderRenderer', () => {
 
     it('provides Mantine adapters for MVP data display components', () => {
         const components = createBuilderMantineDataDisplayComponents({
+            Accordion: 'mantine-accordion',
+            AccordionItem: 'mantine-accordion-item',
+            AccordionControl: 'mantine-accordion-control',
+            AccordionPanel: 'mantine-accordion-panel',
             Table: 'mantine-table',
+            TableCaption: 'mantine-table-caption',
+            TableThead: 'mantine-table-thead',
+            TableTbody: 'mantine-table-tbody',
+            TableTfoot: 'mantine-table-tfoot',
+            TableTr: 'mantine-table-tr',
+            TableTh: 'mantine-table-th',
+            TableTd: 'mantine-table-td',
             DataTable: 'mantine-data-table',
+            Timeline: 'mantine-timeline',
+            TimelineItem: 'mantine-timeline-item',
+            Tree: 'mantine-tree',
             Card: 'mantine-card',
             Text: 'mantine-text',
             Title: 'mantine-title',
             Badge: 'mantine-badge'
         });
 
-        expect(Object.keys(components).sort()).to.deep.equal(['DataTable', 'MetricCard', 'StatCard', 'Table']);
+        expect(Object.keys(components).sort()).to.deep.equal([
+            'Accordion',
+            'AccordionControl',
+            'AccordionItem',
+            'AccordionPanel',
+            'DataTable',
+            'MetricCard',
+            'StatCard',
+            'Table',
+            'TableCaption',
+            'TableTbody',
+            'TableTd',
+            'TableTfoot',
+            'TableTh',
+            'TableThead',
+            'TableTr',
+            'Timeline',
+            'TimelineItem',
+            'Tree'
+        ]);
 
         const table = renderAdapter(components.Table, { columns: [{ key: 'name', label: 'Name' }], rows: [{ name: 'Ada' }] });
+        const tableCell = renderAdapter(components.TableTd, { children: 'Cell', colSpan: 2 });
         const dataTable = renderAdapter(components.DataTable, { title: 'Users', columns: [{ key: 'name', label: 'Name' }], rows: [{ name: 'Ada' }] });
+        const accordion = renderAdapter(components.Accordion, { items: [{ label: 'Details', value: 'details', content: 'Body' }] });
+        const timeline = renderAdapter(components.Timeline, { items: [{ title: 'Created', description: 'Done', time: 'Today' }] });
         const metric = renderAdapter(components.MetricCard, { label: 'Revenue', value: '$10k', trendLabel: 'Up' });
         const stat = renderAdapter(components.StatCard, { title: 'Orders', value: 12, metrics: [{ label: 'Open', value: 3 }] });
 
         expect(table.type).to.equal('mantine-table');
         expect((React.Children.toArray(table.props.children)[0] as React.ReactElement).type).to.equal('thead');
+        expect(tableCell.type).to.equal('mantine-table-td');
+        expect(tableCell.props.colSpan).to.equal(2);
         expect(dataTable.type).to.equal('section');
         expect((React.Children.toArray(dataTable.props.children)[1] as React.ReactElement).type).to.equal('mantine-data-table');
+        expect(accordion.type).to.equal('mantine-accordion');
+        expect((React.Children.toArray(accordion.props.children)[0] as React.ReactElement).type).to.equal('mantine-accordion-item');
+        expect(timeline.type).to.equal('mantine-timeline');
+        expect((React.Children.toArray(timeline.props.children)[0] as React.ReactElement).type).to.equal('mantine-timeline-item');
         expect(metric.type).to.equal('mantine-card');
         expect((React.Children.toArray(metric.props.children)[1] as React.ReactElement).type).to.equal('mantine-title');
         expect(stat.type).to.equal('mantine-card');
@@ -825,41 +1189,298 @@ describe('BuilderRenderer', () => {
             Anchor: 'mantine-anchor',
             NavLink: 'mantine-nav-link',
             Breadcrumbs: 'mantine-breadcrumbs',
+            Button: 'mantine-button',
+            Menu: 'mantine-menu',
+            MenuTarget: 'mantine-menu-target',
+            MenuDropdown: 'mantine-menu-dropdown',
+            MenuItem: 'mantine-menu-item',
+            MenuLabel: 'mantine-menu-label',
+            MenuDivider: 'mantine-menu-divider',
+            Pagination: 'mantine-pagination',
+            PaginationRoot: 'mantine-pagination-root',
+            PaginationControl: 'mantine-pagination-control',
+            PaginationDots: 'mantine-pagination-dots',
+            PaginationFirst: 'mantine-pagination-first',
+            PaginationItems: 'mantine-pagination-items',
+            PaginationLast: 'mantine-pagination-last',
+            PaginationNext: 'mantine-pagination-next',
+            PaginationPrevious: 'mantine-pagination-previous',
+            Stepper: 'mantine-stepper',
+            StepperCompleted: 'mantine-stepper-completed',
+            StepperStep: 'mantine-stepper-step',
+            TableOfContents: 'mantine-table-of-contents',
             Tabs: 'mantine-tabs',
             TabsList: 'mantine-tabs-list',
+            TabsPanel: 'mantine-tabs-panel',
             TabsTab: 'mantine-tabs-tab'
         });
-        const overlay = createBuilderMantineOverlayComponents({ Modal: 'mantine-modal', Drawer: 'mantine-drawer', Group: 'mantine-group' });
-        const feedback = createBuilderMantineFeedbackComponents({ Alert: 'mantine-alert', Notification: 'mantine-notification', Loader: 'mantine-loader', Group: 'mantine-group', Text: 'mantine-text' });
-        const media = createBuilderMantineMediaComponents({ Image: 'mantine-image', Avatar: 'mantine-avatar', ThemeIcon: 'mantine-theme-icon' });
+        const overlay = createBuilderMantineOverlayComponents({
+            Dialog: 'mantine-dialog',
+            Modal: 'mantine-modal',
+            ModalRoot: 'mantine-modal-root',
+            ModalOverlay: 'mantine-modal-overlay',
+            ModalContent: 'mantine-modal-content',
+            ModalHeader: 'mantine-modal-header',
+            ModalTitle: 'mantine-modal-title',
+            ModalCloseButton: 'mantine-modal-close-button',
+            ModalBody: 'mantine-modal-body',
+            ModalStack: 'mantine-modal-stack',
+            ModalBase: 'mantine-modal-base',
+            ModalBaseOverlay: 'mantine-modal-base-overlay',
+            ModalBaseContent: 'mantine-modal-base-content',
+            ModalBaseHeader: 'mantine-modal-base-header',
+            ModalBaseTitle: 'mantine-modal-base-title',
+            ModalBaseCloseButton: 'mantine-modal-base-close-button',
+            ModalBaseBody: 'mantine-modal-base-body',
+            Drawer: 'mantine-drawer',
+            DrawerRoot: 'mantine-drawer-root',
+            DrawerOverlay: 'mantine-drawer-overlay',
+            DrawerContent: 'mantine-drawer-content',
+            DrawerHeader: 'mantine-drawer-header',
+            DrawerTitle: 'mantine-drawer-title',
+            DrawerCloseButton: 'mantine-drawer-close-button',
+            DrawerBody: 'mantine-drawer-body',
+            DrawerStack: 'mantine-drawer-stack',
+            HoverCard: 'mantine-hover-card',
+            HoverCardDropdown: 'mantine-hover-card-dropdown',
+            HoverCardTarget: 'mantine-hover-card-target',
+            Popover: 'mantine-popover',
+            PopoverDropdown: 'mantine-popover-dropdown',
+            PopoverTarget: 'mantine-popover-target',
+            Tooltip: 'mantine-tooltip',
+            TooltipFloating: 'mantine-tooltip-floating',
+            TooltipGroup: 'mantine-tooltip-group',
+            Overlay: 'mantine-overlay',
+            Portal: 'mantine-portal',
+            OptionalPortal: 'mantine-optional-portal',
+            Transition: 'mantine-transition',
+            FocusTrap: 'mantine-focus-trap',
+            FocusTrapInitialFocus: 'mantine-focus-trap-initial-focus',
+            FloatingArrow: 'mantine-floating-arrow',
+            FloatingIndicator: 'mantine-floating-indicator',
+            NativeScrollArea: 'mantine-native-scroll-area',
+            RemoveScroll: 'mantine-remove-scroll',
+            Group: 'mantine-group'
+        });
+        const feedback = createBuilderMantineFeedbackComponents({
+            Alert: 'mantine-alert',
+            LoadingOverlay: 'mantine-loading-overlay',
+            Notification: 'mantine-notification',
+            Loader: 'mantine-loader',
+            Progress: 'mantine-progress',
+            ProgressRoot: 'mantine-progress-root',
+            ProgressSection: 'mantine-progress-section',
+            ProgressLabel: 'mantine-progress-label',
+            RingProgress: 'mantine-ring-progress',
+            SemiCircleProgress: 'mantine-semi-circle-progress',
+            Skeleton: 'mantine-skeleton',
+            Group: 'mantine-group',
+            Text: 'mantine-text'
+        });
+        const media = createBuilderMantineMediaComponents({
+            BackgroundImage: 'mantine-background-image',
+            Image: 'mantine-image',
+            Avatar: 'mantine-avatar',
+            AvatarGroup: 'mantine-avatar-group',
+            ThemeIcon: 'mantine-theme-icon',
+            CheckIcon: 'mantine-check-icon',
+            CloseIcon: 'mantine-close-icon',
+            RadioIcon: 'mantine-radio-icon',
+            AccordionChevron: 'mantine-accordion-chevron'
+        });
 
-        expect(Object.keys(navigation).sort()).to.deep.equal(['Anchor', 'Breadcrumbs', 'NavLink', 'Tabs']);
-        expect(Object.keys(overlay).sort()).to.deep.equal(['Drawer', 'Modal']);
-        expect(Object.keys(feedback).sort()).to.deep.equal(['Alert', 'Loader', 'NotificationBlock']);
-        expect(Object.keys(media).sort()).to.deep.equal(['Avatar', 'Icon', 'Image']);
+        expect(Object.keys(navigation).sort()).to.deep.equal([
+            'Anchor',
+            'Breadcrumbs',
+            'Menu',
+            'MenuDivider',
+            'MenuDropdown',
+            'MenuItem',
+            'MenuLabel',
+            'MenuTarget',
+            'NavLink',
+            'Pagination',
+            'PaginationControl',
+            'PaginationDots',
+            'PaginationFirst',
+            'PaginationItems',
+            'PaginationLast',
+            'PaginationNext',
+            'PaginationPrevious',
+            'PaginationRoot',
+            'Stepper',
+            'StepperCompleted',
+            'StepperStep',
+            'TableOfContents',
+            'Tabs',
+            'TabsList',
+            'TabsPanel',
+            'TabsTab'
+        ]);
+        expect(Object.keys(overlay).sort()).to.deep.equal([
+            'Dialog',
+            'Drawer',
+            'DrawerBody',
+            'DrawerCloseButton',
+            'DrawerContent',
+            'DrawerHeader',
+            'DrawerOverlay',
+            'DrawerRoot',
+            'DrawerStack',
+            'DrawerTitle',
+            'FloatingArrow',
+            'FloatingIndicator',
+            'FocusTrap',
+            'FocusTrapInitialFocus',
+            'HoverCard',
+            'HoverCardDropdown',
+            'HoverCardTarget',
+            'Modal',
+            'ModalBase',
+            'ModalBaseBody',
+            'ModalBaseCloseButton',
+            'ModalBaseContent',
+            'ModalBaseHeader',
+            'ModalBaseOverlay',
+            'ModalBaseTitle',
+            'ModalBody',
+            'ModalCloseButton',
+            'ModalContent',
+            'ModalHeader',
+            'ModalOverlay',
+            'ModalRoot',
+            'ModalStack',
+            'ModalTitle',
+            'NativeScrollArea',
+            'OptionalPortal',
+            'Overlay',
+            'Popover',
+            'PopoverDropdown',
+            'PopoverTarget',
+            'Portal',
+            'RemoveScroll',
+            'Tooltip',
+            'TooltipFloating',
+            'TooltipGroup',
+            'Transition'
+        ]);
+        expect(Object.keys(feedback).sort()).to.deep.equal(['Alert', 'Loader', 'LoadingOverlay', 'Notification', 'NotificationBlock', 'Progress', 'ProgressLabel', 'ProgressRoot', 'ProgressSection', 'RingProgress', 'SemiCircleProgress', 'Skeleton']);
+        expect(Object.keys(media).sort()).to.deep.equal(['AccordionChevron', 'Avatar', 'AvatarGroup', 'BackgroundImage', 'CheckIcon', 'CloseIcon', 'Icon', 'Image', 'RadioIcon', 'ThemeIcon']);
 
         const anchor = renderAdapter(navigation.Anchor, { href: '/docs', target: '_blank', children: 'Docs' });
         const navLink = renderAdapter(navigation.NavLink, { label: 'Home', href: '/' });
         const breadcrumbs = renderAdapter(navigation.Breadcrumbs, { items: [{ label: 'Home', href: '/' }, { label: 'Page' }] });
+        const menu = renderAdapter(navigation.Menu, { label: 'Actions', items: [{ label: 'Open', href: '/open' }] });
+        const menuLabel = renderAdapter(navigation.MenuLabel, { children: 'Section' });
+        const paginationRoot = renderAdapter(navigation.PaginationRoot, { total: 5, defaultValue: 2 });
+        const paginationControl = renderAdapter(navigation.PaginationControl, { children: '2', active: true });
         const tabs = renderAdapter(navigation.Tabs, { defaultValue: 'overview', tabs: [{ label: 'Overview', href: 'overview' }] });
+        const stepper = renderAdapter(navigation.Stepper, { active: 1, steps: [{ label: 'One', description: 'Start' }] });
+        const pagination = renderAdapter(navigation.Pagination, { total: 10, defaultValue: 2 });
         const modal = renderAdapter(overlay.Modal, { title: 'Dialog', opened: true, children: React.createElement('p'), actions: React.createElement('button') });
+        const modalRoot = renderAdapter(overlay.ModalRoot, { opened: true });
+        const modalTitle = renderAdapter(overlay.ModalTitle, { children: 'Title' });
+        const modalBase = renderAdapter(overlay.ModalBase, { opened: true, children: React.createElement('span') });
+        const modalBaseTitle = renderAdapter(overlay.ModalBaseTitle, { children: 'Base title' });
+        const drawerRoot = renderAdapter(overlay.DrawerRoot, { opened: true, position: 'left' });
+        const drawerBody = renderAdapter(overlay.DrawerBody, { children: React.createElement('span') });
+        const popoverTarget = renderAdapter(overlay.PopoverTarget, { children: React.createElement('button') });
+        const hoverCardDropdown = renderAdapter(overlay.HoverCardDropdown, { children: React.createElement('span') });
+        const tooltip = renderAdapter(overlay.Tooltip, { label: 'Help', children: React.createElement('button') });
+        const tooltipFloating = renderAdapter(overlay.TooltipFloating, { label: 'Help', children: React.createElement('button') });
+        const tooltipGroup = renderAdapter(overlay.TooltipGroup, { children: React.createElement('span') });
+        const overlayLayer = renderAdapter(overlay.Overlay, { backgroundOpacity: 0.5 });
+        const portal = renderAdapter(overlay.Portal, { children: React.createElement('span') });
+        const optionalPortal = renderAdapter(overlay.OptionalPortal, { withinPortal: false, children: React.createElement('span') });
+        const transition = renderAdapter(overlay.Transition, { mounted: true, children: React.createElement('span') });
+        const focusTrap = renderAdapter(overlay.FocusTrap, { active: true, children: React.createElement('button') });
+        const initialFocus = renderAdapter(overlay.FocusTrapInitialFocus, {});
+        const floatingArrow = renderAdapter(overlay.FloatingArrow, { arrowSize: 10 });
+        const floatingIndicator = renderAdapter(overlay.FloatingIndicator, { target: {}, parent: {}, children: React.createElement('span') });
+        const nativeScrollArea = renderAdapter(overlay.NativeScrollArea, { h: 120, children: React.createElement('span') });
+        const removeScroll = renderAdapter(overlay.RemoveScroll, { enabled: true, children: React.createElement('span') });
         const alert = renderAdapter(feedback.Alert, { title: 'Heads up', children: 'Message' });
         const loader = renderAdapter(feedback.Loader, { label: 'Loading' });
+        const progress = renderAdapter(feedback.Progress, { value: 42, label: '42%' });
+        const progressSection = renderAdapter(feedback.ProgressSection, { value: 35, color: 'green' });
+        const progressLabel = renderAdapter(feedback.ProgressLabel, { children: '35%' });
+        const ringProgress = renderAdapter(feedback.RingProgress, { value: 72, color: 'green', label: '72%' });
+        const skeleton = renderAdapter(feedback.Skeleton, { width: '100%', height: 40 });
+        const backgroundImage = renderAdapter(media.BackgroundImage, { src: '/bg.png', padding: 'lg', minHeight: 220 });
         const image = renderAdapter(media.Image, { src: '/hero.png', alt: 'Hero', fit: 'cover' });
+        const avatarGroup = renderAdapter(media.AvatarGroup, { spacing: 'sm' });
+        const themeIcon = renderAdapter(media.ThemeIcon, { label: 'Status', children: '*' });
         const icon = renderAdapter(media.Icon, { name: 'circle', label: 'Status' });
+        const checkIcon = renderAdapter(media.CheckIcon, { label: 'Done' });
+        const closeIcon = renderAdapter(media.CloseIcon, { label: 'Close' });
+        const radioIcon = renderAdapter(media.RadioIcon, { label: 'Selected' });
+        const accordionChevron = renderAdapter(media.AccordionChevron, { label: 'Expand' });
 
         expect(anchor.type).to.equal('mantine-anchor');
         expect(anchor.props.rel).to.equal('noopener noreferrer');
         expect(navLink.type).to.equal('mantine-nav-link');
         expect(breadcrumbs.type).to.equal('mantine-breadcrumbs');
+        expect(menu.type).to.equal('mantine-menu');
+        expect((React.Children.toArray(menu.props.children)[1] as React.ReactElement).type).to.equal('mantine-menu-dropdown');
+        expect(menuLabel.type).to.equal('mantine-menu-label');
+        expect(paginationRoot.type).to.equal('mantine-pagination-root');
+        expect(paginationRoot.props.value).to.equal(2);
+        expect(paginationControl.type).to.equal('mantine-pagination-control');
+        expect(paginationControl.props.active).to.equal(true);
         expect((React.Children.toArray(tabs.props.children)[0] as React.ReactElement).type).to.equal('mantine-tabs-list');
         expect((React.Children.toArray((React.Children.toArray(tabs.props.children)[0] as React.ReactElement).props.children)[0] as React.ReactElement).props['aria-selected']).to.equal(undefined);
+        expect(stepper.type).to.equal('mantine-stepper');
+        expect((React.Children.toArray(stepper.props.children)[0] as React.ReactElement).type).to.equal('mantine-stepper-step');
+        expect(pagination.type).to.equal('mantine-pagination');
+        expect(pagination.props.value).to.equal(2);
         expect(modal.type).to.equal('mantine-modal');
         expect((React.Children.toArray(modal.props.children)[1] as React.ReactElement).type).to.equal('mantine-group');
+        expect(modalRoot.type).to.equal('mantine-modal-root');
+        expect(modalRoot.props.opened).to.equal(true);
+        expect(modalTitle.type).to.equal('mantine-modal-title');
+        expect(modalBase.type).to.equal('mantine-modal-base');
+        expect(React.Children.toArray(modalBase.props.children)[0]).to.not.equal(undefined);
+        expect(modalBaseTitle.type).to.equal('mantine-modal-base-title');
+        expect(drawerRoot.type).to.equal('mantine-drawer-root');
+        expect(drawerRoot.props.position).to.equal('left');
+        expect(drawerBody.type).to.equal('mantine-drawer-body');
+        expect(popoverTarget.type).to.equal('mantine-popover-target');
+        expect(hoverCardDropdown.type).to.equal('mantine-hover-card-dropdown');
+        expect(tooltip.type).to.equal('mantine-tooltip');
+        expect(tooltipFloating.type).to.equal('mantine-tooltip-floating');
+        expect(tooltipGroup.type).to.equal('mantine-tooltip-group');
+        expect(overlayLayer.type).to.equal('mantine-overlay');
+        expect(portal.type).to.equal('mantine-portal');
+        expect(optionalPortal.type).to.equal('mantine-optional-portal');
+        expect(transition.type).to.equal('mantine-transition');
+        expect(typeof transition.props.children).to.equal('function');
+        expect(focusTrap.type).to.equal('mantine-focus-trap');
+        expect(initialFocus.type).to.equal('mantine-focus-trap-initial-focus');
+        expect(floatingArrow.type).to.equal('mantine-floating-arrow');
+        expect(floatingIndicator.type).to.equal('mantine-floating-indicator');
+        expect(nativeScrollArea.type).to.equal('mantine-native-scroll-area');
+        expect(removeScroll.type).to.equal('mantine-remove-scroll');
         expect(alert.type).to.equal('mantine-alert');
         expect(loader.type).to.equal('mantine-group');
+        expect(progress.type).to.equal('mantine-progress');
+        expect(progress.props.value).to.equal(42);
+        expect(progressSection.type).to.equal('mantine-progress-section');
+        expect(progressSection.props.value).to.equal(35);
+        expect(progressLabel.type).to.equal('mantine-progress-label');
+        expect(ringProgress.type).to.equal('mantine-ring-progress');
+        expect(ringProgress.props.sections).to.deep.equal([{ value: 72, color: 'green' }]);
+        expect(skeleton.type).to.equal('mantine-skeleton');
+        expect(skeleton.props.h).to.equal(40);
+        expect(backgroundImage.type).to.equal('mantine-background-image');
+        expect(backgroundImage.props.p).to.equal('lg');
         expect(image.type).to.equal('mantine-image');
+        expect(avatarGroup.type).to.equal('mantine-avatar-group');
+        expect(themeIcon.type).to.equal('mantine-theme-icon');
         expect(icon.type).to.equal('mantine-theme-icon');
+        expect(checkIcon.type).to.equal('mantine-check-icon');
+        expect(closeIcon.type).to.equal('mantine-close-icon');
+        expect(radioIcon.type).to.equal('mantine-radio-icon');
+        expect(accordionChevron.type).to.equal('mantine-accordion-chevron');
 
         const nativeTabs = renderAdapter(createBuilderMantineNavigationComponents().Tabs, {
             defaultValue: 'overview',

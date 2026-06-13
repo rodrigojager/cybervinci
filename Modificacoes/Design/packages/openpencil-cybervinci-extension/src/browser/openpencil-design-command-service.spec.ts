@@ -148,7 +148,7 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.context.responseContract.guidance).to.contain('never browser DOM');
         expect(generated.context.operationExamples.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
         expect(generated.context.skills.map(skill => skill.name)).to.include.members(['jsonl-format', 'schema', 'layout', 'text-rules']);
-        expect(generated.context.skills.every(skill => skill.sourcePath.includes('vendor/openpencil/packages/pen-ai-skills/skills'))).to.equal(true);
+        expect(generated.context.skills.every(skill => skill.sourcePath.includes('Skills/System/OpenPencil/pen-ai-skills'))).to.equal(true);
         const skillsByName = new Map(generated.context.skills.map(skill => [skill.name, skill]));
         expect(skillsByName.get('schema')?.content).to.contain('PenNode types (the ONLY format you output for designs)');
         expect(skillsByName.get('layout')?.content).to.contain('HORIZONTAL ROW WIDTH MATH');
@@ -162,7 +162,7 @@ describe('OpenPencilDesignCommandService', () => {
         expect(section?.children?.find(node => node.role === 'button')?.fill?.[0]?.color).to.equal('#2563eb');
     });
 
-    it('uses the vendored style-defaults skill when no style guide tags match', async () => {
+    it('uses the system style-defaults skill when no style guide tags match', async () => {
         const document = service.createDesign('AI style defaults test');
         const generated = await service.generateAiOperations({
             prompt: 'Create a simple content panel',
@@ -172,13 +172,13 @@ describe('OpenPencilDesignCommandService', () => {
         const styleDefaults = generated.context.skills.find(skill => skill.name === 'style-defaults');
 
         expect(generated.source).to.equal('deterministic-fallback');
-        expect(styleDefaults?.sourcePath).to.equal('vendor/openpencil/packages/pen-ai-skills/skills/phases/generation/style-defaults.md');
+        expect(styleDefaults?.sourcePath).to.equal('Skills/System/OpenPencil/pen-ai-skills/phases/generation/style-defaults.md');
         expect(styleDefaults?.content).to.contain('VISUAL STYLE POLICY');
         expect(generated.context.skills.some(skill => skill.sourcePath.includes('/style-guides/'))).to.equal(false);
         expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
     });
 
-    it('selects a vendored style guide from inferred prompt tags', async () => {
+    it('selects a system style guide from inferred prompt tags', async () => {
         const document = service.createDesign('AI tagged style guide test');
         const generated = await service.generateAiOperations({
             prompt: 'Create a dark analytics panel with cyan metrics',
@@ -187,7 +187,7 @@ describe('OpenPencilDesignCommandService', () => {
         });
         const styleGuide = generated.context.skills.find(skill => skill.name === 'dashboard-analytics-dark');
 
-        expect(styleGuide?.sourcePath).to.equal('vendor/openpencil/packages/pen-ai-skills/skills/style-guides/dashboard-analytics-dark.md');
+        expect(styleGuide?.sourcePath).to.equal('Skills/System/OpenPencil/pen-ai-skills/style-guides/dashboard-analytics-dark.md');
         expect(styleGuide?.content).to.contain('A data-driven dark interface optimized for analytics dashboards');
         expect(styleGuide?.tags).to.include.members(['dashboard', 'data-focused', 'dark-mode', 'cyan-accent']);
         expect(generated.context.skills.map(skill => skill.name)).not.to.include('style-defaults');
@@ -237,7 +237,7 @@ describe('OpenPencilDesignCommandService', () => {
         expect(provider.lastPrompt).to.contain('## Headline Hierarchy');
         expect(provider.lastPrompt).to.contain('ANTI-SLOP RULES');
         expect(provider.lastPrompt).to.contain('A clean, refined SaaS product interface');
-        expect(provider.lastPrompt).to.contain('Source: vendor/openpencil/packages/pen-ai-skills/skills/style-guides/saas-modern-light.md');
+        expect(provider.lastPrompt).to.contain('Source: Skills/System/OpenPencil/pen-ai-skills/style-guides/saas-modern-light.md');
     });
 
     it('captures continuation prompt context and layout guidance for provider continuation requests', async () => {

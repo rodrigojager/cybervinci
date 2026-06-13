@@ -85,8 +85,8 @@ export function ShapeToolDropdown({ trailing }: ShapeToolDropdownProps) {
               : 'text-muted-foreground hover:bg-muted hover:text-foreground'
           }`}
         >
-          <svg viewBox="0 0 6 4" className="w-1.5 h-1 fill-current">
-            <path d="M0 0l3 4 3-4z" />
+          <svg viewBox="0 0 5 8" className="w-1.5 h-2 fill-current" aria-hidden="true" focusable="false">
+            <path d="M0 0l5 4-5 4z" />
           </svg>
         </button>
       </div>

@@ -116,6 +116,15 @@ describe('CyberVinci product shell contract', () => {
         expect(CYBERVINCI_MENU_ITEMS.BUILDER).to.deep.equal({ label: 'Builder', icon: 'brick-wall', iconClass: 'cybervinci-product-icon cybervinci-product-icon-brick-wall' });
     });
 
+    it('keeps the Codex product icon complete in menus and sidebar tabs', () => {
+        const css = readText('packages/branding/src/browser/style/branding.css');
+        expect(css).to.contain('.cybervinci-product-icon-codex');
+        expect(css).to.contain('m-5.876-2.997');
+        expect(css).to.contain('.lm-Menu-itemIcon.cybervinci-product-icon::before');
+        expect(css).to.contain('.lm-TabBar.theia-app-right .lm-TabBar-tabIcon.cybervinci-product-icon');
+        expect(css).to.contain('mask-image: var(--cybervinci-product-icon-mask)');
+    });
+
     it('keeps every CyberVinci product feature as an explicit extension or host customization', () => {
         const ids = CYBERVINCI_PRODUCT_FEATURES.map(feature => feature.id);
         expect(ids).to.include.members([
@@ -128,7 +137,7 @@ describe('CyberVinci product shell contract', () => {
             'openpencil',
             'builder',
             'ai-ide-product-chat',
-            'codex-provider-provider',
+            'ai-providers',
             'codex-sidebar',
             'welcome-branding'
         ]);
@@ -249,8 +258,8 @@ describe('CyberVinci product shell contract', () => {
             'examples/browser-only'
         ];
         const allowedSourceFiles = new Set([
-            'packages/branding/src/common/cybervinci-product.ts',
-            'packages/branding/src/common/cybervinci-product-contract.spec.ts',
+            'packages/branding/src/common/branding.ts',
+            'packages/branding/src/common/branding-contract.spec.ts',
             'examples/browser/package.json',
             'examples/browser/tsconfig.json',
             'examples/electron/package.json',
@@ -281,8 +290,8 @@ describe('CyberVinci product shell contract', () => {
             'examples/electron'
         ];
         const allowedFiles = new Set([
-            'packages/branding/src/common/cybervinci-product.ts',
-            'packages/branding/src/common/cybervinci-product-contract.spec.ts',
+            'packages/branding/src/common/branding.ts',
+            'packages/branding/src/common/branding-contract.spec.ts',
             'examples/browser/package.json',
             'examples/browser/tsconfig.json',
             'examples/electron/package.json',
@@ -293,7 +302,7 @@ describe('CyberVinci product shell contract', () => {
             .flatMap(file => {
                 const text = readText(file);
                 return [
-                    ...text.matchAll(/\.builder\.json|builder|@cybervinci\/builder|Builder Schema|CyberVinci UI Builder/gi)
+                    ...text.matchAll(/\.builder\.json|@cybervinci\/builder|Builder Schema|CyberVinci UI Builder|\bbuilder\b/gi)
                 ].map(match => `${file}: ${match[0]}`);
             });
 

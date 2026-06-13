@@ -1,0 +1,8 @@
+{
+  "examples/browser/package.json": {
+    "@cybervinci/razor-visual-editor": "1.72.0"
+  },
+  "examples/electron/package.json": {
+    "@cybervinci/razor-visual-editor": "1.72.0"
+  }
+}

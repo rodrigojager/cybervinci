@@ -1,4 +1,4 @@
-export type FlowStateType = 'input' | 'context' | 'agent' | 'parallel' | 'join' | 'condition' | 'gate' | 'command' | 'memory_write' | 'report';
+export type FlowStateType = 'input' | 'context' | 'agent' | 'parallel' | 'dynamic_parallel' | 'tournament' | 'join' | 'condition' | 'gate' | 'command' | 'memory_write' | 'report';
 
 export interface FlowWorkflow {
     version: 'flow.workflow/v1' | string;
@@ -34,7 +34,15 @@ export interface FlowWorkflowState {
     type: FlowStateType;
     layout?: FlowWorkflowStateLayout;
     agent?: string;
+    agentRole?: FlowAgenticRole;
+    provider?: FlowProviderSelection;
+    modelExecution?: FlowModelExecutionProfile;
+    systemPrompt?: string;
+    taskPrompt?: string;
+    deliverables?: FlowDeliverable[];
     branches?: Record<string, FlowWorkflowState>;
+    dynamicParallel?: FlowDynamicParallelConfig;
+    tournament?: FlowTournamentConfig;
     waitFor?: string[];
     input?: FlowInputContract;
     outputs?: string[];
@@ -63,9 +71,132 @@ export interface FlowWorkflowVersionDiffItem {
     summary: string;
 }
 
+export type FlowPipelinePresetSource = 'built-in' | 'workspace';
+
+export interface FlowPipelinePreset {
+    id: string;
+    name: string;
+    description: string;
+    version: 'flow.pipeline-preset/v1' | string;
+    source?: FlowPipelinePresetSource;
+    workflow: FlowWorkflow;
+    agentMarkdown?: FlowPipelinePresetAgentMarkdown[];
+    tags?: string[];
+}
+
+export interface FlowPipelinePresetAgentMarkdown {
+    relativePath: string;
+    content: string;
+}
+
+export interface FlowPipelinePresetAgentNodeConfiguration {
+    provider?: FlowProviderSelection;
+    modelExecution?: FlowModelExecutionProfile;
+    systemPrompt?: string;
+    taskPrompt?: string;
+    outputs?: string[];
+    deliverables?: FlowDeliverable[];
+}
+
+export type FlowAgenticRole =
+    | 'classifier'
+    | 'planner'
+    | 'executor'
+    | 'candidate_generator'
+    | 'critic'
+    | 'judge'
+    | 'verifier'
+    | 'synthesizer'
+    | 'repairer'
+    | 'researcher'
+    | string;
+
 export interface FlowWorkflowStateLayout {
     x?: number;
     y?: number;
+}
+
+export interface FlowProviderSelection {
+    providerId: string;
+    modelId?: string;
+    options?: Record<string, unknown>;
+}
+
+export type FlowReasoningMode = 'off' | 'auto' | 'fast' | 'balanced' | 'deep' | 'coding' | 'research' | 'lats';
+
+export type FlowReasoningEffort = 'none' | 'low' | 'medium' | 'high';
+
+export type FlowReasoningPolicy = 'off' | 'native' | 'virtual' | 'auto' | 'native_plus_virtual_light';
+
+export interface FlowNativeReasoningOptions {
+    enabled?: boolean;
+    effort?: FlowReasoningEffort;
+    budgetTokens?: number;
+}
+
+export interface FlowVirtualReasoningOptions {
+    enabled?: boolean;
+    mode?: FlowReasoningMode;
+    showProgress?: boolean;
+    showReasoningSummary?: boolean;
+    allowToolUse?: boolean;
+    maxCostMultiplier?: number;
+}
+
+export interface FlowModelExecutionProfile {
+    profileId?: string;
+    temperature?: number;
+    maxTokens?: number;
+    topP?: number;
+    reasoningPolicy?: FlowReasoningPolicy;
+    nativeReasoning?: FlowNativeReasoningOptions;
+    virtualReasoning?: FlowVirtualReasoningOptions;
+}
+
+export interface FlowModelProfile {
+    id: string;
+    name: string;
+    description: string;
+    provider?: FlowProviderSelection;
+    execution: FlowModelExecutionProfile;
+    tags?: string[];
+}
+
+export type FlowDynamicParallelFailurePolicy = 'fail_fast' | 'best_effort' | 'threshold';
+
+export type FlowDynamicParallelJoinStrategy = 'collect' | 'best_effort' | 'require_all';
+
+export interface FlowDynamicParallelConfig {
+    itemsFrom: string;
+    itemVariable?: string;
+    worker: FlowWorkflowState;
+    concurrency?: number;
+    maxItems?: number;
+    failurePolicy?: FlowDynamicParallelFailurePolicy;
+    failureThreshold?: number;
+    joinStrategy?: FlowDynamicParallelJoinStrategy;
+    outputKey?: string;
+}
+
+export type FlowTournamentStrategy = 'single_round' | 'bracket' | 'round_robin';
+
+export type FlowTournamentTieBreaker = 'judge_again' | 'score_total' | 'first_candidate';
+
+export interface FlowTournamentConfig {
+    candidatesFrom: string;
+    judge: FlowWorkflowState;
+    strategy?: FlowTournamentStrategy;
+    criteria?: string[];
+    winnerCount?: number;
+    maxComparisons?: number;
+    tieBreaker?: FlowTournamentTieBreaker;
+}
+
+export interface FlowDeliverable {
+    path: string;
+    description?: string;
+    required?: boolean;
+    kind?: string;
 }
 
 export interface FlowInputContract {
@@ -452,6 +583,8 @@ export type FlowEventType =
     | 'workload.retry'
     | 'workload.failed'
     | 'workload.completed'
+    | 'dynamic_workflow.selected'
+    | 'virtual_reasoning.progress'
     | 'artifact.created'
     | 'effect.proposed'
     | 'effect.approved'

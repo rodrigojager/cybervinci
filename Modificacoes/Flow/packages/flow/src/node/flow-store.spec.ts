@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import * as yaml from 'js-yaml';
-import { FlowWorkflow } from '../common';
+import { FLOW_PIPELINE_PRESET_VERSION, FlowPipelinePreset, FlowWorkflow } from '../common';
 import { FlowStore } from './flow-store';
 
 describe('FlowStore', () => {
@@ -199,6 +199,36 @@ describe('FlowStore', () => {
         expect(workflow.id).to.equal('simple_specialist_2');
         expect(workflow.name).to.equal('Simple Specialist 2');
         expect(normalizePath(workflow.file?.path)).to.equal(normalizePath(workflowPath('simple_specialist_2.json')));
+    });
+
+    it('saves and lists workspace pipeline presets under the preset store', async () => {
+        const saved = await store.savePipelinePreset(workspaceRootUri, samplePreset('reusable_pipeline'));
+
+        const presets = await store.listWorkspacePipelinePresets(workspaceRootUri);
+        const persisted = JSON.parse(await fs.readFile(presetPath('reusable_pipeline.json'), 'utf8')) as FlowPipelinePreset;
+
+        expect(saved.source).to.equal('workspace');
+        expect(presets.map(preset => preset.id)).to.deep.equal(['reusable_pipeline']);
+        expect(presets[0].source).to.equal('workspace');
+        expect(persisted.workflow).not.to.have.property('file');
+        expect(persisted.agentMarkdown?.[0].content).to.equal('# Reusable Agent\n');
+    });
+
+    it('creates workflows from presets while preserving provider, model, prompts, outputs, and deliverables', async () => {
+        const preset = samplePreset('configured_pipeline');
+
+        const workflow = await store.createWorkflowFromPreset(workspaceRootUri, preset, { workflowId: 'from_preset' });
+
+        const worker = workflow.states.worker;
+        expect(workflow.id).to.equal('from_preset');
+        expect(worker.provider).to.deep.equal({ providerId: 'command', modelId: 'custom-command-model' });
+        expect(worker.systemPrompt).to.equal('System instructions');
+        expect(worker.taskPrompt).to.equal('Task instructions');
+        expect(worker.outputs).to.deep.equal(['work/result.md']);
+        expect(worker.deliverables).to.deep.equal([{ path: 'work/result.md', description: 'Result', required: true, kind: 'markdown' }]);
+
+        worker.outputs = ['mutated.md'];
+        expect(preset.workflow.states.worker.outputs).to.deep.equal(['work/result.md']);
     });
 
     it('imports an exported YAML workflow while preserving id, agents, states, transitions, and format', async () => {
@@ -811,6 +841,10 @@ describe('FlowStore', () => {
         return path.join(tempDir, '.theia', 'flow', 'workflows', fileName);
     }
 
+    function presetPath(fileName: string): string {
+        return path.join(tempDir, '.theia', 'flow', 'presets', fileName);
+    }
+
     async function writeStorageFile(relativePath: string, content: string): Promise<void> {
         const file = path.join(tempDir, '.theia', 'flow', relativePath);
         await fs.mkdir(path.dirname(file), { recursive: true });
@@ -838,6 +872,43 @@ function sampleWorkflow(id: string): FlowWorkflow {
 
 function normalizePath(value: string | undefined): string {
     return path.normalize(value || '').toLowerCase();
+}
+
+function samplePreset(id: string): FlowPipelinePreset {
+    return {
+        version: FLOW_PIPELINE_PRESET_VERSION,
+        id,
+        name: 'Configured Pipeline',
+        description: 'Reusable configured pipeline.',
+        source: 'workspace',
+        agentMarkdown: [{ relativePath: 'reusable/agent.md', content: '# Reusable Agent' }],
+        workflow: {
+            version: 'flow.workflow/v1',
+            id,
+            name: 'Configured Pipeline',
+            agents: {
+                worker: 'reusable/agent.md'
+            },
+            states: {
+                input: { type: 'input', outputs: ['input/request.md'] },
+                worker: {
+                    type: 'agent',
+                    agent: 'worker',
+                    provider: { providerId: 'command', modelId: 'custom-command-model' },
+                    systemPrompt: 'System instructions',
+                    taskPrompt: 'Task instructions',
+                    input: { include: ['input/request.md'] },
+                    outputs: ['work/result.md'],
+                    deliverables: [{ path: 'work/result.md', description: 'Result', required: true, kind: 'markdown' }]
+                },
+                final_report: { type: 'report', input: { include: ['work/result.md'] }, outputs: ['final/report.md'] }
+            },
+            transitions: [
+                { id: 'input_to_worker', from: 'input', to: 'worker', on: 'run.started' },
+                { id: 'worker_to_final_report', from: 'worker', to: 'final_report', on: 'workload.completed' }
+            ]
+        }
+    };
 }
 
 async function fileExists(file: string): Promise<boolean> {
