@@ -2,11 +2,11 @@
   "examples/browser/package.json": {
     "@cybervinci/ai-providers": "1.72.0",
     "@cybervinci/ai-runtime": "1.72.0",
-    "@cybervinci/razor-visual-editor": "1.72.0"
+    "@cybervinci/flow": "1.72.0"
   },
   "examples/electron/package.json": {
     "@cybervinci/ai-providers": "1.72.0",
     "@cybervinci/ai-runtime": "1.72.0",
-    "@cybervinci/razor-visual-editor": "1.72.0"
+    "@cybervinci/flow": "1.72.0"
   }
 }

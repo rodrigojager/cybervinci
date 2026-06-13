@@ -5,7 +5,7 @@ import * as path from 'path';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { generateUuid } from '@theia/core/lib/common';
 import { getTextOfResponse, LanguageModel, LanguageModelRegistry, LanguageModelService, UserRequest } from '@theia/ai-core';
-import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
+import { CodexProviderBackendRequest, CodexProviderOptions, CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import { ReasoningStage, VirtualReasoningEngine, VirtualReasoningMode } from '@cybervinci/ai-providers/lib/common/virtual-reasoning';
 import * as Ajv from '@theia/core/shared/ajv';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
@@ -1047,7 +1047,7 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
             );
         }
         if ('codexProvider' in provider) {
-            return invokeCodexProviderProvider(provider.codexProvider, context, providerPayload, workloadDir, provider.modelId);
+            return invokeCodexProviderProvider(provider.codexProvider, context, providerPayload, workloadDir, provider.modelId, provider.request);
         }
         return invokeChatProvider(
             this.languageModelService,
@@ -1530,7 +1530,8 @@ async function invokeCodexProviderProvider(
     context: FlowWorkloadExecutionContext,
     payload: Record<string, unknown>,
     cwd: string,
-    modelId?: string
+    modelId?: string,
+    request: Partial<CodexProviderBackendRequest> = {}
 ): Promise<string> {
     const prompt = [
         'You are an execution agent for the Flow workflow engine.',
@@ -1548,14 +1549,37 @@ async function invokeCodexProviderProvider(
             text_elements: []
         }],
         sessionId: `flow-workload-${context.run.id}`,
+        runtime: request.runtime,
+        executablePath: request.executablePath,
+        profile: request.profile,
+        modelProvider: request.modelProvider,
+        openRouterApiKey: request.openRouterApiKey,
+        openCodeApiKey: request.openCodeApiKey,
+        openCodeExecutablePath: request.openCodeExecutablePath,
+        openCodeAgent: request.openCodeAgent,
+        openCodeVariant: request.openCodeVariant,
+        geminiExecutablePath: request.geminiExecutablePath,
+        claudeExecutablePath: request.claudeExecutablePath,
+        claudeAgent: request.claudeAgent,
+        cursorExecutablePath: request.cursorExecutablePath,
+        cursorMode: request.cursorMode,
         options: {
             cwd,
             model: modelId,
+            reasoningEffort: codexReasoningEffort(context),
             approvalPolicy: 'never',
             sandboxMode: 'read-only'
         }
     });
     return result.text;
+}
+
+function codexReasoningEffort(context: FlowWorkloadExecutionContext): CodexProviderOptions['reasoningEffort'] | undefined {
+    const execution = context.state.modelExecution;
+    if (execution?.reasoningPolicy === 'off' || execution?.nativeReasoning?.effort === 'none') {
+        return undefined;
+    }
+    return execution?.nativeReasoning?.effort as CodexProviderOptions['reasoningEffort'] | undefined;
 }
 
 async function invokeChatProvider(
@@ -2758,7 +2782,7 @@ function parseIssueOutput(value: unknown): ParsedAgentIssue[] {
         return [];
     }
     const issues: ParsedAgentIssue[] = value
-        .map(item => {
+        .map((item): ParsedAgentIssue | undefined => {
             if (typeof item === 'string') {
                 const summary = item.trim();
                 if (!summary) {

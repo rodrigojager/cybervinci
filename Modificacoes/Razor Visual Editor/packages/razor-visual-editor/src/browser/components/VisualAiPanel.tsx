@@ -4,6 +4,8 @@ import { VisualAiProviderDescriptor } from '../types/visual-ai';
 export interface VisualAiPanelRunOptions {
     providerId: string;
     model: string;
+    reasoningPolicy: 'off' | 'native' | 'virtual' | 'auto' | 'native_plus_virtual_light';
+    reasoningEffort: 'none' | 'low' | 'medium' | 'high' | 'xhigh';
     instruction: string;
 }
 
@@ -21,6 +23,8 @@ export interface VisualAiPanelProps {
 export function VisualAiPanel(props: VisualAiPanelProps): React.ReactElement {
     const [providerId, setProviderId] = React.useState('');
     const [model, setModel] = React.useState('auto');
+    const [reasoningPolicy, setReasoningPolicy] = React.useState<VisualAiPanelRunOptions['reasoningPolicy']>('auto');
+    const [reasoningEffort, setReasoningEffort] = React.useState<VisualAiPanelRunOptions['reasoningEffort']>('medium');
     const [instruction, setInstruction] = React.useState('');
     const selectedProvider = props.providers.find(provider => provider.id === providerId) ?? props.providers[0];
     const modelListId = React.useMemo(() => `cv-ai-models-${Math.random().toString(36).slice(2)}`, []);
@@ -77,6 +81,26 @@ export function VisualAiPanel(props: VisualAiPanelProps): React.ReactElement {
                     {(selectedProvider?.models ?? []).map(item => <option key={item} value={item} />)}
                 </datalist>
             </label>
+            <label>
+                <span>Reasoning</span>
+                <select value={reasoningPolicy} onChange={event => setReasoningPolicy(event.currentTarget.value as VisualAiPanelRunOptions['reasoningPolicy'])}>
+                    <option value='auto'>Auto</option>
+                    <option value='native'>Native</option>
+                    <option value='virtual'>Virtual</option>
+                    <option value='native_plus_virtual_light'>Native + virtual</option>
+                    <option value='off'>Off</option>
+                </select>
+            </label>
+            <label>
+                <span>Effort</span>
+                <select value={reasoningEffort} onChange={event => setReasoningEffort(event.currentTarget.value as VisualAiPanelRunOptions['reasoningEffort'])}>
+                    <option value='none'>None</option>
+                    <option value='low'>Low</option>
+                    <option value='medium'>Medium</option>
+                    <option value='high'>High</option>
+                    <option value='xhigh'>X High</option>
+                </select>
+            </label>
         </div>
         <div className={`cv-ai-provider-status ${selectedProvider?.status ?? 'unavailable'}`}>
             {props.loadingProviders
@@ -106,7 +130,7 @@ export function VisualAiPanel(props: VisualAiPanelProps): React.ReactElement {
         {props.summary && !props.error && <p className='cv-ai-message'>{props.summary}</p>}
         <footer>
             <button type='button' className='cv-ai-secondary' onClick={props.onClose}>Cancel</button>
-            <button type='button' className='cv-ai-primary' onClick={() => props.onRun({ providerId, model, instruction })} disabled={!canRun}>
+            <button type='button' className='cv-ai-primary' onClick={() => props.onRun({ providerId, model, reasoningPolicy, reasoningEffort, instruction })} disabled={!canRun}>
                 <SparklesIcon /> {props.running ? 'Running...' : 'Run AI'}
             </button>
         </footer>
@@ -133,4 +157,3 @@ function statusLabel(status: VisualAiProviderDescriptor['status']): string {
             return 'Unavailable';
     }
 }
-

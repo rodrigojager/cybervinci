@@ -1,0 +1,89 @@
+.cv-ai-runtime-button {
+    align-items: center;
+    display: inline-flex;
+    gap: 4px;
+    min-width: 0;
+}
+
+.cv-ai-runtime-button--active {
+    outline: 1px solid var(--theia-focusBorder);
+}
+
+.cv-ai-runtime-prompt-panel {
+    border-top: 1px solid var(--theia-panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+}
+
+.cv-ai-runtime-prompt-panel > header,
+.cv-ai-runtime-prompt-panel > footer {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.cv-ai-runtime-prompt-panel h3 {
+    font-size: var(--theia-ui-font-size1);
+    font-weight: 600;
+    margin: 0;
+}
+
+.cv-ai-runtime-prompt-panel textarea {
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-input-foreground);
+    min-height: 84px;
+    resize: vertical;
+    width: 100%;
+}
+
+.cv-ai-runtime-execution-picker {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+.cv-ai-runtime-execution-picker label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cv-ai-runtime-execution-picker label > span {
+    color: var(--theia-descriptionForeground);
+    font-size: var(--theia-ui-font-size0);
+}
+
+.cv-ai-runtime-execution-picker input,
+.cv-ai-runtime-execution-picker select {
+    min-width: 0;
+    width: 100%;
+}
+
+.cv-ai-runtime-icon-button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--theia-icon-foreground);
+    cursor: pointer;
+    display: inline-flex;
+    height: 24px;
+    justify-content: center;
+    padding: 0;
+    width: 24px;
+}
+
+.cv-ai-runtime-error {
+    color: var(--theia-errorForeground);
+    font-size: var(--theia-ui-font-size0);
+}
+
+@media (max-width: 700px) {
+    .cv-ai-runtime-execution-picker {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+}
