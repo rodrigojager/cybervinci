@@ -921,6 +921,106 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.diagnostics?.join(' ')).to.contain('Hanging generate provider generation did not return OpenPencil operations');
     });
 
+    it('materializes a local marketplace skeleton when the incremental skeleton batch stage times out', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-incremental-skeleton-provider',
+            label: 'Hanging incremental skeleton provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI incremental skeleton fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: [
+                'Faca uma copia da pagina inicial do Mercado Livre com o nome Mercado Controlado.',
+                'Incremental stage 1/3: create only the root view frame and major visible section/container skeleton.',
+                'Do not wait for the full page. The canvas should show the intended structure after this stage.'
+            ].join('\n'),
+            document,
+            selection: [],
+            mode: 'generation'
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations, {
+            mode: 'generation',
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200,
+            requireVisibleContent: true
+        });
+        const page = result.document.pages![0];
+        const root = page.children[0];
+        const header = root?.children?.find(node => node.name === 'Marketplace header');
+        const brand = header?.children?.find(node => node.name === 'Marketplace brand');
+        const quality = providerService.validateAiLayoutQuality(result.document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['updatePage', 'setSelection']);
+        expect(generated.diagnostics?.join(' ')).to.contain('generated a local visible skeleton');
+        expect(page.width).to.equal(1200);
+        expect(root?.name).to.equal('Marketplace homepage skeleton');
+        expect(header).to.exist;
+        expect(brand?.content).to.equal('Mercado Controlado');
+        expect(quality.valid).to.equal(true);
+    });
+
+    it('applies a local marketplace skeleton when the incremental skeleton stream stage times out', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-incremental-skeleton-stream-provider',
+            label: 'Hanging incremental skeleton stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                await new Promise<void>(() => undefined);
+            }
+        };
+        const providerService = new FastStreamTimeoutOpenPencilDesignCommandService(provider);
+        let currentDocument = providerService.createDesign('AI incremental skeleton stream fallback test');
+        let currentSelection: string[] = [];
+        let appliedTotal = 0;
+        const generated = await providerService.streamAiOperations({
+            prompt: [
+                'Faca uma copia da pagina inicial do Mercado Livre com o nome Mercado Controlado.',
+                'Incremental stage 1/3: create only the root view frame and major visible section/container skeleton.',
+                'Do not wait for the full page. The canvas should show the intended structure after this stage.'
+            ].join('\n'),
+            document: currentDocument,
+            selection: currentSelection,
+            mode: 'generation'
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, {
+                mode: 'generation',
+                normalizeVisibleBounds: true,
+                preservePageWidth: true,
+                targetPageWidth: 1200,
+                requireVisibleContent: true
+            });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            appliedTotal += result.changed ? streamed.operations.length : 0;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+        const page = currentDocument.pages![0];
+        const quality = providerService.validateAiLayoutQuality(currentDocument, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['updatePage', 'setSelection']);
+        expect(appliedTotal).to.be.greaterThan(0);
+        expect(page.children[0]?.name).to.equal('Marketplace homepage skeleton');
+        expect(quality.valid).to.equal(true);
+    });
+
     it('expands streamed provider containers so later children remain visible', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'visible-bounds-stream-provider',
@@ -1847,6 +1947,55 @@ describe('OpenPencilDesignCommandService', () => {
 
     it('allows intentional card surfaces behind foreground text in AI layout quality', () => {
         const document = service.createDesign('AI layout quality surface allowance test');
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true
+        });
+
+        expect(quality.valid).to.equal(true);
+    });
+
+    it('does not report AI layout overlap for flow children inside auto-layout parents', () => {
+        const document = service.createDesign('AI layout quality auto-layout test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 620;
+        page.children = [
+            {
+                id: 'auto-layout-section',
+                type: 'frame',
+                name: 'Auto layout section',
+                x: 80,
+                y: 80,
+                width: 420,
+                height: 180,
+                layout: 'vertical',
+                gap: 12,
+                padding: [20, 24, 20, 24],
+                children: [
+                    {
+                        id: 'auto-layout-title',
+                        type: 'text',
+                        name: 'Auto layout title',
+                        content: 'Mercado Controlado',
+                        x: 0,
+                        y: 0,
+                        width: 320,
+                        height: 34
+                    },
+                    {
+                        id: 'auto-layout-copy',
+                        type: 'text',
+                        name: 'Auto layout copy',
+                        content: 'Auto-layout will position this below the title.',
+                        x: 0,
+                        y: 0,
+                        width: 340,
+                        height: 44
+                    }
+                ]
+            }
+        ];
+
         const quality = service.validateAiLayoutQuality(document, {
             requireVisibleContent: true
         });
