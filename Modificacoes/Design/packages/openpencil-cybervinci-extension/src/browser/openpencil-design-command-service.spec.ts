@@ -1154,6 +1154,128 @@ describe('OpenPencilDesignCommandService', () => {
         expect(children.find(node => node.id === 'escaping-offer-shape')?.x).to.equal(180);
     });
 
+    it('normalizes oversized media overlays inside streamed marketplace cards', () => {
+        const document = service.createDesign('Homepage media overlay clamp test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [
+            {
+                id: 'notebook-offer-card',
+                type: 'frame',
+                name: 'Oferta notebook',
+                role: 'card',
+                x: 80,
+                y: 80,
+                width: 312,
+                height: 280,
+                layout: 'vertical',
+                gap: 10,
+                padding: 0,
+                children: [
+                    {
+                        id: 'notebook-offer-image',
+                        type: 'rectangle',
+                        name: 'Imagem notebook',
+                        role: 'overlay',
+                        x: 2,
+                        y: -3,
+                        width: 1200,
+                        height: 150,
+                        fill: [{ type: 'solid', color: '#f8f8f8' }]
+                    },
+                    {
+                        id: 'notebook-offer-info',
+                        type: 'frame',
+                        name: 'Info notebook',
+                        x: 0,
+                        y: 0,
+                        width: 1200,
+                        height: 118,
+                        layout: 'vertical',
+                        gap: 6,
+                        padding: [0, 16, 18, 16],
+                        children: [
+                            {
+                                id: 'notebook-offer-desc',
+                                type: 'text',
+                                name: 'Descrição notebook',
+                                content: 'Notebook leve para trabalho e estudo',
+                                x: 16,
+                                y: 59,
+                                width: 1168,
+                                height: 20
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'notebook-offer-card');
+        const image = card?.children?.find(node => node.id === 'notebook-offer-image');
+        const info = card?.children?.find(node => node.id === 'notebook-offer-info');
+        const desc = info?.children?.find(node => node.id === 'notebook-offer-desc');
+
+        expect(result.changed).to.equal(true);
+        expect(image?.role).to.equal(undefined);
+        expect(image?.x).to.equal(0);
+        expect(image?.y).to.equal(0);
+        expect(image?.width).to.equal(312);
+        expect(info?.width).to.equal(312);
+        expect(desc?.width).to.equal(280);
+    });
+
+    it('repairs broken marketplace feature-card strips into stable columns', () => {
+        const document = service.createDesign('Homepage feature cards grid test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'benefits-strip',
+                type: 'frame',
+                name: 'Benefícios Mercado Privado',
+                role: 'section',
+                x: 40,
+                y: 80,
+                width: 1120,
+                height: 494,
+                layout: 'none',
+                children: [
+                    createFeatureCard('payment-benefit', 'Pagamento seguro', 0, 0, 1120, 152, 1080),
+                    createFeatureCard('installment-benefit', 'Parcelamento', 526, 174, 68, 320, 28),
+                    createFeatureCard('shipping-benefit', 'Envio rápido', 76, 160, 'fill_container', 152, 1160)
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const strip = result.document.pages![0].children.find(node => node.id === 'benefits-strip');
+        const cards = strip?.children ?? [];
+        const installment = cards.find(node => node.id === 'installment-benefit');
+        const installmentTitle = installment?.children?.find(node => node.id === 'installment-benefit-title');
+        const installmentDesc = installment?.children?.find(node => node.id === 'installment-benefit-desc');
+
+        expect(result.changed).to.equal(true);
+        expect(cards.map(node => node.width)).to.deep.equal([362, 362, 362]);
+        expect(cards.map(node => node.x)).to.deep.equal([0, 378, 756]);
+        expect(cards.map(node => node.y)).to.deep.equal([0, 0, 0]);
+        expect(strip?.height).to.equal(180);
+        expect(installmentTitle?.width).to.equal(322);
+        expect(installmentDesc?.width).to.equal(322);
+        expect(Number(installmentDesc?.height)).to.be.lessThan(80);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',
@@ -2783,6 +2905,55 @@ function createHomepageSection(id: string, name: string, x: number, y: number, w
         height,
         fill: [{ type: 'solid', color: '#ffffff' }],
         children: []
+    };
+}
+
+function createFeatureCard(id: string, name: string, x: number, y: number, width: OpenPencilNode['width'], height: number, textWidth: number): OpenPencilNode {
+    return {
+        id,
+        type: 'frame',
+        name,
+        role: 'feature-card',
+        x,
+        y,
+        width,
+        height,
+        layout: 'vertical',
+        gap: 10,
+        padding: 20,
+        fill: [{ type: 'solid', color: '#ffffff' }],
+        children: [
+            {
+                id: `${id}-icon`,
+                type: 'icon_font',
+                name: 'Feature icon',
+                role: 'overlay',
+                x: 20,
+                y: 24,
+                width: 28,
+                height: 28
+            },
+            {
+                id: `${id}-title`,
+                type: 'text',
+                name: 'Título benefício',
+                content: name === 'Parcelamento' ? 'Pague em parcelas' : name,
+                x: 20,
+                y: 69,
+                width: textWidth,
+                height: 24
+            },
+            {
+                id: `${id}-desc`,
+                type: 'text',
+                name: 'Descrição benefício',
+                content: name === 'Parcelamento' ? 'Use cartão ou saldo do Mercado Pago Privado.' : 'Receba vantagens da assinatura no marketplace.',
+                x: 20,
+                y: 103,
+                width: textWidth,
+                height: name === 'Parcelamento' ? 208 : 18
+            }
+        ]
     };
 }
 
