@@ -899,6 +899,28 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.diagnostics?.join(' ')).to.contain('Diagnostic-only stream provider streaming did not produce an OpenPencil operation');
     });
 
+    it('times out a hanging batch provider instead of leaving the skeleton stage pending', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-generate-provider',
+            label: 'Hanging generate provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI hanging generate timeout test');
+        const startedAt = Date.now();
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Create a marketplace page skeleton',
+            document,
+            selection: []
+        });
+
+        expect(Date.now() - startedAt).to.be.lessThan(120);
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('Hanging generate provider generation did not return OpenPencil operations');
+    });
+
     it('expands streamed provider containers so later children remain visible', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'visible-bounds-stream-provider',
@@ -3545,4 +3567,8 @@ class FastStreamTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCo
     protected override readonly providerStreamFirstOperationTimeoutMs = 10;
     protected override readonly providerStreamIdleTimeoutMs = 10;
     protected override readonly providerStreamTotalTimeoutMs = 20;
+}
+
+class FastGenerateTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
+    protected override readonly providerGenerateTimeoutMs = 10;
 }
