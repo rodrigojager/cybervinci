@@ -1,0 +1,12 @@
+[    1502ms] [INFO] sending initial connect on 2Gai_tnE-P1d784FAAAF @ http://127.0.0.1:50696/bundle.js:67876
+[    1501ms] TypeError: Cannot read properties of undefined (reading 'WindowMetadata')
+    at ElectronFrontendIdProvider.getId (http://127.0.0.1:50696/bundle.js:89941:43)
+    at ElectronWebSocketConnectionSource.negotiateInitialConnect (http://127.0.0.1:50696/bundle.js:67878:123)
+    at ElectronWebSocketConnectionSource.handleSocketConnected (http://127.0.0.1:50696/bundle.js:67884:18)
+    at Socket3.<anonymous> (http://127.0.0.1:50696/bundle.js:67833:18)
+    at Emitter.emit (http://127.0.0.1:50696/bundle.js:61653:27)
+    at Socket3.onconnect (http://127.0.0.1:50696/bundle.js:64919:16)
+    at Socket3.onpacket (http://127.0.0.1:50696/bundle.js:64812:22)
+    at Emitter.emit (http://127.0.0.1:50696/bundle.js:61653:27)
+    at http://127.0.0.1:50696/bundle.js:65494:18
+[    1503ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://127.0.0.1:50696/socket.io/?EIO=4&transport=polling&t=v72ewd4m&sid=0bXPpkpT8V7Ql55FAAAE:0

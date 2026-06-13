@@ -1,0 +1,1233 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - tablist [ref=e59] [cursor=pointer]:
+            - listitem [ref=e60]:
+              - generic [ref=e62]: Welcome
+              - generic "Close" [ref=e63]
+            - listitem [ref=e64]:
+              - generic [ref=e66]: Flow
+              - generic "Close" [ref=e67]: 
+          - text:     
+          - tabpanel [ref=e180]:
+            - generic [ref=e181]:
+              - banner [ref=e182]:
+                - generic [ref=e183]:
+                  - generic [ref=e184]: CyberVinci Flow
+                  - heading "Flow Sample" [level=2] [ref=e185]
+                  - paragraph [ref=e186]: A removable UI sample workflow with a human approval gate.
+                  - generic "Workflow metadata" [ref=e187]:
+                    - generic "flow_studio_sample" [ref=e188]
+                    - generic "c:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\.theia\\flow\\workflows\\flow_studio_sample.json" [ref=e189]
+                    - generic [ref=e190]: Run run_75c26a709c24e8aa - failed
+                - generic "Run request composer" [ref=e191]:
+                  - generic [ref=e192]: Run request
+                  - textbox "Run prompt" [ref=e193]:
+                    - /placeholder: Describe the goal, inputs, expected artifacts, constraints, and approval requirements for this workflow run.
+                    - text: Describe the workflow request, expected outputs, constraints, and review gates for this run.
+                  - generic [ref=e194]:
+                    - generic [ref=e195]: 5 states ready
+                    - button " Start run" [ref=e196]:
+                      - generic [ref=e197]: 
+                      - text: Start run
+              - region "Flow actions and runtime status" [ref=e198]:
+                - generic "Workflow creation" [ref=e199]:
+                  - strong [ref=e200]: Build workflow
+                  - generic [ref=e201]:
+                    - generic [ref=e202]: Template
+                    - combobox "Workflow template" [ref=e203]:
+                      - option "Simple Specialist" [selected]
+                      - option "Linear Chain"
+                      - option "Review Loop"
+                      - option "Contracted Parallel Delivery"
+                      - option "Content Factory"
+                      - option "Conditional Contract"
+                      - option "Human Approval Gate"
+                      - option "Memory Consolidation"
+                  - button " Create" [ref=e204]:
+                    - generic [ref=e205]: 
+                    - text: Create
+                  - generic [ref=e206]:
+                    - generic [ref=e207]: Preset
+                    - combobox "Pipeline preset" [ref=e208]:
+                      - option "Sisyphus Ultrawork Coordinator (built-in)" [selected]
+                  - button " Use preset" [ref=e209]:
+                    - generic [ref=e210]: 
+                    - text: Use preset
+                  - button " Save preset" [ref=e211]:
+                    - generic [ref=e212]: 
+                    - text: Save preset
+                - generic "Workflow file actions" [ref=e213]:
+                  - strong [ref=e214]: Workflow file
+                  - button " Refresh" [ref=e215]:
+                    - generic [ref=e216]: 
+                    - text: Refresh
+                  - button " Reload" [ref=e217]:
+                    - generic [ref=e218]: 
+                    - text: Reload
+                  - button " Undo" [disabled] [ref=e219]:
+                    - generic [ref=e220]: 
+                    - text: Undo
+                  - button " Redo" [disabled] [ref=e221]:
+                    - generic [ref=e222]: 
+                    - text: Redo
+                  - button " Save" [ref=e223]:
+                    - generic [ref=e224]: 
+                    - text: Save
+                  - button " Import" [ref=e225]:
+                    - generic [ref=e226]: 
+                    - text: Import
+                  - button " Export" [ref=e227]:
+                    - generic [ref=e228]: 
+                    - text: Export
+                  - button " Versions" [ref=e229]:
+                    - generic [ref=e230]: 
+                    - text: Versions
+                  - button " Restore" [ref=e231]:
+                    - generic [ref=e232]: 
+                    - text: Restore
+                - generic "Run controls" [ref=e233]:
+                  - strong [ref=e234]: Run controls
+                  - button " Import run" [ref=e235]:
+                    - generic [ref=e236]: 
+                    - text: Import run
+                  - button " Export run" [ref=e237]:
+                    - generic [ref=e238]: 
+                    - text: Export run
+                  - button " Tick" [disabled] [ref=e239]:
+                    - generic [ref=e240]: 
+                    - text: Tick
+                  - button " Pause" [disabled] [ref=e241]:
+                    - generic [ref=e242]: 
+                    - text: Pause
+                  - button " Resume" [disabled] [ref=e243]:
+                    - generic [ref=e244]: 
+                    - text: Resume
+                  - button " Cancel" [disabled] [ref=e245]:
+                    - generic [ref=e246]: 
+                    - text: Cancel
+                  - button " Finalize" [ref=e247]:
+                    - generic [ref=e248]: 
+                    - text: Finalize
+                - region "Flow runtime status" [ref=e249]:
+                  - generic [ref=e250]:
+                    - generic "Execution mode set to external kernel." [ref=e251]:
+                      - generic [ref=e252]: Kernel
+                      - strong [ref=e253]: External kernel
+                    - 'generic "Host mode: Normal" [ref=e254]':
+                      - generic [ref=e255]: Host mode
+                      - strong [ref=e256]: Normal
+                    - 'generic "LLM provider: missing" [ref=e257]':
+                      - generic [ref=e258]: LLM provider
+                      - strong [ref=e259]: missing
+                    - generic "Kernel run event streaming is not available in the current host." [ref=e260]:
+                      - generic [ref=e261]: Run updates
+                      - strong [ref=e262]: Unavailable
+                  - generic [ref=e263]:
+                    - 'generic "llm.agent.execute: unavailable" [ref=e264]':
+                      - generic [ref=e265]: llm.agent.execute
+                      - strong [ref=e266]: unavailable
+                    - 'generic "filesystem.edit: available / policy configured" [ref=e267]':
+                      - generic [ref=e268]: filesystem.edit
+                      - strong [ref=e269]: available / policy configured
+                    - 'generic "image.generate: unavailable / provider missing" [ref=e270]':
+                      - generic [ref=e271]: image.generate
+                      - strong [ref=e272]: unavailable / provider missing
+                    - 'generic "command.execute: blocked / policy blocked" [ref=e273]':
+                      - generic [ref=e274]: command.execute
+                      - strong [ref=e275]: blocked / policy blocked
+                    - 'generic "Memory: local" [ref=e276]':
+                      - generic [ref=e277]: Memory
+                      - strong [ref=e278]: local
+                    - 'generic "run.event_stream: unavailable" [ref=e279]':
+                      - generic [ref=e280]: run.event_stream
+                      - strong [ref=e281]: unavailable
+              - region "Agent Markdown library" [ref=e282]:
+                - generic [ref=e283]:
+                  - generic [ref=e284]:
+                    - heading "Prompt assets" [level=3] [ref=e285]
+                    - generic [ref=e286]: 3 of 3 Markdown files
+                  - button " New" [ref=e287]:
+                    - generic [ref=e288]: 
+                    - text: New
+                - generic [ref=e289]:
+                  - generic [ref=e290]: 
+                  - textbox "Search agent Markdown files" [ref=e291]:
+                    - /placeholder: Search by path
+                - generic [ref=e292]:
+                  - article [ref=e293]:
+                    - button " sisyphus/coordinator.md" [ref=e294]:
+                      - generic [ref=e295]: 
+                      - generic [ref=e296]: sisyphus/coordinator.md
+                    - time [ref=e297]: 27/05/2026, 23:30:32
+                    - generic [ref=e298]:
+                      - button "" [ref=e299]:
+                        - generic [ref=e300]: 
+                      - button "" [ref=e301]:
+                        - generic [ref=e302]: 
+                  - article [ref=e303]:
+                    - button " sisyphus/reviewer.md" [ref=e304]:
+                      - generic [ref=e305]: 
+                      - generic [ref=e306]: sisyphus/reviewer.md
+                    - time [ref=e307]: 27/05/2026, 23:30:37
+                    - generic [ref=e308]:
+                      - button "" [ref=e309]:
+                        - generic [ref=e310]: 
+                      - button "" [ref=e311]:
+                        - generic [ref=e312]: 
+                  - article [ref=e313]:
+                    - button " sisyphus/ultraworker.md" [ref=e314]:
+                      - generic [ref=e315]: 
+                      - generic [ref=e316]: sisyphus/ultraworker.md
+                    - time [ref=e317]: 27/05/2026, 23:30:33
+                    - generic [ref=e318]:
+                      - button "" [ref=e319]:
+                        - generic [ref=e320]: 
+                      - button "" [ref=e321]:
+                        - generic [ref=e322]: 
+              - main [ref=e323]:
+                - generic [ref=e324]:
+                  - application "Flow Sample workflow canvas" [ref=e325]:
+                    - generic "Canvas controls" [ref=e326]:
+                      - button "" [ref=e327]:
+                        - generic [ref=e328]: 
+                      - generic [ref=e329]: 100%
+                      - button "" [ref=e330]:
+                        - generic [ref=e331]: 
+                      - button "" [ref=e332]:
+                        - generic [ref=e333]: 
+                      - button "" [ref=e334]:
+                        - generic [ref=e335]: 
+                      - button "" [disabled] [ref=e336]:
+                        - generic [ref=e337]: 
+                      - button "" [disabled] [ref=e338]:
+                        - generic [ref=e339]: 
+                      - button "" [ref=e340]:
+                        - generic [ref=e341]: 
+                    - generic "New workflow states" [ref=e342]:
+                      - button " input" [ref=e343]:
+                        - generic [ref=e344]: 
+                        - generic [ref=e345]: input
+                      - button " context" [ref=e346]:
+                        - generic [ref=e347]: 
+                        - generic [ref=e348]: context
+                      - button " agent" [ref=e349]:
+                        - generic [ref=e350]: 
+                        - generic [ref=e351]: agent
+                      - button " parallel" [ref=e352]:
+                        - generic [ref=e353]: 
+                        - generic [ref=e354]: parallel
+                      - button " join" [ref=e355]:
+                        - generic [ref=e356]: 
+                        - generic [ref=e357]: join
+                      - button " condition" [ref=e358]:
+                        - generic [ref=e359]: 
+                        - generic [ref=e360]: condition
+                      - button " gate" [ref=e361]:
+                        - generic [ref=e362]: 
+                        - generic [ref=e363]: gate
+                      - button " command" [ref=e364]:
+                        - generic [ref=e365]: 
+                        - generic [ref=e366]: command
+                      - button " memory write" [ref=e367]:
+                        - generic [ref=e368]: 
+                        - generic [ref=e369]: memory write
+                      - button " report" [ref=e370]:
+                        - generic [ref=e371]: 
+                        - generic [ref=e372]: report
+                    - generic "Workflow viewport. Drag empty space to pan, use Control plus mouse wheel to zoom, Alt plus left or right arrow to move selection." [ref=e373]:
+                      - generic [ref=e374]:
+                        - img:
+                          - button "Transition intake to architecture on run.started" [ref=e375]:
+                            - generic: run.started
+                          - button "Transition architecture to frontend_work on workload.completed" [ref=e376]:
+                            - generic: workload.completed
+                            - generic: artifact.exists
+                          - button "Transition frontend_work to qa on gate.approved" [ref=e377]:
+                            - generic: gate.approved
+                          - button "Transition qa to final_report on workload.completed" [ref=e378]:
+                            - generic: workload.completed
+                            - generic: signal.equals
+                        - button " input intake Generic pipeline block pending Start connecting a transition from intake" [ref=e379]:
+                          - generic [ref=e380]:
+                            - generic [ref=e381]: 
+                            - text: input
+                          - strong [ref=e382]: intake
+                          - generic [ref=e383]: Generic pipeline block
+                          - generic [ref=e384]: pending
+                          - button "Start connecting a transition from intake" [ref=e385]:
+                            - generic [ref=e386]: 
+                            - generic [ref=e387]: Connect
+                        - button " agent architecture Agent architect pending Start connecting a transition from architecture" [ref=e388]:
+                          - generic [ref=e389]:
+                            - generic [ref=e390]: 
+                            - text: agent
+                          - strong [ref=e391]: architecture
+                          - generic [ref=e392]: Agent architect
+                          - generic [ref=e393]: pending
+                          - button "Start connecting a transition from architecture" [ref=e394]:
+                            - generic [ref=e395]: 
+                            - generic [ref=e396]: Connect
+                        - button " agent frontend work Agent frontend pending Start connecting a transition from frontend_work" [ref=e397]:
+                          - generic [ref=e398]:
+                            - generic [ref=e399]: 
+                            - text: agent
+                          - strong [ref=e400]: frontend work
+                          - generic [ref=e401]: Agent frontend
+                          - generic [ref=e402]: pending
+                          - button "Start connecting a transition from frontend_work" [ref=e403]:
+                            - generic [ref=e404]: 
+                            - generic [ref=e405]: Connect
+                        - button " agent qa Agent qa pending Start connecting a transition from qa" [ref=e406]:
+                          - generic [ref=e407]:
+                            - generic [ref=e408]: 
+                            - text: agent
+                          - strong [ref=e409]: qa
+                          - generic [ref=e410]: Agent qa
+                          - generic [ref=e411]: pending
+                          - button "Start connecting a transition from qa" [ref=e412]:
+                            - generic [ref=e413]: 
+                            - generic [ref=e414]: Connect
+                        - button " report final report Generic pipeline block pending Start connecting a transition from final_report" [ref=e415]:
+                          - generic [ref=e416]:
+                            - generic [ref=e417]: 
+                            - text: report
+                          - strong [ref=e418]: final report
+                          - generic [ref=e419]: Generic pipeline block
+                          - generic [ref=e420]: pending
+                          - button "Start connecting a transition from final_report" [ref=e421]:
+                            - generic [ref=e422]: 
+                            - generic [ref=e423]: Connect
+                  - region "Workflow JSON editor" [ref=e430]:
+                    - generic [ref=e431]:
+                      - heading "Workflow JSON" [level=3] [ref=e432]
+                      - generic [ref=e433]: valid
+                      - button " Apply" [ref=e434]:
+                        - generic [ref=e435]: 
+                        - text: Apply
+                    - generic [ref=e436]:
+                      - generic [ref=e437]: Selection
+                      - code [ref=e438]: states.intake
+                    - textbox "Workflow JSON source" [ref=e439]: "{ \"version\": \"flow.workflow/v1\", \"id\": \"flow_studio_sample\", \"name\": \"Flow Sample\", \"description\": \"A removable UI sample workflow with a human approval gate.\", \"agents\": { \"architect\": \"agents/solution-architect.md\", \"frontend\": \"agents/frontend-specialist.md\", \"qa\": \"agents/qa-specialist.md\" }, \"states\": { \"intake\": { \"type\": \"input\", \"outputs\": [ \"request.md\" ] }, \"architecture\": { \"type\": \"agent\", \"agent\": \"architect\", \"input\": { \"include\": [ \"request.md\" ] }, \"outputs\": [ \"architecture/plan.md\" ] }, \"frontend_work\": { \"type\": \"agent\", \"agent\": \"frontend\", \"input\": { \"include\": [ \"architecture/plan.md\" ] }, \"outputs\": [ \"ui/implementation-notes.md\" ], \"gates\": [ { \"id\": \"frontend_review_gate\", \"title\": \"Review frontend plan\", \"prompt\": \"Approve the simulated frontend workload before QA starts.\" } ] }, \"qa\": { \"type\": \"agent\", \"agent\": \"qa\", \"outputs\": [ \"qa/report.md\" ] }, \"final_report\": { \"type\": \"report\", \"outputs\": [ \"final/report.md\" ] } }, \"transitions\": [ { \"from\": \"intake\", \"to\": \"architecture\", \"on\": \"run.started\" }, { \"from\": \"architecture\", \"to\": \"frontend_work\", \"on\": \"workload.completed\", \"guard\": { \"artifact.exists\": \"architecture/plan.md\" } }, { \"from\": \"frontend_work\", \"to\": \"qa\", \"on\": \"gate.approved\" }, { \"from\": \"qa\", \"to\": \"final_report\", \"on\": \"workload.completed\", \"guard\": { \"signal.equals\": { \"key\": \"qa.status\", \"value\": \"passed\" } } } ] }"
+                - complementary [ref=e440]:
+                  - generic [ref=e441]:
+                    - heading "Inspector" [level=3] [ref=e442]
+                    - generic [ref=e443]:
+                      - generic [ref=e444]:
+                        - heading "Overview" [level=4] [ref=e445]
+                        - generic [ref=e446]: Selected pipeline block
+                      - generic [ref=e447]:
+                        - generic [ref=e448]: Id
+                        - strong [ref=e449]: intake
+                      - generic [ref=e450]:
+                        - generic [ref=e451]: Type
+                        - strong [ref=e452]: input
+                      - generic [ref=e453]:
+                        - generic [ref=e454]: Agent
+                        - strong [ref=e455]: none
+                    - generic [ref=e456]:
+                      - generic [ref=e457]:
+                        - heading "Schema contract" [level=4] [ref=e458]
+                        - generic [ref=e459]: Declared inputs and outputs
+                      - generic [ref=e460]:
+                        - generic [ref=e461]: Inputs
+                        - strong [ref=e462]: none
+                      - generic [ref=e463]:
+                        - generic [ref=e464]: Outputs
+                        - strong [ref=e465]: request.md
+                      - generic [ref=e466]:
+                        - generic [ref=e467]: Signals
+                        - strong [ref=e468]: none
+                      - generic [ref=e469]:
+                        - generic [ref=e470]: Timeout
+                        - strong [ref=e471]: none
+                      - generic [ref=e472]:
+                        - generic [ref=e473]: Retry
+                        - strong [ref=e474]: none
+                    - generic [ref=e475]:
+                      - generic [ref=e476]:
+                        - heading "Runtime" [level=4] [ref=e477]
+                        - generic [ref=e478]: Current run snapshot
+                      - generic [ref=e479]:
+                        - generic [ref=e480]: Workloads
+                        - strong [ref=e481]: "0"
+                      - generic [ref=e482]:
+                        - generic [ref=e483]: Artifacts
+                        - strong [ref=e484]: "0"
+                      - generic [ref=e485]:
+                        - generic [ref=e486]: Effects
+                        - strong [ref=e487]: "0"
+                      - generic [ref=e488]:
+                        - generic [ref=e489]: Gates
+                        - strong [ref=e490]: "0"
+                    - generic [ref=e491]:
+                      - generic [ref=e492]:
+                        - heading "Editable fields" [level=4] [ref=e493]
+                        - generic [ref=e494]: Workflow source backed
+                      - region "State editor" [ref=e495]:
+                        - generic [ref=e496]:
+                          - heading "Workflow fields" [level=4] [ref=e497]
+                          - button " Save" [ref=e498]:
+                            - generic [ref=e499]: 
+                            - text: Save
+                          - button " Delete" [ref=e500]:
+                            - generic [ref=e501]: 
+                            - text: Delete
+                        - generic [ref=e502]:
+                          - generic [ref=e503]: Agent
+                          - generic [ref=e504]:
+                            - textbox "Agent " [ref=e505]
+                            - button "" [disabled] [ref=e506]:
+                              - generic [ref=e507]: 
+                        - generic [ref=e508]:
+                          - generic [ref=e509]: Input includes
+                          - textbox "Input includes" [ref=e510]
+                        - generic [ref=e511]:
+                          - generic [ref=e512]: Input signals
+                          - textbox "Input signals" [ref=e513]
+                        - generic [ref=e514]:
+                          - generic [ref=e515]: Outputs
+                          - textbox "Outputs" [ref=e516]: request.md
+                        - generic [ref=e517]:
+                          - generic [ref=e518]:
+                            - generic [ref=e519]: Timeout ms
+                            - spinbutton "Timeout ms" [ref=e520]
+                          - generic [ref=e521]:
+                            - generic [ref=e522]: Retry max
+                            - spinbutton "Retry max" [ref=e523]
+                          - generic [ref=e524]:
+                            - generic [ref=e525]: Retry counter
+                            - textbox "Retry counter" [ref=e526]
+                    - generic [ref=e527]:
+                      - generic [ref=e528]:
+                        - heading "Artifacts" [level=4] [ref=e529]
+                        - generic [ref=e530]: Produced by this block
+                      - generic [ref=e531]:
+                        - heading "Artifacts" [level=4] [ref=e532]
+                        - paragraph [ref=e533]: No artifacts for this state.
+                    - generic [ref=e534]:
+                      - generic [ref=e535]:
+                        - heading "Effects" [level=4] [ref=e536]
+                        - generic [ref=e537]: Runtime side effects
+                      - generic [ref=e538]:
+                        - heading "Effects" [level=4] [ref=e539]
+                        - paragraph [ref=e540]: No effects for this state.
+                    - generic [ref=e541]:
+                      - generic [ref=e542]:
+                        - heading "Runtime data" [level=4] [ref=e543]
+                        - generic [ref=e544]: Signals and workloads
+                      - generic [ref=e545]:
+                        - heading "Signals" [level=4] [ref=e546]
+                        - paragraph [ref=e547]: No signals for this state.
+                      - generic [ref=e548]:
+                        - heading "Workload details" [level=4] [ref=e549]
+                        - paragraph [ref=e550]: No workloads for this state.
+                    - generic [ref=e551]:
+                      - generic [ref=e552]:
+                        - heading "Gates / Approvals" [level=4] [ref=e553]
+                        - generic [ref=e554]: Human decisions
+                      - paragraph [ref=e555]: No gates are attached to this state.
+                    - generic [ref=e556]:
+                      - generic [ref=e557]:
+                        - heading "Events" [level=4] [ref=e558]
+                        - generic [ref=e559]: Filtered to this state
+                      - generic [ref=e560]:
+                        - heading "Relevant events" [level=4] [ref=e561]
+                        - paragraph [ref=e562]: No events for this state.
+              - generic [ref=e563]:
+                - region "Run history snapshot" [ref=e564]:
+                  - generic [ref=e565]:
+                    - heading "Run history" [level=3] [ref=e566]
+                    - generic [ref=e567]: Current snapshot
+                  - generic [ref=e568]:
+                    - generic [ref=e569]: Run
+                    - strong [ref=e570]: run_75c26a709c24e8aa
+                  - generic [ref=e571]:
+                    - generic [ref=e572]: Workflow
+                    - strong [ref=e573]: sisyphus_ultrawork_coordinator_7
+                  - generic [ref=e574]:
+                    - generic [ref=e575]: Status
+                    - strong [ref=e576]: failed
+                  - generic [ref=e577]:
+                    - generic [ref=e578]: Updated
+                    - strong [ref=e579]: 29/05/2026, 05:25:19
+                  - paragraph [ref=e580]: This extension currently exposes the active run snapshot only.
+                - region "Workloads" [ref=e581]:
+                  - heading "Pending" [level=3] [ref=e583]
+                  - heading "Ready" [level=3] [ref=e585]
+                  - heading "Running" [level=3] [ref=e587]
+                  - heading "Waiting" [level=3] [ref=e589]
+                  - heading "Review" [level=3] [ref=e591]
+                  - generic [ref=e592]:
+                    - heading "Done" [level=3] [ref=e593]
+                    - article [ref=e594]:
+                      - strong [ref=e595]: sisyphus_coordinator
+                      - generic [ref=e596]: sisyphus_coordinator
+                      - generic [ref=e597]: 3 artifacts / 0 effects
+                      - generic [ref=e598]:
+                        - button " plan.md" [ref=e599]:
+                          - generic [ref=e600]: 
+                          - generic [ref=e601]: plan.md
+                        - button " acceptance-criteria.md" [ref=e602]:
+                          - generic [ref=e603]: 
+                          - generic [ref=e604]: acceptance-criteria.md
+                        - button " work-order.md" [ref=e605]:
+                          - generic [ref=e606]: 
+                          - generic [ref=e607]: work-order.md
+                  - generic [ref=e608]:
+                    - heading "Failed" [level=3] [ref=e609]
+                    - article [ref=e610]:
+                      - strong [ref=e611]: sisyphus_ultraworker
+                      - generic [ref=e612]: sisyphus_ultraworker
+                      - generic [ref=e613]: 3 artifacts / 0 effects
+                      - generic [ref=e614]:
+                        - button " summary.md" [ref=e615]:
+                          - generic [ref=e616]: 
+                          - generic [ref=e617]: summary.md
+                        - button " changes.md" [ref=e618]:
+                          - generic [ref=e619]: 
+                          - generic [ref=e620]: changes.md
+                        - button " evidence.md" [ref=e621]:
+                          - generic [ref=e622]: 
+                          - generic [ref=e623]: evidence.md
+                - region "Run observability" [ref=e624]:
+                  - heading "Run" [level=3] [ref=e625]
+                  - generic "Run summary" [ref=e626]:
+                    - article [ref=e627]:
+                      - generic [ref=e628]: Workloads
+                      - strong [ref=e629]: 1/2
+                      - generic [ref=e630]: completed
+                    - article [ref=e631]:
+                      - generic [ref=e632]: Artifacts
+                      - strong [ref=e633]: "4"
+                      - generic [ref=e634]: available
+                    - article [ref=e635]:
+                      - generic [ref=e636]: Effects
+                      - strong [ref=e637]: "3"
+                      - generic [ref=e638]: recorded
+                    - article [ref=e639]:
+                      - generic [ref=e640]: Gates
+                      - strong [ref=e641]: "0"
+                      - generic [ref=e642]: pending
+                  - generic [ref=e643]:
+                    - generic [ref=e644]: Status
+                    - strong [ref=e645]: failed
+                  - generic [ref=e646]:
+                    - generic [ref=e647]: Execution mode
+                    - strong [ref=e648]: External kernel
+                  - generic [ref=e649]:
+                    - heading "Execution details" [level=4] [ref=e650]
+                    - article [ref=e651]:
+                      - strong [ref=e652]: Execution mode set to external kernel.
+                  - generic [ref=e653]:
+                    - generic [ref=e654]: Tick
+                    - strong [ref=e655]: "0"
+                  - generic [ref=e656]:
+                    - generic [ref=e657]: Current
+                    - strong [ref=e658]: none
+                  - generic [ref=e659]:
+                    - generic [ref=e660]:
+                      - heading "Run summary" [level=4] [ref=e661]
+                      - generic [ref=e662]: 3 report artifacts
+                    - paragraph [ref=e663]: failed run with 1 completed workload.
+                    - generic "Final report metrics" [ref=e664]:
+                      - generic [ref=e665]:
+                        - generic [ref=e666]: Workloads
+                        - strong [ref=e667]: 1/2 done
+                      - generic [ref=e668]:
+                        - generic [ref=e669]: Artifacts
+                        - strong [ref=e670]: "4"
+                      - generic [ref=e671]:
+                        - generic [ref=e672]: Effects
+                        - strong [ref=e673]: "3"
+                      - generic [ref=e674]:
+                        - generic [ref=e675]: Issues
+                        - strong [ref=e676]: 0 blocking / 0 follow-up
+                    - generic [ref=e677]:
+                      - heading "Blocking issues" [level=4] [ref=e678]
+                      - paragraph [ref=e679]: No blocking issues.
+                    - generic [ref=e680]:
+                      - heading "Follow-ups" [level=4] [ref=e681]
+                      - paragraph [ref=e682]: No follow-ups recorded.
+                  - generic [ref=e683]:
+                    - heading "Artifacts" [level=4] [ref=e684]
+                    - generic [ref=e685]:
+                      - button " acceptance-criteria.md Markdown report" [ref=e686]:
+                        - generic [ref=e687]: 
+                        - generic [ref=e688]: acceptance-criteria.md
+                        - generic [ref=e689]: Markdown report
+                      - button " plan.md Markdown report" [ref=e690]:
+                        - generic [ref=e691]: 
+                        - generic [ref=e692]: plan.md
+                        - generic [ref=e693]: Markdown report
+                      - button " work-order.md Contract" [ref=e694]:
+                        - generic [ref=e695]: 
+                        - generic [ref=e696]: work-order.md
+                        - generic [ref=e697]: Contract
+                      - button " result.json JSON result" [ref=e698]:
+                        - generic [ref=e699]: 
+                        - generic [ref=e700]: result.json
+                        - generic [ref=e701]: JSON result
+                    - article [ref=e702]:
+                      - generic [ref=e703]:
+                        - generic [ref=e704]:
+                          - strong [ref=e705]: acceptance-criteria.md
+                          - generic [ref=e706]: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/acceptance-criteria.md
+                        - button "" [ref=e707]:
+                          - generic [ref=e708]: 
+                      - paragraph [ref=e710]: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/acceptance-criteria.md
+                  - region "Effect review" [ref=e711]:
+                    - generic [ref=e712]:
+                      - heading "Effects" [level=4] [ref=e713]
+                      - generic [ref=e714]: 3 recorded
+                    - article [ref=e715]:
+                      - generic [ref=e716]:
+                        - generic [ref=e717]:
+                          - strong [ref=e718]: other / applied
+                          - generic [ref=e719]: Plano, critérios de aceitação e ordem de trabalho preparados para criar os arquivos solicitados na área de trabalho.
+                        - code [ref=e720]: effect_f5cb117e02695741
+                      - generic [ref=e721]:
+                        - generic [ref=e722]:
+                          - generic [ref=e723]: Path
+                          - strong [ref=e724]: none
+                        - generic [ref=e725]:
+                          - generic [ref=e726]: State
+                          - strong [ref=e727]: sisyphus_coordinator
+                        - generic [ref=e728]:
+                          - generic [ref=e729]: Policy
+                          - strong [ref=e730]: unspecified
+                        - generic [ref=e731]:
+                          - generic [ref=e732]: Hash before
+                          - strong [ref=e733]: none
+                        - generic [ref=e734]:
+                          - generic [ref=e735]: Hash after
+                          - strong [ref=e736]: none
+                      - textbox "Approval/rejection note" [disabled] [ref=e737]
+                      - generic [ref=e738]:
+                        - button "Reject" [disabled] [ref=e739]
+                        - button "Apply" [disabled] [ref=e740]
+                    - article [ref=e741]:
+                      - generic [ref=e742]:
+                        - generic [ref=e743]:
+                          - strong [ref=e744]: other / applied
+                          - generic [ref=e745]: "Agent workload \"sisyphus_ultraworker\" failed after 1 attempts: Workload output contract validation failed: invalid JSON in result payload for \"sisyphus_ultraworker\"."
+                        - code [ref=e746]: effect_02aa73dde760ff1f
+                      - generic [ref=e747]:
+                        - generic [ref=e748]:
+                          - generic [ref=e749]: Path
+                          - strong [ref=e750]: none
+                        - generic [ref=e751]:
+                          - generic [ref=e752]: State
+                          - strong [ref=e753]: sisyphus_ultraworker
+                        - generic [ref=e754]:
+                          - generic [ref=e755]: Policy
+                          - strong [ref=e756]: unspecified
+                        - generic [ref=e757]:
+                          - generic [ref=e758]: Hash before
+                          - strong [ref=e759]: none
+                        - generic [ref=e760]:
+                          - generic [ref=e761]: Hash after
+                          - strong [ref=e762]: none
+                      - textbox "Approval/rejection note" [disabled] [ref=e763]
+                      - generic [ref=e764]:
+                        - button "Reject" [disabled] [ref=e765]
+                        - button "Apply" [disabled] [ref=e766]
+                    - article [ref=e767]:
+                      - generic [ref=e768]:
+                        - generic [ref=e769]:
+                          - strong [ref=e770]: other / applied
+                          - generic [ref=e771]: "Agent workload \"sisyphus_ultraworker\" failed after 1 attempts: Workload output contract validation failed: sisyphus_ultraworker: artifacts[0].content must be a non-empty string."
+                        - code [ref=e772]: effect_ca190dfc8042910c
+                      - generic [ref=e773]:
+                        - generic [ref=e774]:
+                          - generic [ref=e775]: Path
+                          - strong [ref=e776]: none
+                        - generic [ref=e777]:
+                          - generic [ref=e778]: State
+                          - strong [ref=e779]: sisyphus_ultraworker
+                        - generic [ref=e780]:
+                          - generic [ref=e781]: Policy
+                          - strong [ref=e782]: unspecified
+                        - generic [ref=e783]:
+                          - generic [ref=e784]: Hash before
+                          - strong [ref=e785]: none
+                        - generic [ref=e786]:
+                          - generic [ref=e787]: Hash after
+                          - strong [ref=e788]: none
+                      - textbox "Approval/rejection note" [disabled] [ref=e789]
+                      - generic [ref=e790]:
+                        - button "Reject" [disabled] [ref=e791]
+                        - button "Apply" [disabled] [ref=e792]
+                  - generic [ref=e793]:
+                    - heading "Memory candidates" [level=4] [ref=e794]
+                    - paragraph [ref=e795]: No memory candidates.
+                  - generic [ref=e796]:
+                    - heading "Context pack" [level=4] [ref=e797]
+                    - generic [ref=e798]:
+                      - generic [ref=e799]: Summary
+                      - strong [ref=e800]: Memory context pack with 5 sections, 3 retrieval sections, and 318 estimated tokens.
+                    - generic [ref=e801]:
+                      - generic [ref=e802]: Workflow
+                      - strong [ref=e803]: 6 states / 5 transitions
+                    - generic [ref=e804]:
+                      - generic [ref=e805]: Agents
+                      - strong [ref=e806]: sisyphus_coordinator, sisyphus_ultraworker, sisyphus_reviewer
+                    - generic [ref=e807]:
+                      - heading "Files" [level=4] [ref=e808]
+                      - article [ref=e809]:
+                        - strong [ref=e810]: .theia/flow/agents/sisyphus/coordinator.md
+                        - generic [ref=e811]: "Memory indexed file: markdown"
+                      - article [ref=e812]:
+                        - strong [ref=e813]: .theia/flow/agents/sisyphus/reviewer.md
+                        - generic [ref=e814]: "Memory indexed file: markdown"
+                      - article [ref=e815]:
+                        - strong [ref=e816]: .theia/flow/agents/sisyphus/ultraworker.md
+                        - generic [ref=e817]: "Memory indexed file: markdown"
+                      - article [ref=e818]:
+                        - strong [ref=e819]: .theia/flow/runs/run_5e4d25d5f95a1641/workloads/wl_20b5f93516b549db/input/context-pack.md
+                        - generic [ref=e820]: "Memory indexed file: markdown"
+                      - article [ref=e821]:
+                        - strong [ref=e822]: .theia/flow/runs/run_5e4d25d5f95a1641/workloads/wl_20b5f93516b549db/input/prompt.md
+                        - generic [ref=e823]: "Memory indexed file: markdown"
+                      - article [ref=e824]:
+                        - strong [ref=e825]: .theia/flow/runs/run_5e4d25d5f95a1641/workloads/wl_20b5f93516b549db/input/work-order.md
+                        - generic [ref=e826]: "Memory indexed file: markdown"
+                      - article [ref=e827]:
+                        - strong [ref=e828]: .theia/flow/runs/run_abe86be5944743e5.json
+                        - generic [ref=e829]: "Memory indexed file: json"
+                      - article [ref=e830]:
+                        - strong [ref=e831]: .theia/flow/runs/run_abe86be5944743e5/issues/blocking.jsonl
+                        - generic [ref=e832]: "Memory indexed file: jsonl"
+                      - article [ref=e833]:
+                        - strong [ref=e834]: .theia/flow/runs/run_abe86be5944743e5/issues/followup.jsonl
+                        - generic [ref=e835]: "Memory indexed file: jsonl"
+                      - article [ref=e836]:
+                        - strong [ref=e837]: .theia/flow/runs/run_abe86be5944743e5/issues/issues.jsonl
+                        - generic [ref=e838]: "Memory indexed file: jsonl"
+                      - article [ref=e839]:
+                        - strong [ref=e840]: .theia/flow/runs/run_abe86be5944743e5/issues/non_blocking.jsonl
+                        - generic [ref=e841]: "Memory indexed file: jsonl"
+                      - article [ref=e842]:
+                        - strong [ref=e843]: .theia/flow/runs/run_abe86be5944743e5/issues/summary.json
+                        - generic [ref=e844]: "Memory indexed file: json"
+                      - article [ref=e845]:
+                        - strong [ref=e846]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_5e4d25d5f95a1641\workloads\wl_20b5f93516b549db\input\context-pack.md:54
+                        - generic [ref=e847]: "Memory local-docs: Relevant Retrieval"
+                      - article [ref=e848]:
+                        - strong [ref=e849]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_5e4d25d5f95a1641\workloads\wl_20b5f93516b549db\input\context-pack.md:90
+                        - generic [ref=e850]: "Memory local-docs: Implementation Summary"
+                      - article [ref=e851]:
+                        - strong [ref=e852]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_abe86be5944743e5\workloads\wl_1f547f885d40a6cc\input\context-pack.md:107
+                        - generic [ref=e853]: "Memory local-docs: Relevant Retrieval"
+                      - article [ref=e854]:
+                        - strong [ref=e855]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_abe86be5944743e5\workloads\wl_6bdaf16058c09d6c\input\context-pack.md:107
+                        - generic [ref=e856]: "Memory local-docs: Relevant Retrieval"
+                      - article [ref=e857]:
+                        - strong [ref=e858]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_abe86be5944743e5\workloads\wl_908f88474fe77707\input\context-pack.md:94
+                        - generic [ref=e859]: "Memory local-docs: Work Order - sisyphus_coordinator"
+                      - article [ref=e860]:
+                        - strong [ref=e861]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_b95a03b79a367ae6\workloads\wl_098100f8cb59a18c\input\context-pack.md:58
+                        - generic [ref=e862]: "Memory local-docs: Relevant Retrieval"
+                      - article [ref=e863]:
+                        - strong [ref=e864]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_b95a03b79a367ae6\workloads\wl_7fdde2f7dd3ffac8\input\context-pack.md:58
+                        - generic [ref=e865]: "Memory local-docs: Relevant Retrieval"
+                      - article [ref=e866]:
+                        - strong [ref=e867]: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\runs\run_b95a03b79a367ae6\workloads\wl_e2d01bbbdb421ef2\input\context-pack.md:90
+                        - generic [ref=e868]: "Memory local-docs: Work Order - sisyphus_coordinator"
+                      - article [ref=e869]:
+                        - strong [ref=e870]: final/report.md
+                        - generic [ref=e871]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e872]:
+                        - strong [ref=e873]: input/request.md
+                        - generic [ref=e874]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e875]:
+                        - strong [ref=e876]: plan/acceptance-criteria.md
+                        - generic [ref=e877]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e878]:
+                        - strong [ref=e879]: plan/plan.md
+                        - generic [ref=e880]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e881]:
+                        - strong [ref=e882]: plan/work-order.md
+                        - generic [ref=e883]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e884]:
+                        - strong [ref=e885]: review/review.md
+                        - generic [ref=e886]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e887]:
+                        - strong [ref=e888]: review/status.json
+                        - generic [ref=e889]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e890]:
+                        - strong [ref=e891]: sisyphus/coordinator.md
+                        - generic [ref=e892]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e893]:
+                        - strong [ref=e894]: sisyphus/reviewer.md
+                        - generic [ref=e895]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e896]:
+                        - strong [ref=e897]: sisyphus/ultraworker.md
+                        - generic [ref=e898]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e899]:
+                        - strong [ref=e900]: work/changes.md
+                        - generic [ref=e901]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e902]:
+                        - strong [ref=e903]: work/evidence.md
+                        - generic [ref=e904]: Referenced by workflow input, output, or agent declaration.
+                      - article [ref=e905]:
+                        - strong [ref=e906]: work/summary.md
+                        - generic [ref=e907]: Referenced by workflow input, output, or agent declaration.
+                    - generic [ref=e908]:
+                      - heading "Signals" [level=4] [ref=e909]
+                      - article [ref=e910]:
+                        - strong [ref=e911]: memory.context.task
+                        - generic [ref=e912]: Task
+                      - article [ref=e913]:
+                        - strong [ref=e914]: memory.context.workspace
+                        - generic [ref=e915]: Workspace
+                      - article [ref=e916]:
+                        - strong [ref=e917]: memory.context.context-chunk_8033f116
+                        - generic [ref=e918]: "local-docs: Relevant Retrieval"
+                      - article [ref=e919]:
+                        - strong [ref=e920]: memory.context.files
+                        - generic [ref=e921]: "147"
+                      - article [ref=e922]:
+                        - strong [ref=e923]: memory.context.symbols
+                        - generic [ref=e924]: "0"
+                      - article [ref=e925]:
+                        - strong [ref=e926]: memory.context.memories
+                        - generic [ref=e927]: "0"
+                      - article [ref=e928]:
+                        - strong [ref=e929]: memory.context.skills
+                        - generic [ref=e930]: "0"
+                      - article [ref=e931]:
+                        - strong [ref=e932]: memory.context.retrieval_sources
+                        - generic [ref=e933]: local-docs
+                      - article [ref=e934]:
+                        - strong [ref=e935]: memory.context.memory_enabled
+                        - generic [ref=e936]: "false"
+                - region "Run events" [ref=e937]:
+                  - generic [ref=e938]:
+                    - heading "Events" [level=3] [ref=e939]
+                    - generic [ref=e940]: 73 / 73
+                  - generic "Event filters" [ref=e941]:
+                    - generic [ref=e942]:
+                      - generic [ref=e943]: State
+                      - combobox "State" [ref=e944]:
+                        - option "All" [selected]
+                        - option "input"
+                        - option "plan_gate"
+                        - option "sisyphus_coordinator"
+                        - option "sisyphus_ultraworker"
+                    - generic [ref=e945]:
+                      - generic [ref=e946]: Workload
+                      - combobox "Workload" [ref=e947]:
+                        - option "All" [selected]
+                        - option "wl_a6b5c82bf1eaf2e4"
+                        - option "wl_ecb2ae1bb0ac8619"
+                    - generic [ref=e948]:
+                      - generic [ref=e949]: Type
+                      - combobox "Type" [ref=e950]:
+                        - option "All" [selected]
+                        - option "artifact.created"
+                        - option "effect.proposed"
+                        - option "gate.approved"
+                        - option "gate.created"
+                        - option "run.started"
+                        - option "signal.emitted"
+                        - option "state.completed"
+                        - option "state.entered"
+                        - option "transition.fired"
+                        - option "workload.completed"
+                        - option "workload.created"
+                        - option "workload.failed"
+                        - option "workload.started"
+                    - generic [ref=e951]:
+                      - generic [ref=e952]: Gate
+                      - combobox "Gate" [ref=e953]:
+                        - option "All" [selected]
+                        - option "sisyphus_plan_approval"
+                    - generic [ref=e954]:
+                      - generic [ref=e955]: Artifact
+                      - combobox "Artifact" [ref=e956]:
+                        - option "All" [selected]
+                        - option "artifact-run_75c26a709c24e8aa-wl_ecb2ae1bb0ac8619-file____c_3A_Users_Rodrigo_AppData_Local_Temp_cloud-ws-5fflzy_.theia_flow_runs_run_75c26a709c24e8aa_workloads_wl_ecb2ae1bb0ac8619_output_artifacts_plan_acceptance-criteria.md"
+                        - option "artifact-run_75c26a709c24e8aa-wl_ecb2ae1bb0ac8619-file____c_3A_Users_Rodrigo_AppData_Local_Temp_cloud-ws-5fflzy_.theia_flow_runs_run_75c26a709c24e8aa_workloads_wl_ecb2ae1bb0ac8619_output_artifacts_plan_plan.md"
+                        - option "artifact-run_75c26a709c24e8aa-wl_ecb2ae1bb0ac8619-file____c_3A_Users_Rodrigo_AppData_Local_Temp_cloud-ws-5fflzy_.theia_flow_runs_run_75c26a709c24e8aa_workloads_wl_ecb2ae1bb0ac8619_output_artifacts_plan_work-order.md"
+                        - option "artifact-run_75c26a709c24e8aa-wl_ecb2ae1bb0ac8619-file____c_3A_Users_Rodrigo_AppData_Local_Temp_cloud-ws-5fflzy_.theia_flow_runs_run_75c26a709c24e8aa_workloads_wl_ecb2ae1bb0ac8619_output_result.json"
+                        - option "file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/acceptance-criteria.md"
+                        - option "file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/plan.md"
+                        - option "file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/work-order.md"
+                        - option "file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/result.json"
+                    - generic [ref=e957]:
+                      - generic [ref=e958]: Effect
+                      - combobox "Effect" [ref=e959]:
+                        - option "All" [selected]
+                        - option "notification"
+                    - generic [ref=e960]:
+                      - generic [ref=e961]: Severity
+                      - combobox "Severity" [ref=e962]:
+                        - option "All" [selected]
+                    - button "" [disabled] [ref=e963]:
+                      - generic [ref=e964]: 
+                  - generic [ref=e965]:
+                    - article [ref=e966]:
+                      - time [ref=e967]: 05:25:19
+                      - strong [ref=e968]: gate.approved
+                      - generic [ref=e969]: gate approved
+                    - article [ref=e970]:
+                      - time [ref=e971]: 05:25:19
+                      - strong [ref=e972]: gate.approved
+                      - generic [ref=e973]: gate approved
+                    - article [ref=e974]:
+                      - time [ref=e975]: 05:25:19
+                      - strong [ref=e976]: gate.approved
+                      - generic [ref=e977]: gate approved
+                    - article [ref=e978]:
+                      - time [ref=e979]: 05:25:19
+                      - strong [ref=e980]: gate.approved
+                      - generic [ref=e981]: gate approved
+                    - article [ref=e982]:
+                      - time [ref=e983]: 05:25:18
+                      - strong [ref=e984]: gate.approved
+                      - generic [ref=e985]: gate approved
+                    - article [ref=e986]:
+                      - time [ref=e987]: 05:24:41
+                      - strong [ref=e988]: gate.approved
+                      - generic [ref=e989]: gate approved
+                    - article [ref=e990]:
+                      - time [ref=e991]: 05:24:41
+                      - strong [ref=e992]: gate.approved
+                      - generic [ref=e993]: gate approved
+                    - article [ref=e994]:
+                      - time [ref=e995]: 05:24:41
+                      - strong [ref=e996]: gate.approved
+                      - generic [ref=e997]: gate approved
+                    - article [ref=e998]:
+                      - time [ref=e999]: 05:24:41
+                      - strong [ref=e1000]: gate.approved
+                      - generic [ref=e1001]: gate approved
+                    - article [ref=e1002]:
+                      - time [ref=e1003]: 05:24:41
+                      - strong [ref=e1004]: gate.approved
+                      - generic [ref=e1005]: gate approved
+                    - article [ref=e1006]:
+                      - time [ref=e1007]: 05:24:41
+                      - strong [ref=e1008]: gate.approved
+                      - generic [ref=e1009]: gate approved
+                    - article [ref=e1010]:
+                      - time [ref=e1011]: 05:24:41
+                      - strong [ref=e1012]: gate.approved
+                      - generic [ref=e1013]: gate approved
+                    - article [ref=e1014]:
+                      - time [ref=e1015]: 05:24:41
+                      - strong [ref=e1016]: gate.approved
+                      - generic [ref=e1017]: gate approved
+                    - article [ref=e1018]:
+                      - time [ref=e1019]: 05:24:41
+                      - strong [ref=e1020]: gate.approved
+                      - generic [ref=e1021]: gate approved
+                    - article [ref=e1022]:
+                      - time [ref=e1023]: 05:23:28
+                      - strong [ref=e1024]: workload.failed
+                      - generic [ref=e1025]: workload.failed
+                    - article [ref=e1026]:
+                      - time [ref=e1027]: 05:23:28
+                      - strong [ref=e1028]: signal.emitted
+                      - generic [ref=e1029]: sisyphus_ultraworker.status
+                    - article [ref=e1030]:
+                      - time [ref=e1031]: 05:23:26
+                      - strong [ref=e1032]: effect.proposed
+                      - generic [ref=e1033]: "Agent workload \"sisyphus_ultraworker\" failed after 1 attempts: Workload output contract validation failed: sisyphus_ultraworker: artifacts[0].content must be a non-empty string."
+                    - article [ref=e1034]:
+                      - time [ref=e1035]: 05:22:27
+                      - strong [ref=e1036]: gate.approved
+                      - generic [ref=e1037]: gate approved
+                    - article [ref=e1038]:
+                      - time [ref=e1039]: 05:22:25
+                      - strong [ref=e1040]: gate.approved
+                      - generic [ref=e1041]: gate approved
+                    - article [ref=e1042]:
+                      - time [ref=e1043]: 05:22:25
+                      - strong [ref=e1044]: gate.approved
+                      - generic [ref=e1045]: gate approved
+                    - article [ref=e1046]:
+                      - time [ref=e1047]: 05:22:25
+                      - strong [ref=e1048]: gate.approved
+                      - generic [ref=e1049]: gate approved
+                    - article [ref=e1050]:
+                      - time [ref=e1051]: 05:22:25
+                      - strong [ref=e1052]: gate.approved
+                      - generic [ref=e1053]: gate approved
+                    - article [ref=e1054]:
+                      - time [ref=e1055]: 05:22:25
+                      - strong [ref=e1056]: gate.approved
+                      - generic [ref=e1057]: gate approved
+                    - article [ref=e1058]:
+                      - time [ref=e1059]: 05:22:24
+                      - strong [ref=e1060]: gate.approved
+                      - generic [ref=e1061]: gate approved
+                    - article [ref=e1062]:
+                      - time [ref=e1063]: 05:21:30
+                      - strong [ref=e1064]: state.completed
+                      - generic [ref=e1065]: state completed
+                    - article [ref=e1066]:
+                      - time [ref=e1067]: 05:21:30
+                      - strong [ref=e1068]: workload.failed
+                      - generic [ref=e1069]: workload.failed
+                    - article [ref=e1070]:
+                      - time [ref=e1071]: 05:21:29
+                      - strong [ref=e1072]: signal.emitted
+                      - generic [ref=e1073]: sisyphus_ultraworker.status
+                    - article [ref=e1074]:
+                      - time [ref=e1075]: 05:21:29
+                      - strong [ref=e1076]: effect.proposed
+                      - generic [ref=e1077]: "Agent workload \"sisyphus_ultraworker\" failed after 1 attempts: Workload output contract validation failed: invalid JSON in result payload for \"sisyphus_ultraworker\"."
+                    - article [ref=e1078]:
+                      - time [ref=e1079]: 05:20:53
+                      - strong [ref=e1080]: gate.approved
+                      - generic [ref=e1081]: gate approved
+                    - article [ref=e1082]:
+                      - time [ref=e1083]: 05:20:53
+                      - strong [ref=e1084]: gate.approved
+                      - generic [ref=e1085]: gate approved
+                    - article [ref=e1086]:
+                      - time [ref=e1087]: 05:20:53
+                      - strong [ref=e1088]: gate.approved
+                      - generic [ref=e1089]: gate approved
+                    - article [ref=e1090]:
+                      - time [ref=e1091]: 05:20:53
+                      - strong [ref=e1092]: gate.approved
+                      - generic [ref=e1093]: gate approved
+                    - article [ref=e1094]:
+                      - time [ref=e1095]: 05:20:53
+                      - strong [ref=e1096]: gate.approved
+                      - generic [ref=e1097]: gate approved
+                    - article [ref=e1098]:
+                      - time [ref=e1099]: 05:20:53
+                      - strong [ref=e1100]: gate.approved
+                      - generic [ref=e1101]: gate approved
+                    - article [ref=e1102]:
+                      - time [ref=e1103]: 05:20:53
+                      - strong [ref=e1104]: gate.approved
+                      - generic [ref=e1105]: gate approved
+                    - article [ref=e1106]:
+                      - time [ref=e1107]: 05:20:53
+                      - strong [ref=e1108]: gate.approved
+                      - generic [ref=e1109]: gate approved
+                    - article [ref=e1110]:
+                      - time [ref=e1111]: 05:20:53
+                      - strong [ref=e1112]: gate.approved
+                      - generic [ref=e1113]: gate approved
+                    - article [ref=e1114]:
+                      - time [ref=e1115]: 05:20:53
+                      - strong [ref=e1116]: gate.approved
+                      - generic [ref=e1117]: gate approved
+                    - article [ref=e1118]:
+                      - time [ref=e1119]: 05:20:53
+                      - strong [ref=e1120]: gate.approved
+                      - generic [ref=e1121]: gate approved
+                    - article [ref=e1122]:
+                      - time [ref=e1123]: 05:20:11
+                      - strong [ref=e1124]: gate.approved
+                      - generic [ref=e1125]: gate approved
+                    - article [ref=e1126]:
+                      - time [ref=e1127]: 05:20:01
+                      - strong [ref=e1128]: gate.approved
+                      - generic [ref=e1129]: gate approved
+                    - article [ref=e1130]:
+                      - time [ref=e1131]: 05:20:01
+                      - strong [ref=e1132]: gate.approved
+                      - generic [ref=e1133]: gate approved
+                    - article [ref=e1134]:
+                      - time [ref=e1135]: 05:20:00
+                      - strong [ref=e1136]: gate.approved
+                      - generic [ref=e1137]: gate approved
+                    - article [ref=e1138]:
+                      - time [ref=e1139]: 05:20:00
+                      - strong [ref=e1140]: gate.approved
+                      - generic [ref=e1141]: gate approved
+                    - article [ref=e1142]:
+                      - time [ref=e1143]: 05:20:00
+                      - strong [ref=e1144]: gate.approved
+                      - generic [ref=e1145]: gate approved
+                    - article [ref=e1146]:
+                      - time [ref=e1147]: 05:20:00
+                      - strong [ref=e1148]: gate.approved
+                      - generic [ref=e1149]: gate approved
+                    - article [ref=e1150]:
+                      - time [ref=e1151]: 05:19:31
+                      - strong [ref=e1152]: gate.approved
+                      - generic [ref=e1153]: gate approved
+                    - article [ref=e1154]:
+                      - time [ref=e1155]: 05:19:31
+                      - strong [ref=e1156]: gate.approved
+                      - generic [ref=e1157]: gate approved
+                    - article [ref=e1158]:
+                      - time [ref=e1159]: 05:19:21
+                      - strong [ref=e1160]: workload.started
+                      - generic [ref=e1161]: workload started
+                    - article [ref=e1162]:
+                      - time [ref=e1163]: 05:19:21
+                      - strong [ref=e1164]: workload.created
+                      - generic [ref=e1165]: workload created
+                    - article [ref=e1166]:
+                      - time [ref=e1167]: 05:19:21
+                      - strong [ref=e1168]: state.entered
+                      - generic [ref=e1169]: state entered
+                    - article [ref=e1170]:
+                      - time [ref=e1171]: 05:19:21
+                      - strong [ref=e1172]: transition.fired
+                      - generic [ref=e1173]: transition fired
+                    - article [ref=e1174]:
+                      - time [ref=e1175]: 05:19:21
+                      - strong [ref=e1176]: state.completed
+                      - generic [ref=e1177]: state completed
+                    - article [ref=e1178]:
+                      - time [ref=e1179]: 05:19:21
+                      - strong [ref=e1180]: gate.approved
+                      - generic [ref=e1181]: gate approved
+                    - article [ref=e1182]:
+                      - time [ref=e1183]: 05:15:36
+                      - strong [ref=e1184]: gate.created
+                      - generic [ref=e1185]: Approve this gate before the run continues.
+                    - article [ref=e1186]:
+                      - time [ref=e1187]: 05:15:36
+                      - strong [ref=e1188]: state.entered
+                      - generic [ref=e1189]: state entered
+                    - article [ref=e1190]:
+                      - time [ref=e1191]: 05:15:36
+                      - strong [ref=e1192]: transition.fired
+                      - generic [ref=e1193]: transition fired
+                    - article [ref=e1194]:
+                      - time [ref=e1195]: 05:15:36
+                      - strong [ref=e1196]: state.completed
+                      - generic [ref=e1197]: state completed
+                    - article [ref=e1198]:
+                      - time [ref=e1199]: 05:15:36
+                      - strong [ref=e1200]: workload.completed
+                      - generic [ref=e1201]: workload completed
+                    - article [ref=e1202]:
+                      - time [ref=e1203]: 05:15:36
+                      - strong [ref=e1204]: signal.emitted
+                      - generic [ref=e1205]: sisyphus_coordinator.status
+                    - article [ref=e1206]:
+                      - time [ref=e1207]: 05:15:36
+                      - strong [ref=e1208]: signal.emitted
+                      - generic [ref=e1209]: ready_for_ultrawork
+                    - article [ref=e1210]:
+                      - time [ref=e1211]: 05:15:35
+                      - strong [ref=e1212]: effect.proposed
+                      - generic [ref=e1213]: Plano, critérios de aceitação e ordem de trabalho preparados para criar os arquivos solicitados na área de trabalho.
+                    - article [ref=e1214]:
+                      - time [ref=e1215]: 05:15:33
+                      - strong [ref=e1216]: artifact.created
+                      - generic [ref=e1217]: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/result.json
+                    - article [ref=e1218]:
+                      - time [ref=e1219]: 05:15:33
+                      - strong [ref=e1220]: artifact.created
+                      - generic [ref=e1221]: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/work-order.md
+                    - article [ref=e1222]:
+                      - time [ref=e1223]: 05:15:33
+                      - strong [ref=e1224]: artifact.created
+                      - generic [ref=e1225]: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/acceptance-criteria.md
+                    - article [ref=e1226]:
+                      - time [ref=e1227]: 05:15:31
+                      - strong [ref=e1228]: artifact.created
+                      - generic [ref=e1229]: file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/.theia/flow/runs/run_75c26a709c24e8aa/workloads/wl_ecb2ae1bb0ac8619/output/artifacts/plan/plan.md
+                    - article [ref=e1230]:
+                      - time [ref=e1231]: 05:14:17
+                      - strong [ref=e1232]: workload.started
+                      - generic [ref=e1233]: workload started
+                    - article [ref=e1234]:
+                      - time [ref=e1235]: 05:14:17
+                      - strong [ref=e1236]: workload.created
+                      - generic [ref=e1237]: workload created
+                    - article [ref=e1238]:
+                      - time [ref=e1239]: 05:14:17
+                      - strong [ref=e1240]: state.entered
+                      - generic [ref=e1241]: state entered
+                    - article [ref=e1242]:
+                      - time [ref=e1243]: 05:14:17
+                      - strong [ref=e1244]: transition.fired
+                      - generic [ref=e1245]: transition fired
+                    - article [ref=e1246]:
+                      - time [ref=e1247]: 05:14:17
+                      - strong [ref=e1248]: state.completed
+                      - generic [ref=e1249]: state completed
+                    - article [ref=e1250]:
+                      - time [ref=e1251]: 05:14:17
+                      - strong [ref=e1252]: state.entered
+                      - generic [ref=e1253]: state entered
+                    - article [ref=e1254]:
+                      - time [ref=e1255]: 05:14:17
+                      - strong [ref=e1256]: run.started
+                      - generic [ref=e1257]: run started
+        - text:           
+      - generic [ref=e146]:
+        - tablist [ref=e151] [cursor=pointer]:
+          - listitem [ref=e152]:
+            - generic [ref=e154]: 
+          - listitem [ref=e155]:
+            - generic [ref=e157]: 
+          - listitem [ref=e158]
+        - generic:      +   
+    - generic [ref=e161]:
+      - generic [ref=e162]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e163]:
+          - generic [ref=e164]: 
+          - generic [ref=e165]: "0"
+          - generic [ref=e166]: 
+          - generic [ref=e167]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e168]:
+          - generic [ref=e169]: 
+          - generic [ref=e170]: Collaborate
+      - generic [ref=e171]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e172]:
+          - generic [ref=e173]: 
+          - generic [ref=e174]: Sign in to GitHub Copilot
+        - generic "No Notifications" [ref=e175]:
+          - generic [ref=e176]: 
+        - button "Toggle Bottom Panel" [ref=e177]:
+          - generic [ref=e178]: 
+  - generic:
+    - generic:  
+  - generic [ref=e179]:
+    - alert
+    - alert
+  - generic [ref=e1258]: Flow

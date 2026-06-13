@@ -1,9 +1,15 @@
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import { LanguageModelRegistry } from '@theia/ai-core';
-import { CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import {
     FLOW_CAPABILITIES,
     FlowCreateWorkflowFromTemplateRequest,
+    FlowCreateWorkflowFromPresetRequest,
+    FlowCreateWorkflowFromPatternRequest,
+    FlowCreateWorkflowFromAiAuthoringDraftRequest,
+    FlowRunWorkflowPatternRequest,
+    FlowPlanDynamicWorkflowRequest,
+    FlowRunDynamicWorkflowRequest,
     FlowCreateAgentMarkdownRequest,
     FlowAgentMarkdownFile,
     FlowAgentMarkdownRequest,
@@ -23,12 +29,15 @@ import {
     FlowImportRunRequest,
     FlowImportWorkflowRequest,
     FlowMemoryWriteRequest,
+    FlowPipelinePreset,
     FlowRun,
     FlowKernelRunMetadata,
     FlowRunLifecycleRequest,
     FlowRunRequest,
     FlowRunStreamRequest,
+    FlowListPipelinePresetsRequest,
     FlowSaveWorkflowRequest,
+    FlowSavePipelinePresetRequest,
     FlowRenameAgentMarkdownRequest,
     FlowSecondRunApprovalRequest,
     FlowSecondRunDecisionRequest,
@@ -43,13 +52,24 @@ import {
     FlowWorkflowRequest,
     FlowWorkflowTemplate,
     FlowWorkspaceRequest,
+    FlowDynamicWorkflowPlan,
     MemoryCandidate,
     MemoryWrite,
+    FLOW_PIPELINE_PRESET_VERSION,
+    compileFlowWorkflowPattern,
     formatMissingCapabilities,
+    getBuiltInFlowPipelinePreset,
+    getFlowAiAuthoringSpec,
+    listFlowModelProfiles,
+    listFlowWorkflowPatterns,
     listFlowWorkflowTemplates,
+    listBuiltInFlowPipelinePresets,
+    planDynamicWorkflow,
     redactFlowRunForDisplay,
     redactFlowSecretsText,
     resolveFlowWorkflowCapabilities,
+    SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID,
+    validateFlowPipelinePreset,
     validateFlowWorkflow
 } from '../common';
 import { decideFlowApprovalPolicy, FlowApprovalAction, FlowApprovalPolicyDecision } from '../common/flow-approval-policy';
@@ -115,6 +135,10 @@ export class FlowServiceImpl implements FlowService {
         return this.getRuntimeCapabilities();
     }
 
+    async getAiAuthoringSpec() {
+        return getFlowAiAuthoringSpec();
+    }
+
     async getSnapshot(request: FlowWorkspaceRequest): Promise<FlowSnapshot> {
         const workflows = await this.ensureWorkflows(request.workspaceRootUri);
         const runs = await this.store.listRuns(request.workspaceRootUri);
@@ -134,8 +158,29 @@ export class FlowServiceImpl implements FlowService {
         return this.ensureWorkflows(request.workspaceRootUri);
     }
 
+    async listRuns(request: FlowWorkspaceRequest): Promise<FlowRun[]> {
+        const runs = await this.store.listRuns(request.workspaceRootUri);
+        return runs.map(run => redactFlowRunForDisplay(run));
+    }
+
     async listWorkflowTemplates(): Promise<FlowWorkflowTemplate[]> {
         return listFlowWorkflowTemplates();
+    }
+
+    async listWorkflowPatterns() {
+        return listFlowWorkflowPatterns();
+    }
+
+    async listModelProfiles() {
+        return listFlowModelProfiles();
+    }
+
+    async listPipelinePresets(request: FlowListPipelinePresetsRequest): Promise<FlowPipelinePreset[]> {
+        const includeBuiltIn = request.includeBuiltIn !== false;
+        const includeWorkspace = request.includeWorkspace !== false;
+        const builtIn = includeBuiltIn ? listBuiltInFlowPipelinePresets() : [];
+        const workspace = includeWorkspace ? await this.store.listWorkspacePipelinePresets(request.workspaceRootUri) : [];
+        return [...builtIn, ...workspace];
     }
 
     async listAgentMarkdownFiles(request: FlowWorkspaceRequest): Promise<FlowAgentMarkdownSummary[]> {
@@ -176,6 +221,221 @@ export class FlowServiceImpl implements FlowService {
             name: request.name,
             description: request.description
         });
+    }
+
+    async createWorkflowFromPreset(request: FlowCreateWorkflowFromPresetRequest): Promise<FlowWorkflow> {
+        const preset = await this.getPipelinePreset(request.workspaceRootUri, request.presetId);
+        await this.materializePresetAgents(request.workspaceRootUri, preset);
+        return this.store.createWorkflowFromPreset(request.workspaceRootUri, preset, {
+            workflowId: request.workflowId,
+            name: request.name,
+            description: request.description,
+            agentNodeOverrides: request.agentNodeOverrides
+        });
+    }
+
+    async createWorkflowFromPattern(request: FlowCreateWorkflowFromPatternRequest): Promise<FlowWorkflow> {
+        const workflow = compileFlowWorkflowPattern(request);
+        const saved = await this.store.createWorkflowFromPattern(request.workspaceRootUri, workflow, request.patternId);
+        await this.materializeWorkflowAgents(request.workspaceRootUri, saved);
+        return saved;
+    }
+
+    async createWorkflowFromAiAuthoringDraft(request: FlowCreateWorkflowFromAiAuthoringDraftRequest): Promise<FlowWorkflow> {
+        return this.materializeAiAuthoringDraft(request.workspaceRootUri, request.draft);
+    }
+
+    async runWorkflowPattern(request: FlowRunWorkflowPatternRequest): Promise<FlowRun> {
+        const workflow = await this.createWorkflowFromPattern(request);
+        return this.startRun({
+            workspaceRootUri: request.workspaceRootUri,
+            workflowId: workflow.id,
+            prompt: request.prompt
+        });
+    }
+
+    async planDynamicWorkflow(request: FlowPlanDynamicWorkflowRequest) {
+        const workflows = await this.listWorkflows(request);
+        return planDynamicWorkflow({
+            prompt: request.prompt,
+            workflows,
+            patterns: listFlowWorkflowPatterns(),
+            preferSaved: request.preferSaved
+        });
+    }
+
+    async runDynamicWorkflow(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun> {
+        if (request.authoringDraft) {
+            return this.runAiAuthoringDraft(request);
+        }
+        const plan = await this.planDynamicWorkflow(request);
+        if (plan.kind === 'saved_workflow' && plan.workflowId) {
+            const run = await this.startRun({
+                workspaceRootUri: request.workspaceRootUri,
+                workflowId: plan.workflowId,
+                prompt: request.prompt
+            });
+            return this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, plan);
+        }
+        if (plan.kind === 'generated_workflow' && plan.workflow) {
+            const workflow = await this.store.createWorkflowFromGeneratedWorkflow(
+                request.workspaceRootUri,
+                plan.workflow,
+                plan.reason
+            );
+            await this.materializeWorkflowAgents(request.workspaceRootUri, workflow);
+            const run = await this.startRun({
+                workspaceRootUri: request.workspaceRootUri,
+                workflowId: workflow.id,
+                prompt: request.prompt
+            });
+            return this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, {
+                ...plan,
+                workflowId: workflow.id,
+                workflow: undefined
+            });
+        }
+        if (!plan.patternId) {
+            throw new Error(`Dynamic workflow planner did not select an executable workflow for prompt: ${plan.reason}`);
+        }
+        const run = await this.runWorkflowPattern({
+            workspaceRootUri: request.workspaceRootUri,
+            patternId: plan.patternId,
+            parameters: {
+                ...(plan.parameters || {}),
+                ...(request.parameters || {})
+            },
+            roleOverrides: request.roleOverrides,
+            prompt: request.prompt
+        });
+        return this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, {
+            ...plan,
+            workflowId: run.workflowId,
+            parameters: {
+                ...(plan.parameters || {}),
+                ...(request.parameters || {})
+            }
+        });
+    }
+
+    protected async runAiAuthoringDraft(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun> {
+        const draft = request.authoringDraft;
+        if (!draft) {
+            throw new Error('Dynamic workflow run is missing an AI authoring draft.');
+        }
+        const prompt = draft.promptMarkdown || request.prompt;
+        if (draft.action === 'run_saved_workflow') {
+            if (!draft.savedWorkflowId) {
+                throw new Error('AI authoring draft action "run_saved_workflow" requires savedWorkflowId.');
+            }
+            const run = await this.startRun({
+                workspaceRootUri: request.workspaceRootUri,
+                workflowId: draft.savedWorkflowId,
+                prompt
+            });
+            return this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, {
+                kind: 'saved_workflow',
+                workflowId: draft.savedWorkflowId,
+                reason: draft.reason || 'AI authoring selected a saved workflow.',
+                confidence: draft.confidence ?? 0
+            }, draft.action);
+        }
+        const workflow = await this.materializeAiAuthoringDraft(request.workspaceRootUri, draft);
+        const run = await this.startRun({
+            workspaceRootUri: request.workspaceRootUri,
+            workflowId: workflow.id,
+            prompt
+        });
+        return this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, {
+            kind: draft.action === 'instantiate_pattern' ? 'pattern' : 'generated_workflow',
+            workflowId: workflow.id,
+            patternId: draft.pattern?.patternId,
+            reason: draft.reason || `AI authoring action "${draft.action}" materialized workflow "${workflow.id}".`,
+            confidence: draft.confidence ?? 0,
+            parameters: draft.pattern?.parameters
+        }, draft.action);
+    }
+
+    protected async recordDynamicWorkflowDecision(
+        workspaceRootUri: string | undefined,
+        run: FlowRun,
+        plan: FlowDynamicWorkflowPlan,
+        authoringAction?: string
+    ): Promise<FlowRun> {
+        const eventId = stableId('event', run.id, 'dynamic-workflow-selected');
+        if (!run.events.some(event => event.id === eventId)) {
+            run.events.push({
+                id: eventId,
+                runId: run.id,
+                workflowId: run.workflowId,
+                type: 'dynamic_workflow.selected',
+                timestamp: timestamp(),
+                message: dynamicWorkflowDecisionMessage(plan, authoringAction),
+                payload: compactDynamicWorkflowDecisionPayload(plan, authoringAction)
+            });
+            run.updatedAt = timestamp();
+            await this.store.saveRun(workspaceRootUri, run);
+            this.publishRunUpdate(workspaceRootUri, run, 'started');
+        }
+        return run;
+    }
+
+    protected async materializeAiAuthoringDraft(workspaceRootUri: string | undefined, draft: NonNullable<FlowRunDynamicWorkflowRequest['authoringDraft']>): Promise<FlowWorkflow> {
+        if (draft.action === 'run_saved_workflow') {
+            if (!draft.savedWorkflowId) {
+                throw new Error('AI authoring draft action "run_saved_workflow" requires savedWorkflowId.');
+            }
+            return this.getWorkflow({ workspaceRootUri, workflowId: draft.savedWorkflowId });
+        }
+        if (draft.action === 'instantiate_pattern') {
+            if (!draft.pattern?.patternId) {
+                throw new Error('AI authoring draft action "instantiate_pattern" requires pattern.patternId.');
+            }
+            return this.createWorkflowFromPattern({
+                ...draft.pattern,
+                workspaceRootUri
+            });
+        }
+        if (draft.action === 'create_workflow') {
+            if (!draft.workflow) {
+                throw new Error('AI authoring draft action "create_workflow" requires workflow.');
+            }
+            const workflow = normalizeAiAuthoredWorkflow(draft.workflow, draft.reason);
+            const saved = await this.store.createWorkflowFromGeneratedWorkflow(workspaceRootUri, workflow, draft.reason || draft.workflow.id || draft.workflow.name || 'dynamic_workflow');
+            await this.materializeWorkflowAgents(workspaceRootUri, saved);
+            return saved;
+        }
+        if (draft.action === 'ask_user') {
+            throw new Error(`AI authoring draft needs user input: ${draft.questionMarkdown || draft.reason || 'No question provided.'}`);
+        }
+        throw new Error(`Unsupported AI authoring draft action "${draft.action}".`);
+    }
+
+    async savePipelinePreset(request: FlowSavePipelinePresetRequest): Promise<FlowPipelinePreset> {
+        const id = request.id || request.workflow.id;
+        if (id === SISYPHUS_ULTRAWORK_COORDINATOR_PRESET_ID) {
+            throw new Error(`Pipeline preset "${id}" is built in and cannot be overwritten.`);
+        }
+        const preset: FlowPipelinePreset = {
+            id,
+            name: request.name || request.workflow.name,
+            description: request.description || request.workflow.description || `Reusable Flow pipeline preset for ${request.workflow.name}.`,
+            version: FLOW_PIPELINE_PRESET_VERSION,
+            source: 'workspace',
+            workflow: {
+                ...request.workflow,
+                id,
+                name: request.name || request.workflow.name,
+                description: request.description || request.workflow.description
+            },
+            agentMarkdown: request.agentMarkdown,
+            tags: request.tags
+        };
+        const validation = validateFlowPipelinePreset(preset);
+        if (!validation.valid) {
+            throw new Error(`Pipeline preset "${id}" is invalid: ${validation.errors.map(error => error.message).join('; ')}`);
+        }
+        return this.store.savePipelinePreset(request.workspaceRootUri, preset, { overwrite: request.overwrite });
     }
 
     async getWorkflow(request: FlowWorkflowRequest): Promise<FlowWorkflow> {
@@ -272,6 +532,36 @@ export class FlowServiceImpl implements FlowService {
         return validateFlowWorkflow(workflow);
     }
 
+    protected async getPipelinePreset(workspaceRootUri: string | undefined, presetId: string): Promise<FlowPipelinePreset> {
+        const builtIn = getBuiltInFlowPipelinePreset(presetId);
+        if (builtIn) {
+            return builtIn;
+        }
+        const workspace = await this.store.getWorkspacePipelinePreset(workspaceRootUri, presetId);
+        if (workspace) {
+            return workspace;
+        }
+        throw new Error(`Pipeline preset "${presetId}" was not found.`);
+    }
+
+    protected async materializePresetAgents(workspaceRootUri: string | undefined, preset: FlowPipelinePreset): Promise<void> {
+        for (const agent of preset.agentMarkdown || []) {
+            const existing = await this.agentMarkdownStore.readAgent(workspaceRootUri, agent.relativePath);
+            if (!existing) {
+                await this.agentMarkdownStore.writeAgent(workspaceRootUri, agent.relativePath, agent.content);
+            }
+        }
+    }
+
+    protected async materializeWorkflowAgents(workspaceRootUri: string | undefined, workflow: FlowWorkflow): Promise<void> {
+        for (const agent of collectWorkflowAgentMarkdownPaths(workflow)) {
+            const existing = await this.agentMarkdownStore.readAgent(workspaceRootUri, agent.relativePath);
+            if (!existing) {
+                await this.agentMarkdownStore.writeAgent(workspaceRootUri, agent.relativePath, defaultGeneratedAgentMarkdown(agent));
+            }
+        }
+    }
+
     async startRun(request: FlowStartRunRequest): Promise<FlowRun> {
         const workflow = await this.getWorkflow(request);
         await this.assertHostCapabilities(workflow);
@@ -330,7 +620,7 @@ export class FlowServiceImpl implements FlowService {
     async approveGate(request: FlowGateDecisionRequest): Promise<FlowRun> {
         const run = await this.getRun(request);
         const workflow = await this.getWorkflow({ ...request, workflowId: run.workflowId });
-        const updated = await this.kernelBridge.approveGate(workflow, run, request);
+        const updated = await this.kernelBridge.approveGate(workflow, run, request, request.workspaceRootUri);
         updated.memoryCandidates = mergeMemoryCandidates(updated.memoryCandidates, await this.memory.collectMemoryCandidates(updated));
         const materializedRun = await this.workloadStore.materializeRun(request.workspaceRootUri, workflow, updated);
         await this.store.saveRun(request.workspaceRootUri, materializedRun);
@@ -687,7 +977,7 @@ export class FlowServiceImpl implements FlowService {
         const codexProvider = await this.resolveCodexProviderRuntimeReport();
         const llmProvider = await this.resolveLlmAgentProvider(codexProvider);
         const filesystemEdit = this.resolveFilesystemEditCapability();
-        const imageProviderConfigured = this.hasConfiguredImageProvider() || codexProvider.imageGeneration;
+        const imageProviderConfigured = this.hasConfiguredImageProvider() || (this.isExplicitCodexProvider() && codexProvider.imageGeneration);
         const commandPolicyConfigured = this.hasConfiguredCommandPolicy();
         return {
             ...FLOW_CAPABILITIES,
@@ -733,7 +1023,13 @@ export class FlowServiceImpl implements FlowService {
         if (provider === 'command' || provider === 'provider' || provider === 'cli') {
             return { llmAgentExecution: 'unavailable', llmAgentProvider: 'missing', demoMode: 'off' };
         }
-        if ((provider === 'auto' || provider === 'codex' || provider === 'codex-provider' || provider === 'codex_cli') && codexProvider.available) {
+        if (this.isExplicitCodexProvider()) {
+            if (codexProvider.available) {
+                return { llmAgentExecution: 'available', llmAgentProvider: 'configured', demoMode: 'off' };
+            }
+            return { llmAgentExecution: 'unavailable', llmAgentProvider: 'missing', demoMode: 'off' };
+        }
+        if (provider === 'auto' && await this.hasConfiguredTheiaLanguageModel(provider)) {
             return { llmAgentExecution: 'available', llmAgentProvider: 'configured', demoMode: 'off' };
         }
         if (await this.hasConfiguredTheiaLanguageModel(provider)) {
@@ -788,6 +1084,11 @@ export class FlowServiceImpl implements FlowService {
         }
         return Object.keys(process.env).some(key => /^FLOW_IMAGE_PROVIDER_[A-Z0-9_]+_COMMAND$/.test(key)
             && Boolean(process.env[key]?.trim()));
+    }
+
+    protected isExplicitCodexProvider(): boolean {
+        const provider = (process.env.FLOW_AGENT_PROVIDER || 'auto').trim().toLowerCase();
+        return provider === 'codex' || provider === 'codex-provider' || provider === 'codex_cli';
     }
 
     protected hasConfiguredCommandPolicy(): boolean {
@@ -1211,8 +1512,110 @@ function appendSecondRunContext(
     };
 }
 
+interface WorkflowAgentMarkdownSeed {
+    relativePath: string;
+    agentId: string;
+    role: string;
+}
+
+function collectWorkflowAgentMarkdownPaths(workflow: FlowWorkflow): WorkflowAgentMarkdownSeed[] {
+    const byPath = new Map<string, WorkflowAgentMarkdownSeed>();
+    const visit = (state: FlowWorkflow['states'][string]): void => {
+        const agentId = state.agent?.trim();
+        if (agentId) {
+            const relativePath = workflow.agents?.[agentId] || agentId;
+            if (isMarkdownAgentPath(relativePath) && !byPath.has(relativePath)) {
+                byPath.set(relativePath, {
+                    relativePath,
+                    agentId,
+                    role: state.agentRole || agentId
+                });
+            }
+        }
+        Object.values(state.branches || {}).forEach(visit);
+        if (state.dynamicParallel?.worker) {
+            visit(state.dynamicParallel.worker);
+        }
+        if (state.tournament?.judge) {
+            visit(state.tournament.judge);
+        }
+    };
+    Object.values(workflow.states || {}).forEach(visit);
+    return [...byPath.values()];
+}
+
+function isMarkdownAgentPath(relativePath: string): boolean {
+    return /\.(md|markdown)$/i.test(relativePath);
+}
+
+function defaultGeneratedAgentMarkdown(agent: WorkflowAgentMarkdownSeed): string {
+    const title = titleCase(agent.agentId.replace(/[-_]+/g, ' '));
+    return [
+        `# ${title}`,
+        '',
+        '## Role',
+        '',
+        `Act as the ${agent.role} stage in a CyberVinci Flow workflow.`,
+        '',
+        '## Instructions',
+        '',
+        '- Follow the workflow state systemPrompt and taskPrompt.',
+        '- Use the provided input artifacts and produce the declared outputs.',
+        '- Keep internal reasoning private; write concise decisions, evidence, and results into the requested artifacts.',
+        '- Prefer Markdown for narrative outputs and valid JSON only when the workflow output path requires JSON.'
+    ].join('\n');
+}
+
+function titleCase(value: string): string {
+    return value.replace(/\b\w/g, match => match.toUpperCase());
+}
+
 function cloneJson<T>(value: T): T {
     return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function normalizeAiAuthoredWorkflow(workflow: FlowWorkflow, fallbackName?: string): FlowWorkflow {
+    const cloned = cloneJson(workflow);
+    const name = cloned.name?.trim() || fallbackName?.trim() || 'AI Authored Workflow';
+    return {
+        ...cloned,
+        version: cloned.version || 'flow.workflow/v1',
+        id: sanitizeWorkflowId(cloned.id || name || 'ai_authored_workflow'),
+        name,
+        states: cloned.states || {},
+        transitions: cloned.transitions || []
+    };
+}
+
+function dynamicWorkflowDecisionMessage(plan: FlowDynamicWorkflowPlan, authoringAction?: string): string {
+    const source = authoringAction ? `AI authoring ${authoringAction}` : 'Dynamic workflow planner';
+    if (plan.kind === 'saved_workflow') {
+        return `${source} selected saved workflow "${plan.workflowId || 'unknown'}": ${plan.reason}`;
+    }
+    if (plan.kind === 'pattern') {
+        return `${source} selected pattern "${plan.patternId || 'unknown'}": ${plan.reason}`;
+    }
+    return `${source} generated workflow "${plan.workflowId || plan.workflow?.id || 'unknown'}": ${plan.reason}`;
+}
+
+function compactDynamicWorkflowDecisionPayload(plan: FlowDynamicWorkflowPlan, authoringAction?: string): Record<string, unknown> {
+    return compactRecord({
+        kind: plan.kind,
+        authoringAction,
+        workflowId: plan.workflowId,
+        patternId: plan.patternId,
+        reason: plan.reason,
+        confidence: plan.confidence,
+        parameters: plan.parameters && Object.keys(plan.parameters).length > 0 ? plan.parameters : undefined
+    });
+}
+
+function sanitizeWorkflowId(value: string): string {
+    return value.trim().replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'ai_authored_workflow';
+}
+
+function compactRecord(value: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined && entry !== ''));
 }
 
 function stableId(prefix: string, ...parts: string[]): string {

@@ -46,6 +46,9 @@ export class CodexFrontendRpcService {
                 return this.addContextFile(webviewId, params, postToWebview);
             case 'open-file':
                 return this.openFile(params);
+            case 'active-workspace-roots':
+            case 'workspace-root-options':
+                return { roots: this.getWorkspaceRoots() };
             default:
                 throw new Error(`Unsupported frontend RPC method: ${method}`);
         }
@@ -117,6 +120,10 @@ export class CodexFrontendRpcService {
                     : undefined
             }
         };
+    }
+
+    protected getWorkspaceRoots(): string[] {
+        return this.workspaceService.tryGetRoots().map(root => FileUri.fsPath(root.resource));
     }
 
     protected async addContextFile(

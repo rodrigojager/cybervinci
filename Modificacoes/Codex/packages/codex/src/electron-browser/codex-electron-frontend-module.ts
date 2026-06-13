@@ -6,9 +6,11 @@
 
 import { ContainerModule } from '@theia/core/shared/inversify';
 import { CodexElectronBridgeService } from '../common/codex-electron-bridge-service';
+import { bindCodexFrontend } from '../browser/codex-frontend-module';
 import { CodexElectronBridgeServiceImpl } from './codex-electron-bridge-service-impl';
 
 export default new ContainerModule(bind => {
+    bindCodexFrontend(bind);
     bind(CodexElectronBridgeServiceImpl).toSelf().inSingletonScope();
     bind(CodexElectronBridgeService).toService(CodexElectronBridgeServiceImpl);
 });

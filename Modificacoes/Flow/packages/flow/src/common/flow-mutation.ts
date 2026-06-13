@@ -14,6 +14,46 @@ export function createFlowWorkflowState(stateType: FlowStateType, stateId: strin
     if (stateType === 'parallel') {
         return { ...base, branches: {} };
     }
+    if (stateType === 'dynamic_parallel') {
+        return {
+            ...base,
+            dynamicParallel: {
+                itemsFrom: 'states.discovery.outputs.items',
+                itemVariable: 'item',
+                worker: {
+                    type: 'agent',
+                    agent: 'worker',
+                    agentRole: 'executor',
+                    outputs: [`${stateId}/items/{{item.id}}.md`]
+                },
+                concurrency: 4,
+                maxItems: 50,
+                failurePolicy: 'best_effort',
+                joinStrategy: 'collect',
+                outputKey: `${stateId}.results`
+            },
+            outputs: [`${stateId}/results.json`]
+        };
+    }
+    if (stateType === 'tournament') {
+        return {
+            ...base,
+            tournament: {
+                candidatesFrom: 'states.generate.outputs.candidates',
+                judge: {
+                    type: 'agent',
+                    agent: 'judge',
+                    agentRole: 'judge',
+                    outputs: [`${stateId}/judgment.json`]
+                },
+                strategy: 'single_round',
+                criteria: ['correctness', 'simplicity', 'maintainability'],
+                winnerCount: 1,
+                tieBreaker: 'judge_again'
+            },
+            outputs: [`${stateId}/ranking.json`]
+        };
+    }
     if (stateType === 'join') {
         return { ...base, waitFor: [], outputs: [`${stateId}/join-summary.md`] };
     }

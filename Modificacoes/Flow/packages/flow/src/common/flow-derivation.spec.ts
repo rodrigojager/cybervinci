@@ -82,6 +82,108 @@ describe('Flow common contracts', () => {
         expect(result.errors.map(error => error.code)).to.contain('state.join.wait_for.invalid');
     });
 
+    it('accepts configurable agent node runtime fields when deliverables match outputs', () => {
+        const workflow: FlowWorkflow = {
+            version: 'flow.workflow/v1',
+            id: 'configurable_agent',
+            name: 'Configurable Agent',
+            states: {
+                intake: { type: 'input' },
+                build: {
+                    type: 'agent',
+                    agent: 'builder',
+                    provider: {
+                        providerId: 'openai',
+                        modelId: 'gpt-5',
+                        options: { temperature: 0.2 }
+                    },
+                    systemPrompt: 'You are a focused build agent.',
+                    taskPrompt: 'Produce the implementation summary.',
+                    outputs: ['reports/build.md'],
+                    deliverables: [
+                        {
+                            path: 'reports/build.md',
+                            description: 'Build summary',
+                            required: true,
+                            kind: 'markdown'
+                        }
+                    ]
+                }
+            },
+            transitions: [
+                { from: 'intake', to: 'build', on: 'run.started' }
+            ]
+        };
+
+        const result = validateFlowWorkflow(workflow);
+
+        expect(result.valid, result.errors.map(error => error.message).join('\n')).to.equal(true);
+        expect(result.errors).to.deep.equal([]);
+    });
+
+    it('rejects invalid provider configuration on agent nodes', () => {
+        const workflow: FlowWorkflow = {
+            version: 'flow.workflow/v1',
+            id: 'invalid_provider',
+            name: 'Invalid Provider',
+            states: {
+                intake: { type: 'input' },
+                build: {
+                    type: 'agent',
+                    provider: {
+                        providerId: '',
+                        modelId: ''
+                    }
+                }
+            },
+            transitions: [
+                { from: 'intake', to: 'build', on: 'run.started' }
+            ]
+        };
+
+        const result = validateFlowWorkflow(workflow);
+
+        expect(result.valid).to.equal(false);
+        expect(result.errors.map(error => error.code)).to.include.members([
+            'state.provider.id.required',
+            'state.provider.model.invalid'
+        ]);
+    });
+
+    it('rejects invalid deliverables and mismatched outputs on agent nodes', () => {
+        const workflow: FlowWorkflow = {
+            version: 'flow.workflow/v1',
+            id: 'invalid_deliverables',
+            name: 'Invalid Deliverables',
+            states: {
+                intake: { type: 'input' },
+                build: {
+                    type: 'agent',
+                    outputs: ['reports/build.md'],
+                    deliverables: [
+                        { path: 'reports/build.md' },
+                        { path: 'reports/build.md' },
+                        { path: '/absolute/path.md' },
+                        { path: '../escape.md' },
+                        { path: 'reports/missing.md' }
+                    ]
+                }
+            },
+            transitions: [
+                { from: 'intake', to: 'build', on: 'run.started' }
+            ]
+        };
+
+        const result = validateFlowWorkflow(workflow);
+
+        expect(result.valid).to.equal(false);
+        expect(result.errors.map(error => error.code)).to.include.members([
+            'state.deliverable.path.duplicate',
+            'state.deliverable.path.invalid',
+            'state.deliverable.output.missing'
+        ]);
+    });
+
     it('derives canvas nodes, saved layout, and guarded transition labels from workflow JSON', () => {
         const workflow = sampleWorkflow();
         const run: FlowRun = {

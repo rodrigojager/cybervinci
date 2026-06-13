@@ -1,0 +1,259 @@
+[    1499ms] [INFO] sending initial connect on 2Ik6KKW1XpWGJzFJAAAB @ http://127.0.0.1:3000/bundle.js:67846
+[    1507ms] [INFO] initial connect received on 2Ik6KKW1XpWGJzFJAAAB @ http://127.0.0.1:3000/bundle.js:67841
+[    1598ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[    1628ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/bundle.js:235627
+[    1643ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3000/bundle.js:56469
+[    1658ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[    1839ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[    1841ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[    2211ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:56469
+[    2267ms] [WARNING] 2026-06-01T05:02:20.547Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:192090
+[    2304ms] [WARNING] 2026-06-01T05:02:20.585Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3000/bundle.js:192090
+[    2308ms] [INFO] 2026-06-01T05:02:20.589Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3000/bundle.js:192090
+[    2945ms] [WARNING] 2026-06-01T05:02:21.226Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 723.9 ms [2.939 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3035ms] [INFO] 2026-06-01T05:02:21.316Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3000/bundle.js:192090
+[    3102ms] [INFO] 2026-06-01T05:02:21.382Z root INFO [da337778-7659-4073-8b6f-699e545e1c97] Waiting for backend deployment: 19.6 ms [3.095 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3111ms] [INFO] 2026-06-01T05:02:21.391Z root INFO Start frontend contributions: 940.7 ms [3.099 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3111ms] [INFO] 2026-06-01T05:02:21.392Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3000/bundle.js:192090
+[    3114ms] [INFO] 2026-06-01T05:02:21.395Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3000/bundle.js:192090
+[    3114ms] [INFO] 2026-06-01T05:02:21.395Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3000/bundle.js:192090
+[    3188ms] [INFO] 2026-06-01T05:02:21.468Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3000/bundle.js:192090
+[    3189ms] [INFO] 2026-06-01T05:02:21.470Z root INFO Initialize the workbench layout: 74.5 ms [3.181 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3190ms] [INFO] 2026-06-01T05:02:21.470Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3000/bundle.js:192090
+[    3270ms] [WARNING] 2026-06-01T05:02:21.550Z terminal WARN Failed attaching to terminal id 1280532601, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3000/bundle.js:192090
+[    3644ms] [WARNING] 2026-06-01T05:02:21.924Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[    3644ms] [WARNING] 2026-06-01T05:02:21.924Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[    3780ms] [INFO] 2026-06-01T05:02:22.061Z root INFO [da337778-7659-4073-8b6f-699e545e1c97] Loading plugin contributions @ http://127.0.0.1:3000/bundle.js:192090
+[    4178ms] [INFO] 2026-06-01T05:02:22.459Z root INFO Replace loading indicator with ready workbench UI (animation): 986.7 ms [4.170 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    4185ms] [INFO] 2026-06-01T05:02:22.466Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3000/bundle.js:192090
+[    4186ms] [INFO] 2026-06-01T05:02:22.466Z root INFO All frontend contributions settled: 2012.9 ms [4.171 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    6237ms] [WARNING] 2026-06-01T05:02:24.517Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://127.0.0.1:3000/bundle.js:192090
+[   57456ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ http://127.0.0.1:3000/codex-webview/shell?webviewId=8bb30e49-e56d-49bb-a14c-f4bd88c7762a:0
+[   57460ms] [INFO] 2026-06-01T05:03:15.740Z root INFO [Codex] webview ready: 8bb30e49-e56d-49bb-a14c-f4bd88c7762a @ http://127.0.0.1:3000/bundle.js:192090
+[   63080ms] [WARNING] 2026-06-01T05:03:21.360Z root WARN [Codex] [persisted-atom] host did not respond to sync request; continuing with legacy state only @ http://127.0.0.1:3000/bundle.js:192090
+[   63101ms] [INFO] 2026-06-01T05:03:21.381Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   63109ms] [INFO] 2026-06-01T05:03:21.390Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   63110ms] [INFO] 2026-06-01T05:03:21.390Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   63110ms] [INFO] 2026-06-01T05:03:21.390Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   63110ms] [INFO] 2026-06-01T05:03:21.390Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   63110ms] [INFO] 2026-06-01T05:03:21.391Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available @ http://127.0.0.1:3000/bundle.js:192090
+[   63110ms] [INFO] 2026-06-01T05:03:21.391Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   63111ms] [WARNING] 2026-06-01T05:03:21.391Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3000/bundle.js:192090
+[   63113ms] [WARNING] 2026-06-01T05:03:21.393Z root WARN [Codex] webview fetch failed: vscode://codex/list-pinned-threads: Unknown Codex RPC method: list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   63115ms] [WARNING] 2026-06-01T05:03:21.396Z root WARN [Codex] webview fetch failed: vscode://codex/extension-info: Unknown Codex RPC method: extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   63115ms] [WARNING] 2026-06-01T05:03:21.396Z root WARN [Codex] webview fetch failed: vscode://codex/os-info: Unknown Codex RPC method: os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   63117ms] [WARNING] 2026-06-01T05:03:21.398Z root WARN [Codex] Failed to load projectless thread ids @ http://127.0.0.1:3000/bundle.js:192090
+[   63118ms] [WARNING] 2026-06-01T05:03:21.398Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3000/bundle.js:192090
+[   64121ms] [INFO] 2026-06-01T05:03:22.401Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   64121ms] [INFO] 2026-06-01T05:03:22.402Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   64122ms] [INFO] 2026-06-01T05:03:22.402Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   64122ms] [INFO] 2026-06-01T05:03:22.402Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   64122ms] [INFO] 2026-06-01T05:03:22.402Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   64125ms] [WARNING] 2026-06-01T05:03:22.405Z root WARN [Codex] webview fetch failed: vscode://codex/list-pinned-threads: Unknown Codex RPC method: list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   64125ms] [WARNING] 2026-06-01T05:03:22.406Z root WARN [Codex] webview fetch failed: vscode://codex/extension-info: Unknown Codex RPC method: extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   64126ms] [WARNING] 2026-06-01T05:03:22.406Z root WARN [Codex] webview fetch failed: vscode://codex/os-info: Unknown Codex RPC method: os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   66125ms] [INFO] 2026-06-01T05:03:24.406Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   66127ms] [INFO] 2026-06-01T05:03:24.407Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   66127ms] [INFO] 2026-06-01T05:03:24.408Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   66127ms] [INFO] 2026-06-01T05:03:24.408Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   66128ms] [INFO] 2026-06-01T05:03:24.408Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   66128ms] [WARNING] 2026-06-01T05:03:24.408Z root WARN [Codex] webview fetch failed: vscode://codex/list-pinned-threads: Unknown Codex RPC method: list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   66128ms] [WARNING] 2026-06-01T05:03:24.409Z root WARN [Codex] webview fetch failed: vscode://codex/extension-info: Unknown Codex RPC method: extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   66129ms] [WARNING] 2026-06-01T05:03:24.410Z root WARN [Codex] webview fetch failed: vscode://codex/os-info: Unknown Codex RPC method: os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   70127ms] [INFO] 2026-06-01T05:03:28.408Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   70129ms] [INFO] 2026-06-01T05:03:28.410Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   70130ms] [INFO] 2026-06-01T05:03:28.410Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   70130ms] [WARNING] 2026-06-01T05:03:28.411Z root WARN [Codex] webview fetch failed: vscode://codex/list-pinned-threads: Unknown Codex RPC method: list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[   70131ms] [INFO] 2026-06-01T05:03:28.411Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3000/bundle.js:192090
+[   70131ms] [INFO] 2026-06-01T05:03:28.411Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[   70131ms] [WARNING] 2026-06-01T05:03:28.412Z root WARN [Codex] webview fetch failed: vscode://codex/extension-info: Unknown Codex RPC method: extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[   70132ms] [WARNING] 2026-06-01T05:03:28.412Z root WARN [Codex] webview fetch failed: vscode://codex/os-info: Unknown Codex RPC method: os-info @ http://127.0.0.1:3000/bundle.js:192090
+[  393389ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r0k7quxz:0
+[  397415ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r0n522ay:0
+[  402498ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r0r1vvga:0
+[  412318ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r0ytnzqt:0
+[  424373ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r184cgb4:0
+[  436432ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r1hf6nzi:0
+[  448483ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r1qq80e0:0
+[  458527ms] [INFO] 2026-06-01T05:09:56.807Z root INFO sending reconnect on BUvdvikwpYskuMT4AAAB @ http://127.0.0.1:3000/bundle.js:192090
+[  458631ms] [INFO] 2026-06-01T05:09:56.911Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3000/bundle.js:192090
+[  458631ms] [INFO] 2026-06-01T05:09:56.911Z root INFO >>> Storing the layout... @ http://127.0.0.1:3000/bundle.js:192090
+[  458631ms] [INFO] 2026-06-01T05:09:56.911Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3000/bundle.js:192090
+[  458631ms] [INFO] 2026-06-01T05:09:56.911Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3000/bundle.js:192090
+[  458631ms] [INFO] 2026-06-01T05:09:56.911Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3000/bundle.js:192090
+[  463471ms] [INFO] sending initial connect on VgWQgcE15_3S7YanAAAD @ http://127.0.0.1:3000/bundle.js:67846
+[  463491ms] [INFO] initial connect received on VgWQgcE15_3S7YanAAAD @ http://127.0.0.1:3000/bundle.js:67841
+[  463706ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[  463775ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/bundle.js:235627
+[  463816ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3000/bundle.js:56469
+[  463845ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[  464243ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  464247ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  464247ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  464247ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  464247ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  464248ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  464248ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  464248ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  464248ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  465326ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:56469
+[  465463ms] [WARNING] 2026-06-01T05:10:03.744Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:192090
+[  465543ms] [WARNING] 2026-06-01T05:10:03.823Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3000/bundle.js:192090
+[  465552ms] [INFO] 2026-06-01T05:10:03.832Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3000/bundle.js:192090
+[  465771ms] [WARNING] 2026-06-01T05:10:04.052Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 421.7 ms [7.217 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  465908ms] [WARNING] 2026-06-01T05:10:04.188Z root WARN Frontend commands.onStart took longer than the expected maximum 100 milliseconds: 127.7 ms [7.354 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  465978ms] [INFO] 2026-06-01T05:10:04.258Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3000/bundle.js:192090
+[  466120ms] [INFO] 2026-06-01T05:10:04.400Z root INFO [cf23795c-8b18-46f8-b128-ea2b01aae336] Waiting for backend deployment: 45.2 ms [7.565 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  466143ms] [INFO] 2026-06-01T05:10:04.423Z root INFO Start frontend contributions: 919.2 ms [7.578 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  466143ms] [INFO] 2026-06-01T05:10:04.424Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3000/bundle.js:192090
+[  466145ms] [INFO] 2026-06-01T05:10:04.425Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3000/bundle.js:192090
+[  466145ms] [INFO] 2026-06-01T05:10:04.425Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3000/bundle.js:192090
+[  466413ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ http://127.0.0.1:3000/codex-webview/shell?webviewId=844ef0e9-22a0-4157-9fed-a9b93c6712f1:0
+[  466734ms] [WARNING] 2026-06-01T05:10:05.014Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[  466734ms] [WARNING] 2026-06-01T05:10:05.014Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[  466740ms] [WARNING] 2026-06-01T05:10:05.021Z terminal WARN Failed attaching to terminal id 1892700582, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3000/bundle.js:192090
+[  466833ms] [INFO] 2026-06-01T05:10:05.113Z root INFO [cf23795c-8b18-46f8-b128-ea2b01aae336] Loading plugin contributions @ http://127.0.0.1:3000/bundle.js:192090
+[  466994ms] [INFO] 2026-06-01T05:10:05.274Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3000/bundle.js:192090
+[  466996ms] [INFO] 2026-06-01T05:10:05.277Z root INFO Initialize the workbench layout: 850.0 ms [8.441 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  466997ms] [INFO] 2026-06-01T05:10:05.278Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3000/bundle.js:192090
+[  467037ms] [INFO] 2026-06-01T05:10:05.317Z root INFO [Codex] webview ready: 844ef0e9-22a0-4157-9fed-a9b93c6712f1 @ http://127.0.0.1:3000/bundle.js:192090
+[  467957ms] [INFO] 2026-06-01T05:10:06.238Z root INFO Replace loading indicator with ready workbench UI (animation): 955.5 ms [9.402 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  467977ms] [INFO] 2026-06-01T05:10:06.257Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3000/bundle.js:192090
+[  467977ms] [INFO] 2026-06-01T05:10:06.258Z root INFO All frontend contributions settled: 2744.8 ms [9.403 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  471882ms] [INFO] 2026-06-01T05:10:10.163Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  471905ms] [INFO] 2026-06-01T05:10:10.185Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  471905ms] [INFO] 2026-06-01T05:10:10.186Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[  471907ms] [INFO] 2026-06-01T05:10:10.187Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[  471910ms] [INFO] 2026-06-01T05:10:10.190Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3000/bundle.js:192090
+[  471911ms] [INFO] 2026-06-01T05:10:10.191Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available @ http://127.0.0.1:3000/bundle.js:192090
+[  471911ms] [INFO] 2026-06-01T05:10:10.192Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  471928ms] [WARNING] 2026-06-01T05:10:10.208Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3000/bundle.js:192090
+[  471956ms] [WARNING] 2026-06-01T05:10:10.236Z root WARN [Codex] Failed to load projectless thread ids @ http://127.0.0.1:3000/bundle.js:192090
+[  471956ms] [WARNING] 2026-06-01T05:10:10.237Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3000/bundle.js:192090
+[  472966ms] [INFO] 2026-06-01T05:10:11.247Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  472967ms] [INFO] 2026-06-01T05:10:11.247Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  475192ms] [INFO] 2026-06-01T05:10:13.473Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  475193ms] [INFO] 2026-06-01T05:10:13.473Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  482572ms] [INFO] 2026-06-01T05:10:20.853Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  482573ms] [INFO] 2026-06-01T05:10:20.853Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  566486ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r49wuo1l:0
+[  570501ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r4d25vdz:0
+[  577162ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r4i0v8qc:0
+[  583666ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r4n18t3y:0
+[  595732ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r4wc6bdd:0
+[  605755ms] [INFO] 2026-06-01T05:12:24.035Z root INFO sending reconnect on bvHBfkNk_I8rvS54AAAB @ http://127.0.0.1:3000/bundle.js:192090
+[  605775ms] [INFO] 2026-06-01T05:12:24.055Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3000/bundle.js:192090
+[  605775ms] [INFO] 2026-06-01T05:12:24.055Z root INFO >>> Storing the layout... @ http://127.0.0.1:3000/bundle.js:192090
+[  605775ms] [INFO] 2026-06-01T05:12:24.055Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3000/bundle.js:192090
+[  605775ms] [INFO] 2026-06-01T05:12:24.055Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3000/bundle.js:192090
+[  605775ms] [INFO] 2026-06-01T05:12:24.055Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3000/bundle.js:192090
+[  606298ms] [INFO] sending initial connect on d2G4I1yhFV2AQ0CuAAAF @ http://127.0.0.1:3000/bundle.js:67846
+[  606305ms] [INFO] initial connect received on d2G4I1yhFV2AQ0CuAAAF @ http://127.0.0.1:3000/bundle.js:67841
+[  606369ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[  606379ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/bundle.js:235627
+[  606395ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3000/bundle.js:56469
+[  606400ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[  606501ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  606504ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  606505ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  606695ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:56469
+[  606762ms] [WARNING] 2026-06-01T05:12:25.042Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:192090
+[  606809ms] [WARNING] 2026-06-01T05:12:25.089Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3000/bundle.js:192090
+[  606815ms] [INFO] 2026-06-01T05:12:25.095Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3000/bundle.js:192090
+[  607459ms] [WARNING] 2026-06-01T05:12:25.740Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 749.9 ms [1.699 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  607523ms] [INFO] 2026-06-01T05:12:25.804Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3000/bundle.js:192090
+[  607611ms] [INFO] 2026-06-01T05:12:25.891Z root INFO [5195d6b5-d23c-46ae-af62-81fbfcf65b36] Waiting for backend deployment: 32.0 ms [1.850 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  607629ms] [INFO] 2026-06-01T05:12:25.910Z root INFO Start frontend contributions: 968.9 ms [1.862 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  607630ms] [INFO] 2026-06-01T05:12:25.910Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3000/bundle.js:192090
+[  607937ms] [WARNING] 2026-06-01T05:12:26.217Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[  607938ms] [WARNING] 2026-06-01T05:12:26.219Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[  607999ms] [INFO] 2026-06-01T05:12:26.280Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3000/bundle.js:192090
+[  607999ms] [INFO] 2026-06-01T05:12:26.280Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3000/bundle.js:192090
+[  608015ms] [INFO] 2026-06-01T05:12:26.296Z root INFO [5195d6b5-d23c-46ae-af62-81fbfcf65b36] Loading plugin contributions @ http://127.0.0.1:3000/bundle.js:192090
+[  608199ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ http://127.0.0.1:3000/codex-webview/shell?webviewId=f4d999ef-2c67-4bcc-aec6-151c50654a3e:0
+[  608259ms] [WARNING] 2026-06-01T05:12:26.540Z terminal WARN Failed attaching to terminal id 1112042687, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3000/bundle.js:192090
+[  608313ms] [INFO] 2026-06-01T05:12:26.593Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3000/bundle.js:192090
+[  608314ms] [INFO] 2026-06-01T05:12:26.594Z root INFO Initialize the workbench layout: 315.2 ms [2.553 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  608314ms] [INFO] 2026-06-01T05:12:26.595Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3000/bundle.js:192090
+[  608342ms] [INFO] 2026-06-01T05:12:26.622Z root INFO [Codex] webview ready: f4d999ef-2c67-4bcc-aec6-151c50654a3e @ http://127.0.0.1:3000/bundle.js:192090
+[  609693ms] [INFO] 2026-06-01T05:12:27.974Z root INFO Replace loading indicator with ready workbench UI (animation): 1377.6 ms [3.932 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  609694ms] [INFO] 2026-06-01T05:12:27.974Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3000/bundle.js:192090
+[  609694ms] [INFO] 2026-06-01T05:12:27.975Z root INFO All frontend contributions settled: 3039.6 ms [3.933 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  611699ms] [WARNING] 2026-06-01T05:12:29.980Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://127.0.0.1:3000/bundle.js:192090
+[  611997ms] [INFO] 2026-06-01T05:12:30.277Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  612022ms] [INFO] 2026-06-01T05:12:30.302Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  612023ms] [INFO] 2026-06-01T05:12:30.303Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3000/bundle.js:192090
+[  612023ms] [INFO] 2026-06-01T05:12:30.304Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3000/bundle.js:192090
+[  612024ms] [INFO] 2026-06-01T05:12:30.305Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3000/bundle.js:192090
+[  612026ms] [INFO] 2026-06-01T05:12:30.307Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available @ http://127.0.0.1:3000/bundle.js:192090
+[  612029ms] [INFO] 2026-06-01T05:12:30.309Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3000/bundle.js:192090
+[  612052ms] [WARNING] 2026-06-01T05:12:30.333Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3000/bundle.js:192090
+[  612212ms] [WARNING] 2026-06-01T05:12:30.493Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3000/bundle.js:192090
+[  831756ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=r9ygo9e5:0
+[  835550ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=ra1dztkd:0
+[  840308ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=ra52h0u4:0
+[  850846ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=rad704df:0
+[  862893ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=ramhvvvf:0
+[  874950ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=ravse7fe:0
+[  887018ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=rb53p3i2:0
+[  898322ms] [INFO] 2026-06-01T05:17:16.603Z root INFO sending reconnect on BcrUQIhOzOSvwuu3AAAC @ http://127.0.0.1:3000/bundle.js:192090
+[  898386ms] [INFO] 2026-06-01T05:17:16.666Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3000/bundle.js:192090
+[  898386ms] [INFO] 2026-06-01T05:17:16.667Z root INFO >>> Storing the layout... @ http://127.0.0.1:3000/bundle.js:192090
+[  898386ms] [INFO] 2026-06-01T05:17:16.667Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3000/bundle.js:192090
+[  898387ms] [INFO] 2026-06-01T05:17:16.667Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3000/bundle.js:192090
+[  898387ms] [INFO] 2026-06-01T05:17:16.667Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3000/bundle.js:192090
+[  902257ms] [INFO] sending initial connect on z-1Pc6v_OiJU_W5xAAAF @ http://127.0.0.1:3000/bundle.js:67846
+[  902271ms] [INFO] initial connect received on z-1Pc6v_OiJU_W5xAAAF @ http://127.0.0.1:3000/bundle.js:67841
+[  902491ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[  902564ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/bundle.js:235627
+[  902618ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3000/bundle.js:56469
+[  902652ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[  903198ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  903201ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[  903202ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[  905298ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:56469
+[  905957ms] [WARNING] 2026-06-01T05:17:24.238Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:192090
+[  906168ms] [WARNING] 2026-06-01T05:17:24.448Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3000/bundle.js:192090
+[  906189ms] [INFO] 2026-06-01T05:17:24.469Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3000/bundle.js:192090
+[  906661ms] [WARNING] 2026-06-01T05:17:24.942Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 1267.6 ms [8.311 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  907968ms] [WARNING] 2026-06-01T05:17:26.248Z root WARN Frontend CommonFrontendContribution.configure took longer than the expected maximum 100 milliseconds: 1289.1 ms [9.612 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  908139ms] [WARNING] 2026-06-01T05:17:26.419Z root WARN Frontend commands.onStart took longer than the expected maximum 100 milliseconds: 153.7 ms [9.788 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  908314ms] [INFO] 2026-06-01T05:17:26.595Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3000/bundle.js:192090
+[  908320ms] [WARNING] 2026-06-01T05:17:26.601Z root WARN Frontend keybindings.onStart took longer than the expected maximum 100 milliseconds: 127.9 ms [9.916 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  910108ms] [WARNING] 2026-06-01T05:17:28.389Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[  910108ms] [WARNING] 2026-06-01T05:17:28.389Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[  910729ms] [INFO] 2026-06-01T05:17:29.010Z root INFO [6061fc1e-6f1f-4458-b42b-ce19b63afe1e] Waiting for backend deployment: 2151.0 ms [12.377 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  910965ms] [WARNING] 2026-06-01T05:17:29.246Z root WARN Frontend ClaudeCodeSlashCommandsContribution.onStart took longer than the expected maximum 100 milliseconds: 2384.7 ms [12.613 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  911020ms] [INFO] 2026-06-01T05:17:29.300Z root INFO Start frontend contributions: 6136.2 ms [12.629 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  911021ms] [INFO] 2026-06-01T05:17:29.301Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3000/bundle.js:192090
+[  911770ms] [INFO] 2026-06-01T05:17:30.050Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3000/bundle.js:192090
+[  911770ms] [INFO] 2026-06-01T05:17:30.050Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3000/bundle.js:192090
+[  912262ms] [INFO] 2026-06-01T05:17:30.543Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3000/bundle.js:192090
+[  912265ms] [INFO] 2026-06-01T05:17:30.545Z root INFO Initialize the workbench layout: 495.6 ms [13.912 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  912267ms] [INFO] 2026-06-01T05:17:30.548Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3000/bundle.js:192090
+[  913594ms] [INFO] 2026-06-01T05:17:31.875Z root INFO Replace loading indicator with ready workbench UI (animation): 1322.4 ms [15.243 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  913595ms] [INFO] 2026-06-01T05:17:31.876Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3000/bundle.js:192090
+[  913596ms] [INFO] 2026-06-01T05:17:31.876Z root INFO All frontend contributions settled: 8751.3 ms [15.243 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[  914709ms] [WARNING] 2026-06-01T05:17:32.990Z terminal WARN Failed attaching to terminal id 1820664597, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3000/bundle.js:192090
+[  919005ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ http://127.0.0.1:3000/codex-webview/shell?webviewId=3a13d647-5f16-41db-8083-7e73cadcb6d4:0
+[  919026ms] [INFO] 2026-06-01T05:17:37.307Z root INFO [Codex] webview ready: 3a13d647-5f16-41db-8083-7e73cadcb6d4 @ http://127.0.0.1:3000/bundle.js:192090
+[  920290ms] [INFO] 2026-06-01T05:17:38.571Z root INFO [6061fc1e-6f1f-4458-b42b-ce19b63afe1e] Loading plugin contributions @ http://127.0.0.1:3000/bundle.js:192090

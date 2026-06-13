@@ -56,13 +56,19 @@ import rjsfValidator from '@rjsf/validator-ajv8';
 import { BinaryBuffer } from '@theia/core/lib/common/buffer';
 import URI from '@theia/core/lib/common/uri';
 import { MessageService, Emitter, Event } from '@theia/core/lib/common';
+import { CommandService } from '@theia/core/lib/common/command';
 import { Navigatable, OpenerService, ReactWidget, Saveable, SaveableSource, codicon, Message, open } from '@theia/core/lib/browser';
 import { FileDialogService } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import * as monaco from '@theia/monaco-editor-core';
 import { inject, injectable, postConstruct } from '@theia/core/shared/inversify';
 import * as React from '@theia/core/shared/react';
-import { BuilderService } from '../common';
+import { BuilderCommands, BuilderService } from '../common';
+import { PageBuilderApp } from './components/PageBuilderApp';
+import type { PageBuilderViewMode } from './components/BuilderToolbar';
+import type { ComponentLibraryTab } from './components/ComponentLibraryPanel';
+import type { BuilderPreviewViewport } from './components/PreviewPanel';
+import type { BuilderPropertiesTab } from './components/PropertiesPanel';
 import { BuilderEditorState, formatValidationMessage } from './builder-editor-state';
 import {
     createBuilderCopyUri,
@@ -104,40 +110,230 @@ const Builder_COMPONENT_TYPE_ICONS: Record<string, string> = {
     Group: 'group-by-ref-type',
     SimpleGrid: 'layout',
     Grid: 'layout',
+    GridCol: 'layout-panel',
     Card: 'symbol-struct',
+    CardSection: 'layout-panel',
+    Paper: 'layout-panel',
+    Center: 'circle-large-filled',
+    Flex: 'layout-activitybar-left',
+    AspectRatio: 'device-camera-video',
+    Affix: 'pinned',
+    AppShell: 'window',
+    AppShellHeader: 'layout-panel-top',
+    AppShellNavbar: 'layout-sidebar-left',
+    AppShellAside: 'layout-sidebar-right',
+    AppShellMain: 'layout-centered',
+    AppShellFooter: 'layout-panel-bottom',
+    AppShellSection: 'layout-panel',
+    Collapse: 'fold',
+    Indicator: 'circle-filled',
+    ScrollArea: 'list-tree',
+    Spoiler: 'fold',
+    ScrollAreaAutosize: 'list-tree',
+    TableScrollContainer: 'table',
+    VisuallyHidden: 'eye-closed',
     Divider: 'dash',
     Space: 'blank',
     Box: 'symbol-misc',
     Title: 'text-size',
     Text: 'symbol-string',
     Badge: 'tag',
+    Code: 'code',
+    Kbd: 'keyboard',
+    Mark: 'symbol-keyword',
+    Pill: 'tag',
+    PillGroup: 'tag',
+    TypographyStylesProvider: 'symbol-string',
+    NumberFormatter: 'symbol-number',
+    Blockquote: 'quote',
+    Highlight: 'sparkle',
     List: 'list-ordered',
+    ListItem: 'list-selection',
     Markdown: 'markdown',
     Button: 'symbol-method',
+    ButtonGroup: 'group-by-ref-type',
+    ButtonGroupSection: 'layout-panel',
+    ActionIcon: 'tools',
+    ActionIconGroup: 'tools',
+    ActionIconGroupSection: 'layout-panel',
+    UnstyledButton: 'circle-large-outline',
+    Burger: 'menu',
+    CloseButton: 'close',
+    CopyButton: 'copy',
+    Input: 'edit',
+    InputBase: 'edit',
+    InputWrapper: 'layout-panel',
+    InputLabel: 'symbol-string',
+    InputDescription: 'note',
+    InputPlaceholder: 'placeholder',
+    InputClearButton: 'clear-all',
+    InputError: 'error',
     TextInput: 'edit',
+    Autocomplete: 'sparkle',
+    PasswordInput: 'lock',
     Textarea: 'note',
     Select: 'list-selection',
+    MultiSelect: 'checklist',
+    NativeSelect: 'list-flat',
+    Combobox: 'list-selection',
+    ComboboxTarget: 'symbol-method',
+    ComboboxDropdownTarget: 'edit',
+    ComboboxEventsTarget: 'symbol-event',
+    ComboboxDropdown: 'layout-panel',
+    ComboboxOptions: 'list-flat',
+    ComboboxOption: 'list-selection',
+    ComboboxSearch: 'search',
+    ComboboxEmpty: 'circle-slash',
+    ComboboxGroup: 'group-by-ref-type',
+    ComboboxHeader: 'layout-panel-top',
+    ComboboxFooter: 'layout-panel-bottom',
+    ComboboxChevron: 'chevron-down',
+    ComboboxClearButton: 'clear-all',
+    ComboboxHiddenInput: 'eye-closed',
     Checkbox: 'check',
+    CheckboxGroup: 'checklist',
+    CheckboxCard: 'checklist',
+    CheckboxIndicator: 'check',
+    Switch: 'toggle',
+    SwitchGroup: 'toggle',
     RadioGroup: 'circle-large-outline',
+    Radio: 'circle-large-outline',
+    RadioCard: 'circle-large-outline',
+    RadioIndicator: 'circle-large-filled',
     NumberInput: 'symbol-number',
     DateInput: 'calendar',
+    Chip: 'tag',
+    ChipGroup: 'tag',
+    Slider: 'settings',
+    RangeSlider: 'settings-gear',
+    SegmentedControl: 'layout-centered',
+    PinInput: 'symbol-number',
+    ColorInput: 'symbol-color',
+    ColorPicker: 'color-mode',
+    HueSlider: 'symbol-color',
+    AlphaSlider: 'symbol-color',
+    AngleSlider: 'settings',
+    ColorSwatch: 'symbol-color',
+    JsonInput: 'json',
+    TagsInput: 'tag',
+    FileInput: 'file',
+    FileButton: 'file',
+    Fieldset: 'group-by-ref-type',
+    PillsInput: 'tag',
+    PillsInputField: 'edit',
+    Rating: 'star-full',
     DynamicForm: 'checklist',
     Table: 'table',
+    TableCaption: 'comment',
+    TableThead: 'table',
+    TableTbody: 'table',
+    TableTfoot: 'table',
+    TableTr: 'arrow-right',
+    TableTh: 'symbol-key',
+    TableTd: 'symbol-field',
     DataTable: 'table',
+    Accordion: 'list-tree',
+    AccordionItem: 'list-tree',
+    AccordionControl: 'chevron-right',
+    AccordionPanel: 'layout-panel',
+    Timeline: 'timeline',
+    TimelineItem: 'timeline',
+    Tree: 'list-tree',
     MetricCard: 'pulse',
     StatCard: 'graph-line',
     Anchor: 'link',
     NavLink: 'arrow-right',
     Breadcrumbs: 'ellipsis',
+    Menu: 'menu',
+    MenuTarget: 'symbol-method',
+    MenuDropdown: 'layout-panel',
+    MenuItem: 'list-selection',
+    MenuLabel: 'symbol-string',
+    MenuDivider: 'dash',
     Tabs: 'layout-sidebar-left',
+    TabsList: 'list-flat',
+    TabsTab: 'chrome-restore',
+    TabsPanel: 'layout-panel',
+    Stepper: 'debug-step-over',
+    StepperStep: 'debug-step-over',
+    StepperCompleted: 'pass',
+    Pagination: 'list-ordered',
+    PaginationRoot: 'list-ordered',
+    PaginationControl: 'symbol-number',
+    PaginationDots: 'ellipsis',
+    PaginationFirst: 'debug-step-back',
+    PaginationItems: 'list-selection',
+    PaginationLast: 'debug-step-over',
+    PaginationNext: 'arrow-right',
+    PaginationPrevious: 'arrow-left',
+    TableOfContents: 'list-ordered',
     Modal: 'multiple-windows',
+    ModalRoot: 'multiple-windows',
+    ModalOverlay: 'screen-full',
+    ModalContent: 'layout-panel',
+    ModalHeader: 'layout-panel-top',
+    ModalTitle: 'text-size',
+    ModalCloseButton: 'close',
+    ModalBody: 'layout-panel',
+    ModalStack: 'multiple-windows',
+    ModalBase: 'multiple-windows',
+    ModalBaseOverlay: 'screen-full',
+    ModalBaseContent: 'layout-panel',
+    ModalBaseHeader: 'layout-panel-top',
+    ModalBaseTitle: 'text-size',
+    ModalBaseCloseButton: 'close',
+    ModalBaseBody: 'layout-panel',
     Drawer: 'layout-sidebar-right',
+    DrawerRoot: 'layout-sidebar-right',
+    DrawerOverlay: 'screen-full',
+    DrawerContent: 'layout-panel',
+    DrawerHeader: 'layout-panel-top',
+    DrawerTitle: 'text-size',
+    DrawerCloseButton: 'close',
+    DrawerBody: 'layout-panel',
+    DrawerStack: 'layout-sidebar-right',
+    Tooltip: 'question',
+    TooltipFloating: 'question',
+    TooltipGroup: 'group-by-ref-type',
+    Popover: 'window',
+    PopoverTarget: 'symbol-method',
+    PopoverDropdown: 'layout-panel',
+    HoverCard: 'window',
+    HoverCardTarget: 'symbol-method',
+    HoverCardDropdown: 'layout-panel',
+    Dialog: 'comment',
+    Overlay: 'screen-full',
+    Portal: 'go-to-file',
+    OptionalPortal: 'go-to-file',
+    Transition: 'debug-step-over',
+    FocusTrap: 'target',
+    FocusTrapInitialFocus: 'circle-filled',
+    FloatingArrow: 'arrow-down',
+    FloatingIndicator: 'dash',
+    NativeScrollArea: 'list-tree',
+    RemoveScroll: 'lock',
     Alert: 'warning',
+    Notification: 'bell',
     NotificationBlock: 'bell',
+    LoadingOverlay: 'loading',
     Loader: 'loading',
+    Progress: 'pulse',
+    ProgressRoot: 'pulse',
+    ProgressSection: 'graph-line',
+    ProgressLabel: 'symbol-string',
+    RingProgress: 'circle-large-filled',
+    SemiCircleProgress: 'pulse',
+    Skeleton: 'loading',
     Image: 'file-media',
+    BackgroundImage: 'file-media',
     Avatar: 'account',
+    AvatarGroup: 'accounts-view-bar-icon',
+    ThemeIcon: 'symbol-color',
     Icon: 'symbol-event',
+    CheckIcon: 'check',
+    CloseIcon: 'close',
+    RadioIcon: 'circle-large-filled',
+    AccordionChevron: 'chevron-right',
     HeroSection: 'rocket',
     FeatureGrid: 'symbol-array',
     PricingSection: 'credit-card',
@@ -151,6 +347,8 @@ const Builder_COMPONENT_TYPE_ICONS: Record<string, string> = {
 type BuilderPanel = 'components' | 'blocks' | 'insert' | 'layers' | 'properties' | 'theme' | 'data' | 'ai' | 'export' | 'json';
 type BuilderPanelGroupId = 'build' | 'inspect' | 'tools';
 type BuilderLayerPanelMode = 'tree' | 'quickInsert';
+const Builder_LIBRARY_PANELS = new Set<BuilderPanel>(['components', 'blocks', 'insert', 'layers']);
+const Builder_LIBRARY_TABS = new Set<BuilderPanel>(['components', 'blocks', 'insert']);
 
 interface BuilderPanelDefinition {
     id: BuilderPanel;
@@ -583,38 +781,146 @@ const Builder_MANTINE_PROVIDER = Mantine.MantineProvider as unknown as BuilderMa
 
 const Builder_MANTINE_COMPONENTS: BuilderMantineComponentResolver = {
     ...createBuilderMantineLayoutComponents({
+        Affix: asBuilderMantineComponent(Mantine.Affix),
+        AppShell: asBuilderMantineComponent(Mantine.AppShell),
+        AppShellAside: asBuilderMantineComponent(Mantine.AppShell.Aside),
+        AppShellFooter: asBuilderMantineComponent(Mantine.AppShell.Footer),
+        AppShellHeader: asBuilderMantineComponent(Mantine.AppShell.Header),
+        AppShellMain: asBuilderMantineComponent(Mantine.AppShell.Main),
+        AppShellNavbar: asBuilderMantineComponent(Mantine.AppShell.Navbar),
+        AppShellSection: asBuilderMantineComponent(Mantine.AppShell.Section),
+        AspectRatio: asBuilderMantineComponent(Mantine.AspectRatio),
         Box: asBuilderMantineComponent(Mantine.Box),
         Card: asBuilderMantineComponent(Mantine.Card),
+        Center: asBuilderMantineComponent(Mantine.Center),
+        Collapse: asBuilderMantineComponent(Mantine.Collapse),
         Container: asBuilderMantineComponent(Mantine.Container),
         Divider: asBuilderMantineComponent(Mantine.Divider),
+        Flex: asBuilderMantineComponent(Mantine.Flex),
         Grid: asBuilderMantineComponent(Mantine.Grid),
+        GridCol: asBuilderMantineComponent(Mantine.Grid.Col),
         Group: asBuilderMantineComponent(Mantine.Group),
+        Indicator: asBuilderMantineComponent(Mantine.Indicator),
+        Paper: asBuilderMantineComponent(Mantine.Paper),
+        CardSection: asBuilderMantineComponent(Mantine.Card.Section),
+        ScrollArea: asBuilderMantineComponent(Mantine.ScrollArea),
+        ScrollAreaAutosize: asBuilderMantineComponent(Mantine.ScrollArea.Autosize),
         SimpleGrid: asBuilderMantineComponent(Mantine.SimpleGrid),
         Space: asBuilderMantineComponent(Mantine.Space),
-        Stack: asBuilderMantineComponent(Mantine.Stack)
+        Spoiler: asBuilderMantineComponent(Mantine.Spoiler),
+        Stack: asBuilderMantineComponent(Mantine.Stack),
+        TableScrollContainer: asBuilderMantineComponent(Mantine.Table.ScrollContainer),
+        VisuallyHidden: asBuilderMantineComponent(Mantine.VisuallyHidden)
     }),
     ...createBuilderMantineTypographyComponents({
         Title: asBuilderMantineComponent(Mantine.Title),
         Text: asBuilderMantineComponent(Mantine.Text),
         Badge: asBuilderMantineComponent(Mantine.Badge),
+        Blockquote: asBuilderMantineComponent(Mantine.Blockquote),
+        Code: asBuilderMantineComponent(Mantine.Code),
+        Highlight: asBuilderMantineComponent(Mantine.Highlight),
+        Kbd: asBuilderMantineComponent(Mantine.Kbd),
         List: asBuilderMantineComponent(Mantine.List),
         ListItem: asBuilderMantineComponent(Mantine.List.Item),
+        Mark: asBuilderMantineComponent(Mantine.Mark),
+        NumberFormatter: asBuilderMantineComponent(Mantine.NumberFormatter),
+        Pill: asBuilderMantineComponent(Mantine.Pill),
+        PillGroup: asBuilderMantineComponent(Mantine.Pill.Group),
         TypographyStylesProvider: asBuilderMantineComponent(Mantine.TypographyStylesProvider)
     }),
     ...createBuilderMantineFormComponents({
+        ActionIcon: asBuilderMantineComponent(Mantine.ActionIcon),
+        ActionIconGroup: asBuilderMantineComponent(Mantine.ActionIcon.Group),
+        ActionIconGroupSection: asBuilderMantineComponent(Mantine.ActionIcon.GroupSection),
+        Autocomplete: asBuilderMantineComponent(Mantine.Autocomplete),
+        Burger: asBuilderMantineComponent(Mantine.Burger),
         Button: asBuilderMantineComponent(Mantine.Button),
+        ButtonGroup: asBuilderMantineComponent(Mantine.Button.Group),
+        ButtonGroupSection: asBuilderMantineComponent(Mantine.Button.GroupSection),
+        CheckboxCard: asBuilderMantineComponent(Mantine.Checkbox.Card),
+        CheckboxIndicator: asBuilderMantineComponent(Mantine.Checkbox.Indicator),
+        Chip: asBuilderMantineComponent(Mantine.Chip),
+        CloseButton: asBuilderMantineComponent(Mantine.CloseButton),
+        ColorInput: asBuilderMantineComponent(Mantine.ColorInput),
+        ColorPicker: asBuilderMantineComponent(Mantine.ColorPicker),
+        ColorSwatch: asBuilderMantineComponent(Mantine.ColorSwatch),
+        CopyButton: asBuilderMantineComponent(Mantine.CopyButton),
+        Input: asBuilderMantineComponent(Mantine.Input),
+        InputBase: asBuilderMantineComponent(Mantine.InputBase),
+        InputWrapper: asBuilderMantineComponent(Mantine.Input.Wrapper),
+        InputLabel: asBuilderMantineComponent(Mantine.Input.Label),
+        InputDescription: asBuilderMantineComponent(Mantine.Input.Description),
+        InputPlaceholder: asBuilderMantineComponent(Mantine.Input.Placeholder),
+        InputClearButton: asBuilderMantineComponent(Mantine.Input.ClearButton),
+        InputError: asBuilderMantineComponent(Mantine.Input.Error),
+        Fieldset: asBuilderMantineComponent(Mantine.Fieldset),
+        FileButton: asBuilderMantineComponent(Mantine.FileButton),
         TextInput: asBuilderMantineComponent(Mantine.TextInput),
+        PasswordInput: asBuilderMantineComponent(Mantine.PasswordInput),
         Textarea: asBuilderMantineComponent(Mantine.Textarea),
         Select: asBuilderMantineComponent(Mantine.Select),
+        MultiSelect: asBuilderMantineComponent(Mantine.MultiSelect),
+        NativeSelect: asBuilderMantineComponent(Mantine.NativeSelect),
+        Combobox: asBuilderMantineComponent(Mantine.Combobox),
+        ComboboxTarget: asBuilderMantineComponent(Mantine.Combobox.Target),
+        ComboboxDropdownTarget: asBuilderMantineComponent(Mantine.Combobox.DropdownTarget),
+        ComboboxEventsTarget: asBuilderMantineComponent(Mantine.Combobox.EventsTarget),
+        ComboboxDropdown: asBuilderMantineComponent(Mantine.Combobox.Dropdown),
+        ComboboxOptions: asBuilderMantineComponent(Mantine.Combobox.Options),
+        ComboboxOption: asBuilderMantineComponent(Mantine.Combobox.Option),
+        ComboboxSearch: asBuilderMantineComponent(Mantine.Combobox.Search),
+        ComboboxEmpty: asBuilderMantineComponent(Mantine.Combobox.Empty),
+        ComboboxGroup: asBuilderMantineComponent(Mantine.Combobox.Group),
+        ComboboxHeader: asBuilderMantineComponent(Mantine.Combobox.Header),
+        ComboboxFooter: asBuilderMantineComponent(Mantine.Combobox.Footer),
+        ComboboxChevron: asBuilderMantineComponent(Mantine.Combobox.Chevron),
+        ComboboxClearButton: asBuilderMantineComponent(Mantine.Combobox.ClearButton),
+        ComboboxHiddenInput: asBuilderMantineComponent(Mantine.Combobox.HiddenInput),
+        CheckboxGroup: asBuilderMantineComponent(Mantine.Checkbox.Group),
         Checkbox: asBuilderMantineComponent(Mantine.Checkbox),
+        FileInput: asBuilderMantineComponent(Mantine.FileInput),
+        JsonInput: asBuilderMantineComponent(Mantine.JsonInput),
+        Pill: asBuilderMantineComponent(Mantine.Pill),
+        PillGroup: asBuilderMantineComponent(Mantine.Pill.Group),
+        PillsInput: asBuilderMantineComponent(Mantine.PillsInput),
+        PillsInputField: asBuilderMantineComponent(Mantine.PillsInput.Field),
+        PinInput: asBuilderMantineComponent(Mantine.PinInput),
+        RadioCard: asBuilderMantineComponent(Mantine.Radio.Card),
         RadioGroup: asBuilderMantineComponent(Mantine.Radio.Group),
         Radio: asBuilderMantineComponent(Mantine.Radio),
+        RadioIndicator: asBuilderMantineComponent(Mantine.Radio.Indicator),
+        RangeSlider: asBuilderMantineComponent(Mantine.RangeSlider),
+        HueSlider: asBuilderMantineComponent(Mantine.HueSlider),
+        AlphaSlider: asBuilderMantineComponent(Mantine.AlphaSlider),
+        AngleSlider: asBuilderMantineComponent(Mantine.AngleSlider),
+        Rating: asBuilderMantineComponent(Mantine.Rating),
+        SegmentedControl: asBuilderMantineComponent(Mantine.SegmentedControl),
+        Slider: asBuilderMantineComponent(Mantine.Slider),
+        SwitchGroup: asBuilderMantineComponent(Mantine.Switch.Group),
+        Switch: asBuilderMantineComponent(Mantine.Switch),
+        TagsInput: asBuilderMantineComponent(Mantine.TagsInput),
+        ChipGroup: asBuilderMantineComponent(Mantine.Chip.Group),
         NumberInput: asBuilderMantineComponent(Mantine.NumberInput),
+        UnstyledButton: asBuilderMantineComponent(Mantine.UnstyledButton),
         Stack: asBuilderMantineComponent(Mantine.Stack),
         Group: asBuilderMantineComponent(Mantine.Group)
     }),
     ...createBuilderMantineDataDisplayComponents({
+        Accordion: asBuilderMantineComponent(Mantine.Accordion),
+        AccordionItem: asBuilderMantineComponent(Mantine.Accordion.Item),
+        AccordionControl: asBuilderMantineComponent(Mantine.Accordion.Control),
+        AccordionPanel: asBuilderMantineComponent(Mantine.Accordion.Panel),
         Table: asBuilderMantineComponent(Mantine.Table),
+        TableCaption: asBuilderMantineComponent(Mantine.Table.Caption),
+        TableThead: asBuilderMantineComponent(Mantine.Table.Thead),
+        TableTbody: asBuilderMantineComponent(Mantine.Table.Tbody),
+        TableTfoot: asBuilderMantineComponent(Mantine.Table.Tfoot),
+        TableTr: asBuilderMantineComponent(Mantine.Table.Tr),
+        TableTh: asBuilderMantineComponent(Mantine.Table.Th),
+        TableTd: asBuilderMantineComponent(Mantine.Table.Td),
+        Timeline: asBuilderMantineComponent(Mantine.Timeline),
+        TimelineItem: asBuilderMantineComponent(Mantine.Timeline.Item),
+        Tree: asBuilderMantineComponent(Mantine.Tree),
         Card: asBuilderMantineComponent(Mantine.Card),
         Group: asBuilderMantineComponent(Mantine.Group),
         Stack: asBuilderMantineComponent(Mantine.Stack),
@@ -626,28 +932,105 @@ const Builder_MANTINE_COMPONENTS: BuilderMantineComponentResolver = {
         Anchor: asBuilderMantineComponent(Mantine.Anchor),
         NavLink: asBuilderMantineComponent(Mantine.NavLink),
         Breadcrumbs: asBuilderMantineComponent(Mantine.Breadcrumbs),
+        Button: asBuilderMantineComponent(Mantine.Button),
+        Menu: asBuilderMantineComponent(Mantine.Menu),
+        MenuTarget: asBuilderMantineComponent(Mantine.Menu.Target),
+        MenuDropdown: asBuilderMantineComponent(Mantine.Menu.Dropdown),
+        MenuItem: asBuilderMantineComponent(Mantine.Menu.Item),
+        MenuLabel: asBuilderMantineComponent(Mantine.Menu.Label),
+        MenuDivider: asBuilderMantineComponent(Mantine.Menu.Divider),
+        Pagination: asBuilderMantineComponent(Mantine.Pagination),
+        PaginationRoot: asBuilderMantineComponent(Mantine.Pagination.Root),
+        PaginationControl: asBuilderMantineComponent(Mantine.Pagination.Control),
+        PaginationDots: asBuilderMantineComponent(Mantine.Pagination.Dots),
+        PaginationFirst: asBuilderMantineComponent(Mantine.Pagination.First),
+        PaginationItems: asBuilderMantineComponent(Mantine.Pagination.Items),
+        PaginationLast: asBuilderMantineComponent(Mantine.Pagination.Last),
+        PaginationNext: asBuilderMantineComponent(Mantine.Pagination.Next),
+        PaginationPrevious: asBuilderMantineComponent(Mantine.Pagination.Previous),
+        Stepper: asBuilderMantineComponent(Mantine.Stepper),
+        StepperStep: asBuilderMantineComponent(Mantine.Stepper.Step),
+        StepperCompleted: asBuilderMantineComponent(Mantine.Stepper.Completed),
+        TableOfContents: asBuilderMantineComponent(Mantine.TableOfContents),
         Tabs: asBuilderMantineComponent(Mantine.Tabs),
         TabsList: asBuilderMantineComponent(Mantine.Tabs.List),
         TabsTab: asBuilderMantineComponent(Mantine.Tabs.Tab),
         TabsPanel: asBuilderMantineComponent(Mantine.Tabs.Panel)
     }),
     ...createBuilderMantineOverlayComponents({
+        Dialog: asBuilderMantineComponent(Mantine.Dialog),
         Modal: asBuilderMantineComponent(Mantine.Modal),
+        ModalRoot: asBuilderMantineComponent(Mantine.Modal.Root),
+        ModalOverlay: asBuilderMantineComponent(Mantine.Modal.Overlay),
+        ModalContent: asBuilderMantineComponent(Mantine.Modal.Content),
+        ModalHeader: asBuilderMantineComponent(Mantine.Modal.Header),
+        ModalTitle: asBuilderMantineComponent(Mantine.Modal.Title),
+        ModalCloseButton: asBuilderMantineComponent(Mantine.Modal.CloseButton),
+        ModalBody: asBuilderMantineComponent(Mantine.Modal.Body),
+        ModalStack: asBuilderMantineComponent(Mantine.Modal.Stack),
+        ModalBase: asBuilderMantineComponent(Mantine.ModalBase),
+        ModalBaseOverlay: asBuilderMantineComponent(Mantine.ModalBaseOverlay),
+        ModalBaseContent: asBuilderMantineComponent(Mantine.ModalBaseContent),
+        ModalBaseHeader: asBuilderMantineComponent(Mantine.ModalBaseHeader),
+        ModalBaseTitle: asBuilderMantineComponent(Mantine.ModalBaseTitle),
+        ModalBaseCloseButton: asBuilderMantineComponent(Mantine.ModalBaseCloseButton),
+        ModalBaseBody: asBuilderMantineComponent(Mantine.ModalBaseBody),
         Drawer: asBuilderMantineComponent(Mantine.Drawer),
+        DrawerRoot: asBuilderMantineComponent(Mantine.Drawer.Root),
+        DrawerOverlay: asBuilderMantineComponent(Mantine.Drawer.Overlay),
+        DrawerContent: asBuilderMantineComponent(Mantine.Drawer.Content),
+        DrawerHeader: asBuilderMantineComponent(Mantine.Drawer.Header),
+        DrawerTitle: asBuilderMantineComponent(Mantine.Drawer.Title),
+        DrawerCloseButton: asBuilderMantineComponent(Mantine.Drawer.CloseButton),
+        DrawerBody: asBuilderMantineComponent(Mantine.Drawer.Body),
+        DrawerStack: asBuilderMantineComponent(Mantine.Drawer.Stack),
+        HoverCard: asBuilderMantineComponent(Mantine.HoverCard),
+        HoverCardDropdown: asBuilderMantineComponent(Mantine.HoverCard.Dropdown),
+        HoverCardTarget: asBuilderMantineComponent(Mantine.HoverCard.Target),
+        Popover: asBuilderMantineComponent(Mantine.Popover),
+        PopoverDropdown: asBuilderMantineComponent(Mantine.Popover.Dropdown),
+        PopoverTarget: asBuilderMantineComponent(Mantine.Popover.Target),
+        Tooltip: asBuilderMantineComponent(Mantine.Tooltip),
+        TooltipFloating: asBuilderMantineComponent(Mantine.Tooltip.Floating),
+        TooltipGroup: asBuilderMantineComponent(Mantine.Tooltip.Group),
+        Overlay: asBuilderMantineComponent(Mantine.Overlay),
+        Portal: asBuilderMantineComponent(Mantine.Portal),
+        OptionalPortal: asBuilderMantineComponent(Mantine.OptionalPortal),
+        Transition: asBuilderMantineComponent(Mantine.Transition),
+        FocusTrap: asBuilderMantineComponent(Mantine.FocusTrap),
+        FocusTrapInitialFocus: asBuilderMantineComponent(Mantine.FocusTrapInitialFocus),
+        FloatingArrow: asBuilderMantineComponent(Mantine.FloatingArrow),
+        FloatingIndicator: asBuilderMantineComponent(Mantine.FloatingIndicator),
+        NativeScrollArea: asBuilderMantineComponent(Mantine.NativeScrollArea),
+        RemoveScroll: asBuilderMantineComponent(Mantine.RemoveScroll),
         Stack: asBuilderMantineComponent(Mantine.Stack),
         Group: asBuilderMantineComponent(Mantine.Group)
     }),
     ...createBuilderMantineFeedbackComponents({
         Alert: asBuilderMantineComponent(Mantine.Alert),
+        LoadingOverlay: asBuilderMantineComponent(Mantine.LoadingOverlay),
         Notification: asBuilderMantineComponent(Mantine.Notification),
         Loader: asBuilderMantineComponent(Mantine.Loader),
+        Progress: asBuilderMantineComponent(Mantine.Progress),
+        ProgressRoot: asBuilderMantineComponent(Mantine.Progress.Root),
+        ProgressSection: asBuilderMantineComponent(Mantine.Progress.Section),
+        ProgressLabel: asBuilderMantineComponent(Mantine.Progress.Label),
+        RingProgress: asBuilderMantineComponent(Mantine.RingProgress),
+        SemiCircleProgress: asBuilderMantineComponent(Mantine.SemiCircleProgress),
+        Skeleton: asBuilderMantineComponent(Mantine.Skeleton),
         Group: asBuilderMantineComponent(Mantine.Group),
         Text: asBuilderMantineComponent(Mantine.Text)
     }),
     ...createBuilderMantineMediaComponents({
+        BackgroundImage: asBuilderMantineComponent(Mantine.BackgroundImage),
         Image: asBuilderMantineComponent(Mantine.Image),
         Avatar: asBuilderMantineComponent(Mantine.Avatar),
-        ThemeIcon: asBuilderMantineComponent(Mantine.ThemeIcon)
+        AvatarGroup: asBuilderMantineComponent(Mantine.Avatar.Group),
+        ThemeIcon: asBuilderMantineComponent(Mantine.ThemeIcon),
+        CheckIcon: asBuilderMantineComponent(Mantine.CheckIcon),
+        CloseIcon: asBuilderMantineComponent(Mantine.CloseIcon),
+        RadioIcon: asBuilderMantineComponent(Mantine.RadioIcon),
+        AccordionChevron: asBuilderMantineComponent(Mantine.AccordionChevron)
     }),
     ...createBuilderMantineMarketingComponents({
         Box: asBuilderMantineComponent(Mantine.Box),
@@ -875,7 +1258,7 @@ function toHtmlColorValue(value: string): string {
 export class BuilderWidget extends ReactWidget implements Navigatable, SaveableSource {
 
     static readonly ID = 'builder.editor';
-    static readonly LABEL = 'Builder Builder';
+    static readonly LABEL = 'Page Builder';
 
     readonly uri: URI;
     readonly saveable: Saveable;
@@ -904,6 +1287,9 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
     protected activePanel: BuilderPanel = 'components';
     protected activePanelGroup: BuilderPanelGroupId = 'build';
     protected activeLayersPanelMode: BuilderLayerPanelMode = 'tree';
+    protected viewMode: PageBuilderViewMode = 'editor';
+    protected previewViewport: BuilderPreviewViewport = 'desktop';
+    protected activePropertiesTab: BuilderPropertiesTab = 'props';
     protected insertTargetNodeId: string | undefined;
     protected newThemeTokenKey = '';
     protected newThemeTokenValue = '';
@@ -924,6 +1310,9 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
 
     @inject(OpenerService)
     protected readonly openerService: OpenerService;
+
+    @inject(CommandService)
+    protected readonly commandService: CommandService;
 
     @inject(BuilderService)
     protected readonly service: BuilderService;
@@ -948,7 +1337,7 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
             },
             save: () => self.save(),
             revert: () => self.revert(),
-            filters: () => ({ 'Builder Schema': ['builder.json'] })
+            filters: () => ({ 'CyberVinci Page': ['cvpage.json', 'builder.json'] })
         };
     }
 
@@ -980,6 +1369,26 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
 
     getJson(): string {
         return this.editorState.snapshot.json;
+    }
+
+    async savePage(): Promise<void> {
+        await this.save();
+    }
+
+    showPreview(): void {
+        this.setViewMode('preview');
+    }
+
+    showJson(): void {
+        this.setViewMode('json');
+    }
+
+    getValidatedDocument(): BuilderDocument {
+        const validated = this.validateDocumentForSave();
+        if (!validated.valid) {
+            throw new Error(validated.messages.join(' '));
+        }
+        return validated.document;
     }
 
     async stageAiPatch(prompt: string, patch: BuilderAiPatch): Promise<void> {
@@ -1285,6 +1694,35 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
     protected setActivePanel(panel: BuilderPanel): void {
         this.activePanel = panel;
         this.activePanelGroup = this.getPanelGroupId(panel);
+        this.update();
+    }
+
+    protected setLibraryPanel(panel: ComponentLibraryTab): void {
+        this.activePanel = panel;
+        this.activePanelGroup = 'build';
+        this.update();
+    }
+
+    protected getLibraryPanel(): ComponentLibraryTab {
+        return Builder_LIBRARY_TABS.has(this.activePanel)
+            ? this.activePanel as ComponentLibraryTab
+            : 'components';
+    }
+
+    protected setViewMode(mode: PageBuilderViewMode): void {
+        this.viewMode = mode;
+        this.update();
+    }
+
+    protected setPreviewViewport(viewport: BuilderPreviewViewport): void {
+        this.previewViewport = viewport;
+        this.update();
+    }
+
+    protected setPropertiesTab(tab: BuilderPropertiesTab): void {
+        this.activePanel = 'properties';
+        this.activePanelGroup = 'inspect';
+        this.activePropertiesTab = tab;
         this.update();
     }
 
@@ -1980,48 +2418,72 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
         const snapshot = this.editorState.snapshot;
         const hasCurrentJsonErrors = !!snapshot.parseError || snapshot.validationIssues.length > 0;
         const cannotUseCanonicalState = hasCurrentJsonErrors || snapshot.hasUnappliedJsonChanges;
-        return <div className='builder-shell'>
-            <header className='builder-toolbar'>
-                <div>
-                    <strong>Builder Builder</strong>
-                    <span>{this.uri.path.base}</span>
-                </div>
-                <div className='builder-actions'>
-                    <button type='button' title='Formatar JSON' onClick={() => this.formatJson()} disabled={!!snapshot.parseError}>Formatar</button>
-                    <button type='button' title='Save' onClick={() => this.save()} disabled={!this.dirty || cannotUseCanonicalState}>Save</button>
-                </div>
-            </header>
-            <main className='builder-workbench' aria-label='Builder Builder workspace'>
-                <nav className='builder-tool-rail' aria-label='Builder tools'>
-                    {this.renderToolRail()}
-                </nav>
-                <section className='builder-area builder-area-panel' aria-label='Builder panel'>
-                    {this.renderActivePanel()}
-                </section>
-                <section
-                    className='builder-area builder-area-preview builder-drop-target'
-                    aria-label='Rendered preview'
-                    onDragOver={event => {
-                        const document = this.editorState.snapshot.document;
-                        if (document) {
-                            this.handleComponentDragOver(event, document.tree.id);
-                        }
-                    }}
-                    onDrop={event => {
-                        const document = this.editorState.snapshot.document;
-                        if (document) {
-                            this.handleComponentDrop(event, document.tree.id);
-                        }
-                    }}
-                >
-                    <h3>Preview</h3>
-                    {this.renderPreview()}
-                </section>
-                <section className='builder-area builder-area-json' aria-label='Canonical Builder JSON'>
-                    {this.renderJsonEditor()}
-                </section>
-            </main>
-        </div>;
+        const document = snapshot.document;
+        const selectedNode = snapshot.selectedNode ?? document?.tree;
+        const selectedLocation = document && selectedNode ? findNodeById(document.tree, selectedNode.id) : undefined;
+        const selectedLabel = selectedNode ? this.getNodeLayerLabel(selectedNode) : undefined;
+        const selectedPath = selectedLocation ? this.formatNodePath(selectedLocation.path, selectedLocation.node) : undefined;
+        const libraryPanel = this.getLibraryPanel();
+        const canExport = !cannotUseCanonicalState && !!document;
+        const inspectorContent = Builder_LIBRARY_PANELS.has(this.activePanel) || this.activePanel === 'properties'
+            ? this.renderProperties({ tab: this.activePropertiesTab })
+            : this.renderActivePanelBody(this.activePanel);
+
+        return <PageBuilderApp
+            toolbar={{
+                fileName: this.uri.path.base,
+                dirty: this.dirty,
+                viewMode: this.viewMode,
+                canSave: this.dirty && !cannotUseCanonicalState,
+                canExport,
+                onNew: () => this.commandService.executeCommand(BuilderCommands.NEW_PAGE.id),
+                onOpen: () => this.commandService.executeCommand(BuilderCommands.OPEN_PAGE_JSON.id),
+                onSave: () => this.save(),
+                onExportReact: () => this.commandService.executeCommand(BuilderCommands.EXPORT_REACT.id, this),
+                onExportHtml: () => this.exportHtml(),
+                onViewModeChange: mode => this.setViewMode(mode)
+            }}
+            library={{
+                activeTab: libraryPanel,
+                onTabChange: tab => this.setLibraryPanel(tab),
+                children: this.renderActivePanelBody(libraryPanel),
+                layers: this.renderActivePanelBody('layers')
+            }}
+            canvas={{
+                selectedLabel,
+                selectedType: selectedNode?.type,
+                selectedPath,
+                actions: this.renderVisualSelectionToolbar(),
+                onDragOver: event => {
+                    if (document) {
+                        this.handleComponentDragOver(event, document.tree.id);
+                    }
+                },
+                onDrop: event => {
+                    if (document) {
+                        this.handleComponentDrop(event, document.tree.id);
+                    }
+                },
+                children: this.renderPreview({ selectable: true })
+            }}
+            preview={{
+                viewport: this.previewViewport,
+                onViewportChange: viewport => this.setPreviewViewport(viewport),
+                children: this.renderPreview({ selectable: false })
+            }}
+            json={{
+                dirty: this.dirty,
+                hasUnappliedChanges: snapshot.hasUnappliedJsonChanges,
+                children: this.renderJsonEditor()
+            }}
+            properties={{
+                activeTab: this.activePropertiesTab,
+                selectedLabel,
+                selectedType: selectedNode?.type,
+                onTabChange: tab => this.setPropertiesTab(tab),
+                children: inspectorContent
+            }}
+        />;
     }
 
     protected renderToolRail(): React.ReactNode {
@@ -2547,7 +3009,6 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
         >
             <span className={`builder-toolbox-icon ${codicon(icon)}`} aria-hidden='true' />
             <span className='builder-toolbox-label'>{definition.displayName}</span>
-            <code>{definition.type}</code>
         </button>;
     }
 
@@ -2722,11 +3183,12 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
         return ordered.find(type => this.canAddChild(parent, type)) ?? ordered[0] ?? 'Text';
     }
 
-    protected renderPreview(): React.ReactNode {
+    protected renderPreview(options: { selectable?: boolean } = {}): React.ReactNode {
         const snapshot = this.editorState.snapshot;
         const { document, selectedNodeId } = snapshot;
+        const selectable = options.selectable !== false;
         if (this.loadStatus === 'loading') {
-            return <BuilderStatusView kind='loading' title='Loading Builder document' message='Reading the canonical .builder.json file.' />;
+            return <BuilderStatusView kind='loading' title='Loading Builder document' message='Reading the canonical .cvpage.json file.' />;
         }
         if (!document) {
             if (!snapshot.json.trim()) {
@@ -2761,8 +3223,8 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
         return <div className='builder-preview-surface'>
             {renderBuilderDocument({
                 document,
-                selectedNodeId,
-                onSelectNode: nodeId => this.selectNode(nodeId),
+                selectedNodeId: selectable ? selectedNodeId : undefined,
+                onSelectNode: selectable ? nodeId => this.selectNode(nodeId) : undefined,
                 onAction: actionId => this.messages.info(`Builder action requested: ${actionId}`),
                 renderUnknownComponent: fallback => this.renderUnknownComponentFallback(fallback.node, fallback.reason)
             }, {
@@ -2781,7 +3243,7 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
         </div>;
     }
 
-    protected renderProperties(options: { showSchemaModel?: boolean } = {}): React.ReactNode {
+    protected renderProperties(options: { showSchemaModel?: boolean; tab?: BuilderPropertiesTab } = {}): React.ReactNode {
         const node = this.selectedNode();
         if (!node) {
             return <div className='builder-panel-note'>Select a layer or preview component to edit properties.</div>;
@@ -2802,26 +3264,30 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
         }
         const model = createPropertyPanelModel(node, definition);
         const snapshot = this.editorState.snapshot;
+        const tab = options.tab ?? (options.showSchemaModel ? 'advanced' : this.activePropertiesTab);
         const propertyErrors = [
             ...this.rjsfPropertyErrors,
             ...(snapshot.propsError ? snapshot.propsError.split('\n') : []),
             ...this.collectSelectedNodePropsSchemaIssues(node)
                 .map(issue => formatValidationMessage(issue))
         ];
+
+        if (tab === 'style') {
+            return <>
+                {this.renderPropertiesHeader(definition, model, node)}
+                {this.renderSelectedNodeStyleEditor(node)}
+            </>;
+        }
+
+        if (tab === 'data') {
+            return <>
+                {this.renderPropertiesHeader(definition, model, node)}
+                {this.renderSelectedNodeDataPanel(node)}
+            </>;
+        }
+
         return <>
-            <div className='builder-properties-header'>
-                <div>
-                    <h3>Properties</h3>
-                    <strong>{definition.displayName}</strong>
-                    <code>{model.nodeId}</code>
-                </div>
-            </div>
-            <dl className='builder-properties-meta'>
-                <dt>Type</dt>
-                <dd>{model.componentType}</dd>
-                <dt>Style</dt>
-                <dd>{this.countStyleRules(node)} rule(s)</dd>
-            </dl>
+            {this.renderPropertiesHeader(definition, model, node)}
             <BuilderPropertyPanel
                 node={node}
                 definition={definition}
@@ -2845,33 +3311,72 @@ export class BuilderWidget extends ReactWidget implements Navigatable, SaveableS
                     )}
                 </div>
             </section>}
-            <label className='builder-label' htmlFor='builder-props-json'>Props JSON</label>
-            <textarea
-                id='builder-props-json'
-                className='builder-props-editor builder-props-json'
-                aria-label='Selected component props JSON'
-                aria-invalid={!!snapshot.propsError || propertyErrors.length > 0}
-                spellCheck={false}
-                value={snapshot.propsDraft}
-                onChange={event => {
-                    this.editorState.setPropsDraft(event.currentTarget.value);
+            {tab === 'advanced' && <>
+                <label className='builder-label' htmlFor='builder-props-json'>Props JSON</label>
+                <textarea
+                    id='builder-props-json'
+                    className='builder-props-editor builder-props-json'
+                    aria-label='Selected component props JSON'
+                    aria-invalid={!!snapshot.propsError || propertyErrors.length > 0}
+                    spellCheck={false}
+                    value={snapshot.propsDraft}
+                    onChange={event => {
+                        this.editorState.setPropsDraft(event.currentTarget.value);
+                        this.update();
+                    }}
+                />
+                <button type='button' onClick={() => {
+                    const nextSnapshot = this.editorState.applyPropsDraft();
+                    if (!nextSnapshot.propsError) {
+                        this.rjsfPropertyErrors = [];
+                    }
+                    this.setDirty(nextSnapshot.dirty);
                     this.update();
-                }}
-            />
-            <button type='button' onClick={() => {
-                const nextSnapshot = this.editorState.applyPropsDraft();
-                if (!nextSnapshot.propsError) {
-                    this.rjsfPropertyErrors = [];
-                }
-                this.setDirty(nextSnapshot.dirty);
-                this.update();
-            }}>Apply Properties</button>
-            {options.showSchemaModel && <>
+                }}>Apply Properties</button>
                 <h3>RJSF Model</h3>
                 <pre>{JSON.stringify(model.propsSchema, undefined, 2)}</pre>
             </>}
-            {this.renderSelectedNodeStyleEditor(node)}
         </>;
+    }
+
+    protected renderPropertiesHeader(
+        definition: BuilderComponentDefinition,
+        model: ReturnType<typeof createPropertyPanelModel>,
+        node: BuilderNode
+    ): React.ReactNode {
+        return <>
+            <div className='builder-properties-header'>
+                <div>
+                    <h3>Properties</h3>
+                    <strong>{definition.displayName}</strong>
+                    <code>{model.nodeId}</code>
+                </div>
+            </div>
+            <dl className='builder-properties-meta'>
+                <dt>Type</dt>
+                <dd>{model.componentType}</dd>
+                <dt>Style</dt>
+                <dd>{this.countStyleRules(node)} rule(s)</dd>
+            </dl>
+        </>;
+    }
+
+    protected renderSelectedNodeDataPanel(node: BuilderNode): React.ReactNode {
+        return <section className='builder-data-panel builder-selected-data-panel'>
+            <div className='builder-record-summary'>
+                <h3>Node data</h3>
+                {node.data
+                    ? <pre>{JSON.stringify(node.data, undefined, 2)}</pre>
+                    : <p className='builder-panel-note'>No data binding configured for this component.</p>}
+            </div>
+            <div className='builder-record-summary'>
+                <h3>Events</h3>
+                {node.events
+                    ? <pre>{JSON.stringify(node.events, undefined, 2)}</pre>
+                    : <p className='builder-panel-note'>No events configured for this component.</p>}
+            </div>
+            {this.renderDataActionsPanel()}
+        </section>;
     }
 
     protected renderSelectedNodeStyleEditor(node: BuilderNode): React.ReactNode {

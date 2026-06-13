@@ -1,0 +1,520 @@
+[    1342ms] [INFO] sending initial connect on mQqJDVFGbiKC7V6BAAAN @ http://127.0.0.1:3001/bundle.js:70086
+[    1344ms] [INFO] initial connect received on mQqJDVFGbiKC7V6BAAAN @ http://127.0.0.1:3001/bundle.js:70081
+[    1413ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:58709
+[    1435ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:237867
+[    1447ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:58709
+[    1457ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:58709
+[    1922ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:58709
+[    1973ms] [WARNING] 2026-06-06T10:09:11.945Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:194330
+[    2810ms] [WARNING] 2026-06-06T10:09:12.782Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:194330
+[    2812ms] [INFO] 2026-06-06T10:09:12.785Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:194330
+[    3882ms] [WARNING] 2026-06-06T10:09:13.854Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 1951.2 ms [3.874 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[    3919ms] [INFO] 2026-06-06T10:09:13.891Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:194330
+[    4023ms] [INFO] 2026-06-06T10:09:13.995Z root INFO Start frontend contributions: 2135.8 ms [4.010 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[    4023ms] [INFO] 2026-06-06T10:09:13.995Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:194330
+[    4031ms] [INFO] 2026-06-06T10:09:14.003Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:194330
+[    4031ms] [INFO] 2026-06-06T10:09:14.003Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:194330
+[    4073ms] [INFO] 2026-06-06T10:09:14.045Z root INFO [070e9962-537e-465c-846e-cf9b5c0b4c55] Waiting for backend deployment: 73.5 ms [4.064 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[    4401ms] [WARNING] 2026-06-06T10:09:14.374Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:194330
+[    4401ms] [WARNING] 2026-06-06T10:09:14.374Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:194330
+[    4747ms] [INFO] 2026-06-06T10:09:14.719Z root INFO [070e9962-537e-465c-846e-cf9b5c0b4c55] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:194330
+[    5094ms] [INFO] 2026-06-06T10:09:15.066Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:194330
+[    5095ms] [INFO] 2026-06-06T10:09:15.067Z root INFO Initialize the workbench layout: 1063.2 ms [5.085 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[    5095ms] [INFO] 2026-06-06T10:09:15.068Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:194330
+[    5904ms] [INFO] 2026-06-06T10:09:15.876Z root INFO Replace loading indicator with ready workbench UI (animation): 806.9 ms [5.895 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[    5905ms] [INFO] 2026-06-06T10:09:15.877Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:194330
+[    5905ms] [INFO] 2026-06-06T10:09:15.877Z root INFO All frontend contributions settled: 4021.9 ms [5.895 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[    6562ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ http://127.0.0.1:3001/codex-webview/shell?webviewId=13e4216c-a536-4b04-83cf-2703bb6c2da3&viewKind=sidebar:0
+[    6569ms] [INFO] 2026-06-06T10:09:16.541Z root INFO [Codex] webview ready: 13e4216c-a536-4b04-83cf-2703bb6c2da3 @ http://127.0.0.1:3001/bundle.js:194330
+[    6668ms] [WARNING] 2026-06-06T10:09:16.640Z root WARN Widget was activated, but did not accept focus after 2000ms: builder.editor:file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/cybervinci-landing-demo.cvpage.json @ http://127.0.0.1:3001/bundle.js:194330
+[    8076ms] [INFO] 2026-06-06T10:09:18.049Z root INFO [Codex] webview fetch: POST vscode://codex/get-settings @ http://127.0.0.1:3001/bundle.js:194330
+[    8088ms] [WARNING] 2026-06-06T10:09:18.061Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[    8090ms] [INFO] 2026-06-06T10:09:18.062Z root INFO [Codex] mcp request: remoteControl/status/read @ http://127.0.0.1:3001/bundle.js:194330
+[    8090ms] [INFO] 2026-06-06T10:09:18.062Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[    8090ms] [INFO] 2026-06-06T10:09:18.063Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[    8091ms] [INFO] 2026-06-06T10:09:18.063Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[    8091ms] [INFO] 2026-06-06T10:09:18.064Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3001/bundle.js:194330
+[    8091ms] [INFO] 2026-06-06T10:09:18.064Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3001/bundle.js:194330
+[    8092ms] [INFO] 2026-06-06T10:09:18.064Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3001/bundle.js:194330
+[    8092ms] [INFO] 2026-06-06T10:09:18.064Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available @ http://127.0.0.1:3001/bundle.js:194330
+[    8092ms] [INFO] 2026-06-06T10:09:18.065Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[    8093ms] [WARNING] 2026-06-06T10:09:18.065Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[    8093ms] [INFO] 2026-06-06T10:09:18.065Z root INFO [Codex] mcp request: account/read @ http://127.0.0.1:3001/bundle.js:194330
+[    8103ms] [WARNING] 2026-06-06T10:09:18.076Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[    8103ms] [INFO] 2026-06-06T10:09:18.076Z root INFO [Codex] mcp request: fs/readFile @ http://127.0.0.1:3001/bundle.js:194330
+[    8104ms] [INFO] 2026-06-06T10:09:18.076Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[    8108ms] [WARNING] 2026-06-06T10:09:18.080Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[    8108ms] [INFO] 2026-06-06T10:09:18.080Z root INFO [Codex] mcp request: thread/list @ http://127.0.0.1:3001/bundle.js:194330
+[    8428ms] [WARNING] 2026-06-06T10:09:18.401Z root WARN [Codex] Received app server notification @ http://127.0.0.1:3001/bundle.js:194330
+[    8431ms] [WARNING] 2026-06-06T10:09:18.404Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[    8435ms] [WARNING] 2026-06-06T10:09:18.408Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[    8435ms] [INFO] 2026-06-06T10:09:18.408Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[    8436ms] [WARNING] 2026-06-06T10:09:18.408Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[    8436ms] [INFO] 2026-06-06T10:09:18.409Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780740558407&sid=theia-mq26xleo-jjyh8t9madd&se=1 @ http://127.0.0.1:3001/bundle.js:194330
+[    8437ms] [INFO] 2026-06-06T10:09:18.409Z root INFO [Codex] webview fetch: POST vscode://codex/account-info @ http://127.0.0.1:3001/bundle.js:194330
+[    8463ms] [INFO] 2026-06-06T10:09:18.435Z root INFO [Codex] webview fetch: GET /wham/accounts/check @ http://127.0.0.1:3001/bundle.js:194330
+[    8666ms] [INFO] 2026-06-06T10:09:18.638Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780740558638&sid=theia-mq26xleo-jjyh8t9madd&ec=2 @ http://127.0.0.1:3001/bundle.js:194330
+[    9949ms] [WARNING] 2026-06-06T10:09:19.921Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10049ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10051ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10052ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10053ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10053ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[   10056ms] [WARNING] 2026-06-06T10:09:20.028Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10056ms] [INFO] 2026-06-06T10:09:20.028Z root INFO [Codex] mcp request: config/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10056ms] [INFO] 2026-06-06T10:09:20.029Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots @ http://127.0.0.1:3001/bundle.js:194330
+[   10057ms] [INFO] 2026-06-06T10:09:20.029Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10057ms] [INFO] 2026-06-06T10:09:20.029Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10057ms] [INFO] 2026-06-06T10:09:20.029Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10057ms] [WARNING] 2026-06-06T10:09:20.030Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10058ms] [INFO] 2026-06-06T10:09:20.030Z root INFO [Codex] mcp request: account/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10058ms] [INFO] 2026-06-06T10:09:20.030Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10058ms] [WARNING] 2026-06-06T10:09:20.031Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10059ms] [INFO] 2026-06-06T10:09:20.031Z root INFO [Codex] mcp request: collaborationMode/list @ http://127.0.0.1:3001/bundle.js:194330
+[   10059ms] [INFO] 2026-06-06T10:09:20.031Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10059ms] [WARNING] 2026-06-06T10:09:20.032Z root WARN [Codex] [remote-connections/bootstrap] shared_object_synced @ http://127.0.0.1:3001/bundle.js:194330
+[   10060ms] [WARNING] 2026-06-06T10:09:20.032Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10060ms] [INFO] 2026-06-06T10:09:20.032Z root INFO [Codex] mcp request: experimentalFeature/list @ http://127.0.0.1:3001/bundle.js:194330
+[   10060ms] [WARNING] 2026-06-06T10:09:20.032Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10060ms] [INFO] 2026-06-06T10:09:20.033Z root INFO [Codex] mcp request: config/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10060ms] [INFO] 2026-06-06T10:09:20.033Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10061ms] [INFO] 2026-06-06T10:09:20.033Z root INFO [Codex] webview fetch: POST vscode://codex/workspace-root-options @ http://127.0.0.1:3001/bundle.js:194330
+[   10061ms] [INFO] 2026-06-06T10:09:20.033Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[   10061ms] [INFO] 2026-06-06T10:09:20.033Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10061ms] [WARNING] 2026-06-06T10:09:20.034Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10062ms] [INFO] 2026-06-06T10:09:20.034Z root INFO [Codex] mcp request: configRequirements/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10062ms] [INFO] 2026-06-06T10:09:20.034Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[   10062ms] [WARNING] 2026-06-06T10:09:20.034Z root WARN [Codex] [startup][renderer] app routes mounted after 5016ms @ http://127.0.0.1:3001/bundle.js:194330
+[   10062ms] [INFO] 2026-06-06T10:09:20.035Z root INFO [Codex] official webview app ready: 13e4216c-a536-4b04-83cf-2703bb6c2da3 @ http://127.0.0.1:3001/bundle.js:194330
+[   10063ms] [INFO] 2026-06-06T10:09:20.035Z root INFO [Codex] webview fetch: POST vscode://codex/locale-info @ http://127.0.0.1:3001/bundle.js:194330
+[   10063ms] [WARNING] 2026-06-06T10:09:20.036Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10063ms] [INFO] 2026-06-06T10:09:20.036Z root INFO [Codex] mcp request: experimentalFeature/enablement/set @ http://127.0.0.1:3001/bundle.js:194330
+[   10064ms] [INFO] 2026-06-06T10:09:20.036Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780740560027&sid=theia-mq26xleo-jjyh8t9madd&ec=39 @ http://127.0.0.1:3001/bundle.js:194330
+[   10064ms] [INFO] 2026-06-06T10:09:20.036Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780740560027&sid=theia-mq26xleo-jjyh8t9madd&se=1 @ http://127.0.0.1:3001/bundle.js:194330
+[   10070ms] [WARNING] 2026-06-06T10:09:20.042Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10070ms] [INFO] 2026-06-06T10:09:20.042Z root INFO [Codex] mcp request: config/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10092ms] [WARNING] 2026-06-06T10:09:20.065Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10094ms] [WARNING] 2026-06-06T10:09:20.066Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10095ms] [WARNING] 2026-06-06T10:09:20.068Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10101ms] [WARNING] 2026-06-06T10:09:20.074Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10103ms] [WARNING] 2026-06-06T10:09:20.075Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10108ms] [WARNING] 2026-06-06T10:09:20.081Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10109ms] [INFO] 2026-06-06T10:09:20.081Z root INFO [Codex] mcp request: model/list @ http://127.0.0.1:3001/bundle.js:194330
+[   10109ms] [WARNING] 2026-06-06T10:09:20.081Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10109ms] [INFO] 2026-06-06T10:09:20.081Z root INFO [Codex] mcp request: configRequirements/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10110ms] [WARNING] 2026-06-06T10:09:20.083Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10116ms] [WARNING] 2026-06-06T10:09:20.089Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10117ms] [WARNING] 2026-06-06T10:09:20.089Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10117ms] [INFO] 2026-06-06T10:09:20.090Z root INFO [Codex] mcp request: experimentalFeature/list @ http://127.0.0.1:3001/bundle.js:194330
+[   10118ms] [WARNING] 2026-06-06T10:09:20.091Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10123ms] [WARNING] 2026-06-06T10:09:20.095Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10124ms] [WARNING] 2026-06-06T10:09:20.097Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10128ms] [WARNING] 2026-06-06T10:09:20.101Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10527ms] [INFO] 2026-06-06T10:09:20.500Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[   10528ms] [WARNING] 2026-06-06T10:09:20.500Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10528ms] [INFO] 2026-06-06T10:09:20.500Z root INFO [Codex] mcp request: mcpServerStatus/list @ http://127.0.0.1:3001/bundle.js:194330
+[   10528ms] [WARNING] 2026-06-06T10:09:20.500Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10528ms] [INFO] 2026-06-06T10:09:20.501Z root INFO [Codex] mcp request: account/read @ http://127.0.0.1:3001/bundle.js:194330
+[   10528ms] [WARNING] 2026-06-06T10:09:20.501Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10528ms] [INFO] 2026-06-06T10:09:20.501Z root INFO [Codex] mcp request: plugin/list @ http://127.0.0.1:3001/bundle.js:194330
+[   10543ms] [WARNING] 2026-06-06T10:09:20.515Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   10545ms] [WARNING] 2026-06-06T10:09:20.517Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[   10545ms] [INFO] 2026-06-06T10:09:20.517Z root INFO [Codex] mcp request: plugin/list @ http://127.0.0.1:3001/bundle.js:194330
+[   11396ms] [WARNING] 2026-06-06T10:09:21.368Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   11396ms] [INFO] 2026-06-06T10:09:21.369Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11396ms] [INFO] 2026-06-06T10:09:21.369Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11396ms] [INFO] 2026-06-06T10:09:21.369Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11397ms] [INFO] 2026-06-06T10:09:21.369Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11397ms] [INFO] 2026-06-06T10:09:21.369Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11441ms] [WARNING] 2026-06-06T10:09:21.414Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   11442ms] [INFO] 2026-06-06T10:09:21.414Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11442ms] [INFO] 2026-06-06T10:09:21.414Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11442ms] [INFO] 2026-06-06T10:09:21.414Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11442ms] [INFO] 2026-06-06T10:09:21.414Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11442ms] [INFO] 2026-06-06T10:09:21.414Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11445ms] [INFO] 2026-06-06T10:09:21.418Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11449ms] [INFO] 2026-06-06T10:09:21.422Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11454ms] [INFO] 2026-06-06T10:09:21.426Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11458ms] [INFO] 2026-06-06T10:09:21.430Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11465ms] [INFO] 2026-06-06T10:09:21.437Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11465ms] [INFO] 2026-06-06T10:09:21.437Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11466ms] [INFO] 2026-06-06T10:09:21.438Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11466ms] [INFO] 2026-06-06T10:09:21.438Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11473ms] [INFO] 2026-06-06T10:09:21.445Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11474ms] [INFO] 2026-06-06T10:09:21.446Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11474ms] [INFO] 2026-06-06T10:09:21.447Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11476ms] [INFO] 2026-06-06T10:09:21.449Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11490ms] [INFO] 2026-06-06T10:09:21.463Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11490ms] [INFO] 2026-06-06T10:09:21.463Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11490ms] [INFO] 2026-06-06T10:09:21.463Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11491ms] [INFO] 2026-06-06T10:09:21.463Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11491ms] [INFO] 2026-06-06T10:09:21.463Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11491ms] [INFO] 2026-06-06T10:09:21.464Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11491ms] [INFO] 2026-06-06T10:09:21.464Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11496ms] [INFO] 2026-06-06T10:09:21.468Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11496ms] [INFO] 2026-06-06T10:09:21.468Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11496ms] [INFO] 2026-06-06T10:09:21.469Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11497ms] [INFO] 2026-06-06T10:09:21.469Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11497ms] [INFO] 2026-06-06T10:09:21.469Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11497ms] [INFO] 2026-06-06T10:09:21.469Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11497ms] [INFO] 2026-06-06T10:09:21.470Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11501ms] [INFO] 2026-06-06T10:09:21.474Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11502ms] [INFO] 2026-06-06T10:09:21.475Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11502ms] [INFO] 2026-06-06T10:09:21.475Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11503ms] [INFO] 2026-06-06T10:09:21.476Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11503ms] [INFO] 2026-06-06T10:09:21.476Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11504ms] [INFO] 2026-06-06T10:09:21.476Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11504ms] [INFO] 2026-06-06T10:09:21.477Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11505ms] [INFO] 2026-06-06T10:09:21.477Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11505ms] [INFO] 2026-06-06T10:09:21.478Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11509ms] [INFO] 2026-06-06T10:09:21.481Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11509ms] [INFO] 2026-06-06T10:09:21.482Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11510ms] [INFO] 2026-06-06T10:09:21.482Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11510ms] [INFO] 2026-06-06T10:09:21.483Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11511ms] [INFO] 2026-06-06T10:09:21.483Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11511ms] [INFO] 2026-06-06T10:09:21.483Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11511ms] [INFO] 2026-06-06T10:09:21.483Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11513ms] [INFO] 2026-06-06T10:09:21.486Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11514ms] [INFO] 2026-06-06T10:09:21.487Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11515ms] [INFO] 2026-06-06T10:09:21.487Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11515ms] [INFO] 2026-06-06T10:09:21.487Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11517ms] [INFO] 2026-06-06T10:09:21.490Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11519ms] [INFO] 2026-06-06T10:09:21.492Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11519ms] [INFO] 2026-06-06T10:09:21.492Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11520ms] [INFO] 2026-06-06T10:09:21.492Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11520ms] [INFO] 2026-06-06T10:09:21.492Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11520ms] [INFO] 2026-06-06T10:09:21.493Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11522ms] [INFO] 2026-06-06T10:09:21.495Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11524ms] [INFO] 2026-06-06T10:09:21.496Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11524ms] [INFO] 2026-06-06T10:09:21.497Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11524ms] [INFO] 2026-06-06T10:09:21.497Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11525ms] [INFO] 2026-06-06T10:09:21.497Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11526ms] [INFO] 2026-06-06T10:09:21.499Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11527ms] [INFO] 2026-06-06T10:09:21.500Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11527ms] [INFO] 2026-06-06T10:09:21.500Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11528ms] [INFO] 2026-06-06T10:09:21.500Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11528ms] [INFO] 2026-06-06T10:09:21.501Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11531ms] [INFO] 2026-06-06T10:09:21.504Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11533ms] [INFO] 2026-06-06T10:09:21.505Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11533ms] [INFO] 2026-06-06T10:09:21.506Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11534ms] [INFO] 2026-06-06T10:09:21.506Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11534ms] [INFO] 2026-06-06T10:09:21.506Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11536ms] [INFO] 2026-06-06T10:09:21.508Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11537ms] [INFO] 2026-06-06T10:09:21.509Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11537ms] [INFO] 2026-06-06T10:09:21.510Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11537ms] [INFO] 2026-06-06T10:09:21.510Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11538ms] [INFO] 2026-06-06T10:09:21.510Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11539ms] [INFO] 2026-06-06T10:09:21.512Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11540ms] [INFO] 2026-06-06T10:09:21.513Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11541ms] [INFO] 2026-06-06T10:09:21.513Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11541ms] [INFO] 2026-06-06T10:09:21.513Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11542ms] [INFO] 2026-06-06T10:09:21.514Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11543ms] [INFO] 2026-06-06T10:09:21.516Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11544ms] [INFO] 2026-06-06T10:09:21.517Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11544ms] [INFO] 2026-06-06T10:09:21.517Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11544ms] [INFO] 2026-06-06T10:09:21.517Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11545ms] [INFO] 2026-06-06T10:09:21.518Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11547ms] [INFO] 2026-06-06T10:09:21.520Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11548ms] [INFO] 2026-06-06T10:09:21.521Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11548ms] [INFO] 2026-06-06T10:09:21.521Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11549ms] [INFO] 2026-06-06T10:09:21.521Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11549ms] [INFO] 2026-06-06T10:09:21.522Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11550ms] [INFO] 2026-06-06T10:09:21.523Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11552ms] [INFO] 2026-06-06T10:09:21.524Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11552ms] [INFO] 2026-06-06T10:09:21.524Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11553ms] [INFO] 2026-06-06T10:09:21.526Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11553ms] [INFO] 2026-06-06T10:09:21.526Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11555ms] [INFO] 2026-06-06T10:09:21.528Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11556ms] [INFO] 2026-06-06T10:09:21.529Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11557ms] [INFO] 2026-06-06T10:09:21.530Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11558ms] [INFO] 2026-06-06T10:09:21.530Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11559ms] [INFO] 2026-06-06T10:09:21.531Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11559ms] [INFO] 2026-06-06T10:09:21.532Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11560ms] [INFO] 2026-06-06T10:09:21.533Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11561ms] [INFO] 2026-06-06T10:09:21.533Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11561ms] [INFO] 2026-06-06T10:09:21.534Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11562ms] [INFO] 2026-06-06T10:09:21.535Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11563ms] [INFO] 2026-06-06T10:09:21.536Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11564ms] [INFO] 2026-06-06T10:09:21.537Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11565ms] [INFO] 2026-06-06T10:09:21.537Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11566ms] [INFO] 2026-06-06T10:09:21.539Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11567ms] [INFO] 2026-06-06T10:09:21.540Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11568ms] [INFO] 2026-06-06T10:09:21.541Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11571ms] [INFO] 2026-06-06T10:09:21.543Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11575ms] [INFO] 2026-06-06T10:09:21.547Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11577ms] [INFO] 2026-06-06T10:09:21.549Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11577ms] [INFO] 2026-06-06T10:09:21.550Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11578ms] [INFO] 2026-06-06T10:09:21.550Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11579ms] [INFO] 2026-06-06T10:09:21.551Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11581ms] [INFO] 2026-06-06T10:09:21.554Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11582ms] [INFO] 2026-06-06T10:09:21.555Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11582ms] [INFO] 2026-06-06T10:09:21.555Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11588ms] [INFO] 2026-06-06T10:09:21.560Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11589ms] [INFO] 2026-06-06T10:09:21.562Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11590ms] [INFO] 2026-06-06T10:09:21.562Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11590ms] [INFO] 2026-06-06T10:09:21.562Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11590ms] [INFO] 2026-06-06T10:09:21.563Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11591ms] [INFO] 2026-06-06T10:09:21.564Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11593ms] [INFO] 2026-06-06T10:09:21.566Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11596ms] [INFO] 2026-06-06T10:09:21.569Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11597ms] [INFO] 2026-06-06T10:09:21.569Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11597ms] [INFO] 2026-06-06T10:09:21.569Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11597ms] [INFO] 2026-06-06T10:09:21.570Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11599ms] [INFO] 2026-06-06T10:09:21.572Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11599ms] [INFO] 2026-06-06T10:09:21.572Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11601ms] [INFO] 2026-06-06T10:09:21.573Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11602ms] [INFO] 2026-06-06T10:09:21.574Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11602ms] [INFO] 2026-06-06T10:09:21.574Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11602ms] [INFO] 2026-06-06T10:09:21.575Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11603ms] [INFO] 2026-06-06T10:09:21.575Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11604ms] [INFO] 2026-06-06T10:09:21.577Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11605ms] [INFO] 2026-06-06T10:09:21.578Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11606ms] [INFO] 2026-06-06T10:09:21.579Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11606ms] [INFO] 2026-06-06T10:09:21.579Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11608ms] [INFO] 2026-06-06T10:09:21.581Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11610ms] [INFO] 2026-06-06T10:09:21.582Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11610ms] [INFO] 2026-06-06T10:09:21.583Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11611ms] [INFO] 2026-06-06T10:09:21.583Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11611ms] [INFO] 2026-06-06T10:09:21.583Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11617ms] [INFO] 2026-06-06T10:09:21.589Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11618ms] [INFO] 2026-06-06T10:09:21.591Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11619ms] [INFO] 2026-06-06T10:09:21.591Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11619ms] [INFO] 2026-06-06T10:09:21.592Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11624ms] [INFO] 2026-06-06T10:09:21.596Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11625ms] [INFO] 2026-06-06T10:09:21.597Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11625ms] [INFO] 2026-06-06T10:09:21.598Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11625ms] [INFO] 2026-06-06T10:09:21.598Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11626ms] [INFO] 2026-06-06T10:09:21.598Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11626ms] [INFO] 2026-06-06T10:09:21.598Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11632ms] [INFO] 2026-06-06T10:09:21.605Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11632ms] [INFO] 2026-06-06T10:09:21.605Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11633ms] [INFO] 2026-06-06T10:09:21.605Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11633ms] [INFO] 2026-06-06T10:09:21.605Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11636ms] [INFO] 2026-06-06T10:09:21.608Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11637ms] [INFO] 2026-06-06T10:09:21.609Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11637ms] [INFO] 2026-06-06T10:09:21.609Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11637ms] [INFO] 2026-06-06T10:09:21.609Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11639ms] [INFO] 2026-06-06T10:09:21.612Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11643ms] [INFO] 2026-06-06T10:09:21.616Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11644ms] [INFO] 2026-06-06T10:09:21.616Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11644ms] [INFO] 2026-06-06T10:09:21.616Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11644ms] [INFO] 2026-06-06T10:09:21.617Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11646ms] [INFO] 2026-06-06T10:09:21.618Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11648ms] [INFO] 2026-06-06T10:09:21.620Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11649ms] [INFO] 2026-06-06T10:09:21.622Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11650ms] [INFO] 2026-06-06T10:09:21.622Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11650ms] [INFO] 2026-06-06T10:09:21.623Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11651ms] [INFO] 2026-06-06T10:09:21.623Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11651ms] [INFO] 2026-06-06T10:09:21.623Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11655ms] [INFO] 2026-06-06T10:09:21.628Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11655ms] [INFO] 2026-06-06T10:09:21.628Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11655ms] [INFO] 2026-06-06T10:09:21.628Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11655ms] [INFO] 2026-06-06T10:09:21.628Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11660ms] [INFO] 2026-06-06T10:09:21.633Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11660ms] [INFO] 2026-06-06T10:09:21.633Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11660ms] [INFO] 2026-06-06T10:09:21.633Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11666ms] [INFO] 2026-06-06T10:09:21.638Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11666ms] [INFO] 2026-06-06T10:09:21.639Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11667ms] [INFO] 2026-06-06T10:09:21.639Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11667ms] [INFO] 2026-06-06T10:09:21.639Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11671ms] [INFO] 2026-06-06T10:09:21.644Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11672ms] [INFO] 2026-06-06T10:09:21.644Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11674ms] [INFO] 2026-06-06T10:09:21.646Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   11676ms] [INFO] 2026-06-06T10:09:21.648Z root INFO [Codex] webview fetch: POST vscode://codex/read-file-binary @ http://127.0.0.1:3001/bundle.js:194330
+[   13729ms] [WARNING] 2026-06-06T10:09:23.702Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[   68438ms] [INFO] 2026-06-06T10:10:18.411Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780740618408&sid=theia-mq26xleo-jjyh8t9madd&ec=69 @ http://127.0.0.1:3001/bundle.js:194330
+[  600777ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600777ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600778ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600779ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  600797ms] [INFO] 2026-06-06T10:19:10.769Z root INFO [Codex] webview fetch: POST vscode://codex/get-settings @ http://127.0.0.1:3001/bundle.js:194330
+[  600797ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600797ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: POST vscode://codex/account-info @ http://127.0.0.1:3001/bundle.js:194330
+[  600797ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: GET /wham/accounts/check @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.770Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.771Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.771Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600798ms] [INFO] 2026-06-06T10:19:10.771Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600799ms] [WARNING] 2026-06-06T10:19:10.771Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600799ms] [INFO] 2026-06-06T10:19:10.772Z root INFO [Codex] mcp request: config/read @ http://127.0.0.1:3001/bundle.js:194330
+[  600799ms] [INFO] 2026-06-06T10:19:10.772Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600799ms] [INFO] 2026-06-06T10:19:10.772Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600800ms] [WARNING] 2026-06-06T10:19:10.772Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600800ms] [INFO] 2026-06-06T10:19:10.772Z root INFO [Codex] mcp request: experimentalFeature/list @ http://127.0.0.1:3001/bundle.js:194330
+[  600800ms] [WARNING] 2026-06-06T10:19:10.773Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600800ms] [INFO] 2026-06-06T10:19:10.773Z root INFO [Codex] mcp request: config/read @ http://127.0.0.1:3001/bundle.js:194330
+[  600800ms] [INFO] 2026-06-06T10:19:10.773Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600800ms] [INFO] 2026-06-06T10:19:10.773Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[  600801ms] [INFO] 2026-06-06T10:19:10.773Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600801ms] [INFO] 2026-06-06T10:19:10.773Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600801ms] [WARNING] 2026-06-06T10:19:10.774Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600801ms] [INFO] 2026-06-06T10:19:10.774Z root INFO [Codex] mcp request: config/read @ http://127.0.0.1:3001/bundle.js:194330
+[  600802ms] [WARNING] 2026-06-06T10:19:10.774Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600802ms] [INFO] 2026-06-06T10:19:10.774Z root INFO [Codex] mcp request: model/list @ http://127.0.0.1:3001/bundle.js:194330
+[  600802ms] [WARNING] 2026-06-06T10:19:10.774Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600802ms] [INFO] 2026-06-06T10:19:10.775Z root INFO [Codex] mcp request: plugin/list @ http://127.0.0.1:3001/bundle.js:194330
+[  600802ms] [WARNING] 2026-06-06T10:19:10.775Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600802ms] [INFO] 2026-06-06T10:19:10.775Z root INFO [Codex] mcp request: configRequirements/read @ http://127.0.0.1:3001/bundle.js:194330
+[  600803ms] [INFO] 2026-06-06T10:19:10.775Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[  600803ms] [WARNING] 2026-06-06T10:19:10.775Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600803ms] [INFO] 2026-06-06T10:19:10.775Z root INFO [Codex] mcp request: mcpServerStatus/list @ http://127.0.0.1:3001/bundle.js:194330
+[  600807ms] [INFO] 2026-06-06T10:19:10.780Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780741150760&sid=theia-mq26xleo-jjyh8t9madd&se=1 @ http://127.0.0.1:3001/bundle.js:194330
+[  600832ms] [INFO] 2026-06-06T10:19:10.805Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  600852ms] [WARNING] 2026-06-06T10:19:10.825Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  600853ms] [INFO] 2026-06-06T10:19:10.825Z root INFO [Codex] mcp request: thread/list @ http://127.0.0.1:3001/bundle.js:194330
+[  600860ms] [WARNING] 2026-06-06T10:19:10.833Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  600864ms] [WARNING] 2026-06-06T10:19:10.836Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  600868ms] [WARNING] 2026-06-06T10:19:10.841Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  600870ms] [WARNING] 2026-06-06T10:19:10.842Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  600872ms] [WARNING] 2026-06-06T10:19:10.845Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  600874ms] [WARNING] 2026-06-06T10:19:10.846Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  601522ms] [WARNING] 2026-06-06T10:19:11.494Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  601748ms] [WARNING] 2026-06-06T10:19:11.721Z root WARN [Codex] Request completed @ http://127.0.0.1:3001/bundle.js:194330
+[  602562ms] [INFO] 2026-06-06T10:19:12.534Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780741152530&sid=theia-mq26xleo-jjyh8t9madd&ec=68 @ http://127.0.0.1:3001/bundle.js:194330
+[  605297ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=7azmvh6y:0
+[  609014ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=7b2i3io1:0
+[  610054ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610054ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610055ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610056ms] [WARNING]   WARN  [Statsig] SDK initialization has not completed. Reason: Loading:Unrecognized @ http://127.0.0.1:3001/codex-webview/assets/error-boundary-C0hM5kIc.js:1
+[  610058ms] [INFO] 2026-06-06T10:19:20.030Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780741160029&sid=theia-mq26xleo-jjyh8t9madd&se=1 @ http://127.0.0.1:3001/bundle.js:194330
+[  613067ms] [INFO] 2026-06-06T10:19:23.039Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780741163038&sid=theia-mq26xleo-jjyh8t9madd&ec=68 @ http://127.0.0.1:3001/bundle.js:194330
+[  613432ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=7b5wjadt:0
+[  620077ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=7bb1awyb:0
+[  620558ms] [INFO] 2026-06-06T10:19:30.531Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780741170531&sid=theia-mq26xleo-jjyh8t9madd&se=1 @ http://127.0.0.1:3001/bundle.js:194330
+[  625072ms] [INFO] 2026-06-06T10:19:35.044Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780741175043&sid=theia-mq26xleo-jjyh8t9madd&ec=68 @ http://127.0.0.1:3001/bundle.js:194330
+[  625072ms] Error: Max disconnected buffer size exceeded by adding 44180 bytes
+    at SocketWriteBuffer.ensureWriteBuffer (http://127.0.0.1:3001/bundle.js:69941:19)
+    at SocketWriteBuffer.buffer (http://127.0.0.1:3001/bundle.js:69931:16)
+    at http://127.0.0.1:3001/bundle.js:70128:34
+    at http://127.0.0.1:3001/bundle.js:59608:73
+    at CallbackList2.invoke (http://127.0.0.1:3001/bundle.js:59615:24)
+    at _Emitter.fire (http://127.0.0.1:3001/bundle.js:59743:36)
+    at Uint8ArrayWriteBuffer.commit (http://127.0.0.1:3001/bundle.js:69829:32)
+    at _RpcProtocol.sendRequest (http://127.0.0.1:3001/bundle.js:62914:20)
+    at http://127.0.0.1:3001/bundle.js:63147:52
+    at new Promise (<anonymous>)
+[  628942ms] [INFO] 2026-06-06T10:19:38.914Z root INFO sending reconnect on BqSs4Y7zM2iSMRvhAAAF @ http://127.0.0.1:3001/bundle.js:194330
+[  628980ms] [INFO] 2026-06-06T10:19:38.952Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3001/bundle.js:194330
+[  628980ms] [INFO] 2026-06-06T10:19:38.952Z root INFO >>> Storing the layout... @ http://127.0.0.1:3001/bundle.js:194330
+[  628980ms] [INFO] 2026-06-06T10:19:38.953Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3001/bundle.js:194330
+[  628980ms] [INFO] 2026-06-06T10:19:38.953Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3001/bundle.js:194330
+[  628980ms] [INFO] 2026-06-06T10:19:38.953Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3001/bundle.js:194330
+[  630730ms] [INFO] sending initial connect on h3DlYzz2YbBzFjqpAAAL @ http://127.0.0.1:3001/bundle.js:70086
+[  630733ms] [INFO] initial connect received on h3DlYzz2YbBzFjqpAAAL @ http://127.0.0.1:3001/bundle.js:70081
+[  630807ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:58709
+[  630831ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:237867
+[  630844ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:58709
+[  630857ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:58709
+[  631531ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:58709
+[  631618ms] [WARNING] 2026-06-06T10:19:41.591Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:194330
+[  632787ms] [WARNING] 2026-06-06T10:19:42.760Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:194330
+[  633032ms] [INFO] 2026-06-06T10:19:43.005Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:194330
+[  633957ms] [WARNING] 2026-06-06T10:19:43.929Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 2408.8 ms [5.000 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[  634022ms] [INFO] 2026-06-06T10:19:43.994Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:194330
+[  634149ms] [INFO] 2026-06-06T10:19:44.121Z root INFO Start frontend contributions: 2687.1 ms [5.188 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[  634149ms] [INFO] 2026-06-06T10:19:44.122Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:194330
+[  634151ms] [INFO] 2026-06-06T10:19:44.123Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:194330
+[  634151ms] [INFO] 2026-06-06T10:19:44.124Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:194330
+[  634216ms] [INFO] 2026-06-06T10:19:44.189Z root INFO [4f72daf2-9d62-4614-93c5-1b713e75cb6f] Waiting for backend deployment: 91.8 ms [5.259 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[  634660ms] [WARNING] 2026-06-06T10:19:44.633Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:194330
+[  634660ms] [WARNING] 2026-06-06T10:19:44.633Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:194330
+[  634720ms] [INFO] 2026-06-06T10:19:44.693Z root INFO [4f72daf2-9d62-4614-93c5-1b713e75cb6f] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:194330
+[  637019ms] [WARNING] 2026-06-06T10:19:46.991Z root WARN Widget was activated, but did not accept focus after 2000ms: builder.editor:file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/cybervinci-landing-demo.cvpage.json @ http://127.0.0.1:3001/bundle.js:194330
+[  637113ms] [INFO] 2026-06-06T10:19:47.086Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:194330
+[  637114ms] [INFO] 2026-06-06T10:19:47.087Z root INFO Initialize the workbench layout: 2962.7 ms [8.156 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[  637115ms] [INFO] 2026-06-06T10:19:47.087Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:194330
+[  637156ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ http://127.0.0.1:3001/codex-webview/shell?webviewId=99683a0c-3ec9-415f-a5fa-beb666397f60&viewKind=sidebar:0
+[  637165ms] [INFO] 2026-06-06T10:19:47.137Z root INFO [Codex] webview ready: 99683a0c-3ec9-415f-a5fa-beb666397f60 @ http://127.0.0.1:3001/bundle.js:194330
+[  637607ms] [INFO] 2026-06-06T10:19:47.579Z root INFO [Codex] webview fetch: POST vscode://codex/get-settings @ http://127.0.0.1:3001/bundle.js:194330
+[  637619ms] [WARNING] 2026-06-06T10:19:47.591Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  637621ms] [INFO] 2026-06-06T10:19:47.593Z root INFO [Codex] mcp request: remoteControl/status/read @ http://127.0.0.1:3001/bundle.js:194330
+[  637621ms] [INFO] 2026-06-06T10:19:47.594Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home @ http://127.0.0.1:3001/bundle.js:194330
+[  637622ms] [INFO] 2026-06-06T10:19:47.594Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  637622ms] [INFO] 2026-06-06T10:19:47.595Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  637623ms] [INFO] 2026-06-06T10:19:47.595Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads @ http://127.0.0.1:3001/bundle.js:194330
+[  637623ms] [INFO] 2026-06-06T10:19:47.595Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info @ http://127.0.0.1:3001/bundle.js:194330
+[  637623ms] [INFO] 2026-06-06T10:19:47.596Z root INFO [Codex] webview fetch: POST vscode://codex/os-info @ http://127.0.0.1:3001/bundle.js:194330
+[  637623ms] [INFO] 2026-06-06T10:19:47.596Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available @ http://127.0.0.1:3001/bundle.js:194330
+[  637624ms] [INFO] 2026-06-06T10:19:47.596Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  637624ms] [WARNING] 2026-06-06T10:19:47.597Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  637624ms] [INFO] 2026-06-06T10:19:47.597Z root INFO [Codex] mcp request: account/read @ http://127.0.0.1:3001/bundle.js:194330
+[  637636ms] [WARNING] 2026-06-06T10:19:47.608Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  637636ms] [INFO] 2026-06-06T10:19:47.609Z root INFO [Codex] mcp request: fs/readFile @ http://127.0.0.1:3001/bundle.js:194330
+[  637636ms] [INFO] 2026-06-06T10:19:47.609Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state @ http://127.0.0.1:3001/bundle.js:194330
+[  637639ms] [WARNING] 2026-06-06T10:19:47.612Z root WARN [Codex] mcp_request_enqueued @ http://127.0.0.1:3001/bundle.js:194330
+[  637640ms] [INFO] 2026-06-06T10:19:47.612Z root INFO [Codex] mcp request: thread/list @ http://127.0.0.1:3001/bundle.js:194330
+[  637926ms] [INFO] 2026-06-06T10:19:47.898Z root INFO Replace loading indicator with ready workbench UI (animation): 808.9 ms [8.968 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330
+[  637926ms] [INFO] 2026-06-06T10:19:47.899Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:194330
+[  637926ms] [INFO] 2026-06-06T10:19:47.899Z root INFO All frontend contributions settled: 6468.1 ms [8.969 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:194330

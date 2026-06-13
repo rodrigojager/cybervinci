@@ -1,0 +1,214 @@
+.ai-providers-configuration-widget .ai-providers-provider-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 6px;
+    background: var(--theia-editor-background);
+}
+
+.ai-providers-configuration-widget .ai-providers-provider-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--theia-foreground);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ai-providers-configuration-widget .ai-providers-provider-subtitle {
+    max-width: 760px;
+    margin-top: 6px;
+    color: var(--theia-descriptionForeground);
+    line-height: 1.45;
+}
+
+.ai-providers-configuration-widget .ai-providers-provider-actions,
+.ai-providers-configuration-widget .ai-providers-segmented {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ai-providers-configuration-widget .ai-providers-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ai-providers-configuration-widget .ai-providers-status-tile {
+    min-height: 76px;
+    padding: 10px 12px;
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 6px;
+    background: var(--theia-sideBar-background);
+}
+
+.ai-providers-configuration-widget .ai-providers-status-tile.pass {
+    border-left: 3px solid var(--theia-testing-iconPassed);
+}
+
+.ai-providers-configuration-widget .ai-providers-status-tile.warn {
+    border-left: 3px solid var(--theia-testing-iconQueued);
+}
+
+.ai-providers-configuration-widget .ai-providers-status-tile.fail {
+    border-left: 3px solid var(--theia-testing-iconFailed);
+}
+
+.ai-providers-configuration-widget .ai-providers-status-label,
+.ai-providers-configuration-widget .ai-providers-status-detail,
+.ai-providers-configuration-widget .ai-providers-mode-current {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.ai-providers-configuration-widget .ai-providers-status-value {
+    margin-top: 5px;
+    color: var(--theia-foreground);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.ai-providers-configuration-widget .ai-providers-status-detail {
+    margin-top: 5px;
+    overflow-wrap: anywhere;
+}
+
+.ai-providers-configuration-widget .ai-providers-mode-panel {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.ai-providers-configuration-widget .ai-providers-mode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.ai-providers-configuration-widget .ai-providers-mode-title {
+    color: var(--theia-foreground);
+    font-weight: 600;
+}
+
+.ai-providers-configuration-widget .ai-providers-segment {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 4px 10px;
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 4px;
+    color: var(--theia-button-secondaryForeground);
+    background: var(--theia-button-secondaryBackground);
+    cursor: pointer;
+}
+
+.ai-providers-configuration-widget .ai-providers-segment:hover {
+    background: var(--theia-button-secondaryHoverBackground);
+}
+
+.ai-providers-configuration-widget .ai-providers-segment.active {
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    border-color: var(--theia-focusBorder);
+}
+
+.ai-providers-configuration-widget .ai-providers-segment.available:not(.active) {
+    border-color: color-mix(in srgb, var(--theia-testing-iconPassed) 45%, var(--theia-dropdown-border));
+}
+
+.ai-providers-configuration-widget .ai-providers-segment.needs-config:not(.active) {
+    border-color: color-mix(in srgb, var(--theia-testing-iconQueued) 45%, var(--theia-dropdown-border));
+}
+
+.ai-providers-configuration-widget .ai-providers-segment.missing:not(.active) {
+    opacity: 0.76;
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 8px;
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 6px;
+    background: var(--theia-sideBar-background);
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-row.available {
+    border-left: 3px solid var(--theia-testing-iconPassed);
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-row.missing {
+    border-left: 3px solid var(--theia-testing-iconQueued);
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-row.needs-config {
+    border-left: 3px solid var(--theia-testing-iconQueued);
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-main {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-label {
+    color: var(--theia-foreground);
+    font-weight: 600;
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-state,
+.ai-providers-configuration-widget .ai-providers-detection-detail {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-detail {
+    grid-column: 1 / -1;
+    overflow-wrap: anywhere;
+}
+
+.ai-providers-configuration-widget .ai-providers-detection-actions {
+    grid-row: 1;
+    grid-column: 2;
+}
+
+.ai-providers-configuration-widget .ai-providers-model-input-cell {
+    display: flex;
+    gap: 4px;
+    min-width: 0;
+}
+
+.ai-providers-configuration-widget .ai-providers-model-input-cell input {
+    width: 100%;
+}
+
+.ai-providers-configuration-widget .ai-providers-model-input-cell button {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 720px) {
+    .ai-providers-configuration-widget .ai-providers-provider-header {
+        flex-direction: column;
+    }
+}

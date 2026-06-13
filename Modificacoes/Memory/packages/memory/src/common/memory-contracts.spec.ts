@@ -383,6 +383,28 @@ describe('Memory service contracts', () => {
         expect(result.suggestions.every(suggestion => suggestion.reasons.length > 0)).to.equal(true);
     });
 
+    it('excludes manual-only skills from automatic skill suggestions', () => {
+        const engine = new SkillSuggestionEngine();
+        const result = engine.suggest({
+            task: 'review code and write tests',
+            projectSignals: [],
+            minimumConfidence: 0.1,
+            availableSkills: [{
+                id: 'manual-review-agent',
+                name: 'Code Review Agent',
+                description: 'Review code and write tests',
+                discovery: 'manual'
+            }, {
+                id: 'auto-testing',
+                name: 'Testing',
+                description: 'Review code and write tests',
+                discovery: 'auto'
+            }]
+        });
+
+        expect(result.suggestions.map(suggestion => suggestion.skillId)).to.deep.equal(['auto-testing']);
+    });
+
     it('defines SQLite-ready pi_* schema migrations', () => {
         expect(MEMORY_SCHEMA.tables).not.to.be.empty;
         expect(MEMORY_SCHEMA.tables.every(table => table.name.startsWith('pi_'))).to.equal(true);

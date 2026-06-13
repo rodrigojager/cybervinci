@@ -362,7 +362,7 @@ describe('validateBuilderNodeTypesAgainstRegistry', () => {
                 },
                 {
                     path: '$.tree.children[0].slots.actions[0].type',
-                    message: "Component 'Card' does not allow child component 'Divider'; expected Button, Anchor, Group.",
+                    message: "Component 'Card' does not allow child component 'Divider'; expected Button, ActionIcon, UnstyledButton, CloseButton, Burger, CopyButton, FileButton, Anchor, Group.",
                     nodeId: 'divider',
                     componentType: 'Divider'
                 }
@@ -575,14 +575,17 @@ describe('validateBuilderNodeTypesAgainstRegistry', () => {
                 },
                 {
                     path: '$.tree.children[0].children[0].type',
-                    message: "Component 'DynamicForm' does not allow child component 'Text'; expected TextInput, Textarea, Select, Checkbox, " +
-                        'RadioGroup, NumberInput, DateInput, Button.',
+                    message: "Component 'DynamicForm' does not allow child component 'Text'; expected Fieldset, InputWrapper, Input, InputBase, InputLabel, " +
+                        'InputDescription, InputPlaceholder, InputClearButton, InputError, TextInput, Autocomplete, PasswordInput, Textarea, Select, MultiSelect, NativeSelect, Combobox, ComboboxTarget, ComboboxDropdownTarget, ComboboxEventsTarget, ComboboxDropdown, ComboboxOptions, ComboboxOption, ComboboxSearch, ComboboxEmpty, ComboboxGroup, ComboboxHeader, ComboboxFooter, ComboboxChevron, ComboboxClearButton, ComboboxHiddenInput, CheckboxGroup, Checkbox, CheckboxCard, SwitchGroup, Switch, RadioGroup, Radio, RadioCard, ' +
+                        'NumberInput, DateInput, ChipGroup, Chip, Slider, RangeSlider, SegmentedControl, PinInput, ColorInput, ColorPicker, HueSlider, AlphaSlider, AngleSlider, ' +
+                        'ColorSwatch, JsonInput, TagsInput, FileInput, FileButton, PillsInput, PillsInputField, Rating, Button, ActionIcon, UnstyledButton, ' +
+                        'Burger, CloseButton, CopyButton.',
                     nodeId: 'copy',
                     componentType: 'Text'
                 },
                 {
                     path: '$.tree.children[0].slots.actions[0].type',
-                    message: "Component 'DynamicForm' does not allow child component 'TextInput'; expected Button, Group.",
+                    message: "Component 'DynamicForm' does not allow child component 'TextInput'; expected Button, ActionIcon, Group.",
                     nodeId: 'field',
                     componentType: 'TextInput'
                 },
@@ -712,7 +715,7 @@ describe('validateBuilderNodeTypesAgainstRegistry', () => {
                 },
                 {
                     path: '$.tree.children[0].children[0].type',
-                    message: "Component 'Table' does not allow child component 'Text'; expected no children.",
+                    message: "Component 'Table' does not allow child component 'Text'; expected TableCaption, TableThead, TableTbody, TableTfoot, TableTr.",
                     nodeId: 'copy',
                     componentType: 'Text'
                 },

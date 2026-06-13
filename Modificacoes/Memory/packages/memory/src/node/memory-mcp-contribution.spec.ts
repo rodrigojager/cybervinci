@@ -36,6 +36,7 @@ describe('Memory MCP contribution', () => {
             'cybervinci.context.explainRanking',
             'cybervinci.context.markAccepted',
             'cybervinci.context.markRejected',
+            'cybervinci.search.graphFirst',
             'cybervinci.graph.findCallers',
             'cybervinci.graph.findCallees',
             'cybervinci.graph.findTests',
@@ -1153,6 +1154,93 @@ describe('Memory MCP contribution', () => {
         expect(graphCommunities[0].nodeIds).to.include.members(['sym-a', 'sym-b']);
         expect(graphCommunities[0].relationSummaries).to.deep.include({ relationType: 'calls', count: 2, confidenceScore: 0.85 });
         expect(graphCommunities[0].mainRelations.map(relation => relation.id)).to.include.members(['rel-a-b', 'rel-b-c']);
+    });
+
+    it('searches Memory graph before external grep fallbacks through MCP', async () => {
+        const searchCalls: unknown[] = [];
+        const gitImpactCalls: unknown[] = [];
+        const dashboard = {
+            files: [
+                { id: 'file-auth', relativePath: 'src/auth.ts', fileName: 'auth.ts', languageId: 'typescript', sizeBytes: 10, contentHash: 'auth', isIgnored: false, isGenerated: false, isBinary: false, isSensitive: false }
+            ],
+            symbols: [
+                { id: 'sym-auth', fileId: 'file-auth', languageId: 'typescript', symbolKind: 'class', name: 'AuthService', fullName: 'AuthService' }
+            ],
+            relations: [
+                { id: 'rel-auth-file', sourceKind: 'file', sourceId: 'file-auth', targetKind: 'symbol', targetId: 'sym-auth', relationType: 'contains', confidenceLevel: 'extracted', confidenceScore: 1 }
+            ],
+            events: [],
+            memories: [],
+            changeImpacts: [],
+            knowledgeGraphs: []
+        };
+        const handlers = configureHandlers({
+            getDashboard: async () => dashboard,
+            search: async (request: unknown) => {
+                searchCalls.push(request);
+                return [{
+                    id: 'graph-auth-result',
+                    sourceKind: 'code-graph',
+                    title: 'AuthService',
+                    snippet: 'AuthService owns login flow with API_KEY=abcdefghijklmnopqrstuvwxyz123456.',
+                    score: 0.94,
+                    uri: 'src/auth.ts',
+                    evidence: 'code graph symbol',
+                    estimatedTokens: 16
+                }];
+            },
+            detectChangeImpactFromGitDiff: async (request: unknown) => {
+                gitImpactCalls.push(request);
+                return {
+                    changeSet: {
+                        workspacePath: '/workspace',
+                        changedFilePaths: ['src/auth.ts'],
+                        source: 'git-diff',
+                        diagnostics: []
+                    },
+                    impacts: [],
+                    summary: { totalChangedFiles: 1 }
+                };
+            }
+        });
+
+        const payload = await invokeMcp(handlers, 'cybervinci.search.graphFirst', {
+            workspacePath: '/workspace',
+            query: 'AuthService',
+            tokenBudget: 80,
+            detectGitChanges: true,
+            includeUntracked: true
+        }) as {
+            strategy: string;
+            graphReady: boolean;
+            graph: { count: number };
+            retrieval: { count: number; results: Array<{ sourceKind: string; snippet: string }> };
+            recommendedNextStep: string;
+            changeImpact: { changeSet: { source: string } };
+        };
+
+        expect(searchCalls).to.deep.equal([{
+            workspacePath: '/workspace',
+            text: 'AuthService',
+            limit: 12,
+            sourceKinds: ['code-graph', 'project-memory', 'repository-memory', 'task-memory', 'local-docs', 'skill', 'agent-event', 'feedback-record']
+        }]);
+        expect(gitImpactCalls).to.deep.equal([{
+            workspacePath: '/workspace',
+            baseRef: undefined,
+            compareRef: undefined,
+            includeUntracked: true,
+            since: undefined,
+            maxDepth: undefined
+        }]);
+        expect(payload.strategy).to.equal('graph-first');
+        expect(payload.graphReady).to.equal(true);
+        expect(payload.graph.count).to.equal(1);
+        expect(payload.retrieval.count).to.equal(1);
+        expect(payload.retrieval.results[0].sourceKind).to.equal('code-graph');
+        expect(payload.retrieval.results[0].snippet).not.to.contain('abcdefghijklmnopqrstuvwxyz123456');
+        expect(payload.changeImpact.changeSet.source).to.equal('git-diff');
+        expect(payload.recommendedNextStep).to.equal('use-memory-results');
     });
 
     it('records context feedback without writing raw secrets to MCP audit events', async () => {

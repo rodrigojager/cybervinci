@@ -1,0 +1,28 @@
+(node:73036) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `electron --trace-deprecation ...` to show where the warning was created)
+2026-06-03T09:35:44.255Z root WARN Backend DefaultMessagingService.initialize took longer than the expected maximum 50 milliseconds: 51.0 ms [0.878 s since backend process start]
+2026-06-03T09:35:44.258Z root WARN Backend Object.initialize took longer than the expected maximum 50 milliseconds: 50.1 ms [0.878 s since backend process start]
+2026-06-03T09:35:44.267Z root WARN Backend PluginLocalizationServer.initialize took longer than the expected maximum 50 milliseconds: 64.5 ms [0.893 s since backend process start]
+2026-06-03T09:35:44.286Z root WARN The local plugin referenced by local-dir:/c%3A/Users/Rodrigo/.theia/plugins does not exist.
+2026-06-03T09:35:44.287Z root WARN The local plugin referenced by local-dir:/c%3A/Users/Rodrigo/.theia/deployedPlugins does not exist.
+2026-06-03T09:35:44.287Z root WARN The local plugin referenced by local-dir:../../plugins does not exist.
+2026-06-03T09:35:46.352Z root WARN Could not find translation key for default value: "Author"
+2026-06-03T09:35:46.383Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-03T09:35:47.075Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 775.0 ms [2.759 s since frontend page start]
+2026-06-03T09:35:47.427Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-03T09:35:47.427Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-03T09:35:47.513Z root WARN Frontend ContainerInfoContribution.onStart took longer than the expected maximum 100 milliseconds: 258.8 ms [3.197 s since frontend page start]
+(node:73036) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(node:93824) UnhandledPromiseRejectionWarning: Error: Cancelled
+    at cancelled (C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:9402:14)
+    at C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:14453:54
+    at C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:9543:70
+    at CallbackList.invoke (C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:9550:22)
+    at _Emitter.fire (C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:9678:34)
+    at MutableToken.cancel (C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:9347:27)
+    at CancellationTokenSource.cancel (C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:9386:23)
+    at showWindowAndCloseSplashScreen (C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:129497:29)
+    at C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\electron\lib\backend\electron-main.js:129505:32
+(Use `electron --trace-warnings ...` to show where the warning was created)
+(node:93824) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). To terminate the node process on unhandled promise rejection, use the CLI flag `--unhandled-rejections=strict` (see https://nodejs.org/api/cli.html#cli_unhandled_rejections_mode). (rejection id: 2)
+2026-06-03T09:35:52.211Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget

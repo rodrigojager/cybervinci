@@ -5,31 +5,29 @@
 // *****************************************************************************
 
 import { injectable } from '@theia/core/shared/inversify';
-import { ipcRenderer } from '@theia/electron/shared/electron';
-import {
-    CODEX_ELECTRON_DISMISS_HOTKEY_WINDOW,
-    CODEX_ELECTRON_GET_BUILD_FLAVOR,
-    CODEX_ELECTRON_GET_SHARED_OBJECT,
-    CODEX_ELECTRON_TOGGLE_HOTKEY_WINDOW
-} from '../common/codex-electron-ipc';
+import type { CodexElectronBridgeApi } from '../common/codex-electron-api';
 import { CodexElectronBridgeService as CodexElectronBridgeServiceInterface } from '../common/codex-electron-bridge-service';
 
 @injectable()
 export class CodexElectronBridgeServiceImpl implements CodexElectronBridgeServiceInterface {
 
+    protected get api(): CodexElectronBridgeApi | undefined {
+        return window.codexElectronBridge;
+    }
+
     async dismissHotkeyWindow(): Promise<void> {
-        await ipcRenderer.invoke(CODEX_ELECTRON_DISMISS_HOTKEY_WINDOW);
+        await this.api?.dismissHotkeyWindow();
     }
 
     async toggleHotkeyWindow(): Promise<void> {
-        await ipcRenderer.invoke(CODEX_ELECTRON_TOGGLE_HOTKEY_WINDOW);
+        await this.api?.toggleHotkeyWindow();
     }
 
     getBuildFlavor(): string {
-        return ipcRenderer.sendSync(CODEX_ELECTRON_GET_BUILD_FLAVOR) as string;
+        return this.api?.getBuildFlavor() ?? 'theia-electron';
     }
 
     getSharedObjectSnapshotValue(key: string): unknown {
-        return ipcRenderer.sendSync(CODEX_ELECTRON_GET_SHARED_OBJECT, key);
+        return this.api?.getSharedObjectSnapshotValue(key);
     }
 }

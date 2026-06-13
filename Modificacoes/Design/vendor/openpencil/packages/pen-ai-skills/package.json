@@ -17,7 +17,6 @@
   },
   "files": [
     "src",
-    "skills",
     "vite-plugin-skills.ts"
   ],
   "type": "module",

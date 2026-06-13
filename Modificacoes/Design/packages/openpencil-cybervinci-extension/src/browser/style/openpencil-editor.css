@@ -2451,8 +2451,16 @@ body.openpencil-panel-resizing * {
     --openpencil-sdk-card: var(--openpencil-card);
     --openpencil-sdk-popover: var(--openpencil-popover);
     --openpencil-sdk-muted: var(--openpencil-muted);
+    --openpencil-sdk-control: var(--openpencil-theme-control);
     --openpencil-sdk-muted-foreground: color-mix(in srgb, var(--openpencil-card-foreground) 84%, var(--openpencil-card) 16%);
+    --openpencil-sdk-accent: var(--openpencil-accent);
+    --openpencil-sdk-primary: var(--openpencil-accent);
+    --openpencil-sdk-primary-foreground: var(--openpencil-accent-foreground);
     --openpencil-sdk-border: var(--openpencil-border);
+    --openpencil-sdk-ring: var(--openpencil-ring);
+    --openpencil-sdk-component: var(--openpencil-accent);
+    --openpencil-sdk-component-quiet: color-mix(in srgb, var(--openpencil-accent) 14%, transparent);
+    --openpencil-sdk-component-border: color-mix(in srgb, var(--openpencil-accent) 48%, transparent);
     --openpencil-sdk-shadow: var(--openpencil-shadow);
     display: block;
     background: var(--openpencil-background);
@@ -2563,15 +2571,28 @@ body.openpencil-panel-resizing * {
 }
 
 .openpencil-sdk-shell .openpencil-sdk-toolbar button[aria-label="Shape options"] {
-    min-width: 13px;
+    flex: 0 0 12px !important;
+    width: 12px !important;
+    min-width: 12px !important;
+    max-width: 12px !important;
+    padding: 0 !important;
 }
 
 .openpencil-sdk-shell .openpencil-sdk-toolbar button[aria-label="Shape options"] svg {
-    width: 7px;
-    height: 5px;
-    color: currentColor;
-    fill: currentColor;
-    opacity: 1;
+    display: block !important;
+    flex: 0 0 7px !important;
+    width: 7px !important;
+    min-width: 7px !important;
+    max-width: 7px !important;
+    height: 7px !important;
+    min-height: 7px !important;
+    max-height: 7px !important;
+    color: currentColor !important;
+    fill: currentColor !important;
+    stroke: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transform-origin: center !important;
 }
 
 .openpencil-sdk-shell .openpencil-sdk-toolbar [class~="left-full"][class~="top-0"][class~="bg-card"] {
@@ -2735,63 +2756,46 @@ body.openpencil-panel-resizing * {
 
 /*
  * ============================================================================
- * Figma-like identity reskin
+ * Theme-aware canvas chrome
  * ----------------------------------------------------------------------------
  * Remaps the existing `--openpencil-*` design tokens so the Canvas surface
- * picks up a Figma-inspired identity (dark and light variants) while keeping
- * the same DOM, the same widget structure, the same commands/keybindings and
- * the same Codex Provider integration. High-contrast themes intentionally fall
- * back to the original Theia tokens for accessibility.
+ * follows the active Theia theme while keeping the same DOM, widget structure,
+ * commands/keybindings and Codex Provider integration. High-contrast themes
+ * intentionally fall back to the original Theia tokens for accessibility.
  * ============================================================================
  */
 
 .openpencil-editor-widget,
 .openpencil-sdk-shell {
-    --openpencil-figma-accent: #0d99ff;
-    --openpencil-figma-accent-strong: #007be5;
-    --openpencil-figma-accent-foreground: #ffffff;
-    --openpencil-figma-success: #14ae5c;
-    --openpencil-figma-warning: #f7b500;
-    --openpencil-figma-danger: #f24822;
+    --openpencil-theme-accent: var(--theia-list-activeSelectionBackground, var(--theia-focusBorder, var(--theia-button-background)));
+    --openpencil-theme-accent-hover: color-mix(in srgb, var(--openpencil-theme-accent) 84%, var(--theia-foreground) 16%);
+    --openpencil-theme-accent-foreground: var(--theia-list-activeSelectionForeground, var(--theia-button-foreground, var(--theia-foreground)));
+    --openpencil-theme-control: color-mix(in srgb, var(--openpencil-card) 86%, var(--openpencil-foreground) 14%);
+    --openpencil-primary-control: var(--openpencil-theme-accent);
+    --openpencil-primary-control-hover: var(--openpencil-theme-accent-hover);
+    --openpencil-primary-control-foreground: var(--openpencil-theme-accent-foreground);
 }
 
-body.vs-dark .openpencil-editor-widget,
-body.vs-dark .openpencil-sdk-shell {
-    --openpencil-background: #1e1e1e;
-    --openpencil-foreground: #ffffff;
-    --openpencil-card: #2c2c2c;
-    --openpencil-card-foreground: #ffffff;
-    --openpencil-popover: #383838;
-    --openpencil-popover-foreground: #ffffff;
-    --openpencil-muted: #383838;
-    --openpencil-muted-foreground: #b3b3b3;
-    --openpencil-accent: var(--openpencil-figma-accent);
-    --openpencil-accent-foreground: var(--openpencil-figma-accent-foreground);
-    --openpencil-border: #383838;
-    --openpencil-input: #444444;
-    --openpencil-ring: var(--openpencil-figma-accent);
-    --openpencil-shadow: color-mix(in srgb, #000000 55%, transparent);
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-editor-widget,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell {
+    --openpencil-background: var(--theia-editor-background);
+    --openpencil-foreground: var(--theia-foreground);
+    --openpencil-card: var(--theia-sideBar-background, var(--theia-editorWidget-background, var(--theia-editor-background)));
+    --openpencil-card-foreground: var(--theia-sideBar-foreground, var(--theia-foreground));
+    --openpencil-popover: var(--theia-menu-background, var(--theia-editorWidget-background, var(--openpencil-card)));
+    --openpencil-popover-foreground: var(--theia-menu-foreground, var(--theia-editorWidget-foreground, var(--openpencil-foreground)));
+    --openpencil-muted: var(--theia-toolbar-hoverBackground, var(--theia-list-hoverBackground, var(--openpencil-theme-control)));
+    --openpencil-muted-foreground: var(--theia-descriptionForeground);
+    --openpencil-accent: var(--openpencil-theme-accent);
+    --openpencil-accent-hover: var(--openpencil-theme-accent-hover);
+    --openpencil-accent-foreground: var(--openpencil-theme-accent-foreground);
+    --openpencil-border: var(--theia-panel-border);
+    --openpencil-input: var(--theia-input-border, var(--openpencil-border));
+    --openpencil-ring: var(--theia-focusBorder, var(--openpencil-accent));
+    --openpencil-shadow: color-mix(in srgb, var(--theia-editor-background) 64%, transparent);
 }
 
-body.vs:not(.vs-dark):not(.hc-black):not(.hc-light) .openpencil-editor-widget,
-body.vs:not(.vs-dark):not(.hc-black):not(.hc-light) .openpencil-sdk-shell {
-    --openpencil-background: #f5f5f5;
-    --openpencil-foreground: #1e1e1e;
-    --openpencil-card: #ffffff;
-    --openpencil-card-foreground: #1e1e1e;
-    --openpencil-popover: #ffffff;
-    --openpencil-popover-foreground: #1e1e1e;
-    --openpencil-muted: #f0f0f0;
-    --openpencil-muted-foreground: #757575;
-    --openpencil-accent: var(--openpencil-figma-accent);
-    --openpencil-accent-foreground: var(--openpencil-figma-accent-foreground);
-    --openpencil-border: #e5e5e5;
-    --openpencil-input: #d9d9d9;
-    --openpencil-ring: var(--openpencil-figma-accent);
-    --openpencil-shadow: color-mix(in srgb, #000000 12%, transparent);
-}
-
-/* Topbar: tighter, more Figma-like proportions and typography. */
+/* Topbar: tighter proportions and typography. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar {
     box-shadow: inset 0 -1px 0 var(--openpencil-border);
@@ -2816,7 +2820,7 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .open
         0 0 0 1px var(--openpencil-border) !important;
 }
 
-/* Selected tool gets the Figma accent treatment. */
+/* Selected tool gets the active theme accent treatment. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-button.selected {
     color: var(--openpencil-accent-foreground);
     background: var(--openpencil-accent);
@@ -2828,7 +2832,61 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-
     stroke: currentColor;
 }
 
-/* Section headers (LAYERS, PAGES, DESIGN) with Figma-style uppercase + tracking. */
+/* Canvas control buttons use the same primary treatment as AI / Continue. */
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-button,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-boolean-toolbar .theia-button,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-selection-toolbar .theia-button,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-zoom-controls .theia-button,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button {
+    color: var(--openpencil-primary-control-foreground) !important;
+    background: var(--openpencil-primary-control) !important;
+    border: 0 !important;
+}
+
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-button:not(.selected):not(:disabled):hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-boolean-toolbar .theia-button:not(:disabled):hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-selection-toolbar .theia-button:not(:disabled):hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-zoom-controls .theia-button:not(:disabled):hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button:not(.bg-primary):not([aria-pressed="true"]):not(:disabled):hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button:not(.bg-primary):not([aria-pressed="true"]):not(:disabled):hover {
+    color: var(--openpencil-primary-control-foreground) !important;
+    background: var(--openpencil-primary-control-hover) !important;
+}
+
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-button.selected,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button.bg-primary,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button.bg-accent,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button[aria-pressed="true"],
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button.bg-primary,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button.bg-accent,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button[aria-pressed="true"] {
+    color: var(--openpencil-primary-control-foreground) !important;
+    background: var(--openpencil-primary-control) !important;
+    border: 0 !important;
+}
+
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-button.selected:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button.bg-primary:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button.bg-accent:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button[aria-pressed="true"]:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button.bg-primary:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button.bg-accent:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button[aria-pressed="true"]:hover {
+    background: var(--openpencil-primary-control-hover) !important;
+}
+
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-toolbar .theia-button:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-boolean-toolbar .theia-button:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-selection-toolbar .theia-button:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-zoom-controls .theia-button:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-toolbar button:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-shell .openpencil-sdk-status button:disabled {
+    color: var(--openpencil-muted-foreground) !important;
+    background: var(--openpencil-muted) !important;
+}
+
+/* Section headers (LAYERS, PAGES, DESIGN) with compact uppercase tracking. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-layers h3,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-properties h3,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-page-strip::before,
@@ -2837,7 +2895,7 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-property-sectio
     font-weight: 600;
 }
 
-/* Layer selection: blue tint with accent text instead of full-fill highlight. */
+/* Layer selection follows the same accent as active theme selections. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-layer.selected,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-page-tab.selected {
     color: var(--openpencil-accent-foreground);
@@ -2846,17 +2904,17 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-page-tab.select
 
 body.vs-dark .openpencil-layer:not(.selected):hover,
 body.vs-dark .openpencil-page-tab:not(.selected):hover {
-    background: color-mix(in srgb, var(--openpencil-figma-accent) 14%, transparent);
+    background: color-mix(in srgb, var(--openpencil-accent) 14%, transparent);
     color: var(--openpencil-foreground);
 }
 
 body.vs:not(.vs-dark):not(.hc-black):not(.hc-light) .openpencil-layer:not(.selected):hover,
 body.vs:not(.vs-dark):not(.hc-black):not(.hc-light) .openpencil-page-tab:not(.selected):hover {
-    background: color-mix(in srgb, var(--openpencil-figma-accent) 10%, transparent);
+    background: color-mix(in srgb, var(--openpencil-accent) 10%, transparent);
     color: var(--openpencil-foreground);
 }
 
-/* Primary action buttons (export / run / AI / share) — Figma's blue pill. */
+/* Primary action buttons (export / run / AI / share) use the active theme accent. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-export-run,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-export-run,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-runtime-export-toolbar .openpencil-export-run,
@@ -2878,10 +2936,21 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions 
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-ai-run:hover,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-text-edit-run:hover,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-text-edit-run:hover {
-    background: var(--openpencil-figma-accent-strong);
+    background: var(--openpencil-accent-hover);
 }
 
-/* Status / zoom floating pills: flatter shadow, Figma-style. */
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-export-run:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-export-run:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-runtime-export-toolbar .openpencil-export-run:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-ai-run:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-ai-run:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-text-edit-run:disabled,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-text-edit-run:disabled {
+    color: var(--openpencil-muted-foreground);
+    background: var(--openpencil-muted);
+}
+
+/* Status / zoom floating pills: flatter shadow, theme-aware. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-status-details,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-zoom-controls,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-status-detail {
@@ -2892,7 +2961,7 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-status-deta
         0 0 0 1px var(--openpencil-border);
 }
 
-/* Inputs / selects on properties panel: subtle Figma surfaces. */
+/* Inputs / selects on properties panel: subtle theme surfaces. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-property-grid input,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-property-grid textarea,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-property-grid select,
@@ -2911,7 +2980,7 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-layer-tools inp
     outline: none;
 }
 
-/* Menus / dropdowns: Figma-style elevated popover. */
+/* Menus / dropdowns: elevated theme popover. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-menu {
     border-color: var(--openpencil-border);
     background: var(--openpencil-popover);
@@ -2925,7 +2994,7 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-menu button:hov
     background: var(--openpencil-accent);
 }
 
-/* Canvas background: solid (Figma) instead of checkerboard, but only when the
+/* Canvas background: subtle dotted surface, but only when the
    editor explicitly hosts a design canvas — never inside the runtime SDK shell
    which already paints its own scene. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-editor-widget .openpencil-canvas-wrap {
@@ -2935,7 +3004,7 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-editor-widget .
     background-size: 24px 24px;
 }
 
-/* Canvas card shadow: a touch more elevation to feel like a Figma frame. */
+/* Canvas card shadow: a touch more elevation for the frame. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-canvas {
     border-radius: 2px;
     box-shadow:
@@ -2943,23 +3012,23 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-canvas {
         0 16px 40px var(--openpencil-shadow);
 }
 
-/* Marquee + selection: align stroke with Figma accent. */
+/* Marquee + selection: align stroke with theme accent. */
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-marquee {
-    fill: color-mix(in srgb, var(--openpencil-figma-accent) 14%, transparent);
-    stroke: var(--openpencil-figma-accent);
+    fill: color-mix(in srgb, var(--openpencil-accent) 14%, transparent);
+    stroke: var(--openpencil-accent);
 }
 
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-selection,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-resize-handle {
-    stroke: var(--openpencil-figma-accent);
+    stroke: var(--openpencil-accent);
 }
 
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-path-anchors .openpencil-path-anchor,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-path-anchors .openpencil-path-handle,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-path-handle-line {
-    stroke: var(--openpencil-figma-accent);
+    stroke: var(--openpencil-accent);
 }
 
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-path-anchors .openpencil-path-handle {
-    fill: var(--openpencil-figma-accent);
+    fill: var(--openpencil-accent);
 }

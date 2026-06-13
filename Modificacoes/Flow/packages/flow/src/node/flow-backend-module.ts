@@ -11,6 +11,7 @@ import { FileEffectHostAdapter, LocalFileEffectHostAdapter } from './file-effect
 import { ImageEffectHostAdapter, LocalImageEffectHostAdapter } from './image-effect-host-adapter';
 import { MarkdownWorkloadStore } from './markdown-workload-store';
 import { LocalMemoryAdapter, MemoryAdapter } from './memory-adapter';
+import { FlowAgentProviderRegistry, FlowAgentProviderResolver } from './flow-agent-provider-registry';
 
 export default new ContainerModule(bind => {
     bind(FlowStore).toSelf().inSingletonScope();
@@ -18,6 +19,8 @@ export default new ContainerModule(bind => {
     bind(MarkdownWorkloadStore).toSelf().inSingletonScope();
     bind(SimulatedFlowKernelBridge).toSelf().inSingletonScope();
     bind(HybridFlowKernelBridge).toSelf().inSingletonScope();
+    bind(FlowAgentProviderRegistry).toSelf().inSingletonScope();
+    bind(FlowAgentProviderResolver).toService(FlowAgentProviderRegistry);
     bind(ProviderBackedFlowWorkloadExecutor).toSelf().inSingletonScope();
     bind(FlowWorkloadExecutor).toService(ProviderBackedFlowWorkloadExecutor);
     bind(LocalCommandEffectHostAdapter).toSelf().inSingletonScope();

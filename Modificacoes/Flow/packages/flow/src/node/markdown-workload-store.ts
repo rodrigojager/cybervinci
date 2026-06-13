@@ -89,6 +89,20 @@ export class MarkdownWorkloadStore {
         await fs.writeFile(path.join(inputDir, 'prompt.md'), truncateFlowText(redactFlowSecretsText(run.prompt) || '', FlowSizeLimits.promptBytes, 'prompt'), 'utf8');
         await fs.writeFile(path.join(inputDir, 'context-pack.md'), renderContextPack(resolveContextPackForWorkload(run, workload), workflow, workload), 'utf8');
         await fs.writeFile(path.join(inputDir, 'work-order.md'), renderWorkOrder(workflow, workload), 'utf8');
+
+        for (const included of workload.inputArtifacts) {
+            const targetFile = path.join(inputDir, 'artifacts', ...splitArtifactPath(included));
+            const sourceFile = findInputArtifactPath(run, included);
+            if (!sourceFile) {
+                continue;
+            }
+            const content = await readTextFile(sourceFile);
+            if (content === undefined) {
+                continue;
+            }
+            await fs.mkdir(path.dirname(targetFile), { recursive: true });
+            await fs.writeFile(targetFile, content, 'utf8');
+        }
     }
 
     protected async writeOutputEnvelope(
@@ -748,6 +762,36 @@ function splitArtifactPath(value: string): string[] {
     return splitFlowRelativePath(value).map(sanitizeFileName);
 }
 
+function findInputArtifactPath(run: FlowRun, requestedPath: string): string | undefined {
+    const normalizedRequested = normalizeArtifactPath(requestedPath);
+    for (const artifact of run.artifacts) {
+        const artifactPath = artifactPathFromUri(artifact.uri);
+        if (!artifactPath) {
+            continue;
+        }
+        const normalizedArtifactPath = normalizeArtifactPath(artifactPath);
+        const normalizedSummary = normalizeArtifactPath(artifact.summary || '');
+        if (normalizedSummary === normalizedRequested || normalizedArtifactPath.endsWith(`/${normalizedRequested}`)) {
+            return artifactPath;
+        }
+    }
+    return undefined;
+}
+
+function artifactPathFromUri(uri: string): string | undefined {
+    if (!uri) {
+        return undefined;
+    }
+    if (uri.startsWith('file://')) {
+        try {
+            return FileUri.fsPath(uri);
+        } catch {
+            return undefined;
+        }
+    }
+    return path.isAbsolute(uri) ? uri : undefined;
+}
+
 function flowArtifactKind(output: string): FlowArtifact['kind'] {
     if (output.includes('contract')) {
         return 'contract';
@@ -777,6 +821,14 @@ function normalizeArtifactPath(value: string): string {
         .replace(/^\.\//, '')
         .replace(/\/+/g, '/')
         .replace(/^\/+/, '');
+}
+
+async function readTextFile(file: string): Promise<string | undefined> {
+    try {
+        return await fs.readFile(file, 'utf8');
+    } catch {
+        return undefined;
+    }
 }
 
 function stableId(prefix: string, ...parts: string[]): string {

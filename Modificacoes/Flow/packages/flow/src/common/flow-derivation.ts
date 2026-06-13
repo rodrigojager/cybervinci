@@ -12,10 +12,10 @@ import {
     FlowWorkloadStatus
 } from './flow-types';
 
-const NODE_WIDTH = 176;
-const NODE_HEIGHT = 76;
-const X_STEP = 238;
-const Y_STEP = 118;
+const NODE_WIDTH = 236;
+const NODE_HEIGHT = 96;
+const X_STEP = 380;
+const Y_STEP = 158;
 
 const KANBAN_ORDER: Array<{ id: FlowWorkloadStatus; label: string }> = [
     { id: 'pending', label: 'Pending' },

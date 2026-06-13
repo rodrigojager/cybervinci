@@ -6,12 +6,88 @@ source of truth for structure, transitions, guards, joins, loops, gates, and
 version history. The UI edits that file through typed services; it does not own
 or infer orchestration logic.
 
-Flow is designed to run real delivery pipelines while preserving a
-deterministic fallback when external capabilities are unavailable. The Go
+Flow executes real delivery pipelines with explicit provider configuration. The Go
 `flow-kernel` owns validation, scheduling, event logs, guards, joins, loops,
 and human gates. The CyberVinci host owns environment capabilities such as LLM
 agents, filesystem access, command execution, image generation, Project
 Intelligence, artifact opening, and user approvals.
+
+## Fail-Fast Provider Policy
+
+Flow has **no implicit production fallback**. Provider modes behave as follows:
+
+- `default` / `auto` / `external`: Require an available external kernel. These modes fail fast when the kernel is unreachable or misconfigured.
+- `simulated`: Explicit dev/test-only mode. Never use for production workflows.
+- `e2e-mock`: Explicit test-only mode for E2E validation. Does not prove production readiness.
+
+When a required capability is missing, Flow reports an actionable error instead of silently degrading. Workflows must declare their required capabilities and the host validates them before execution.
+
+## Per-Node Agent Configuration
+
+Each agent state in a workflow can define explicit provider and model settings:
+
+```yaml
+states:
+  - id: architect
+    type: agent
+    agent:
+      provider:
+        providerId: theia-language-model  # or: command, custom-command, codex
+        modelId: <model-id>              # optional, provider-dependent
+        options:                         # optional provider-specific options
+          temperature: 0.7
+          maxTokens: 4096
+      systemPrompt: |
+        You are a software architect...
+      taskPrompt: |
+        Review the requirements and create a contract...
+      deliverables:
+        - path: docs/contract.md
+          description: Architecture contract
+```
+
+Supported fields per node:
+- `provider.providerId`: Identifies the provider backend
+- `provider.modelId`: Model identifier (optional, provider-dependent)
+- `provider.options`: Provider-specific configuration options
+- `systemPrompt`: System-level instructions for the agent
+- `taskPrompt`: Task-specific prompt template
+- `deliverables`: Expected output artifacts with paths and descriptions
+
+## Supported Provider Paths
+
+Flow supports the following executable provider paths:
+
+1. **Theia Language Model** (`theia-language-model`): Uses Theia's built-in language model service. Default provider when available.
+
+2. **Command Provider** (`command`): Executes a configured command that receives workload input on stdin and returns structured JSON on stdout. Configure with `FLOW_AGENT_LLM_COMMAND`.
+
+3. **Custom Command Provider** (`custom-command`): Similar to command provider but with custom routing and policy controls.
+
+4. **Codex Provider** (`codex`): Available where Codex integration exists. Does not support arbitrary model overrides; uses Codex-configured models only.
+
+5. **E2E Mock** (`e2e-mock`): Deterministic mock provider for tests only. Never use for production.
+
+### Unsupported Providers
+
+Providers like **OpenRouter** or **opencode** are **not natively supported**. They can only be used as command-backed custom providers when an environment command is explicitly configured:
+
+```sh
+FLOW_AGENT_PROVIDER=custom-command
+FLOW_AGENT_CUSTOM_COMMAND="node ./scripts/openrouter-provider.js"
+```
+
+Flow does not claim native integration with these providers. Users must implement the command wrapper themselves.
+
+## Pipeline Presets
+
+Pipeline presets are stored under `.theia/flow/presets` in the workspace root. Presets define reusable workflow templates with pre-configured providers, models, and agent states.
+
+Built-in presets include:
+
+- **`sisyphus_ultrawork_coordinator`**: Coordinates ultrawork delivery pipelines with parallel implementation branches, QA validation, and bounded repair loops.
+
+To use a preset, reference it in your workflow or select it from the Flow UI preset picker. Custom presets can be added by placing YAML or JSON files in the presets directory.
 
 ## Architecture
 
@@ -54,10 +130,7 @@ The bridge is responsible for:
 - import/export of workflows and runs;
 - version metadata and audit event persistence.
 
-If a real kernel is not configured, Flow reports the missing capability
-and can use deterministic providers for local tests and demos. The fallback path
-must preserve protocol shape so browser code and tests exercise the same
-contracts used by the real runtime.
+If a real kernel is not configured, Flow reports the missing capability and fails fast. Deterministic providers are available only in explicit test modes (`e2e-mock`, `simulated`), never as implicit production fallback. Test modes preserve protocol shape so browser code and tests exercise the same contracts used by the real runtime.
 
 ## Runtime Configuration
 
@@ -100,7 +173,7 @@ FLOW_AGENT_TIMEOUT_MS=120000
 `FLOW_AGENT_LLM_COMMAND` receives the workload prompt/context on
 standard input and must return the structured workload result expected by the
 kernel. `llm.agent.execute` is advertised only when a real provider is
-configured and the run is not relying on normal deterministic fallback.
+configured and available.
 
 Demo and E2E execution must be explicit:
 
@@ -112,7 +185,7 @@ FLOW_MEMORY_PROVIDER=mock
 In this mode the host may satisfy `llm.agent.execute.mock` or
 `llm.agent.execute.e2e_mock`, but it must not be treated as proof of
 `llm.agent.execute` for production workflows. The UI surfaces demo/mock mode,
-simulated kernel mode, fallback mode, and missing capabilities separately.
+simulated kernel mode, and missing capabilities separately.
 
 The external kernel bridge is selected with:
 
@@ -125,9 +198,22 @@ FLOW_KERNEL_CLI=./flow-kernel
 FLOW_KERNEL_TIMEOUT_MS=30000
 ```
 
-Without a confirmed external kernel, the host reports simulated bridge mode and
-deterministic fallback. That path is useful for local development and tests, but
-does not satisfy real provider/effect capabilities by itself.
+Without a confirmed external kernel, the host reports simulated bridge mode and fails fast for production workflows. Simulated mode is useful for local development and tests, but does not satisfy real provider/effect capabilities.
+
+## Manual Real-Codex Smoke
+
+Use this only for local/manual validation of the Sisyphus hello-world pipeline. Do **not** wire it into CI.
+Compile Flow first, then run the spec directly from `lib`.
+
+```powershell
+$env:FLOW_REAL_CODEX_SMOKE = '1'
+$env:FLOW_KERNEL_MODE = 'external'
+$env:FLOW_AGENT_PROVIDER = 'codex-provider'
+Remove-Item Env:FLOW_AGENT_MODEL_ID, Env:FLOW_AGENT_LLM_MODEL_ID, Env:FLOW_AGENT_COMMAND, Env:FLOW_AGENT_LLM_COMMAND -ErrorAction SilentlyContinue
+npm test -- --grep=@real-codex-smoke
+```
+
+If your Codex CLI is not on `PATH`, set `CODEX_CLI_PATH` before running the smoke.
 
 ## Effects and Memory Policy
 
@@ -200,8 +286,8 @@ and repair agents. Parallel branches run as independent workloads and converge
 through kernel-controlled joins.
 
 Provider configuration is capability based. When an LLM provider is missing,
-the service returns an actionable capability error and may fall back to the
-deterministic mock provider used by tests.
+the service returns an actionable capability error. Deterministic mock providers
+are available only in explicit test modes.
 
 ## Contracted Parallel Delivery
 
@@ -330,7 +416,7 @@ When a workspace root is provided, workflows and runs are stored under:
 
 `.theia/flow`
 
-Without a workspace root, the fallback is:
+Without a workspace root, the default location is:
 
 `~/.theia/flow`
 

@@ -26,13 +26,19 @@ $dependencies = @{
     'Arena' = @('Distribution', 'Branding')
     'Branding' = @('Distribution')
     'Builder' = @('Distribution', 'Branding')
+    'CSharp Kit' = @('Distribution', 'Branding', 'Memory', 'Razor Visual Editor')
     'Codex' = @('Distribution', 'Branding', 'Codex-Provider')
     'Codex-Provider' = @('Distribution', 'Branding')
     'Design' = @('Distribution', 'Branding')
     'Flow' = @('Distribution', 'Branding', 'Codex-Provider', 'Library', 'Memory')
     'Library' = @('Distribution', 'Branding')
     'Memory' = @('Distribution', 'Branding', 'Library')
+    'Razor Visual Editor' = @('Distribution')
     'Distribution' = @()
+}
+
+$systemSkills = @{
+    'Design' = @('OpenPencil')
 }
 
 $allFeatures = @(
@@ -41,11 +47,13 @@ $allFeatures = @(
     'AI Output Cleaner',
     'Arena',
     'Builder',
+    'CSharp Kit',
     'Library',
     'Design',
     'Codex-Provider',
     'Codex',
     'Memory',
+    'Razor Visual Editor',
     'Flow'
 )
 
@@ -65,6 +73,15 @@ $aliases = @{
     'Product-Shell' = 'Branding'
     'Product Shell' = 'Branding'
     'CVUI' = 'Builder'
+    'C#' = 'CSharp Kit'
+    'CSharp' = 'CSharp Kit'
+    'CSharp-Kit' = 'CSharp Kit'
+    'C# Kit' = 'CSharp Kit'
+    'DotNet' = 'CSharp Kit'
+    '.NET' = 'CSharp Kit'
+    'Razor' = 'Razor Visual Editor'
+    'Razor-Visual-Editor' = 'Razor Visual Editor'
+    'Visual Razor Editor' = 'Razor Visual Editor'
 }
 
 $installed = New-Object 'System.Collections.Generic.HashSet[string]'
@@ -108,6 +125,23 @@ function Copy-TreeContent([string]$sourceRoot, [string]$targetRoot) {
     }
 }
 
+function Copy-Tree([string]$sourceRoot, [string]$targetRoot) {
+    if (!(Test-Path -LiteralPath $sourceRoot)) {
+        return
+    }
+    if ($DryRun) {
+        Write-Host "Would copy $sourceRoot -> $targetRoot"
+        return
+    }
+    if (!(Test-Path -LiteralPath $targetRoot)) {
+        New-Item -ItemType Directory -Force -Path $targetRoot | Out-Null
+    }
+    robocopy $sourceRoot $targetRoot /E /XD node_modules lib coverage .nyc_output .git obj bin .cache dist .turbo /XF tsconfig.tsbuildinfo .eslintcache *.log *.tmp package-lock.json /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -gt 7) {
+        throw "robocopy failed for $sourceRoot -> $targetRoot ($LASTEXITCODE)"
+    }
+}
+
 function Apply-Patches([string]$featureRoot) {
     $patchRoot = Join-Path $featureRoot 'patches'
     if (!(Test-Path -LiteralPath $patchRoot)) {
@@ -127,6 +161,51 @@ function Apply-Patches([string]$featureRoot) {
         if ($LASTEXITCODE -ne 0) {
             throw "Patch apply failed: $($_.FullName)"
         }
+    }
+}
+
+function Add-AppDependencies([string]$featureRoot) {
+    $manifestPath = Join-Path $featureRoot 'app-dependencies.json'
+    if (!(Test-Path -LiteralPath $manifestPath)) {
+        return
+    }
+
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    foreach ($packageProperty in $manifest.PSObject.Properties) {
+        $relativePackageJson = $packageProperty.Name
+        $packageJsonPath = Join-Path $target $relativePackageJson
+        if (!(Test-Path -LiteralPath $packageJsonPath)) {
+            throw "App package.json not found for dependency injection: $packageJsonPath"
+        }
+
+        foreach ($dependencyProperty in $packageProperty.Value.PSObject.Properties) {
+            if ($DryRun) {
+                Write-Host "Would add dependency $($dependencyProperty.Name)@$($dependencyProperty.Value) to $packageJsonPath"
+                continue
+            }
+
+            $json = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
+            if ($null -eq $json.dependencies) {
+                $json | Add-Member -MemberType NoteProperty -Name dependencies -Value ([ordered]@{})
+            }
+            $dependencies = $json.dependencies
+            if ($dependencies.PSObject.Properties.Name -contains $dependencyProperty.Name) {
+                $dependencies.PSObject.Properties[$dependencyProperty.Name].Value = $dependencyProperty.Value
+            } else {
+                $dependencies | Add-Member -MemberType NoteProperty -Name $dependencyProperty.Name -Value $dependencyProperty.Value
+            }
+            $json | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $packageJsonPath -Encoding UTF8
+        }
+    }
+}
+
+function Copy-SystemSkills([string]$name) {
+    if (!$systemSkills.ContainsKey($name)) {
+        return
+    }
+
+    foreach ($skillFolder in $systemSkills[$name]) {
+        Copy-Tree (Join-Path $featuresRootPath "Skills/System/$skillFolder") (Join-Path $target "Skills/System/$skillFolder")
     }
 }
 
@@ -153,7 +232,9 @@ function Install-Feature([string]$name) {
     Copy-TreeContent (Join-Path $featureRoot 'packages') (Join-Path $target 'packages')
     Copy-TreeContent (Join-Path $featureRoot 'vendor') (Join-Path $target 'vendor')
     Copy-TreeContent (Join-Path $featureRoot 'examples') (Join-Path $target 'examples')
+    Copy-SystemSkills $name
     Apply-Patches $featureRoot
+    Add-AppDependencies $featureRoot
 
     [void]$installed.Add($name)
 }

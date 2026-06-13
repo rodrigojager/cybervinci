@@ -1,0 +1,155 @@
+(node:35292) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2026-06-01T06:36:03.406Z root WARN Backend DefaultMessagingService.initialize took longer than the expected maximum 50 milliseconds: 72.6 ms [1.018 s since backend process start]
+2026-06-01T06:36:03.406Z root WARN Backend Object.initialize took longer than the expected maximum 50 milliseconds: 71.3 ms [1.018 s since backend process start]
+2026-06-01T06:36:03.415Z root WARN Backend PluginLocalizationServer.initialize took longer than the expected maximum 50 milliseconds: 82.4 ms [1.029 s since backend process start]
+2026-06-01T06:36:03.447Z root WARN The local plugin referenced by local-dir:/c%3A/Users/Rodrigo/.theia/plugins does not exist.
+2026-06-01T06:36:03.447Z root WARN The local plugin referenced by local-dir:/c%3A/Users/Rodrigo/.theia/deployedPlugins does not exist.
+2026-06-01T06:36:03.447Z root WARN The local plugin referenced by local-dir:../../plugins does not exist.
+(node:35292) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-06-01T06:36:05.713Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:36:05.779Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:36:06.407Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 774.4 ms [2.726 s since frontend page start]
+2026-06-01T06:36:07.008Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:36:07.008Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:36:55.957Z root WARN Failed to register frontend resources from delegate 2b89e3dc-5db4-4fdb-81b7-6c504778a407: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:36:55.957Z root WARN Failed to register frontend MCP contributions from delegate 2b89e3dc-5db4-4fdb-81b7-6c504778a407: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:36:55.964Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:36:56.474Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:36:56.630Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 713.6 ms [3.187 s since frontend page start]
+2026-06-01T06:36:57.187Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:36:57.187Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:36:57.856Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 919.1 ms [4.296 s since frontend page start]
+2026-06-01T06:37:00.785Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-01T06:37:16.610Z root WARN Failed to register frontend resources from delegate a932d4a6-4f8f-4945-9229-9ea0c0e8fd0b: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:37:16.610Z root WARN Failed to register frontend MCP contributions from delegate a932d4a6-4f8f-4945-9229-9ea0c0e8fd0b: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:37:16.616Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:37:17.097Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 490.4 ms [2.973 s since frontend page start]
+2026-06-01T06:37:17.127Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:37:17.653Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:37:17.653Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:37:18.318Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 874.4 ms [4.092 s since frontend page start]
+2026-06-01T06:37:21.229Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-01T06:39:10.465Z root WARN Failed to register frontend resources from delegate 1bc8130c-ca61-4fde-bafd-852a09e51f0c: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:39:10.465Z root WARN Failed to register frontend MCP contributions from delegate 1bc8130c-ca61-4fde-bafd-852a09e51f0c: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:39:10.470Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:39:10.971Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:39:11.124Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 701.6 ms [3.269 s since frontend page start]
+2026-06-01T06:39:11.648Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:39:11.648Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:39:12.236Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 554.3 ms [4.004 s since frontend page start]
+2026-06-01T06:39:15.050Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-01T06:39:55.332Z root WARN Failed to register frontend resources from delegate 848aee4d-6a88-48e8-ba69-dac77db18651: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:39:55.332Z root WARN Failed to register frontend MCP contributions from delegate 848aee4d-6a88-48e8-ba69-dac77db18651: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:39:55.338Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:39:55.856Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 530.3 ms [3.119 s since frontend page start]
+2026-06-01T06:39:55.890Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:39:56.449Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:39:56.449Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:39:57.047Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 983.9 ms [4.347 s since frontend page start]
+2026-06-01T06:40:00.246Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-01T06:41:26.544Z root WARN Failed to register frontend resources from delegate 10ea33ae-414b-4e06-a87f-a6e69efbc8a8: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:41:26.544Z root WARN Failed to register frontend MCP contributions from delegate 10ea33ae-414b-4e06-a87f-a6e69efbc8a8: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:41:26.550Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:41:27.052Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:41:27.275Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 778.3 ms [3.313 s since frontend page start]
+2026-06-01T06:41:27.862Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:41:27.862Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:41:28.732Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 917.1 ms [4.404 s since frontend page start]
+2026-06-01T06:41:31.738Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-01T06:41:38.358Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:38.428Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:38.428Z root WARN [Codex] Request completed
+2026-06-01T06:41:38.428Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:38.433Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:38.795Z root WARN [Codex] Request completed
+2026-06-01T06:41:38.795Z root WARN [Codex] Request completed
+2026-06-01T06:41:38.795Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.443Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.444Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.450Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.450Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.450Z root WARN [Codex] [remote-connections/bootstrap] shared_object_synced
+2026-06-01T06:41:43.453Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.453Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.453Z root WARN [Codex] [startup][renderer] app routes mounted after 8788ms
+2026-06-01T06:41:43.463Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.473Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.473Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.473Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.473Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.473Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.480Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.488Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.489Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.497Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.499Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.511Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.511Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.517Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.517Z root WARN [Codex] Request completed
+2026-06-01T06:41:43.774Z root WARN [Codex] [remote-connections/bootstrap] shared_object_synced
+2026-06-01T06:41:43.775Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:43.782Z root WARN [Codex] [startup][renderer] app routes mounted after 9107ms
+2026-06-01T06:41:43.786Z root WARN [Codex] Request completed
+2026-06-01T06:41:44.463Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:41:44.465Z root WARN [Codex] Request completed
+2026-06-01T06:41:45.447Z root WARN Dropping message for disconnected socket: Max disconnected buffer size exceeded by adding 188789 bytes
+2026-06-01T06:42:09.030Z root WARN Failed to register frontend resources from delegate a177ccbf-f8c2-477d-a394-e1e58a3cc753: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:42:09.030Z root WARN Failed to register frontend MCP contributions from delegate a177ccbf-f8c2-477d-a394-e1e58a3cc753: Error: Resource sample-workspace://info is already registered
+2026-06-01T06:42:09.037Z root WARN Could not find translation key for default value: "Author"
+2026-06-01T06:42:09.579Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 551.2 ms [3.271 s since frontend page start]
+2026-06-01T06:42:09.618Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-01T06:42:10.168Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-01T06:42:10.168Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-01T06:42:10.775Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 954.2 ms [4.465 s since frontend page start]
+2026-06-01T06:42:13.892Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-01T06:42:20.373Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:20.435Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:20.436Z root WARN [Codex] Request completed
+2026-06-01T06:42:20.436Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:20.437Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:20.790Z root WARN [Codex] Request completed
+2026-06-01T06:42:20.790Z root WARN [Codex] Request completed
+2026-06-01T06:42:20.790Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.874Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.874Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.874Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.874Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.874Z root WARN [Codex] [remote-connections/bootstrap] shared_object_synced
+2026-06-01T06:42:24.874Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.874Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.874Z root WARN [Codex] [startup][renderer] app routes mounted after 4710ms
+2026-06-01T06:42:24.875Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.875Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.888Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.949Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.950Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.950Z root WARN [Codex] Request completed
+2026-06-01T06:42:24.950Z root WARN [Codex] [remote-connections/bootstrap] shared_object_synced
+2026-06-01T06:42:24.950Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:24.950Z root WARN [Codex] Features enabled
+2026-06-01T06:42:24.950Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:25.379Z root WARN [Codex] Request completed
+2026-06-01T06:42:25.379Z root WARN [Codex] Request completed
+2026-06-01T06:42:25.379Z root WARN [Codex] Request completed
+2026-06-01T06:42:25.379Z root WARN [Codex] Request completed
+2026-06-01T06:42:25.379Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:25.379Z root WARN [Codex] [startup][renderer] app routes mounted after 9044ms
+2026-06-01T06:42:25.428Z root WARN [Codex] Request completed
+2026-06-01T06:42:25.888Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:25.889Z root WARN [Codex] Request completed
+2026-06-01T06:42:27.890Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:27.892Z root WARN [Codex] Request completed
+2026-06-01T06:42:29.268Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:29.282Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:29.283Z root WARN [Codex] Request completed
+2026-06-01T06:42:29.288Z root WARN [Codex] Request completed
+2026-06-01T06:42:31.895Z root WARN [Codex] mcp_request_enqueued
+2026-06-01T06:42:31.897Z root WARN [Codex] Request completed

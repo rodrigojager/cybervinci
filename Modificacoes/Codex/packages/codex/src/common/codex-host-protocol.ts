@@ -8,18 +8,33 @@ export const CODEX_HOST_SERVICE_PATH = '/services/codex-host';
 export const CODEX_WEBVIEW_STATIC_PATH = '/codex-webview';
 export const CODEX_WEBVIEW_CHANNEL = 'codex-webview-ipc';
 
-export const CODEX_OFFICIAL_EXTENSION_VERSION = '26.5513.21555';
+export const CODEX_OFFICIAL_EXTENSION_VERSION = '26.5527.31454';
 
 /** Fire-and-forget message types webview → host */
 export const CODEX_HOST_EVENT_TYPES = [
+    'ready',
+    'webview-ready',
+    'view-focused',
     'shared-object-subscribe',
     'shared-object-unsubscribe',
     'shared-object-set',
     'open-vscode-command',
+    'open-in-browser',
+    'show-settings',
+    'open-config-toml',
+    'open-keyboard-shortcuts',
+    'show-diff',
+    'update-diff-if-open',
+    'show-plan-summary',
     'navigate-to-route',
     'navigate-in-new-editor-tab',
     'hotkey-window-dismiss',
     'query-cache-invalidate',
+    'tray-menu-threads-changed',
+    'persisted-atom-sync-request',
+    'persisted-atom-update',
+    'mcp-request',
+    'thread-prewarm-start',
     'implement-todo',
     'worker-request',
     'worker-request-cancel',
@@ -33,12 +48,18 @@ export const CODEX_HOST_EVENT_TYPES = [
 /** Host → webview event types */
 export const CODEX_WEBVIEW_EVENT_TYPES = [
     'shared-object-updated',
+    'theme-updated',
     'fetch-response',
     'fetch-stream-event',
     'fetch-stream-error',
     'fetch-stream-complete',
     'worker-response',
-    'worker-event'
+    'worker-event',
+    'persisted-atom-sync',
+    'persisted-atom-updated',
+    'pinned-threads-updated',
+    'mcp-response',
+    'mcp-notification'
 ] as const;
 
 /** RPC methods handled in the browser (file dialogs, IDE context, open file) */
@@ -47,18 +68,30 @@ export const CODEX_FRONTEND_RPC_METHODS = [
     'pick-file',
     'ide-context',
     'add-context-file',
-    'open-file'
+    'open-file',
+    'active-workspace-roots',
+    'workspace-root-options'
 ] as const;
 
 /** RPC methods invoked via vscode://codex/ fetch bridge */
 export const CODEX_HOST_RPC_METHODS = [
     'get-configuration',
     'set-configuration',
+    'get-settings',
+    'get-setting',
+    'set-setting',
     'get-global-state',
     'set-global-state',
     'read-file',
     'read-file-binary',
     'read-file-metadata',
+    'list-pinned-threads',
+    'set-pinned-threads-order',
+    'extension-info',
+    'os-info',
+    'active-workspace-roots',
+    'locale-info',
+    'openai-api-key',
     'open-file',
     'pick-files',
     'pick-file',
@@ -68,6 +101,7 @@ export const CODEX_HOST_RPC_METHODS = [
     'git-origins',
     'git-merge-base',
     'git-create-branch',
+    'git-checkout-branch',
     'git-push',
     'apply-patch',
     'open-in-targets',
@@ -80,11 +114,25 @@ export const CODEX_HOST_RPC_METHODS = [
     'local-environment-config-save',
     'worktree-shell-environment-config',
     'mcp-codex-config',
+    'read-config-for-host',
+    'get-config-requirements-for-host',
+    'write-config-value',
+    'list-mcp-server-status',
+    'read-mcp-resource',
     'ipc-request',
     'set-vs-context',
+    'set-thread-title',
     'prepare-worktree-snapshot',
     'upload-worktree-snapshot',
+    'gh-cli-status',
+    'gh-current-user',
     'gh-pr-create',
+    'gh-pr-board',
+    'gh-pr-body',
+    'gh-pr-checks',
+    'gh-pr-comments',
+    'gh-pr-status',
+    'gh-pr-diff',
     'gh-pr-merge',
     'gh-pr-update',
     'gh-pr-comment',
@@ -102,6 +150,8 @@ export const CODEX_HOST_RPC_METHODS = [
     'start-conversation',
     'account-info',
     'is-copilot-api-available',
+    'get-copilot-api-proxy-info',
+    'has-custom-cli-executable',
     'thread-follower-start-turn',
     'thread-follower-steer-turn',
     'thread-follower-interrupt-turn',
@@ -112,6 +162,14 @@ export const CODEX_HOST_RPC_METHODS = [
     'workspace-root-options',
     'list-hooks-for-host',
     'batch-write-config-value',
+    'fast-mode-rollout-metrics',
+    'flow-list-workflows',
+    'flow-list-workflow-patterns',
+    'flow-ai-authoring-spec',
+    'flow-create-workflow-from-ai-authoring-draft',
+    'flow-plan-dynamic-workflow',
+    'flow-start-workflow',
+    'flow-run-dynamic-workflow',
     'refresh-remote-connections',
     'discover-remote-ssh-connections',
     'refresh-remote-control-connections',
@@ -120,6 +178,8 @@ export const CODEX_HOST_RPC_METHODS = [
     'codex-worktrees',
     'list-worktrees',
     'resolve-worktree-for-thread',
+    'chrome-native-host-install',
+    'chrome-native-host-uninstall',
     'ping'
 ] as const;
 

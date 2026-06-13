@@ -7,6 +7,7 @@ import { BuilderContribution } from './builder-contribution';
 import { BuilderWidget, BuilderWidgetOptions } from './builder-widget';
 import '@mantine/core/styles.css';
 import '../../src/browser/style/index.css';
+import '../../src/browser/style/page-builder.css';
 
 export default new ContainerModule(bind => {
     bind(BuilderService).toDynamicValue(ctx => {

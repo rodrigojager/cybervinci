@@ -1,0 +1,206 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - tablist [ref=e59] [cursor=pointer]:
+                - listitem [ref=e60]:
+                  - generic [ref=e62]: Welcome
+                  - generic "Close" [ref=e63]
+                - listitem [ref=e64]:
+                  - generic [ref=e65]:
+                    - generic [ref=e66]: 
+                    - generic [ref=e67]: sample.cshtml
+                  - generic "Close" [ref=e68]: 
+                - listitem [ref=e69]:
+                  - generic [ref=e70]:
+                    - generic [ref=e71]: 
+                    - generic [ref=e72]: new-page-4.cvpage.json
+                  - generic "Close" [ref=e73]
+                - listitem [ref=e74]:
+                  - generic [ref=e75]:
+                    - generic [ref=e76]: 
+                    - generic [ref=e77]: editor-studio-showcase.builder.json
+                  - generic "Close" [ref=e78]
+              - generic [ref=e81]:
+                - button "Edit visually with CyberVinci" [ref=e83] [cursor=pointer]: 
+                - button "Move View to Secondary Window" [ref=e85] [cursor=pointer]: 
+            - list [ref=e88]:
+              - listitem "sample.cshtml" [ref=e89]:
+                - generic [ref=e90]: 
+                - generic [ref=e91]: sample.cshtml
+          - generic [ref=e93]:
+            - generic [ref=e94]:
+              - tablist [ref=e96] [cursor=pointer]:
+                - listitem [ref=e97]:
+                  - generic [ref=e98]:
+                    - generic [ref=e99]: 
+                    - generic [ref=e100]: sample.cshtml
+                  - generic "Close" [ref=e101]: 
+              - text: 
+            - list [ref=e104]:
+              - listitem "sample.cshtml" [ref=e105]:
+                - generic [ref=e106]: 
+                - generic [ref=e107]: sample.cshtml
+          - text:     
+          - tabpanel [ref=e108]:
+            - code [ref=e109]:
+              - generic [ref=e110]:
+                - textbox "Editor content" [active]
+                - textbox [ref=e111]
+                - generic [ref=e114]:
+                  - generic [ref=e116]: "1"
+                  - generic [ref=e117]:
+                    - generic [ref=e118] [cursor=pointer]: 
+                    - generic [ref=e119]: "2"
+                  - generic [ref=e121]: "3"
+                  - generic [ref=e122]:
+                    - generic [ref=e123] [cursor=pointer]: 
+                    - generic [ref=e124]: "4"
+                  - generic [ref=e125]:
+                    - generic [ref=e126] [cursor=pointer]: 
+                    - generic [ref=e127]: "5"
+                  - generic [ref=e128]:
+                    - generic [ref=e129] [cursor=pointer]: 
+                    - generic [ref=e130]: "6"
+                  - generic [ref=e132]: "7"
+                  - generic [ref=e134]: "8"
+                  - generic [ref=e136]: "9"
+                  - generic [ref=e138]: "10"
+                  - generic [ref=e140]: "11"
+                  - generic [ref=e142]: "12"
+                  - generic [ref=e144]: "13"
+                  - generic [ref=e147]: "14"
+                - generic [ref=e183]:
+                  - generic [ref=e185]: sample.cshtml
+                  - generic [ref=e187]: "@model CyberVinci.Samples.ViewModels.VisualEditorViewModel@using CyberVinci.Samples.Helpers@{"
+                  - generic [ref=e189]: Layout = "~/Views/Shared/_Layout.cshtml";
+                  - generic [ref=e191]: "}<link href=\"~/Content/site.css\" rel=\"stylesheet\"><main class=\"cv-sample-page\"><div class=\"cv-sample-shell\"><nav class=\"cv-sample-nav\"><div class=\"cv-brand\"><span class=\"cv-brand-mark\">CV</span><span>CyberVinci Visual Editor</span></div><div class=\"cv-nav-links\"><span>Tokens Razor</span><span>Assets locais</span><span>Diff seguro</span></div></nav><section class=\"cv-hero\"><div id=\"iq97j\" class=\"cv-hero-copy\"><p class=\"cv-eyebrow\">MVP desacoplado para HTML e Razor</p><h1>Edite visualmente <span>@Model.PageTitle</span> sem quebrar Razor.</h1><p id=\"iqh3j\" class=\"cv-hero-text\">Teste</p><div class=\"cv-actions\"><a asp-controller=\"Home\" asp-action=\"Index\" class=\"cv-button primary\">Abrir no CyberVinci</a><a href=\"mailto:contato@empresa.com\" id=\"imtub\" class=\"cv-button secondary\">contato@empresa.com</a></div></div><aside class=\"cv-preview-card\"><div class=\"cv-preview-topbar\"><div class=\"cv-window-dots\"><span></span><span></span><span></span></div><strong>@ViewBag.Environment</strong></div><div class=\"cv-preview-body\"><section class=\"cv-score-panel\"><div class=\"cv-score\">96</div><div><h2>Razor protegido</h2><p>@Html.DisplayFor(m => m.SafeTokenSummary)</p></div></section><div class=\"cv-preview-grid\"><article class=\"cv-mini-card\"><span class=\"cv-metric\">@Model.TokenCount</span><h3>tokens detectados</h3><p>Inline, diretivas e blocos conservadores.</p></article><article class=\"cv-mini-card\"><span class=\"cv-metric\">@Model.AssetCount</span><h3>assets resolvidos</h3><p>CSS local carregado no canvas do editor.</p></article></div><section class=\"cv-status-row\"><div class=\"cv-status-item\"><span>Diff obrigatorio antes de salvar</span><span class=\"cv-status-pill\">ativo</span></div><div class=\"cv-status-item\"><span>Backup automatico</span><span class=\"cv-status-pill\">pronto</span></div></section></div></aside></section><section class=\"cv-feature-band\"><div class=\"cv-section-title\"><div><h2>Fluxo seguro para paginas reais</h2><p>O HTML comum continua editavel e os trechos Razor aparecem como elementos protegidos.</p></div><a asp-controller=\"Docs\" asp-action=\"RazorProtector\" class=\"cv-button secondary\">Ver detalhes</a></div><div class=\"cv-feature-grid\"><article class=\"cv-feature\"><strong>Tokenizer conservador</strong><p>Ignora e-mails, nao processa CSS @media e preserva @@ escapado.</p></article><article class=\"cv-feature\"><strong>Componentes bloqueados</strong><p>Tokens nao podem ser editados, duplicados ou removidos sem validacao.</p></article><article class=\"cv-feature\"><strong>Assets locais</strong><p>Resolve caminhos como ~/Content, /Content, /css e bundles MVC simples.</p></article></div></section>@if (Model.HasPendingReview)"
+                  - generic [ref=e193]: "{"
+                  - generic [ref=e195]: <section class="cv-feature-band">
+                  - generic [ref=e197]: <h2>Bloco Razor protegido</h2>
+                  - generic [ref=e199]: <p>Este trecho representa uma area condicional que o MVP bloqueia de forma conservadora.</p>
+                  - generic [ref=e201]: </section>
+                  - generic [ref=e203]: "}</div></main>"
+                  - generic [ref=e205]: <style data-cv-grapes-css="true">
+                  - generic [ref=e207]:
+                    - text: "* { box-sizing: border-box; } body {margin: 0;}:root{color-scheme:light;--cv-ink:#172033;--cv-muted:#607089;--cv-panel:#ffffff;--cv-line:#d9e2ec;--cv-blue:#0f6cbd;--cv-teal:#13a38f;--cv-amber:#f59e0b;--cv-rose:#e11d48;--cv-surface:#f4f7fb;}body{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;color:var(--cv-ink);font-family:Inter, \"Segoe UI\", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;}.cv-sample-page{min-height:100vh;background-image:linear-gradient(135deg,"
+                    - text: rgba(15, 108, 189, 0.1), transparent 34%), linear-gradient(225deg,
+                    - text: "rgba(19, 163, 143, 0.1), transparent 32%), initial;background-position-x:initial, initial, initial;background-position-y:initial, initial, initial;background-size:initial, initial, initial;background-repeat:initial, initial, initial;background-attachment:initial, initial, initial;background-origin:initial, initial, initial;background-clip:initial, initial, initial;background-color:"
+                    - text: "rgb(247, 249, 252);}.cv-sample-shell{width:min(1180px, 100% - 40px);margin-top:0px;margin-right:auto;margin-bottom:0px;margin-left:auto;padding-top:28px;padding-right:0px;padding-bottom:46px;padding-left:0px;}.cv-sample-nav{display:flex;align-items:center;justify-content:space-between;row-gap:18px;column-gap:18px;margin-bottom:26px;padding-top:12px;padding-right:14px;padding-bottom:12px;padding-left:14px;border-top-width:1px;border-right-width:1px;border-bottom-width:1px;border-left-width:1px;border-top-style:solid;border-right-style:solid;border-bottom-style:solid;border-left-style:solid;border-top-color:"
+                    - text: "rgba(23, 32, 51, 0.08);border-right-color:"
+                    - text: "rgba(23, 32, 51, 0.08);border-bottom-color:"
+                    - text: "rgba(23, 32, 51, 0.08);border-left-color:"
+                    - text: "rgba(23, 32, 51, 0.08);border-image-source:initial;border-image-slice:initial;border-image-width:initial;border-image-outset:initial;border-image-repeat:initial;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-right-radius:8px;border-bottom-left-radius:8px;background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgba(255, 255, 255, 0.86);box-shadow:"
+                    - text: "rgba(15, 23, 42, 0.08) 0px 10px 28px;}.cv-brand{display:flex;align-items:center;row-gap:10px;column-gap:10px;font-weight:800;}.cv-brand-mark{display:grid;align-items:center;justify-items:center;width:36px;height:36px;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-right-radius:8px;border-bottom-left-radius:8px;color:"
+                    - text: "rgb(255, 255, 255);background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(23, 32, 51);}.cv-nav-links{display:flex;row-gap:16px;column-gap:16px;color:var(--cv-muted);font-size:14px;}.cv-hero{display:grid;grid-template-columns:minmax(0px, 1fr) minmax(360px, 0.88fr);row-gap:28px;column-gap:28px;align-items:stretch;}.cv-hero-copy{padding-top:42px;padding-right:0px;padding-bottom:42px;padding-left:0px;}.cv-eyebrow{display:inline-flex;align-items:center;row-gap:8px;column-gap:8px;margin-top:0px;margin-right:0px;margin-bottom:18px;margin-left:0px;padding-top:6px;padding-right:10px;padding-bottom:6px;padding-left:10px;border-top-width:1px;border-right-width:1px;border-bottom-width:1px;border-left-width:1px;border-top-style:solid;border-right-style:solid;border-bottom-style:solid;border-left-style:solid;border-top-color:"
+                    - text: "rgba(15, 108, 189, 0.2);border-right-color:"
+                    - text: "rgba(15, 108, 189, 0.2);border-bottom-color:"
+                    - text: "rgba(15, 108, 189, 0.2);border-left-color:"
+                    - text: "rgba(15, 108, 189, 0.2);border-image-source:initial;border-image-slice:initial;border-image-width:initial;border-image-outset:initial;border-image-repeat:initial;border-top-left-radius:999px;border-top-right-radius:999px;border-bottom-right-radius:999px;border-bottom-left-radius:999px;color:"
+                    - text: "rgb(8, 75, 131);background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(234, 244, 255);font-size:13px;font-weight:700;}.cv-hero h1{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;max-width:780px;font-size:clamp(40px, 7vw, 76px);line-height:0.96;}.cv-hero h1 span{color:var(--cv-blue);}.cv-hero-text{max-width:670px;margin-top:22px;margin-right:0px;margin-bottom:0px;margin-left:0px;color:var(--cv-muted);font-size:18px;}.cv-actions{display:flex;flex-wrap:wrap;row-gap:12px;column-gap:12px;margin-top:28px;}.cv-button{display:inline-flex;align-items:center;min-height:44px;padding-top:0px;padding-right:18px;padding-bottom:0px;padding-left:18px;border-top-left-radius:7px;border-top-right-radius:7px;border-bottom-right-radius:7px;border-bottom-left-radius:7px;text-decoration-line:none;text-decoration-thickness:initial;text-decoration-style:initial;text-decoration-color:initial;font-weight:800;}.cv-button.primary{color:"
+                    - text: "rgb(255, 255, 255);box-shadow:"
+                    - text: "rgba(15, 108, 189, 0.25) 0px 12px 26px;}.cv-button.secondary{color:var(--cv-ink);background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(255, 255, 255);}.cv-preview-card{display:grid;grid-template-rows:auto 1fr;min-height:520px;border-top-width:1px;border-right-width:1px;border-bottom-width:1px;border-left-width:1px;border-top-style:solid;border-right-style:solid;border-bottom-style:solid;border-left-style:solid;border-top-color:"
+                    - text: "rgba(23, 32, 51, 0.1);border-right-color:"
+                    - text: "rgba(23, 32, 51, 0.1);border-bottom-color:"
+                    - text: "rgba(23, 32, 51, 0.1);border-left-color:"
+                    - text: "rgba(23, 32, 51, 0.1);border-image-source:initial;border-image-slice:initial;border-image-width:initial;border-image-outset:initial;border-image-repeat:initial;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-right-radius:8px;border-bottom-left-radius:8px;box-shadow:"
+                    - text: "rgba(15, 23, 42, 0.15) 0px 24px 60px;overflow-x:hidden;overflow-y:hidden;}.cv-preview-topbar{display:flex;justify-content:space-between;row-gap:16px;column-gap:16px;padding-top:14px;padding-right:16px;padding-bottom:14px;padding-left:16px;color:"
+                    - text: "rgb(255, 255, 255);background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(23, 32, 51);}.cv-window-dots{display:flex;align-items:center;row-gap:6px;column-gap:6px;}.cv-window-dots span{width:10px;height:10px;border-top-left-radius:50%;border-top-right-radius:50%;border-bottom-right-radius:50%;border-bottom-left-radius:50%;}.cv-preview-body{display:grid;row-gap:16px;column-gap:16px;padding-top:18px;padding-right:18px;padding-bottom:18px;padding-left:18px;background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(248, 250, 252);}.cv-score-panel{display:grid;grid-template-columns:auto 1fr;row-gap:16px;column-gap:16px;align-items:center;padding-top:18px;padding-right:18px;padding-bottom:18px;padding-left:18px;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-right-radius:8px;border-bottom-left-radius:8px;background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(255, 255, 255);}.cv-score{display:grid;align-items:center;justify-items:center;width:86px;height:86px;border-top-left-radius:50%;border-top-right-radius:50%;border-bottom-right-radius:50%;border-bottom-left-radius:50%;color:"
+                    - text: "rgb(255, 255, 255);font-size:28px;font-weight:900;}.cv-score-panel h2, .cv-mini-card h3, .cv-section-title h2{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}.cv-score-panel p, .cv-mini-card p, .cv-section-title p{margin-top:6px;margin-right:0px;margin-bottom:0px;margin-left:0px;color:var(--cv-muted);}.cv-preview-grid{display:grid;grid-template-columns:repeat(2, minmax(0px, 1fr));row-gap:14px;column-gap:14px;}.cv-mini-card{padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-right-radius:8px;border-bottom-left-radius:8px;background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(255, 255, 255);}.cv-metric{display:block;color:var(--cv-blue);font-size:28px;font-weight:900;}.cv-status-row{display:grid;row-gap:10px;column-gap:10px;padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px;border-top-left-radius:8px;border-top-right-radius:8px;border-bottom-right-radius:8px;border-bottom-left-radius:8px;background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;background-attachment:initial;background-origin:initial;background-clip:initial;background-color:"
+                    - text: "rgb(255, 255, 255);}.cv-status-item{display:flex;align-items:center;justify-content:space-between;row-gap:10px;column-gap:10px;padding-top:10px;padding-right:12px;padding-bottom:10px;padding-left:12px;border-top-left-radius:7px;border-top-right-radius:7px;border-bottom-right-radius:7px;border-bottom-left-radius:7px;background-image:initial;background-position-x:initial;background-position-y:initial;background-size:initial;background-repeat:initial;backShow more (2.9 KB)"
+                  - generic [ref=e241]: </style>
+          - text:                                                                                                                                                                        
+          - tabpanel [ref=e249]:
+            - generic [ref=e250]: Loading visual editor...
+        - text:           
+      - generic [ref=e251]:
+        - tablist [ref=e256] [cursor=pointer]:
+          - listitem [ref=e257]:
+            - generic [ref=e259]: 
+          - listitem [ref=e260]:
+            - generic [ref=e262]: 
+          - listitem [ref=e263]
+        - generic:      +   
+    - generic [ref=e266]:
+      - generic [ref=e267]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e268]:
+          - generic [ref=e269]: 
+          - generic [ref=e270]: "0"
+          - generic [ref=e271]: 
+          - generic [ref=e272]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e273]:
+          - generic [ref=e274]: 
+          - generic [ref=e275]: Collaborate
+      - generic [ref=e276]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e277]:
+          - generic [ref=e278]: 
+          - generic [ref=e279]: Sign in to GitHub Copilot
+        - generic "Ln 14, Col 1, Go to Line/Column" [ref=e280]:
+          - generic [ref=e281]: Ln 14, Col 1
+        - generic "LF, Select End of Line Sequence" [ref=e282]:
+          - generic [ref=e283]: LF
+        - generic "UTF-8, Select Encoding" [ref=e284]:
+          - generic [ref=e285]: UTF-8
+        - 'generic "Spaces: 4, Select Indentation" [ref=e286]':
+          - generic [ref=e287]: "Spaces: 4"
+        - generic "$(bracket), [object HTMLDivElement]" [ref=e288]:
+          - generic [ref=e289]: 
+        - generic "Plain Text, Select Language Mode" [ref=e290]:
+          - generic [ref=e291]: Plain Text
+        - generic "No Notifications" [ref=e292]:
+          - generic [ref=e293]: 
+        - button "Toggle Bottom Panel" [ref=e294]:
+          - generic [ref=e295]: 
+  - generic:
+    - generic:  
+  - generic [ref=e296]:
+    - alert
+    - alert

@@ -47,10 +47,14 @@ export class CodexWebviewWidget extends BaseWidget implements CodexWebviewSurfac
         this.initialRoute = route;
     }
 
+    getRoute(): string | undefined {
+        return this.initialRoute;
+    }
+
     @postConstruct()
     protected init(): void {
         this.hostService.registerSurface(this);
-        this.iframe.src = this.hostService.buildShellUrl(this.webviewId, this.initialRoute);
+        this.iframe.src = this.hostService.buildShellUrl(this.webviewId, this.initialRoute, 'sidebar');
         const wrapper = new BaseWidget();
         wrapper.addClass('codex-webview-iframe-wrapper');
         wrapper.node.appendChild(this.iframe);

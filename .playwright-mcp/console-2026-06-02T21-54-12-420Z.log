@@ -1,0 +1,9 @@
+[     560ms] [LOG] Loaded {} @ https://grapesjs.com/_next/static/chunks/977-6c3535dc7ce24eb1.js:0
+[     643ms] [WARNING] The specified value "black" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers. @ https://cdn.jsdelivr.net/npm/grapesjs-style-bg@2.0.1:7
+[     644ms] [WARNING] The specified value "white" does not conform to the required format.  The format is "#rrggbb" where rr, gg, bb are two-digit hexadecimal numbers. @ https://cdn.jsdelivr.net/npm/grapesjs-style-bg@2.0.1:7
+[    1233ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://via.placeholder.com/350x250/78c5d6/fff:0
+[    1233ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://via.placeholder.com/350x250/f28c33/fff:0
+[    1233ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://via.placeholder.com/350x250/e868a2/fff:0
+[    1233ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://via.placeholder.com/350x250/c5d647/fff:0
+[    1233ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://via.placeholder.com/350x250/79c267/fff:0
+[    1233ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_CLOSED @ https://via.placeholder.com/350x250/459ba8/fff:0

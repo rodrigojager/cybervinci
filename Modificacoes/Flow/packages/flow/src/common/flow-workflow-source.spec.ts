@@ -17,7 +17,33 @@ describe('Flow workflow source editor contracts', () => {
                 format: 'yaml',
                 editable: true,
                 updatedAt: '2026-05-20T00:00:00.000Z'
-            }
+            },
+            states: {
+                intake: { type: 'input' },
+                build: {
+                    type: 'agent',
+                    agent: 'architect',
+                    provider: {
+                        providerId: 'openai',
+                        modelId: 'gpt-5',
+                        options: { temperature: 0.1 }
+                    },
+                    systemPrompt: 'You are an implementation planner.',
+                    taskPrompt: 'Draft the implementation steps.',
+                    outputs: ['reports/build.md'],
+                    deliverables: [
+                        {
+                            path: 'reports/build.md',
+                            description: 'Build summary',
+                            required: true,
+                            kind: 'markdown'
+                        }
+                    ]
+                }
+            },
+            transitions: [
+                { from: 'intake', to: 'build', on: 'run.started' }
+            ]
         });
 
         const source = formatWorkflowSource(workflow);
@@ -27,6 +53,8 @@ describe('Flow workflow source editor contracts', () => {
         expect(source).not.to.contain('file:');
         expect(parsed.name).to.equal('Edited YAML Workflow');
         expect(parsed.file).to.deep.equal(workflow.file);
+        expect(parsed.states.build.provider).to.deep.equal(workflow.states.build.provider);
+        expect(parsed.states.build.deliverables).to.deep.equal(workflow.states.build.deliverables);
     });
 
     it('round-trips JSON editor content while preserving workflow file metadata', () => {
@@ -37,7 +65,33 @@ describe('Flow workflow source editor contracts', () => {
                 format: 'json',
                 editable: true,
                 updatedAt: '2026-05-20T00:00:00.000Z'
-            }
+            },
+            states: {
+                intake: { type: 'input' },
+                build: {
+                    type: 'agent',
+                    agent: 'architect',
+                    provider: {
+                        providerId: 'anthropic',
+                        modelId: 'claude-sonnet-4',
+                        options: { maxTokens: 2048 }
+                    },
+                    systemPrompt: 'You are an implementation planner.',
+                    taskPrompt: 'Draft the implementation steps.',
+                    outputs: ['reports/build.json'],
+                    deliverables: [
+                        {
+                            path: 'reports/build.json',
+                            description: 'Build summary',
+                            required: false,
+                            kind: 'json'
+                        }
+                    ]
+                }
+            },
+            transitions: [
+                { from: 'intake', to: 'build', on: 'run.started' }
+            ]
         });
 
         const source = formatWorkflowSource(workflow);
@@ -47,6 +101,8 @@ describe('Flow workflow source editor contracts', () => {
         expect(source).not.to.contain('"file"');
         expect(parsed.name).to.equal('Edited JSON Workflow');
         expect(parsed.file).to.deep.equal(workflow.file);
+        expect(parsed.states.build.provider).to.deep.equal(workflow.states.build.provider);
+        expect(parsed.states.build.deliverables).to.deep.equal(workflow.states.build.deliverables);
     });
 
     it('reports structural diff between file workflow and canvas workflow edits', () => {

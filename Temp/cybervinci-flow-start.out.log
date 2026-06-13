@@ -1,0 +1,182 @@
+
+> @theia/example-browser@1.71.0 start
+> theia start --plugins=local-dir:../../plugins --ovsx-router-config=../ovsx-router-config.json --port 3001
+
+Backend main: entry point loaded [0.283 s since backend process start]
+Backend server: loading modules... [0.286 s since backend process start]
+Backend server: container created [0.398 s since backend process start]
+Backend server: modules loaded [0.640 s since backend process start]
+Configuration directory URI: 'file:///c%3A/Users/Rodrigo/.theia'
+2026-06-03T07:05:35.006Z root INFO Settings file not found at 'C:\Users\Rodrigo\.theia\backend-settings.json'. Falling back to defaults.
+Backend server: resolving application [0.669 s since backend process start]
+Configuring to accept webviews on '^.+\.webview\..+$' hostname.
+2026-06-03T07:05:35.101Z root INFO MCPTestContribution.configure() called - MCP system is working!
+2026-06-03T07:05:35.101Z root INFO MCPTestContribution: test-tool registered successfully
+2026-06-03T07:05:35.107Z root INFO configured all backend app contributions
+2026-06-03T07:05:35.110Z root INFO CyberVinci app listening on http://127.0.0.1:3001.
+2026-06-03T07:05:35.114Z root INFO Resolve plugins list: 5.5 ms [0.773 s since backend process start]
+2026-06-03T07:05:35.114Z root INFO Deploy plugins list: 5.9 ms [0.774 s since backend process start]
+2026-06-03T07:05:35.130Z root INFO Reconnecting failed for 933762e7-6335-4dbc-8879-1f945637bd74
+2026-06-03T07:05:35.143Z root INFO Backend application startup sequence completed (async work may still be pending): 41.7 ms [0.803 s since backend process start]
+2026-06-03T07:05:35.144Z root INFO All backend contributions settled: 132.8 ms [0.803 s since backend process start]
+2026-06-03T07:05:35.167Z root INFO Reconnecting failed for 1bb89d81-9762-4d60-b8e4-d75246da6032
+2026-06-03T07:05:36.703Z root INFO creating connection for 70b92a26-8866-48a7-8ebc-54785f7339e0
+2026-06-03T07:05:36.744Z root INFO creating connection for ed610350-d157-4c83-9729-64f951427912
+2026-06-03T07:05:37.507Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-03T07:05:37.543Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-03T07:05:37.730Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-03T07:05:37.761Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-03T07:05:37.817Z root INFO [67560242-dfa4-4c36-b980-744ddea11eb5] Waiting for backend deployment: 43.3 ms [2.682 s since frontend page start]
+2026-06-03T07:05:37.827Z root INFO Start frontend contributions: 452.9 ms [2.688 s since frontend page start]
+2026-06-03T07:05:37.827Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-03T07:05:37.831Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-03T07:05:37.831Z root INFO >>> Restoring the layout state...
+2026-06-03T07:05:37.831Z root INFO <<< Nothing to restore.
+2026-06-03T07:05:37.860Z root INFO [7bff9849-1dc5-4be3-af0b-0a7b9b890759] Waiting for backend deployment: 52.9 ms [2.686 s since frontend page start]
+2026-06-03T07:05:37.875Z root INFO Start frontend contributions: 459.8 ms [2.696 s since frontend page start]
+2026-06-03T07:05:37.876Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-03T07:05:37.898Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-03T07:05:37.899Z root INFO >>> Restoring the layout state...
+2026-06-03T07:05:37.899Z root INFO <<< Nothing to restore.
+2026-06-03T07:05:38.133Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-03T07:05:38.133Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-03T07:05:38.133Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-03T07:05:38.134Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-03T07:05:38.134Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-03T07:05:38.134Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-03T07:05:38.134Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-03T07:05:38.134Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-03T07:05:38.135Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-03T07:05:38.153Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-03T07:05:38.154Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-03T07:05:38.154Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-03T07:05:38.154Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-03T07:05:38.154Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-03T07:05:38.155Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-03T07:05:38.155Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-03T07:05:38.155Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-03T07:05:38.155Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-03T07:05:38.170Z root INFO [67560242-dfa4-4c36-b980-744ddea11eb5] Loading plugin contributions
+2026-06-03T07:05:38.193Z root INFO [7bff9849-1dc5-4be3-af0b-0a7b9b890759] Loading plugin contributions
+2026-06-03T07:05:38.544Z root INFO Initialize the workbench layout: 617.0 ms [3.313 s since frontend page start]
+2026-06-03T07:05:38.544Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-03T07:05:38.547Z root INFO Initialize the workbench layout: 537.3 ms [3.260 s since frontend page start]
+2026-06-03T07:05:38.547Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-03T07:05:39.462Z root INFO Replace loading indicator with ready workbench UI (animation): 811.3 ms [4.134 s since frontend page start]
+2026-06-03T07:05:39.462Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-03T07:05:39.462Z root INFO All frontend contributions settled: 1899.3 ms [4.134 s since frontend page start]
+2026-06-03T07:05:39.463Z root INFO Frontend application startup sequence completed (async work may still be pending): 2021.1 ms [5.121 s since backend process start]
+2026-06-03T07:05:39.464Z root INFO Replace loading indicator with ready workbench UI (animation): 827.4 ms [4.101 s since frontend page start]
+2026-06-03T07:05:39.464Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-03T07:05:39.465Z root INFO All frontend contributions settled: 1865.6 ms [4.101 s since frontend page start]
+2026-06-03T07:05:39.465Z root INFO Frontend application startup sequence completed (async work may still be pending): 1976.2 ms [5.124 s since backend process start]
+2026-06-03T07:05:44.286Z root INFO Reconnecting failed for 02fd4e69-1786-4a24-be50-02c0946aae3a
+2026-06-03T07:05:45.832Z root INFO creating connection for 96c4f205-ba69-49f8-b44b-8383dc8dc293
+2026-06-03T07:05:47.064Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-03T07:05:47.232Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-03T07:05:47.245Z root INFO [ee1fb96f-bb1f-4b90-bc18-3935fc5ad12e] Waiting for backend deployment: 6.7 ms [2.952 s since frontend page start]
+2026-06-03T07:05:47.253Z root INFO Start frontend contributions: 892.1 ms [2.956 s since frontend page start]
+2026-06-03T07:05:47.253Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-03T07:05:47.255Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-03T07:05:47.256Z root INFO >>> Restoring the layout state...
+2026-06-03T07:05:47.256Z root INFO <<< Nothing to restore.
+2026-06-03T07:05:47.317Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-03T07:05:47.317Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-03T07:05:47.318Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-03T07:05:47.318Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-03T07:05:47.318Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-03T07:05:47.319Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-03T07:05:47.319Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-03T07:05:47.319Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-03T07:05:47.320Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-03T07:05:47.347Z root INFO [ee1fb96f-bb1f-4b90-bc18-3935fc5ad12e] Loading plugin contributions
+2026-06-03T07:05:47.846Z root INFO Initialize the workbench layout: 277.5 ms [3.239 s since frontend page start]
+2026-06-03T07:05:47.846Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-03T07:05:49.343Z root INFO Replace loading indicator with ready workbench UI (animation): 807.1 ms [4.055 s since frontend page start]
+2026-06-03T07:05:49.343Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-03T07:05:49.343Z root INFO All frontend contributions settled: 1991.8 ms [4.055 s since frontend page start]
+2026-06-03T07:05:49.343Z root INFO Frontend application startup sequence completed (async work may still be pending): 2920.8 ms [15.002 s since backend process start]
+2026-06-03T07:05:55.863Z root INFO socket closed
+2026-06-03T07:05:55.863Z root INFO setting close timeout for id 96c4f205-ba69-49f8-b44b-8383dc8dc293 to 3000
+2026-06-03T07:05:56.270Z root INFO creating connection for f93dd7d4-3d67-462b-914d-b5bf47b298ed
+2026-06-03T07:05:57.172Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-03T07:05:57.275Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-03T07:05:57.312Z root INFO [e6feac20-b77a-48f3-ae83-6361998f8df9] Waiting for backend deployment: 13.9 ms [1.456 s since frontend page start]
+2026-06-03T07:05:57.316Z root INFO Start frontend contributions: 905.0 ms [1.458 s since frontend page start]
+2026-06-03T07:05:57.316Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-03T07:05:57.318Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-03T07:05:57.319Z root INFO >>> Restoring the layout state...
+2026-06-03T07:05:57.319Z root INFO <<< Nothing to restore.
+2026-06-03T07:05:57.448Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-03T07:05:57.448Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-03T07:05:57.448Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-03T07:05:57.448Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-03T07:05:57.449Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-03T07:05:57.449Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-03T07:05:57.449Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-03T07:05:57.449Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-03T07:05:57.449Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-03T07:05:57.466Z root INFO [e6feac20-b77a-48f3-ae83-6361998f8df9] Loading plugin contributions
+2026-06-03T07:05:57.893Z root INFO Initialize the workbench layout: 364.8 ms [1.827 s since frontend page start]
+2026-06-03T07:05:57.893Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-03T07:05:59.108Z root INFO Replace loading indicator with ready workbench UI (animation): 812.6 ms [2.647 s since frontend page start]
+2026-06-03T07:05:59.109Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-03T07:05:59.109Z root INFO All frontend contributions settled: 2094.0 ms [2.647 s since frontend page start]
+2026-06-03T07:05:59.109Z root INFO Frontend application startup sequence completed (async work may still be pending): 2664.1 ms [24.768 s since backend process start]
+2026-06-03T07:05:59.111Z root INFO closing connection for 96c4f205-ba69-49f8-b44b-8383dc8dc293
+2026-06-03T07:05:59.112Z root INFO Closing channel on service path '/localization-server'.
+2026-06-03T07:05:59.112Z root INFO Closing channel on service path '/os'.
+2026-06-03T07:05:59.112Z root INFO Closing channel on service path '/services/commands'.
+2026-06-03T07:05:59.112Z root INFO Closing channel on service path '/services/logger'.
+2026-06-03T07:05:59.112Z root INFO Closing channel on service path '/services/messageService'.
+2026-06-03T07:05:59.113Z root INFO Closing channel on service path '/services/remote-filesystem'.
+2026-06-03T07:05:59.113Z root INFO Closing channel on service path '/services/envs'.
+2026-06-03T07:05:59.113Z root INFO Closing channel on service path '/services/workspace'.
+2026-06-03T07:05:59.113Z root INFO Closing channel on service path '/services/stopwatch'.
+2026-06-03T07:05:59.113Z root INFO Closing channel on service path '/services/application'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/i18n'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/quickInput'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/debug'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/shell-terminal'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/quickPick'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/search'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/task'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/hostedPlugin'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/plugin-ext'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/plugin-paths'.
+2026-06-03T07:05:59.114Z root INFO Closing channel on service path '/services/vsx-environment'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/request-service'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/library'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/shell-execution'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/search-in-workspace'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/mcpservermanagerserver'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/mcpservermanager'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/automation/browser'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/cli-preferences'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/codex-provider'.
+2026-06-03T07:05:59.115Z root INFO Closing channel on service path '/services/codex-host'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/cybervinci/builder'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/mcpToolDelegate'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/memory'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/ai-output-cleaner'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/languageModelRegistryDelegatePath'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/languageModelDelegatePath'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/anthropic/language-model-manager'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/open-ai/language-model-manager'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/copilot/auth'.
+2026-06-03T07:05:59.116Z root INFO Closing channel on service path '/services/copilot/language-model-manager'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/google/language-model-manager'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/huggingface/language-model-manager'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/llamafilemanager'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/ollama/language-model-manager'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/vercel-ai/language-model-manager'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/mini-browser-service'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/measurement-notification'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/plugin-dev'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/token-usage'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/sampleBackendPreferences'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/scanoss/service'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/claude-code'.
+2026-06-03T07:05:59.117Z root INFO Closing channel on service path '/services/codex'.
+2026-06-03T07:05:59.118Z root INFO Closing channel on service path '/services/github-repo'.
+2026-06-03T07:05:59.118Z root INFO Closing channel on service path '/services/terminals/1031888765'.

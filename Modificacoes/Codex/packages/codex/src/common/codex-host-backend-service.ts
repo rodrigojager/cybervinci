@@ -30,6 +30,7 @@ export interface CodexHostBackendClient {
     notifyFetchStreamEvent(requestId: string, event: unknown): void;
     notifyFetchStreamError(requestId: string, error: string): void;
     notifyFetchStreamComplete(requestId: string): void;
+    notifyMcpNotification?(hostId: string, method: string, params: unknown): void;
 }
 
 export const CodexHostBackendClient = Symbol('CodexHostBackendClient');

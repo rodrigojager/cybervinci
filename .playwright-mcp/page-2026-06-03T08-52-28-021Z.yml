@@ -1,0 +1,888 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic [ref=e54]:                                                               
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - tablist [ref=e61] [cursor=pointer]:
+                - listitem [ref=e62]:
+                  - generic [ref=e63]:
+                    - generic [ref=e64]: 
+                    - generic [ref=e65]:
+                      - generic [ref=e66]: sample.cshtml
+                      - generic [ref=e67]: file:/...
+                  - generic "Close" [ref=e68]: 
+                - listitem [ref=e69]:
+                  - generic [ref=e71]: Flow
+                  - generic "Close" [ref=e72]
+                - listitem [ref=e73]:
+                  - generic [ref=e74]:
+                    - generic [ref=e75]: 
+                    - generic [ref=e76]: sample.cshtml
+                  - generic "Close" [ref=e77]
+              - button "Edit visually with CyberVinci" [ref=e80] [cursor=pointer]: 
+            - list [ref=e83]:
+              - listitem "sample.cshtml" [ref=e84]:
+                - generic [ref=e85]: 
+                - generic [ref=e86]: sample.cshtml
+          - tabpanel [ref=e87]:
+            - generic [ref=e88]:
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - button " Save" [ref=e91]:
+                    - generic [ref=e92]: 
+                    - text: Save
+                  - button " Save As" [ref=e93]:
+                    - generic [ref=e94]: 
+                    - text: Save As
+                  - button " Diff" [ref=e95]:
+                    - generic [ref=e96]: 
+                    - text: Diff
+                  - button " Code" [ref=e97]:
+                    - generic [ref=e98]: 
+                    - text: Code
+                  - button "AI" [ref=e99]:
+                    - img [ref=e100]
+                    - text: AI
+                  - button " Reload" [ref=e104]:
+                    - generic [ref=e105]: 
+                    - text: Reload
+                - generic [ref=e106]:
+                  - combobox "Preview mode" [ref=e107]:
+                    - option "Editor" [selected]
+                    - option "Preview"
+                    - option "Preview with scripts"
+                    - option "Source"
+                  - group "Viewport" [ref=e108]:
+                    - button "Desktop" [pressed] [ref=e109]:
+                      - generic [ref=e110]: 
+                    - button "Tablet" [ref=e111]:
+                      - generic [ref=e112]: 
+                    - button "Mobile" [ref=e113]:
+                      - generic [ref=e114]: 
+                    - button "Custom" [ref=e115]:
+                      - generic [ref=e116]: 
+                - generic [ref=e117]:
+                  - button " Tokens 7" [ref=e118]:
+                    - generic [ref=e119]: 
+                    - text: Tokens 7
+                  - generic [ref=e120]: Assets 0
+              - main [ref=e121]:
+                - complementary [ref=e122]:
+                  - generic [ref=e123]:
+                    - generic [ref=e124]:
+                      - heading "Components" [level=3] [ref=e125]
+                      - generic [ref=e126]: Blocks
+                    - generic [ref=e129]:
+                      - generic [ref=e130]:
+                        - generic [ref=e131] [cursor=pointer]:
+                          - generic [ref=e132]: 
+                          - text: Layout
+                        - generic [ref=e133]:
+                          - generic "Container" [ref=e134]:
+                            - generic:
+                              - img
+                            - generic: Container
+                          - generic "Row" [ref=e135]:
+                            - generic:
+                              - img
+                            - generic: Row
+                          - generic "2 Columns" [ref=e136]:
+                            - generic:
+                              - img
+                            - generic: 2 Columns
+                          - generic "3 Columns" [ref=e137]:
+                            - generic:
+                              - img
+                            - generic: 3 Columns
+                          - generic "Div" [ref=e138]:
+                            - generic:
+                              - img
+                            - generic: Div
+                          - generic "Section" [ref=e139]:
+                            - generic:
+                              - img
+                            - generic: Section
+                          - generic "Header" [ref=e140]:
+                            - generic:
+                              - img
+                            - generic: Header
+                          - generic "Footer" [ref=e141]:
+                            - generic:
+                              - img
+                            - generic: Footer
+                          - generic "Spacer" [ref=e142]:
+                            - generic:
+                              - img
+                            - generic: Spacer
+                      - generic [ref=e143]:
+                        - generic [ref=e144] [cursor=pointer]:
+                          - generic [ref=e145]: 
+                          - text: Text
+                        - generic [ref=e146]:
+                          - generic "Heading" [ref=e147]:
+                            - generic:
+                              - img
+                            - generic: Heading
+                          - generic "Paragraph" [ref=e148]:
+                            - generic:
+                              - img
+                            - generic: Paragraph
+                          - generic "Text" [ref=e149]:
+                            - generic:
+                              - img
+                            - generic: Text
+                          - generic "Link" [ref=e150]:
+                            - generic:
+                              - img
+                            - generic: Link
+                          - generic "List" [ref=e151]:
+                            - generic:
+                              - img
+                            - generic: List
+                          - generic "Quote" [ref=e152]:
+                            - generic:
+                              - img
+                            - generic: Quote
+                          - generic "Table" [ref=e153]:
+                            - generic:
+                              - img
+                            - generic: Table
+                          - generic "Divider" [ref=e154]:
+                            - generic:
+                              - img
+                            - generic: Divider
+                      - generic [ref=e155]:
+                        - generic [ref=e156] [cursor=pointer]:
+                          - generic [ref=e157]: 
+                          - text: Media
+                        - generic [ref=e158]:
+                          - generic "Image" [ref=e159]:
+                            - generic:
+                              - img
+                            - generic: Image
+                          - generic "Video" [ref=e160]:
+                            - generic:
+                              - img
+                            - generic: Video
+                      - generic [ref=e161]:
+                        - generic [ref=e162] [cursor=pointer]:
+                          - generic [ref=e163]: 
+                          - text: Forms
+                        - generic [ref=e164]:
+                          - generic "Form" [ref=e165]:
+                            - generic:
+                              - img
+                            - generic: Form
+                          - generic "Input" [ref=e166]:
+                            - generic:
+                              - img
+                            - generic: Input
+                          - generic "Select" [ref=e167]:
+                            - generic:
+                              - img
+                            - generic: Select
+                          - generic "Checkbox" [ref=e168]:
+                            - generic:
+                              - img
+                            - generic: Checkbox
+                          - generic "Button" [ref=e169]:
+                            - generic:
+                              - img
+                            - generic: Button
+                      - generic [ref=e170]:
+                        - generic [ref=e171] [cursor=pointer]:
+                          - generic [ref=e172]: 
+                          - text: Bootstrap
+                        - generic [ref=e173]:
+                          - generic "Card" [ref=e174]:
+                            - generic:
+                              - img
+                            - generic: Card
+                          - generic "Alert" [ref=e175]:
+                            - generic:
+                              - img
+                            - generic: Alert
+                          - generic "Badge" [ref=e176]:
+                            - generic:
+                              - img
+                            - generic: Badge
+                          - generic "Navbar" [ref=e177]:
+                            - generic:
+                              - img
+                            - generic: Navbar
+                          - generic "Button Group" [ref=e178]:
+                            - generic:
+                              - img
+                            - generic: Button Group
+                  - generic [ref=e181]:
+                    - generic [ref=e182]:
+                      - heading "DOM Tree" [level=3] [ref=e183]
+                      - generic [ref=e184]: Layers
+                    - generic [ref=e187] [cursor=pointer]:
+                      - generic [ref=e188]:
+                        - img [ref=e191]
+                        - generic "Body" [ref=e195]:
+                          - img [ref=e197]
+                          - generic [ref=e199]: Body
+                      - generic [ref=e201]: "3"
+                - separator "Resize components panel" [ref=e202]
+                - generic [ref=e208]:
+                  - iframe [ref=e213]:
+                    - generic [ref=f3e2]:
+                      - text: "sample.cshtml Layout = \"~/Views/Shared/_Layout.cshtml\"; }"
+                      - main [ref=f3e3]:
+                        - generic [ref=f3e4]:
+                          - navigation [ref=f3e5]:
+                            - generic [ref=f3e6]:
+                              - generic [ref=f3e7]: CV
+                              - generic [ref=f3e8]: CyberVinci Visual Editor
+                            - generic [ref=f3e9]:
+                              - generic [ref=f3e10]: Tokens Razor
+                              - generic [ref=f3e11]: Assets locais
+                              - generic [ref=f3e12]: Diff seguro
+                          - generic [ref=f3e13]:
+                            - generic [ref=f3e14]:
+                              - paragraph [ref=f3e15]: MVP desacoplado para HTML e Razor
+                              - heading "Edite visualmente @Model.PageTitle sem quebrar Razor." [level=1] [ref=f3e16]:
+                                - text: Edite visualmente
+                                - generic [ref=f3e18]: "@Model.PageTitle"
+                                - text: sem quebrar Razor.
+                              - paragraph [ref=f3e19]: Teste
+                              - generic [ref=f3e20]:
+                                - generic [ref=f3e21]: Abrir no CyberVinci
+                                - link "contato@empresa.com" [ref=f3e22] [cursor=pointer]:
+                                  - /url: mailto:contato@empresa.com
+                            - complementary [ref=f3e23]:
+                              - strong [ref=f3e29]:
+                                - generic [ref=f3e30]: "@ViewBag.Environment"
+                              - generic [ref=f3e31]:
+                                - generic [ref=f3e32]:
+                                  - generic [ref=f3e33]: "96"
+                                  - generic [ref=f3e34]:
+                                    - heading "Razor protegido" [level=2] [ref=f3e35]
+                                    - paragraph [ref=f3e36]:
+                                      - generic [ref=f3e37]: "@Html.DisplayFor(m => m.SafeTokenSummary)"
+                                - generic [ref=f3e38]:
+                                  - article [ref=f3e39]:
+                                    - generic [ref=f3e41]: "@Model.TokenCount"
+                                    - heading "tokens detectados" [level=3] [ref=f3e42]
+                                    - paragraph [ref=f3e43]: Inline, diretivas e blocos conservadores.
+                                  - article [ref=f3e44]:
+                                    - generic [ref=f3e46]: "@Model.AssetCount"
+                                    - heading "assets resolvidos" [level=3] [ref=f3e47]
+                                    - paragraph [ref=f3e48]: CSS local carregado no canvas do editor.
+                                - generic [ref=f3e49]:
+                                  - generic [ref=f3e50]:
+                                    - generic [ref=f3e51]: Diff obrigatorio antes de salvar
+                                    - generic [ref=f3e52]: ativo
+                                  - generic [ref=f3e53]:
+                                    - generic [ref=f3e54]: Backup automatico
+                                    - generic [ref=f3e55]: pronto
+                          - generic [ref=f3e56]:
+                            - generic [ref=f3e57]:
+                              - generic [ref=f3e58]:
+                                - heading "Fluxo seguro para paginas reais" [level=2] [ref=f3e59]
+                                - paragraph [ref=f3e60]: O HTML comum continua editavel e os trechos Razor aparecem como elementos protegidos.
+                              - generic [ref=f3e61]: Ver detalhes
+                            - generic [ref=f3e62]:
+                              - article [ref=f3e63]:
+                                - strong [ref=f3e64]: Tokenizer conservador
+                                - paragraph [ref=f3e65]: Ignora e-mails, nao processa CSS @media e preserva @@ escapado.
+                              - article [ref=f3e66]:
+                                - strong [ref=f3e67]: Componentes bloqueados
+                                - paragraph [ref=f3e68]: Tokens nao podem ser editados, duplicados ou removidos sem validacao.
+                              - article [ref=f3e69]:
+                                - strong [ref=f3e70]: Assets locais
+                                - paragraph [ref=f3e71]: Resolve caminhos como ~/Content, /Content, /css e bundles MVC simples.
+                          - generic [ref=f3e72]: "Protected Razor block Razor: @if (Model.HasPendingReview) { <section class=\"cv-feature-band\"> <h2>Bloco Razor protegido</h..."
+                  - generic:
+                    - generic [ref=e218]:
+                      - generic "View components" [ref=e219] [cursor=pointer]: 
+                      - generic "Preview" [ref=e220] [cursor=pointer]: 
+                      - generic "Fullscreen" [ref=e221] [cursor=pointer]: 
+                      - generic "View code" [ref=e222] [cursor=pointer]: 
+                    - text:    
+                    - generic [ref=e224]:
+                      - generic [ref=e225]: Device
+                      - combobox [ref=e228]:
+                        - option "Desktop"
+                        - option "Tablet"
+                        - option "Mobile"
+                - complementary [ref=e231]:
+                  - generic [ref=e232]:
+                    - generic [ref=e233]:
+                      - heading "Global Variables" [level=3] [ref=e234]
+                      - generic [ref=e235]: "12"
+                    - generic [ref=e236]:
+                      - heading "Colors" [level=4] [ref=e237]
+                      - generic [ref=e238]:
+                        - generic ":root · ~/Content/site.css" [ref=e239]: "--cv-amber"
+                        - 'textbox "--cv-amber #f59e0b " [ref=e240]': "#f59e0b"
+                        - textbox [ref=e241]: "#f59e0b"
+                        - button "" [ref=e242]:
+                          - generic [ref=e243]: 
+                      - generic [ref=e244]:
+                        - generic ":root · ~/Content/site.css" [ref=e245]: "--cv-blue"
+                        - 'textbox "--cv-blue #0f6cbd " [ref=e246]': "#0f6cbd"
+                        - textbox [ref=e247]: "#0f6cbd"
+                        - button "" [ref=e248]:
+                          - generic [ref=e249]: 
+                      - generic [ref=e250]:
+                        - generic ":root · ~/Content/site.css" [ref=e251]: "--cv-ink"
+                        - 'textbox "--cv-ink #172033 " [ref=e252]': "#172033"
+                        - textbox [ref=e253]: "#172033"
+                        - button "" [ref=e254]:
+                          - generic [ref=e255]: 
+                      - generic [ref=e256]:
+                        - generic ":root · ~/Content/site.css" [ref=e257]: "--cv-line"
+                        - 'textbox "--cv-line #d9e2ec " [ref=e258]': "#d9e2ec"
+                        - textbox [ref=e259]: "#d9e2ec"
+                        - button "" [ref=e260]:
+                          - generic [ref=e261]: 
+                      - generic [ref=e262]:
+                        - generic ":root · ~/Content/site.css" [ref=e263]: "--cv-muted"
+                        - 'textbox "--cv-muted #607089 " [ref=e264]': "#607089"
+                        - textbox [ref=e265]: "#607089"
+                        - button "" [ref=e266]:
+                          - generic [ref=e267]: 
+                      - generic [ref=e268]:
+                        - generic ":root · ~/Content/site.css" [ref=e269]: "--cv-panel"
+                        - 'textbox "--cv-panel #ffffff " [ref=e270]': "#ffffff"
+                        - textbox [ref=e271]: "#ffffff"
+                        - button "" [ref=e272]:
+                          - generic [ref=e273]: 
+                      - generic [ref=e274]:
+                        - generic ":root · ~/Content/site.css" [ref=e275]: "--cv-rose"
+                        - 'textbox "--cv-rose #e11d48 " [ref=e276]': "#e11d48"
+                        - textbox [ref=e277]: "#e11d48"
+                        - button "" [ref=e278]:
+                          - generic [ref=e279]: 
+                      - generic [ref=e280]:
+                        - generic ":root · ~/Content/site.css" [ref=e281]: "--cv-surface"
+                        - 'textbox "--cv-surface #f4f7fb " [ref=e282]': "#f4f7fb"
+                        - textbox [ref=e283]: "#f4f7fb"
+                        - button "" [ref=e284]:
+                          - generic [ref=e285]: 
+                      - generic [ref=e286]:
+                        - generic ":root · ~/Content/site.css" [ref=e287]: "--cv-teal"
+                        - 'textbox "--cv-teal #13a38f " [ref=e288]': "#13a38f"
+                        - textbox [ref=e289]: "#13a38f"
+                        - button "" [ref=e290]:
+                          - generic [ref=e291]: 
+                    - generic [ref=e292]:
+                      - heading "Roundness" [level=4] [ref=e293]
+                      - generic [ref=e294]:
+                        - generic ":root · ~/Content/site.css" [ref=e295]: "--cv-radius-md"
+                        - slider "--cv-radius-md 8px " [ref=e296]: "8"
+                        - textbox [ref=e297]: 8px
+                        - button "" [ref=e298]:
+                          - generic [ref=e299]: 
+                      - generic [ref=e300]:
+                        - generic ":root · ~/Content/site.css" [ref=e301]: "--cv-radius-pill"
+                        - slider "--cv-radius-pill 999px " [ref=e302]: "48"
+                        - textbox [ref=e303]: 999px
+                        - button "" [ref=e304]:
+                          - generic [ref=e305]: 
+                      - generic [ref=e306]:
+                        - generic ":root · ~/Content/site.css" [ref=e307]: "--cv-radius-sm"
+                        - slider "--cv-radius-sm 7px " [ref=e308]: "7"
+                        - textbox [ref=e309]: 7px
+                        - button "" [ref=e310]:
+                          - generic [ref=e311]: 
+                  - generic [ref=e312]:
+                    - heading "Properties" [level=3] [ref=e313]
+                    - paragraph [ref=e314]: Select an element in the canvas to edit attributes, classes, text, and visual styles.
+                    - generic [ref=e315]:
+                      - heading "Classes" [level=4] [ref=e317]
+                      - generic [ref=e319]:
+                        - generic [ref=e320]:
+                          - generic [ref=e321]: Classes
+                          - combobox [ref=e326]:
+                            - option "- State -" [selected]
+                            - option "Hover"
+                            - option "Click"
+                            - option "Even/Odd"
+                        - img [ref=e331] [cursor=pointer]
+                        - generic [ref=e334]: "Selected:"
+                    - heading "Attributes" [level=4] [ref=e337]
+                    - generic [ref=e338]:
+                      - heading "Styles" [level=4] [ref=e340]
+                      - generic [ref=e342]:
+                        - generic [ref=e343]:
+                          - generic [ref=e344] [cursor=pointer]:
+                            - img [ref=e346]
+                            - generic [ref=e348]: Layout
+                          - generic [ref=e349]:
+                            - generic [ref=e350]:
+                              - generic [ref=e352]: Display
+                              - combobox [ref=e356]:
+                                - option "block" [selected]
+                                - option "inline"
+                                - option "inline-block"
+                                - option "flex"
+                                - option "none"
+                            - generic [ref=e359]:
+                              - generic [ref=e361]: Position
+                              - generic [ref=e364]:
+                                - generic [ref=e366] [cursor=pointer]: static
+                                - generic [ref=e368] [cursor=pointer]: relative
+                                - generic [ref=e370] [cursor=pointer]: absolute
+                                - generic [ref=e372] [cursor=pointer]: fixed
+                            - generic [ref=e373]:
+                              - generic [ref=e375]: Top
+                              - generic [ref=e377]:
+                                - textbox "auto" [ref=e379]
+                                - combobox [ref=e381]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e385]:
+                              - generic [ref=e387]: Right
+                              - generic [ref=e389]:
+                                - textbox "auto" [ref=e391]
+                                - combobox [ref=e393]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e397]:
+                              - generic [ref=e399]: Bottom
+                              - generic [ref=e401]:
+                                - textbox "auto" [ref=e403]
+                                - combobox [ref=e405]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e409]:
+                              - generic [ref=e411]: Left
+                              - generic [ref=e413]:
+                                - textbox "auto" [ref=e415]
+                                - combobox [ref=e417]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e421]:
+                              - generic [ref=e423]: Float
+                              - generic [ref=e426]:
+                                - generic [ref=e428] [cursor=pointer]: none
+                                - generic [ref=e430] [cursor=pointer]: left
+                                - generic [ref=e432] [cursor=pointer]: right
+                            - generic [ref=e433]:
+                              - generic [ref=e435]: Clear
+                              - textbox [ref=e438]
+                            - generic [ref=e439]:
+                              - generic [ref=e441]: Width
+                              - generic [ref=e443]:
+                                - textbox "auto" [ref=e445]
+                                - combobox [ref=e447]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e451]:
+                              - generic [ref=e453]: Min width
+                              - generic [ref=e455]:
+                                - textbox "auto" [ref=e457]
+                                - combobox [ref=e459]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e463]:
+                              - generic [ref=e465]: Max width
+                              - generic [ref=e467]:
+                                - textbox "auto" [ref=e469]
+                                - combobox [ref=e471]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e475]:
+                              - generic [ref=e477]: Height
+                              - generic [ref=e479]:
+                                - textbox "auto" [ref=e481]
+                                - combobox [ref=e483]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e487]:
+                              - generic [ref=e489]: Min height
+                              - generic [ref=e491]:
+                                - textbox "auto" [ref=e493]
+                                - combobox [ref=e495]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e499]:
+                              - generic [ref=e501]: Max height
+                              - generic [ref=e503]:
+                                - textbox "auto" [ref=e505]
+                                - combobox [ref=e507]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e511]:
+                              - generic [ref=e513]: Overflow
+                              - combobox [ref=e517]:
+                                - option "visible" [selected]
+                                - option "hidden"
+                                - option "scroll"
+                                - option "auto"
+                            - generic [ref=e520]:
+                              - generic [ref=e522]: Overflow x
+                              - combobox [ref=e526]:
+                                - option "visible" [selected]
+                                - option "hidden"
+                                - option "scroll"
+                                - option "auto"
+                            - generic [ref=e529]:
+                              - generic [ref=e531]: Overflow y
+                              - combobox [ref=e535]:
+                                - option "visible" [selected]
+                                - option "hidden"
+                                - option "scroll"
+                                - option "auto"
+                            - generic [ref=e538]:
+                              - generic [ref=e540]: Box sizing
+                              - textbox [ref=e543]
+                            - generic [ref=e544]:
+                              - generic [ref=e546]: Z index
+                              - textbox [ref=e549]
+                        - generic [ref=e550]:
+                          - generic [ref=e551] [cursor=pointer]:
+                            - img [ref=e553]
+                            - generic [ref=e555]: Spacing
+                          - generic [ref=e556]:
+                            - generic [ref=e557]:
+                              - generic [ref=e559]: Margin
+                              - generic [ref=e563]:
+                                - generic [ref=e564]:
+                                  - generic [ref=e566]: Top
+                                  - generic [ref=e568]:
+                                    - textbox "0" [ref=e570]
+                                    - combobox [ref=e572]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                                - generic [ref=e576]:
+                                  - generic [ref=e578]: Right
+                                  - generic [ref=e580]:
+                                    - textbox "0" [ref=e582]
+                                    - combobox [ref=e584]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                                - generic [ref=e588]:
+                                  - generic [ref=e590]: Bottom
+                                  - generic [ref=e592]:
+                                    - textbox "0" [ref=e594]
+                                    - combobox [ref=e596]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                                - generic [ref=e600]:
+                                  - generic [ref=e602]: Left
+                                  - generic [ref=e604]:
+                                    - textbox "0" [ref=e606]
+                                    - combobox [ref=e608]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                            - generic [ref=e612]:
+                              - generic [ref=e614]: Margin top
+                              - generic [ref=e616]:
+                                - textbox "0" [ref=e618]
+                                - combobox [ref=e620]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e624]:
+                              - generic [ref=e626]: Margin right
+                              - generic [ref=e628]:
+                                - textbox "0" [ref=e630]
+                                - combobox [ref=e632]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e636]:
+                              - generic [ref=e638]: Margin bottom
+                              - generic [ref=e640]:
+                                - textbox "0" [ref=e642]
+                                - combobox [ref=e644]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e648]:
+                              - generic [ref=e650]: Margin left
+                              - generic [ref=e652]:
+                                - textbox "0" [ref=e654]
+                                - combobox [ref=e656]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e660]:
+                              - generic [ref=e662]: Padding
+                              - generic [ref=e666]:
+                                - generic [ref=e667]:
+                                  - generic [ref=e669]: Top
+                                  - generic [ref=e671]:
+                                    - textbox "0" [ref=e673]
+                                    - combobox [ref=e675]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                                - generic [ref=e679]:
+                                  - generic [ref=e681]: Right
+                                  - generic [ref=e683]:
+                                    - textbox "0" [ref=e685]
+                                    - combobox [ref=e687]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                                - generic [ref=e691]:
+                                  - generic [ref=e693]: Bottom
+                                  - generic [ref=e695]:
+                                    - textbox "0" [ref=e697]
+                                    - combobox [ref=e699]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                                - generic [ref=e703]:
+                                  - generic [ref=e705]: Left
+                                  - generic [ref=e707]:
+                                    - textbox "0" [ref=e709]
+                                    - combobox [ref=e711]:
+                                      - option "px" [selected]
+                                      - option "%"
+                                      - option "em"
+                                      - option "rem"
+                                      - option "vh"
+                                      - option "vw"
+                            - generic [ref=e715]:
+                              - generic [ref=e717]: Padding top
+                              - generic [ref=e719]:
+                                - textbox "0" [ref=e721]
+                                - combobox [ref=e723]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e727]:
+                              - generic [ref=e729]: Padding right
+                              - generic [ref=e731]:
+                                - textbox "0" [ref=e733]
+                                - combobox [ref=e735]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e739]:
+                              - generic [ref=e741]: Padding bottom
+                              - generic [ref=e743]:
+                                - textbox "0" [ref=e745]
+                                - combobox [ref=e747]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                            - generic [ref=e751]:
+                              - generic [ref=e753]: Padding left
+                              - generic [ref=e755]:
+                                - textbox "0" [ref=e757]
+                                - combobox [ref=e759]:
+                                  - option "px" [selected]
+                                  - option "%"
+                                  - option "em"
+                                  - option "rem"
+                                  - option "vh"
+                                  - option "vw"
+                        - generic [ref=e764] [cursor=pointer]:
+                          - img [ref=e766]
+                          - generic [ref=e768]: Typography
+                        - generic [ref=e770] [cursor=pointer]:
+                          - img [ref=e772]
+                          - generic [ref=e774]: Background
+                        - generic [ref=e776] [cursor=pointer]:
+                          - img [ref=e778]
+                          - generic [ref=e780]: Border & Effects
+                        - generic [ref=e782] [cursor=pointer]:
+                          - img [ref=e784]
+                          - generic [ref=e786]: Flex/Grid
+                        - generic [ref=e788] [cursor=pointer]:
+                          - img [ref=e790]
+                          - generic [ref=e792]: Transform
+                  - generic [ref=e793]:
+                    - heading "Assets" [level=3] [ref=e794]
+                    - article [ref=e796]:
+                      - strong [ref=e797]: css
+                      - code [ref=e798]: ~/Content/site.css
+                      - generic [ref=e799]: /c:/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/Content/site.css
+                  - generic [ref=e800]:
+                    - heading "Diagnostics" [level=3] [ref=e801]
+                    - list [ref=e802]:
+                      - listitem [ref=e803]: "Razor tokens: 7"
+                      - listitem [ref=e804]: "Razor parse time: 1ms"
+          - text: "                                                      : : : : : : : : : :"
+        - text:           
+      - generic [ref=e805]:
+        - tablist [ref=e810] [cursor=pointer]:
+          - listitem [ref=e811]:
+            - generic [ref=e813]: 
+          - listitem [ref=e814]:
+            - generic [ref=e816]: 
+          - listitem [ref=e817]
+          - listitem [ref=e820]
+        - generic [ref=e823]:
+          - generic "Codex" [ref=e825]
+          - generic [ref=e826]:
+            - text:      +   
+            - tabpanel "Codex" [ref=e827]:
+              - iframe [ref=e829]:
+                - generic [ref=f1e3]:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: Ask Codex to do anything
+                            - generic:
+                              - generic:
+                                - img
+                              - generic:
+                                - img
+                  - generic [ref=f1e4]:
+                    - heading "Codex in your IDE" [level=1] [ref=f1e6]
+                    - generic [ref=f1e9]: Codex navigates, edits, runs commands, and executes tests directly in your repo. Powered by your ChatGPT account.
+                    - generic [ref=f1e11]:
+                      - button "Back" [disabled] [ref=f1e12]
+                      - button "Next" [ref=f1e13] [cursor=pointer]
+    - generic [ref=e830]:
+      - generic [ref=e831]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e832]:
+          - generic [ref=e833]: 
+          - generic [ref=e834]: "0"
+          - generic [ref=e835]: 
+          - generic [ref=e836]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e837]:
+          - generic [ref=e838]: 
+          - generic [ref=e839]: Collaborate
+      - generic [ref=e840]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e841]:
+          - generic [ref=e842]: 
+          - generic [ref=e843]: Sign in to GitHub Copilot
+        - generic "$(symbol-color) Purple V1, Select CyberVinci Theme" [ref=e1026]:
+          - generic [ref=e845]: 
+          - generic [ref=e846]: Purple V1
+        - generic "No Notifications" [ref=e847]:
+          - generic [ref=e848]: 
+        - button "Toggle Bottom Panel" [ref=e849]:
+          - generic [ref=e850]: 
+  - generic:
+    - generic:  
+  - generic [ref=e851]:
+    - alert
+    - alert

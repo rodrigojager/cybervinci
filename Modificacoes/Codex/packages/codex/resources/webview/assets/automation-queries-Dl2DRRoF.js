@@ -1,0 +1,2 @@
+import{a as e,g as t,u as n}from"./vscode-api-CjIlXYxl.js";var r=e(t,`list-automations`,{enabled:!0,refetchInterval:n.ONE_MINUTE,staleTime:n.ONE_MINUTE});export{r as t};
+//# sourceMappingURL=automation-queries-Dl2DRRoF.js.map

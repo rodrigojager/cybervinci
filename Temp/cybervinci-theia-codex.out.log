@@ -1,0 +1,478 @@
+Backend main: entry point loaded [0.475 s since backend process start]
+Backend server: loading modules... [0.478 s since backend process start]
+Backend server: container created [0.668 s since backend process start]
+Backend server: modules loaded [1.096 s since backend process start]
+Configuration directory URI: 'file:///c%3A/Users/Rodrigo/.theia'
+2026-06-01T06:03:00.540Z root INFO Settings file not found at 'C:\Users\Rodrigo\.theia\backend-settings.json'. Falling back to defaults.
+Backend server: resolving application [1.133 s since backend process start]
+Configuring to accept webviews on '^.+\.webview\..+$' hostname.
+2026-06-01T06:03:00.716Z root INFO MCPTestContribution.configure() called - MCP system is working!
+2026-06-01T06:03:00.716Z root INFO MCPTestContribution: test-tool registered successfully
+2026-06-01T06:03:00.719Z root INFO configured all backend app contributions
+2026-06-01T06:03:00.728Z root INFO CyberVinci app listening on http://127.0.0.1:3000.
+2026-06-01T06:03:00.731Z root INFO Resolve plugins list: 1.6 ms [1.321 s since backend process start]
+2026-06-01T06:03:00.731Z root INFO Deploy plugins list: 2.2 ms [1.321 s since backend process start]
+2026-06-01T06:03:00.765Z root INFO Backend application startup sequence completed (async work may still be pending): 47.7 ms [1.354 s since backend process start]
+2026-06-01T06:03:00.766Z root INFO All backend contributions settled: 220.3 ms [1.354 s since backend process start]
+2026-06-01T06:03:02.392Z root INFO Reconnecting failed for 01786c1a-5741-41e8-9455-a100856df9f7
+2026-06-01T06:03:03.419Z root INFO creating connection for 30da3172-572f-4ef5-a2a0-4600c35eeebd
+2026-06-01T06:03:05.105Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-01T06:03:05.871Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-01T06:03:05.983Z root INFO [656e7098-8078-4f78-a817-ca561bda1118] Waiting for backend deployment: 23.8 ms [3.586 s since frontend page start]
+2026-06-01T06:03:06.006Z root INFO Start frontend contributions: 1301.5 ms [3.602 s since frontend page start]
+2026-06-01T06:03:06.006Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-01T06:03:06.509Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-01T06:03:06.509Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-01T06:03:06.510Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-01T06:03:06.510Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-01T06:03:06.510Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-01T06:03:06.511Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-01T06:03:06.511Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-01T06:03:06.511Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-01T06:03:06.512Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-01T06:03:42.087Z root INFO creating connection for ffe067f7-844a-4fde-af2c-1c504a03d260
+2026-06-01T06:03:43.737Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-01T06:03:43.859Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-01T06:03:43.945Z root INFO [982ebbfd-00f3-4616-9bf0-bd0afbeb5cc6] Waiting for backend deployment: 23.2 ms [4.019 s since frontend page start]
+2026-06-01T06:03:43.960Z root INFO Start frontend contributions: 1010.8 ms [4.025 s since frontend page start]
+2026-06-01T06:03:43.960Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-01T06:03:43.988Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-01T06:03:43.990Z root INFO >>> Restoring the layout state...
+2026-06-01T06:03:44.450Z root INFO <<< The layout has been successfully restored.
+2026-06-01T06:03:44.454Z root INFO Initialize the workbench layout: 486.4 ms [4.525 s since frontend page start]
+2026-06-01T06:03:44.454Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-01T06:03:44.476Z root INFO [Codex] webview ready: 4210c38c-6bc6-46f6-b7ae-880bd7d07fed
+2026-06-01T06:03:44.565Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-01T06:03:44.566Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-01T06:03:44.566Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-01T06:03:44.566Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-01T06:03:44.566Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-01T06:03:44.567Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-01T06:03:44.567Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-01T06:03:44.567Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-01T06:03:44.567Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-01T06:03:44.644Z root INFO [982ebbfd-00f3-4616-9bf0-bd0afbeb5cc6] Loading plugin contributions
+2026-06-01T06:03:46.044Z root INFO Replace loading indicator with ready workbench UI (animation): 1140.2 ms [5.671 s since frontend page start]
+2026-06-01T06:03:46.044Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-01T06:03:46.045Z root INFO All frontend contributions settled: 2657.2 ms [5.671 s since frontend page start]
+2026-06-01T06:03:46.045Z root INFO Frontend application startup sequence completed (async work may still be pending): 2993.6 ms [46.632 s since backend process start]
+2026-06-01T06:03:51.229Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:03:51.230Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:03:51.230Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:03:51.230Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info
+2026-06-01T06:03:51.230Z root INFO [Codex] webview fetch: POST vscode://codex/os-info
+2026-06-01T06:03:51.230Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available
+2026-06-01T06:03:51.231Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:03:51.231Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:03:51.321Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:03:51.321Z root INFO [Codex] mcp request: config/read
+2026-06-01T06:03:51.330Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780293831257&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:03:51.331Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780293831258&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:03:51.332Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:03:53.023Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780293833019&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:03:53.023Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780293833019&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:03:59.915Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780293839760&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:03:59.916Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780293839762&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:04:04.433Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:04:04.434Z root INFO [Codex] mcp request: configRequirements/read
+2026-06-01T06:04:04.434Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:04:04.434Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.434Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.435Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.435Z root INFO [Codex] mcp request: config/read
+2026-06-01T06:04:04.436Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.436Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:04:04.436Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.437Z root INFO [Codex] mcp request: experimentalFeature/list
+2026-06-01T06:04:04.437Z root INFO [Codex] mcp request: config/read
+2026-06-01T06:04:04.437Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.437Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:04.437Z root INFO [Codex] webview fetch: POST vscode://codex/workspace-root-options
+2026-06-01T06:04:04.438Z root INFO [Codex] official webview app ready: 4210c38c-6bc6-46f6-b7ae-880bd7d07fed
+2026-06-01T06:04:04.438Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:04.438Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:04.439Z root INFO [Codex] webview fetch: POST vscode://codex/locale-info
+2026-06-01T06:04:04.439Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:04.439Z root INFO [Codex] mcp request: experimentalFeature/enablement/set
+2026-06-01T06:04:04.445Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:04:04.445Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:04.446Z root INFO [Codex] mcp request: mcpServerStatus/list
+2026-06-01T06:04:04.881Z root INFO [Codex] mcp request: experimentalFeature/list
+2026-06-01T06:04:04.881Z root INFO [Codex] mcp request: model/list
+2026-06-01T06:04:04.980Z root INFO [Codex] webview fetch: POST vscode://codex/openai-api-key
+2026-06-01T06:04:04.981Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:05.270Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:04:05.273Z root INFO [Codex] webview fetch: POST vscode://codex/openai-api-key
+2026-06-01T06:04:05.275Z root INFO [Codex] official webview app ready: 4210c38c-6bc6-46f6-b7ae-880bd7d07fed
+2026-06-01T06:04:05.450Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:04:07.455Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:04:10.457Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.461Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.461Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.461Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:04:10.462Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:10.467Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:04:10.467Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.468Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.468Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.468Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.468Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:10.469Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:10.469Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.469Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.473Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.474Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:04:10.474Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:04:10.474Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:04:10.493Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780293850479&sid=theia-mpusy8nc-uqtifubsp1h&ec=44&gz=1
+2026-06-01T06:04:10.505Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:04:10.619Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/sdk_exception
+2026-06-01T06:06:04.606Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.606Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.608Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.608Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:06:04.609Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:06:04.610Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:06:04.610Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.610Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.610Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.611Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.611Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:06:04.611Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:06:04.611Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.613Z root INFO [Codex] mcp request: experimentalFeature/list
+2026-06-01T06:06:04.613Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.613Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.613Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:06:04.613Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:06:04.614Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:06:04.618Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:06:04.642Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:06:17.205Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:26:38.764Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:26:46.470Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-01T06:26:46.471Z root INFO >>> Restoring the layout state...
+2026-06-01T06:26:46.471Z root INFO [656e7098-8078-4f78-a817-ca561bda1118] Loading plugin contributions
+2026-06-01T06:26:46.471Z root INFO <<< Nothing to restore.
+2026-06-01T06:26:46.921Z root INFO Initialize the workbench layout: 147.5 ms [1424.217 s since frontend page start]
+2026-06-01T06:26:46.921Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-01T06:26:47.527Z root INFO Replace loading indicator with ready workbench UI (animation): 809.7 ms [1425.040 s since frontend page start]
+2026-06-01T06:26:47.528Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-01T06:26:47.528Z root INFO All frontend contributions settled: 1422741.0 ms [1425.040 s since frontend page start]
+2026-06-01T06:26:47.528Z root INFO Frontend application startup sequence completed (async work may still be pending): 1422561.1 ms [1428.116 s since backend process start]
+2026-06-01T06:26:49.481Z root INFO socket closed
+2026-06-01T06:26:49.482Z root INFO setting close timeout for id 30da3172-572f-4ef5-a2a0-4600c35eeebd to 3000
+2026-06-01T06:26:50.053Z root INFO creating connection for 2dc00e61-a8cb-4f79-a8b5-5bb6b03a68d2
+2026-06-01T06:26:54.841Z root INFO closing connection for 30da3172-572f-4ef5-a2a0-4600c35eeebd
+2026-06-01T06:26:54.841Z root INFO Closing channel on service path '/localization-server'.
+2026-06-01T06:26:54.841Z root INFO Closing channel on service path '/os'.
+2026-06-01T06:26:54.841Z root INFO Closing channel on service path '/services/commands'.
+2026-06-01T06:26:54.841Z root INFO Closing channel on service path '/services/logger'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/messageService'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/remote-filesystem'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/envs'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/workspace'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/stopwatch'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/application'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/i18n'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/quickInput'.
+2026-06-01T06:26:54.842Z root INFO Closing channel on service path '/services/debug'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/shell-terminal'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/quickPick'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/search'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/task'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/hostedPlugin'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/plugin-ext'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/plugin-paths'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/vsx-environment'.
+2026-06-01T06:26:54.843Z root INFO Closing channel on service path '/services/request-service'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/library'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/shell-execution'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/search-in-workspace'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/mcpservermanagerserver'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/mcpservermanager'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/automation/browser'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/cli-preferences'.
+2026-06-01T06:26:54.844Z root INFO Closing channel on service path '/services/codex-provider'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/codex-host'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/cybervinci/builder'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/mcpToolDelegate'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/memory'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/ai-output-cleaner'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/languageModelRegistryDelegatePath'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/languageModelDelegatePath'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/anthropic/language-model-manager'.
+2026-06-01T06:26:54.845Z root INFO Closing channel on service path '/services/open-ai/language-model-manager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/copilot/auth'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/copilot/language-model-manager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/google/language-model-manager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/huggingface/language-model-manager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/llamafilemanager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/ollama/language-model-manager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/vercel-ai/language-model-manager'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/mini-browser-service'.
+2026-06-01T06:26:54.846Z root INFO Closing channel on service path '/services/measurement-notification'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/plugin-dev'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/token-usage'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/sampleBackendPreferences'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/scanoss/service'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/github-repo'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/claude-code'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/codex'.
+2026-06-01T06:26:54.847Z root INFO Closing channel on service path '/services/terminals/1506495284'.
+2026-06-01T06:26:55.187Z root INFO Detected keyboard layout from browser API: US (PC)
+2026-06-01T06:26:55.881Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation
+2026-06-01T06:26:55.913Z root INFO [6af153eb-3315-45f3-8a49-aee67b567e06] Waiting for backend deployment: 286.0 ms [7.356 s since frontend page start]
+2026-06-01T06:26:55.948Z root INFO Start frontend contributions: 5239.0 ms [7.383 s since frontend page start]
+2026-06-01T06:26:55.949Z root INFO Changed application state from 'init' to 'started_contributions'.
+2026-06-01T06:26:55.949Z root INFO Changed application state from 'started_contributions' to 'attached_shell'.
+2026-06-01T06:26:55.949Z root INFO >>> Restoring the layout state...
+2026-06-01T06:26:55.949Z root INFO <<< Nothing to restore.
+2026-06-01T06:26:56.006Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1
+2026-06-01T06:26:56.006Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-nano
+2026-06-01T06:26:56.007Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4.1-mini
+2026-06-01T06:26:56.007Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4-turbo
+2026-06-01T06:26:56.007Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o
+2026-06-01T06:26:56.007Z vercel-ai INFO Vercel AI: Creating or updating model vercel/openai/gpt-4o-mini
+2026-06-01T06:26:56.007Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-7-sonnet-20250219
+2026-06-01T06:26:56.007Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-5-haiku-20241022
+2026-06-01T06:26:56.008Z vercel-ai INFO Vercel AI: Creating or updating model vercel/anthropic/claude-3-opus-20240229
+2026-06-01T06:26:56.075Z root INFO [6af153eb-3315-45f3-8a49-aee67b567e06] Loading plugin contributions
+2026-06-01T06:26:56.473Z root INFO Initialize the workbench layout: 544.0 ms [7.934 s since frontend page start]
+2026-06-01T06:26:56.474Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'.
+2026-06-01T06:26:57.298Z root INFO Replace loading indicator with ready workbench UI (animation): 812.4 ms [8.757 s since frontend page start]
+2026-06-01T06:26:57.298Z root INFO Changed application state from 'initialized_layout' to 'ready'.
+2026-06-01T06:26:57.298Z root INFO All frontend contributions settled: 6614.5 ms [8.758 s since frontend page start]
+2026-06-01T06:26:57.299Z root INFO Frontend application startup sequence completed (async work may still be pending): 6281.6 ms [1437.887 s since backend process start]
+2026-06-01T06:27:03.614Z root INFO [Codex] webview ready: fc945f19-afff-4543-817c-be06a8355169
+2026-06-01T06:27:04.640Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:04.641Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:04.641Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:27:04.641Z root INFO [Codex] webview fetch: POST vscode://codex/extension-info
+2026-06-01T06:27:04.641Z root INFO [Codex] webview fetch: POST vscode://codex/os-info
+2026-06-01T06:27:04.641Z root INFO [Codex] webview fetch: POST vscode://codex/is-copilot-api-available
+2026-06-01T06:27:04.641Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:04.641Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:27:04.689Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:27:04.690Z root INFO [Codex] mcp request: config/read
+2026-06-01T06:27:04.691Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780295224654&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:27:04.691Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780295224654&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:27:04.691Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:27:08.800Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780295225466&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:27:08.801Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780295225466&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:27:11.131Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780295231128&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:27:11.131Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780295231129&sid=theia-mpusy8nc-uqtifubsp1h&se=1
+2026-06-01T06:27:11.399Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:27:11.399Z root INFO [Codex] mcp request: configRequirements/read
+2026-06-01T06:27:11.399Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:27:11.399Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.399Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.400Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.401Z root INFO [Codex] mcp request: config/read
+2026-06-01T06:27:11.401Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.401Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:27:11.401Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.402Z root INFO [Codex] mcp request: experimentalFeature/list
+2026-06-01T06:27:11.402Z root INFO [Codex] mcp request: config/read
+2026-06-01T06:27:11.402Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.402Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.403Z root INFO [Codex] webview fetch: POST vscode://codex/workspace-root-options
+2026-06-01T06:27:11.404Z root INFO [Codex] official webview app ready: fc945f19-afff-4543-817c-be06a8355169
+2026-06-01T06:27:11.404Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:11.404Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:11.404Z root INFO [Codex] webview fetch: POST vscode://codex/locale-info
+2026-06-01T06:27:11.404Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:11.404Z root INFO [Codex] mcp request: experimentalFeature/enablement/set
+2026-06-01T06:27:11.418Z root INFO [Codex] mcp request: model/list
+2026-06-01T06:27:11.421Z root INFO [Codex] mcp request: experimentalFeature/list
+2026-06-01T06:27:11.443Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:27:11.443Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:11.444Z root INFO [Codex] mcp request: mcpServerStatus/list
+2026-06-01T06:27:11.446Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:27:11.716Z root INFO [Codex] mcp request: account/read
+2026-06-01T06:27:11.721Z root INFO [Codex] webview fetch: POST vscode://codex/openai-api-key
+2026-06-01T06:27:11.722Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:11.722Z root INFO [Codex] official webview app ready: fc945f19-afff-4543-817c-be06a8355169
+2026-06-01T06:27:12.416Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:27:14.264Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:14.264Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:14.264Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:14.264Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:27:14.268Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:27:14.305Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:27:14.421Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:27:18.423Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:27:19.551Z root INFO [Codex] webview fetch: POST https://chatgpt.com/ces/v1/rgstr?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client-react&sv=3.32.6&t=1780295239551&sid=theia-mpusy8nc-uqtifubsp1h&ec=44&gz=1
+2026-06-01T06:27:19.589Z root INFO [Codex] webview fetch: POST https://ab.chatgpt.com/v1/sdk_exception
+2026-06-01T06:27:22.599Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.600Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.600Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.600Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:27:22.600Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:22.600Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:27:22.601Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.601Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.601Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.601Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.602Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:27:22.602Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:27:22.603Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:27:22.610Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:27:26.984Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:27:26.985Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:27:26.986Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:27:26.987Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:28:09.054Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.054Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.054Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.055Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:28:09.055Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:09.056Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:28:09.057Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:09.060Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:09.064Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:28:09.123Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:13.068Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:20.813Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.817Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.819Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.819Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:28:20.820Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:20.820Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:28:20.820Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.822Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.822Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.822Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.824Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:20.824Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:20.824Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:20.824Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.827Z root INFO [Codex] mcp request: experimentalFeature/list
+2026-06-01T06:28:20.828Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.828Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.828Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:20.829Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:28:20.829Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:20.849Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:28:21.740Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:21.740Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:28:21.742Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:28:21.843Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:23.733Z root INFO Changed application state from 'ready' to 'closing_window'.
+2026-06-01T06:28:23.734Z root INFO >>> Storing the layout...
+2026-06-01T06:28:23.734Z root INFO <<< The layout has been successfully stored.
+2026-06-01T06:28:23.734Z root INFO >>> Stopping frontend contributions...
+2026-06-01T06:28:23.734Z root INFO <<< All frontend contributions have been stopped.
+2026-06-01T06:28:23.801Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:23.807Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:28:23.808Z root INFO socket closed
+2026-06-01T06:28:23.847Z root INFO setting close timeout for id ffe067f7-844a-4fde-af2c-1c504a03d260 to 3000
+2026-06-01T06:28:23.866Z root INFO [Codex] mcp request: thread/list
+2026-06-01T06:28:23.867Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:29.896Z root INFO closing connection for ffe067f7-844a-4fde-af2c-1c504a03d260
+2026-06-01T06:28:29.896Z root INFO Closing channel on service path '/localization-server'.
+2026-06-01T06:28:29.896Z root INFO Closing channel on service path '/os'.
+2026-06-01T06:28:29.896Z root INFO Closing channel on service path '/services/commands'.
+2026-06-01T06:28:29.896Z root INFO Closing channel on service path '/services/logger'.
+2026-06-01T06:28:29.896Z root INFO Closing channel on service path '/services/messageService'.
+2026-06-01T06:28:29.896Z root INFO Closing channel on service path '/services/remote-filesystem'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/envs'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/workspace'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/stopwatch'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/application'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/i18n'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/quickInput'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/debug'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/shell-terminal'.
+2026-06-01T06:28:29.897Z root INFO Closing channel on service path '/services/quickPick'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/search'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/task'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/hostedPlugin'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/plugin-ext'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/plugin-paths'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/vsx-environment'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/request-service'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/library'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/shell-execution'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/search-in-workspace'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/mcpservermanagerserver'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/mcpservermanager'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/automation/browser'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/cli-preferences'.
+2026-06-01T06:28:29.898Z root INFO Closing channel on service path '/services/codex-provider'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/codex-host'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/cybervinci/builder'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/mcpToolDelegate'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/memory'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/ai-output-cleaner'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/languageModelRegistryDelegatePath'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/languageModelDelegatePath'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/anthropic/language-model-manager'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/open-ai/language-model-manager'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/copilot/auth'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/copilot/language-model-manager'.
+2026-06-01T06:28:29.899Z root INFO Closing channel on service path '/services/google/language-model-manager'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/huggingface/language-model-manager'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/llamafilemanager'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/ollama/language-model-manager'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/vercel-ai/language-model-manager'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/mini-browser-service'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/measurement-notification'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/plugin-dev'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/token-usage'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/sampleBackendPreferences'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/scanoss/service'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/github-repo'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/claude-code'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/codex'.
+2026-06-01T06:28:29.900Z root INFO Closing channel on service path '/services/flow'.
+2026-06-01T06:28:29.901Z root INFO Closing channel on service path '/services/terminals/969656421'.
+2026-06-01T06:28:29.901Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:29.901Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:30.237Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:36.730Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:37.270Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:37.531Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:37.652Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:37.779Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:37.904Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:38.015Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:38.139Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:38.267Z root INFO [Codex] mcp request: account/login/start
+2026-06-01T06:28:40.033Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.034Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.034Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.035Z root INFO [Codex] webview fetch: POST vscode://codex/list-pinned-threads
+2026-06-01T06:28:40.035Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:40.035Z root INFO [Codex] webview fetch: POST vscode://codex/active-workspace-roots
+2026-06-01T06:28:40.035Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.035Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.035Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.037Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.038Z root INFO [Codex] mcp request: collaborationMode/list
+2026-06-01T06:28:40.038Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:40.038Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:40.038Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.038Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.038Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.038Z root INFO [Codex] webview fetch: POST vscode://codex/get-global-state
+2026-06-01T06:28:40.040Z root INFO [Codex] webview fetch: POST vscode://codex/codex-home
+2026-06-01T06:28:40.040Z root INFO [Codex] webview fetch: POST vscode://codex/get-configuration
+2026-06-01T06:28:40.050Z root INFO [Codex] mcp request: thread/list

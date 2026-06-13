@@ -1,0 +1,157 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - tablist [ref=e59] [cursor=pointer]:
+            - listitem [ref=e60]:
+              - generic [ref=e62]: Welcome
+              - generic "Close" [ref=e63]: 
+            - listitem [ref=e64]:
+              - generic [ref=e66]: Flow
+              - generic "Close" [ref=e67]
+          - tabpanel [ref=e68]:
+            - generic [ref=e69]:
+              - generic [ref=e70]:
+                - generic [ref=e73]:
+                  - heading "CyberVinci" [level=1] [ref=e74]
+                  - paragraph [ref=e75]: An AI-first agentic IDE for professional work.
+                  - paragraph [ref=e76]: Coordinate multiple artificial intelligence agents as a professional agency inside your development environment, from exploration and planning to implementation, review, and delivery.
+                - separator [ref=e77]
+                - generic [ref=e80]:
+                  - heading " AI Agency Workspace" [level=3] [ref=e81]:
+                    - generic [ref=e82]: 
+                    - text: AI Agency Workspace
+                  - paragraph [ref=e83]: Use specialized agents for coding, shell work, repository operations, tests, research, and review while keeping the whole workflow inside the IDE.
+                  - button "Open CyberVinci Chat" [active] [ref=e85] [cursor=pointer]
+                  - button "New Arena A/B Test" [ref=e87] [cursor=pointer]
+                  - button "Open Documentation Manager" [ref=e89] [cursor=pointer]
+                - generic [ref=e92]:
+                  - heading " Start" [level=3] [ref=e93]:
+                    - generic [ref=e94]: 
+                    - text: Start
+                  - button "New File..." [ref=e96] [cursor=pointer]
+                  - button "Open" [ref=e98] [cursor=pointer]
+                  - button "Open Workspace" [ref=e99] [cursor=pointer]
+                - generic [ref=e102]:
+                  - heading " Recent" [level=3] [ref=e103]:
+                    - generic [ref=e104]: 
+                    - text: Recent
+                  - generic [ref=e105]:
+                    - button "cloud-ws-5fflzy" [ref=e106] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy
+                  - generic [ref=e107]:
+                    - button "cloud-ws-i3SNDm" [ref=e108] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-i3SNDm
+                  - generic [ref=e109]:
+                    - button "cloud-ws-mHoQKw" [ref=e110] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-mHoQKw
+                  - generic [ref=e111]:
+                    - button "cloud-ws-Each5R" [ref=e112] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-Each5R
+                  - generic [ref=e113]:
+                    - button "cloud-ws-GSR6Rf" [ref=e114] [cursor=pointer]
+                    - text: C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-GSR6Rf
+                  - button "More..." [ref=e116] [cursor=pointer]
+                - generic [ref=e119]:
+                  - heading " Settings" [level=3] [ref=e120]:
+                    - generic [ref=e121]: 
+                    - text: Settings
+                  - button "Open Settings" [ref=e123] [cursor=pointer]
+                  - button "Open Keyboard Shortcuts" [ref=e125] [cursor=pointer]
+                - generic [ref=e128]:
+                  - heading " Help" [level=3] [ref=e129]:
+                    - generic [ref=e130]: 
+                    - text: Help
+                  - button "Open AI Agency Chat" [ref=e132] [cursor=pointer]
+                  - button "Open Settings" [ref=e134] [cursor=pointer]
+                  - button "Open Keyboard Shortcuts" [ref=e136] [cursor=pointer]
+                - paragraph [ref=e141]: "Version: 1.71.0"
+              - generic [ref=e143]:
+                - checkbox "Show welcome page on startup" [checked] [ref=e144]
+                - generic [ref=e145]: Show welcome page on startup
+          - text:                                                                          
+        - text:           
+      - generic [ref=e146]:
+        - tablist [ref=e151] [cursor=pointer]:
+          - listitem [ref=e152]:
+            - generic [ref=e154]: 
+          - listitem [ref=e155]:
+            - generic [ref=e157]: 
+          - listitem [ref=e158]
+          - listitem [ref=e161]
+        - generic [ref=e164]:
+          - generic "Codex" [ref=e166]
+          - generic [ref=e167]:
+            - text:      +   
+            - tabpanel "Codex" [ref=e168]:
+              - iframe [ref=e170]:
+                - generic [ref=f1e5]:
+                  - heading "Codex" [level=1] [ref=f1e7]
+                  - generic [ref=f1e10]:
+                    - button "Sign in with ChatGPT" [ref=f1e11] [cursor=pointer]
+                    - button "Sign in with GitHub Copilot" [ref=f1e13] [cursor=pointer]
+                    - button "Use API Key" [ref=f1e15] [cursor=pointer]
+                    - generic [ref=f1e16]:
+                      - button [ref=f1e18] [cursor=pointer]: Use device code
+                      - button "More options" [ref=f1e20] [cursor=pointer]
+    - generic [ref=e171]:
+      - generic [ref=e172]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e173]:
+          - generic [ref=e174]: 
+          - generic [ref=e175]: "0"
+          - generic [ref=e176]: 
+          - generic [ref=e177]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e178]:
+          - generic [ref=e179]: 
+          - generic [ref=e180]: Collaborate
+      - generic [ref=e181]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e182]:
+          - generic [ref=e183]: 
+          - generic [ref=e184]: Sign in to GitHub Copilot
+        - generic "No Notifications" [ref=e185]:
+          - generic [ref=e186]: 
+        - button "Toggle Bottom Panel" [ref=e187]:
+          - generic [ref=e188]: 
+  - generic:
+    - generic:  
+  - generic [ref=e189]:
+    - alert
+    - alert

@@ -4,7 +4,7 @@ import * as path from 'path';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { injectable } from '@theia/core/shared/inversify';
 import * as yaml from 'js-yaml';
-import { FlowArtifact, FlowEffect, FlowFileMetadata, FlowRun, FlowRunExportResult, FlowWorkflow, FlowWorkflowExportResult, FlowWorkflowFileFormat, FlowWorkflowState, FlowWorkflowVersion, compareFlowWorkflowStructure, instantiateFlowWorkflowTemplate, listFlowWorkflowTemplates, redactFlowRunForDisplay, redactFlowSecretsText, validateFlowWorkflow } from '../common';
+import { FLOW_PIPELINE_PRESET_VERSION, FlowArtifact, FlowEffect, FlowFileMetadata, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunExportResult, FlowWorkflow, FlowWorkflowExportResult, FlowWorkflowFileFormat, FlowWorkflowState, FlowWorkflowVersion, compareFlowWorkflowStructure, instantiateFlowPipelinePreset, instantiateFlowWorkflowTemplate, listFlowWorkflowTemplates, redactFlowRunForDisplay, redactFlowSecretsText, validateFlowPipelinePreset, validateFlowWorkflow } from '../common';
 import { KernelEvent, KernelRunState, mapKernelRunToFlowRun } from './flow-kernel-bridge';
 
 const WORKFLOW_EXTENSIONS = ['.json', '.yaml', '.yml'];
@@ -377,6 +377,71 @@ export class FlowStore {
         return restored;
     }
 
+    async listWorkspacePipelinePresets(workspaceRootUri: string | undefined): Promise<FlowPipelinePreset[]> {
+        const dir = await this.ensureDir(workspaceRootUri, 'presets');
+        const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+        const presets: FlowPipelinePreset[] = [];
+        for (const entry of entries) {
+            if (entry.isFile() && entry.name.endsWith('.json')) {
+                presets.push(await this.readJson<FlowPipelinePreset>(path.join(dir, entry.name)));
+            }
+        }
+        return presets
+            .map(preset => ({ ...preset, source: 'workspace' as const }))
+            .sort((left, right) => left.name.localeCompare(right.name));
+    }
+
+    async getWorkspacePipelinePreset(workspaceRootUri: string | undefined, presetId: string): Promise<FlowPipelinePreset | undefined> {
+        const file = await this.pipelinePresetFile(workspaceRootUri, presetId);
+        try {
+            return { ...await this.readJson<FlowPipelinePreset>(file), source: 'workspace' };
+        } catch {
+            return undefined;
+        }
+    }
+
+    async savePipelinePreset(
+        workspaceRootUri: string | undefined,
+        preset: FlowPipelinePreset,
+        options: { overwrite?: boolean } = {}
+    ): Promise<FlowPipelinePreset> {
+        const normalized = normalizeWorkspacePreset(preset);
+        const validation = validateFlowPipelinePreset(normalized);
+        if (!validation.valid) {
+            throw new Error(`Pipeline preset "${preset.id || 'unnamed'}" is invalid: ${validation.errors.map(error => error.message).join('; ')}`);
+        }
+        const file = await this.pipelinePresetFile(workspaceRootUri, normalized.id);
+        if (!options.overwrite && await fileExists(file)) {
+            throw new Error(`Pipeline preset "${normalized.id}" already exists.`);
+        }
+        await this.writeJson(file, normalized);
+        return { ...await this.readJson<FlowPipelinePreset>(file), source: 'workspace' };
+    }
+
+    async createWorkflowFromPreset(
+        workspaceRootUri: string | undefined,
+        preset: FlowPipelinePreset,
+        options: { workflowId?: string; name?: string; description?: string; agentNodeOverrides?: Record<string, FlowPipelinePresetAgentNodeConfiguration> } = {}
+    ): Promise<FlowWorkflow> {
+        const validation = validateFlowPipelinePreset(preset);
+        if (!validation.valid) {
+            throw new Error(`Pipeline preset "${preset.id || 'unnamed'}" is invalid: ${validation.errors.map(error => error.message).join('; ')}`);
+        }
+        const identity = await this.nextWorkflowIdentity(workspaceRootUri, options.workflowId || preset.workflow.id || preset.id, options.name || preset.workflow.name || preset.name);
+        const workflow = instantiateFlowPipelinePreset(preset, {
+            id: identity.id,
+            name: identity.name,
+            description: options.description,
+            agentNodeOverrides: options.agentNodeOverrides
+        });
+        await this.saveWorkflow(workspaceRootUri, workflow, undefined, { origin: 'create', message: `Created from pipeline preset ${preset.id}` });
+        const saved = await this.getWorkflow(workspaceRootUri, workflow.id);
+        if (!saved) {
+            throw new Error(`Created workflow "${workflow.id}" could not be reloaded.`);
+        }
+        return saved;
+    }
+
     async createWorkflowFromTemplate(
         workspaceRootUri: string | undefined,
         templateId: string,
@@ -396,6 +461,52 @@ export class FlowStore {
         const saved = await this.getWorkflow(workspaceRootUri, workflow.id);
         if (!saved) {
             throw new Error(`Created workflow "${workflow.id}" could not be reloaded.`);
+        }
+        return saved;
+    }
+
+    async createWorkflowFromPattern(
+        workspaceRootUri: string | undefined,
+        workflow: FlowWorkflow,
+        patternId: string
+    ): Promise<FlowWorkflow> {
+        const identity = await this.nextWorkflowIdentity(workspaceRootUri, workflow.id, workflow.name);
+        const generatedWorkflow: FlowWorkflow = {
+            ...workflow,
+            id: identity.id,
+            name: identity.name
+        };
+        const validation = validateFlowWorkflow(generatedWorkflow);
+        if (!validation.valid) {
+            throw new Error(`Generated workflow pattern "${patternId}" is invalid: ${validation.errors.map(error => error.message).join('; ')}`);
+        }
+        await this.saveWorkflow(workspaceRootUri, generatedWorkflow, undefined, { origin: 'create', message: `Created from workflow pattern ${patternId}` });
+        const saved = await this.getWorkflow(workspaceRootUri, generatedWorkflow.id);
+        if (!saved) {
+            throw new Error(`Created workflow "${generatedWorkflow.id}" could not be reloaded.`);
+        }
+        return saved;
+    }
+
+    async createWorkflowFromGeneratedWorkflow(
+        workspaceRootUri: string | undefined,
+        workflow: FlowWorkflow,
+        source: string
+    ): Promise<FlowWorkflow> {
+        const identity = await this.nextWorkflowIdentity(workspaceRootUri, workflow.id, workflow.name);
+        const generatedWorkflow: FlowWorkflow = {
+            ...workflow,
+            id: identity.id,
+            name: identity.name
+        };
+        const validation = validateFlowWorkflow(generatedWorkflow);
+        if (!validation.valid) {
+            throw new Error(`AI-authored workflow "${source}" is invalid: ${validation.errors.map(error => error.message).join('; ')}`);
+        }
+        await this.saveWorkflow(workspaceRootUri, generatedWorkflow, undefined, { origin: 'ai-authoring', message: `Created from AI authoring draft ${source}` });
+        const saved = await this.getWorkflow(workspaceRootUri, generatedWorkflow.id);
+        if (!saved) {
+            throw new Error(`Created AI-authored workflow "${generatedWorkflow.id}" could not be reloaded.`);
         }
         return saved;
     }
@@ -449,6 +560,11 @@ export class FlowStore {
         return path.join(dir, `${sanitizeFileName(workflowId)}${workflowExtension(format)}`);
     }
 
+    protected async pipelinePresetFile(workspaceRootUri: string | undefined, presetId: string): Promise<string> {
+        const dir = await this.ensureDir(workspaceRootUri, 'presets');
+        return path.join(dir, `${sanitizeFileName(sanitizeWorkflowId(presetId))}.json`);
+    }
+
     protected async nextWorkflowIdentity(workspaceRootUri: string | undefined, requestedId: string, requestedName: string): Promise<{ id: string; name: string }> {
         const baseId = sanitizeWorkflowId(requestedId);
         const workflows = await this.listWorkflows(workspaceRootUri);
@@ -486,7 +602,7 @@ export class FlowStore {
         return workflows.find(workflow => workflow.id === workflowId)?.file?.path;
     }
 
-    protected async ensureDir(workspaceRootUri: string | undefined, child: 'workflows' | 'runs' | 'exports' | 'workflow-history'): Promise<string> {
+    protected async ensureDir(workspaceRootUri: string | undefined, child: 'workflows' | 'runs' | 'exports' | 'workflow-history' | 'presets'): Promise<string> {
         const root = storageRoot(workspaceRootUri);
         const dir = path.join(root, child);
         await fs.mkdir(dir, { recursive: true });
@@ -759,6 +875,26 @@ function stripFileMetadata<T extends { file?: FlowFileMetadata }>(value: T): Omi
     const serializable: Partial<T> = { ...value };
     delete serializable.file;
     return serializable as Omit<T, 'file'>;
+}
+
+function normalizeWorkspacePreset(preset: FlowPipelinePreset): FlowPipelinePreset {
+    return {
+        ...preset,
+        version: preset.version || FLOW_PIPELINE_PRESET_VERSION,
+        source: 'workspace',
+        workflow: stripFileMetadata(preset.workflow) as FlowWorkflow,
+        agentMarkdown: normalizeAgentMarkdown(preset.agentMarkdown)
+    };
+}
+
+function normalizeAgentMarkdown(agentMarkdown: FlowPipelinePresetAgentMarkdown[] | undefined): FlowPipelinePresetAgentMarkdown[] | undefined {
+    if (!agentMarkdown) {
+        return undefined;
+    }
+    return agentMarkdown.map(agent => ({
+        relativePath: agent.relativePath.split(path.sep).join('/'),
+        content: agent.content.endsWith('\n') ? agent.content : `${agent.content}\n`
+    }));
 }
 
 function referencedAgentPaths(workflow: FlowWorkflow): string[] {

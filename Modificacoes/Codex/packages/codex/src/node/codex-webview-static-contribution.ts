@@ -10,16 +10,18 @@ import * as nodePath from 'path';
 import { injectable } from '@theia/core/shared/inversify';
 import { BackendApplicationContribution } from '@theia/core/lib/node/backend-application';
 import { Application, Request, Response } from '@theia/core/shared/express';
-import { CODEX_WEBVIEW_STATIC_PATH } from '../common/codex-host-protocol';
+import { CODEX_OFFICIAL_EXTENSION_VERSION, CODEX_WEBVIEW_STATIC_PATH } from '../common/codex-host-protocol';
 import { buildCodexWebviewShellHtml } from '../common/codex-webview-shell';
 
 @injectable()
 export class CodexWebviewStaticContribution implements BackendApplicationContribution {
 
     protected readonly webviewRoot: string;
+    protected readonly sessionId: string;
 
     constructor() {
         this.webviewRoot = this.resolveWebviewRoot();
+        this.sessionId = this.createSessionId();
     }
 
     protected resolveWebviewRoot(): string {
@@ -35,10 +37,16 @@ export class CodexWebviewStaticContribution implements BackendApplicationContrib
         app.get(`${CODEX_WEBVIEW_STATIC_PATH}/shell`, (request: Request, response: Response) => {
             const webviewId = typeof request.query.webviewId === 'string' ? request.query.webviewId : 'default';
             const initialRoute = typeof request.query.initialRoute === 'string' ? request.query.initialRoute : undefined;
+            const viewKind = this.normalizeViewKind(request.query.viewKind);
             response.type('html').send(buildCodexWebviewShellHtml({
                 webviewId,
                 initialRoute,
-                assetBase: CODEX_WEBVIEW_STATIC_PATH
+                viewKind,
+                assetBase: CODEX_WEBVIEW_STATIC_PATH,
+                officialIndexHtml: this.readOfficialIndexHtml(),
+                sessionId: this.sessionId,
+                extensionVersion: CODEX_OFFICIAL_EXTENSION_VERSION,
+                buildFlavor: 'prod'
             }));
         });
 
@@ -49,5 +57,21 @@ export class CodexWebviewStaticContribution implements BackendApplicationContrib
                 res.status(503).send('Codex webview assets missing. Run: node scripts/copy-codex-webview.js');
             });
         }
+    }
+
+    protected readOfficialIndexHtml(): string | undefined {
+        const indexHtmlPath = nodePath.join(this.webviewRoot, 'index.html');
+        if (!fs.existsSync(indexHtmlPath)) {
+            return undefined;
+        }
+        return fs.readFileSync(indexHtmlPath, 'utf8');
+    }
+
+    protected createSessionId(): string {
+        return `theia-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    protected normalizeViewKind(value: unknown): 'sidebar' | 'editor' | 'hotkey' {
+        return value === 'editor' || value === 'hotkey' ? value : 'sidebar';
     }
 }

@@ -64,7 +64,7 @@ describe('Builder Mantine theme adapter', () => {
                 defaultRadius: 'lg',
                 fontFamily: 'Inter, sans-serif',
                 spacing: {
-                    xs: 4,
+                    xs: '4px',
                     content: '2rem'
                 },
                 colors: {
@@ -117,7 +117,7 @@ describe('Builder Mantine theme adapter', () => {
         theme.spacing!.md = 20;
         (theme.tokens!.colors as { brand: string[] }).brand[0] = '#ddd';
 
-        expect(adapted.spacing).to.deep.equal({ md: 16 });
+        expect(adapted.spacing).to.deep.equal({ md: '16px' });
         expect(adapted.colors).to.deep.equal({ brand: ['#fff', '#000'] });
     });
 

@@ -1,0 +1,23 @@
+Total messages: 185 (Errors: 5, Warnings: 103)
+Returning 5 messages for level "error"
+
+[ERROR] webview-unhandled-rejection: TypeError: t.data is not iterable
+    at If.runRecentConversationRefresh (http://127.0.0.1:3000/codex-webview/assets/app-server-manager-signals-DO_PvY5P.js:45:18771) TypeError: t.data is not iterable
+    at If.runRecentConversationRefresh (http://127.0.0.1:3000/codex-webview/assets/app-server-manager-signals-DO_PvY5P.js:45:18771) @ http://127.0.0.1:3000/codex-webview/assets/apps-BXBDSP0z.js:67
+[ERROR] Failed to load resource: the server responded with a status of 429 () @ https://o33249.ingest.us.sentry.io/api/4510999349821440/envelope/?sentry_version=7&sentry_key=6719eaa18601933a26ac21499dcaba2f&sentry_client=sentry.javascript.browser%2F10.29.0:0
+[ERROR]  ERROR  [Statsig] A networking error occurred during POST request to https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780291898689&sid=theia-mpurswr2-45som8wjwyo&se=1. SyntaxError: Unexpected end of JSON input SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at e.onFetchResponse (http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:60228)
+    at http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:59545
+    at e.deliverMessage (http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:57244)
+    at e.handleMessage (http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:57347)
+    at http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:57058 @ http://127.0.0.1:3000/codex-webview/assets/apps-BXBDSP0z.js:67
+[ERROR]  ERROR  [Statsig] A networking error occurred during POST request to https://ab.chatgpt.com/v1/initialize?k=client-sYWqzCYMRkUg4DqqiZcR5DGTNl2iD7zNJY0HoeDLzxR&st=javascript-client&sv=3.32.6&t=1780291898689&sid=theia-mpurswr2-45som8wjwyo&se=1. SyntaxError: Unexpected end of JSON input SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at e.onFetchResponse (http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:60228)
+    at http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:59545
+    at e.deliverMessage (http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:57244)
+    at e.handleMessage (http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:57347)
+    at http://127.0.0.1:3000/codex-webview/assets/vscode-api-B5Og2mOP.js:1:57058 @ http://127.0.0.1:3000/codex-webview/assets/apps-BXBDSP0z.js:67
+TypeError: t.data is not iterable
+    at If.runRecentConversationRefresh (http://127.0.0.1:3000/codex-webview/assets/app-server-manager-signals-DO_PvY5P.js:45:18771)

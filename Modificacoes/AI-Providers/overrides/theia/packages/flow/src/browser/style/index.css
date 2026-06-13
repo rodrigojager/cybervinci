@@ -1,0 +1,5279 @@
+.flow-widget {
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+}
+
+.flow {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 860px;
+    height: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+.flow__header,
+.flow__main,
+.flow__ops {
+    display: grid;
+    gap: 10px;
+}
+
+.flow__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+}
+
+.flow__header h2,
+.flow__header span,
+.flow__kanban-column h3,
+.flow__events h3,
+.flow__panel h3,
+.flow__run-observability h3,
+.flow__state-editor h4,
+.flow__run-list h4,
+.flow__json-block h4,
+.flow__event-summary h4,
+.flow__context-pack h4,
+.flow__audit-summary h4 {
+    margin: 0;
+}
+
+.flow__header h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.flow__header span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__actions {
+    display: flex;
+    gap: 6px;
+}
+
+.flow__workflow-factories {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.flow__workflow-factories select {
+    min-height: 28px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+}
+
+.flow__workflow-factories button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__runtime-status {
+    margin-top: 8px;
+    display: grid;
+    gap: 6px;
+}
+
+.flow__runtime-status-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__runtime-status-grid--capabilities {
+    max-width: 920px;
+}
+
+.flow__status-pill {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    gap: 6px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__status-pill span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__status-pill strong {
+    color: inherit;
+}
+
+.flow__status-pill--external,
+.flow__status-pill--available {
+    border-color: var(--theia-charts-blue);
+    color: var(--theia-charts-blue);
+}
+
+.flow__status-pill--simulated {
+    border-color: var(--theia-charts-yellow);
+    color: var(--theia-charts-yellow);
+}
+
+.flow__status-pill--mock {
+    border-color: var(--theia-charts-orange);
+    color: var(--theia-charts-orange);
+}
+
+.flow__status-pill--fallback-error {
+    border-color: var(--theia-warn-foreground);
+    color: var(--theia-warn-foreground);
+}
+
+.flow__status-pill--capability-missing,
+.flow__status-pill--missing,
+.flow__status-pill--blocked {
+    border-color: var(--theia-errorForeground);
+    color: var(--theia-errorForeground);
+}
+
+.flow__runtime-status-warning {
+    width: fit-content;
+    max-width: min(920px, 100%);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    background: var(--theia-editorWidget-background);
+    border-color: var(--theia-errorForeground);
+    color: var(--theia-errorForeground);
+}
+
+.flow button {
+    border: 1px solid var(--theia-button-border, transparent);
+    border-radius: 4px;
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    min-height: 28px;
+    padding: 0 10px;
+}
+
+.flow button:disabled {
+    opacity: 0.5;
+}
+
+.flow__actions button {
+    width: 32px;
+    padding: 0;
+}
+
+.flow__prompt input {
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    padding: 0 10px;
+}
+
+.flow__agent-library {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 10px;
+}
+
+.flow__agent-library-header,
+.flow__agent-library-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow__agent-library-header h3 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.flow__agent-library-header span,
+.flow__agent-library-item time,
+.flow__agent-library-list p {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__agent-library-header button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__agent-library-search {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    padding: 0 8px;
+}
+
+.flow__agent-library-search input {
+    min-width: 0;
+    height: 30px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+}
+
+.flow__agent-library-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px;
+    max-height: 180px;
+    overflow: auto;
+}
+
+.flow__agent-library-item {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    padding: 6px;
+}
+
+.flow__agent-library-open {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    background: transparent !important;
+    color: var(--theia-editor-foreground) !important;
+    border-color: transparent !important;
+    text-align: left;
+}
+
+.flow__agent-library-open span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__agent-library-item time {
+    font-size: 11px;
+}
+
+.flow__agent-library-item div {
+    display: flex;
+    gap: 4px;
+}
+
+.flow__agent-library-item div button {
+    width: 28px;
+    min-height: 24px;
+    padding: 0;
+}
+
+.flow__error,
+.flow__validation {
+    display: flex;
+    gap: 8px;
+    border-left: 3px solid var(--theia-errorForeground);
+    background: var(--theia-inputValidation-errorBackground);
+    padding: 8px 10px;
+}
+
+.flow__main {
+    grid-template-columns: minmax(520px, 1fr) 320px;
+    min-height: 400px;
+}
+
+.flow__canvas-pane,
+.flow__inspector,
+.flow__kanban,
+.flow__run-observability,
+.flow__events {
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+}
+
+.flow__canvas-pane {
+    overflow: hidden;
+}
+
+.flow__flow {
+    position: relative;
+    height: 100%;
+    min-height: 400px;
+    background:
+        linear-gradient(var(--theia-panel-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--theia-panel-border) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-color: var(--theia-editor-background);
+}
+
+.flow__flow:focus {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: -1px;
+}
+
+.flow__flow-toolbar {
+    position: absolute;
+    z-index: 4;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    padding: 4px;
+}
+
+.flow__flow-toolbar button {
+    width: 28px;
+    min-height: 24px;
+    padding: 0;
+}
+
+.flow__flow-toolbar span {
+    min-width: 42px;
+    text-align: center;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__flow-palette {
+    position: absolute;
+    z-index: 4;
+    top: 48px;
+    left: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(92px, 1fr));
+    gap: 4px;
+    max-width: 220px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    padding: 6px;
+}
+
+.flow__flow-palette button {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+    min-height: 26px;
+    padding: 3px 6px;
+    text-align: left;
+    cursor: grab;
+}
+
+.flow__flow-palette button:active {
+    cursor: grabbing;
+}
+
+.flow__flow-palette span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-viewport {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+}
+
+.flow__flow-viewport:active {
+    cursor: grabbing;
+}
+
+.flow__flow-world {
+    position: relative;
+    transform-origin: 0 0;
+}
+
+.flow__flow-edges {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.flow__flow-edge {
+    pointer-events: stroke;
+}
+
+.flow__flow-edge line {
+    stroke: var(--theia-descriptionForeground);
+    stroke-width: 1.5;
+}
+
+.flow__flow-edge marker path {
+    fill: var(--theia-descriptionForeground);
+}
+
+.flow__flow-edge text {
+    fill: var(--theia-descriptionForeground);
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.flow__flow-edge--selected line {
+    stroke: var(--theia-focusBorder);
+    stroke-width: 2.5;
+}
+
+.flow__flow-edge--error line,
+.flow__flow-edge--error marker path {
+    stroke: var(--theia-errorForeground);
+    fill: var(--theia-errorForeground);
+}
+
+.flow__flow-edge--warning line,
+.flow__flow-edge--warning marker path {
+    stroke: var(--theia-charts-yellow);
+    fill: var(--theia-charts-yellow);
+}
+
+.flow__flow-edge:focus {
+    outline: none;
+}
+
+.flow__flow-edge:focus line {
+    stroke: var(--theia-focusBorder);
+    stroke-width: 2.5;
+}
+
+.flow__flow-edge-guard {
+    fill: var(--theia-charts-yellow) !important;
+}
+
+.flow__flow-issue-marker {
+    fill: var(--theia-errorForeground) !important;
+    font-weight: 700;
+}
+
+.flow__flow-node {
+    position: absolute;
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-editor-foreground);
+    padding: 10px 14px;
+    text-align: left;
+    cursor: grab;
+    user-select: none;
+}
+
+.flow__flow-node:active {
+    cursor: grabbing;
+}
+
+.flow__flow-node--running {
+    border-color: var(--theia-progressBar-background);
+    border-width: 2px;
+}
+
+.flow__flow-node--review,
+.flow__flow-node--waiting {
+    border-color: var(--theia-charts-yellow);
+    border-width: 2px;
+}
+
+.flow__flow-node--done {
+    border-color: var(--theia-charts-green);
+    border-width: 2px;
+}
+
+.flow__flow-node--failed {
+    border-color: var(--theia-errorForeground);
+    border-width: 2px;
+}
+
+.flow__flow-node--selected {
+    box-shadow: 0 0 0 2px var(--theia-focusBorder);
+}
+
+.flow__flow-node--connecting {
+    box-shadow: 0 0 0 2px var(--theia-charts-yellow);
+}
+
+.flow__flow-node--error {
+    border-color: var(--theia-errorForeground);
+    border-width: 2px;
+}
+
+.flow__flow-node--warning {
+    border-color: var(--theia-charts-yellow);
+    border-width: 2px;
+}
+
+.flow__flow-node-issue {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 50%;
+    background: var(--theia-errorForeground);
+    color: var(--theia-editor-background) !important;
+    font-weight: 700;
+}
+
+.flow__flow-node strong,
+.flow__flow-node span,
+.flow__flow-node small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-node strong {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__flow-node span,
+.flow__flow-node small {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__flow-node-connector {
+    position: absolute;
+    right: -13px;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    min-height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    cursor: crosshair;
+    transform: translateY(-50%);
+}
+
+.flow__flow-node-connector:hover,
+.flow__flow-node-connector:focus {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: 1px;
+}
+
+.flow__flow-minimap {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 3;
+    width: 150px;
+    height: 94px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-minimap-node {
+    position: absolute;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-input-background);
+}
+
+.flow__flow-minimap-viewport {
+    position: absolute;
+    border: 1px solid var(--theia-focusBorder);
+    background: color-mix(in srgb, var(--theia-focusBorder) 16%, transparent);
+    pointer-events: none;
+}
+
+.flow__flow-minimap-node--running {
+    border-color: var(--theia-progressBar-background);
+}
+
+.flow__flow-minimap-node--review,
+.flow__flow-minimap-node--waiting {
+    border-color: var(--theia-charts-yellow);
+}
+
+.flow__flow-minimap-node--done {
+    border-color: var(--theia-charts-green);
+}
+
+.flow__flow-minimap-node--failed {
+    border-color: var(--theia-errorForeground);
+}
+
+.flow__panel {
+    padding: 12px;
+}
+
+.flow__panel h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.flow__panel pre {
+    max-height: 180px;
+    overflow: auto;
+    background: var(--theia-textCodeBlock-background);
+    padding: 8px;
+}
+
+.flow__state-editor,
+.flow__transition-editor,
+.flow__branch-editor,
+.flow__agent-markdown,
+.flow__run-list,
+.flow__json-block,
+.flow__event-summary,
+.flow__context-pack,
+.flow__audit-summary,
+.flow__final-report-summary,
+.flow__second-run-suggestion {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.flow__section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.flow__section-heading button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 24px;
+}
+
+.flow__second-run-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.flow__state-editor h4,
+.flow__transition-editor h4,
+.flow__branch-editor h4,
+.flow__agent-markdown h4,
+.flow__run-list h4,
+.flow__json-block h4,
+.flow__event-summary h4,
+.flow__context-pack h4,
+.flow__audit-summary h4,
+.flow__final-report-summary h4,
+.flow__second-run-suggestion h4 {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.flow__state-editor label,
+.flow__transition-editor label {
+    display: grid;
+    gap: 4px;
+}
+
+.flow__final-report-summary > p {
+    margin: 0;
+}
+
+.flow__report-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 10px;
+}
+
+.flow__state-editor label span,
+.flow__transition-editor label span {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__state-editor input,
+.flow__state-editor textarea,
+.flow__transition-editor input,
+.flow__transition-editor select,
+.flow__transition-editor textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    padding: 5px 7px;
+    font-family: var(--theia-ui-font-family);
+    font-size: 12px;
+}
+
+.flow__agent-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 32px;
+    gap: 6px;
+}
+
+.flow__agent-field button {
+    width: 32px;
+    padding: 0;
+}
+
+.flow__agent-markdown {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__agent-markdown code,
+.flow__agent-markdown p {
+    overflow-wrap: anywhere;
+}
+
+.flow__agent-markdown p {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__state-editor textarea,
+.flow__transition-editor textarea {
+    resize: vertical;
+}
+
+.flow__branch-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__branch-list,
+.flow__branch-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__branch-list span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-descriptionForeground);
+    padding: 4px 6px;
+    font-size: 12px;
+}
+
+.flow__branch-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 26px;
+}
+
+.flow__editor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.flow__editor-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.flow__inline-validation {
+    display: grid;
+    gap: 4px;
+    border-left: 3px solid var(--theia-inputValidation-warningBorder, var(--theia-charts-yellow));
+    background: var(--theia-inputValidation-warningBackground);
+    padding: 6px 8px;
+}
+
+.flow__inline-validation--error {
+    border-left-color: var(--theia-errorForeground);
+    background: var(--theia-inputValidation-errorBackground);
+}
+
+.flow__workflow-json {
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 10px;
+}
+
+.flow__workflow-json-header,
+.flow__workflow-json-selection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow__workflow-json-header h3 {
+    margin: 0;
+    font-size: 13px;
+}
+
+.flow__workflow-json-header span,
+.flow__workflow-json-selection span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__workflow-json-note {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__workflow-json-header button {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__workflow-json-selection code,
+.flow__workflow-json-issue code {
+    color: var(--theia-textLink-foreground);
+}
+
+.flow__workflow-json-issues {
+    display: grid;
+    gap: 4px;
+    max-height: 130px;
+    overflow: auto;
+}
+
+.flow__workflow-json-issue {
+    display: grid;
+    grid-template-columns: minmax(90px, 160px) minmax(0, 1fr);
+    gap: 8px;
+    min-height: 28px;
+    padding: 4px 8px;
+    text-align: left;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__workflow-json-issue--error {
+    border-left: 3px solid var(--theia-errorForeground);
+}
+
+.flow__workflow-json-issue--warning {
+    border-left: 3px solid var(--theia-charts-yellow);
+}
+
+.flow__workflow-json-issue span {
+    overflow-wrap: anywhere;
+}
+
+.flow__workflow-json textarea {
+    min-height: 220px;
+    resize: vertical;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    font-family: var(--theia-ui-font-family);
+    font-size: 12px;
+    line-height: 1.45;
+    padding: 8px;
+    tab-size: 2;
+}
+
+.flow__save-preview {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--theia-focusBorder);
+    background: var(--theia-editorWidget-background);
+    padding: 10px;
+}
+
+.flow__save-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.flow__save-preview-header h3,
+.flow__save-preview-group h4 {
+    margin: 0;
+}
+
+.flow__save-preview-header h3 {
+    font-size: 14px;
+}
+
+.flow__save-preview-header span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__save-preview-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.flow__save-preview-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.flow__save-preview-group {
+    display: grid;
+    gap: 4px;
+}
+
+.flow__save-preview-group h4 {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.flow__save-preview-item {
+    display: grid;
+    grid-template-columns: 72px minmax(120px, 220px) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    border-left: 3px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 5px 8px;
+}
+
+.flow__save-preview-item--added {
+    border-left-color: var(--theia-charts-green);
+}
+
+.flow__save-preview-item--removed {
+    border-left-color: var(--theia-errorForeground);
+}
+
+.flow__save-preview-item--changed {
+    border-left-color: var(--theia-charts-yellow);
+}
+
+.flow__save-preview-item code,
+.flow__save-preview-item span {
+    overflow-wrap: anywhere;
+}
+
+.flow__run-list article {
+    display: grid;
+    gap: 3px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.flow__run-list article:last-child {
+    border-bottom: 0;
+}
+
+.flow__memory-review,
+.flow__effect-review,
+.flow__second-run-suggestion,
+.flow__memory-candidate {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__second-run-suggestion p,
+.flow__second-run-suggestion summary {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__second-run-suggestion pre {
+    margin: 6px 0 0;
+    max-height: 160px;
+    overflow: auto;
+    white-space: pre-wrap;
+    background: var(--theia-textCodeBlock-background);
+    padding: 8px;
+}
+
+.flow__memory-candidate {
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__memory-candidate--written {
+    border-left: 3px solid var(--theia-charts-green);
+}
+
+.flow__memory-candidate--rejected {
+    border-left: 3px solid var(--theia-errorForeground);
+}
+
+.flow__memory-candidate header,
+.flow__memory-controls,
+.flow__memory-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.flow__memory-candidate header {
+    justify-content: space-between;
+}
+
+.flow__memory-candidate header span,
+.flow__memory-candidate p {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__memory-candidate textarea,
+.flow__memory-controls input,
+.flow__memory-controls select {
+    min-width: 0;
+}
+
+.flow__memory-candidate textarea {
+    width: 100%;
+    resize: vertical;
+}
+
+.flow__memory-controls {
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.flow__memory-controls label {
+    display: grid;
+    gap: 3px;
+    min-width: 140px;
+    flex: 1 1 140px;
+}
+
+.flow__memory-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.flow__effect-card {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-left: 3px solid var(--theia-descriptionForeground);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__effect-card--applied,
+.flow__effect-card--approved {
+    border-left-color: var(--theia-charts-green);
+}
+
+.flow__effect-card--blocked,
+.flow__effect-card--failed,
+.flow__effect-card--rejected {
+    border-left-color: var(--theia-errorForeground);
+}
+
+.flow__effect-card--proposed {
+    border-left-color: var(--theia-charts-yellow);
+}
+
+.flow__effect-card header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.flow__effect-card header div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__effect-card header span,
+.flow__effect-card header code,
+.flow__effect-blocked {
+    overflow-wrap: anywhere;
+}
+
+.flow__effect-card header span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__effect-card header code {
+    font-size: 11px;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__effect-metadata {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px 10px;
+}
+
+.flow__effect-blocked {
+    margin: 0;
+    color: var(--theia-errorForeground);
+}
+
+.flow__effect-card textarea {
+    width: 100%;
+    min-width: 0;
+    resize: vertical;
+}
+
+.flow__effect-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.flow__artifact-browser {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__artifact-selector {
+    display: grid;
+    gap: 4px;
+    max-height: 150px;
+    overflow: auto;
+}
+
+.flow__artifact-selector-item {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) minmax(78px, auto);
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 5px 7px;
+    text-align: left;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__artifact-selector-item--selected {
+    border-color: var(--theia-focusBorder);
+}
+
+.flow__artifact-selector-item span,
+.flow__artifact-selector-item small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__artifact-selector-item small {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__artifact-viewer {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+    padding: 8px;
+}
+
+.flow__artifact-viewer header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: start;
+}
+
+.flow__artifact-viewer header div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__artifact-viewer header span {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__artifact-contract,
+.flow__artifact-issues {
+    display: grid;
+    gap: 6px;
+}
+
+.flow__artifact-markdown {
+    display: block;
+}
+
+.flow__artifact-markdown-body > *:first-child,
+.flow__artifact-markdown > *:first-child {
+    margin-top: 0;
+}
+
+.flow__artifact-markdown-body > *:last-child,
+.flow__artifact-markdown > *:last-child {
+    margin-bottom: 0;
+}
+
+.flow__markdown-frontmatter {
+    display: grid;
+    gap: 4px;
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__markdown-frontmatter div {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 8px;
+    align-items: baseline;
+    min-width: 0;
+}
+
+.flow__markdown-frontmatter dt {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: none;
+}
+
+.flow__markdown-frontmatter dd {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    color: var(--theia-editor-foreground);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.flow__markdown-frontmatter dd span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.flow__markdown-frontmatter-swatch {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 999px;
+}
+
+.flow__artifact-markdown h1,
+.flow__artifact-markdown h2,
+.flow__artifact-markdown h3,
+.flow__artifact-markdown h4,
+.flow__artifact-markdown h5,
+.flow__artifact-markdown h6 {
+    margin: 10px 0 4px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.flow__artifact-markdown h1 {
+    font-size: 18px;
+}
+
+.flow__artifact-markdown h2 {
+    font-size: 16px;
+}
+
+.flow__artifact-markdown h3 {
+    font-size: 14px;
+}
+
+.flow__artifact-markdown h4,
+.flow__artifact-markdown h5,
+.flow__artifact-markdown h6 {
+    font-size: 13px;
+}
+
+.flow__artifact-markdown p,
+.flow__artifact-markdown li,
+.flow__artifact-contract p,
+.flow__artifact-contract li,
+.flow__artifact-issues span,
+.flow__artifact-issues small,
+.flow__artifact-image span {
+    overflow-wrap: anywhere;
+}
+
+.flow__artifact-markdown ul,
+.flow__artifact-markdown ol,
+.flow__artifact-contract ul {
+    margin: 0 0 6px;
+    padding-left: 18px;
+}
+
+.flow__artifact-markdown blockquote {
+    margin: 6px 0;
+    padding: 4px 10px;
+    border-left: 3px solid var(--theia-panel-border);
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__artifact-markdown table {
+    display: block;
+    max-width: 100%;
+    margin: 6px 0;
+    overflow: auto;
+    border-collapse: collapse;
+}
+
+.flow__artifact-markdown th,
+.flow__artifact-markdown td {
+    min-width: 130px;
+    padding: 5px 8px;
+    border: 1px solid var(--theia-panel-border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.flow__artifact-markdown th {
+    background: var(--theia-editorWidget-background);
+    font-weight: 600;
+}
+
+.flow__artifact-json pre,
+.flow__artifact-markdown pre,
+.flow__artifact-patch,
+.flow__artifact-log {
+    max-height: 260px;
+    overflow: auto;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+    font-family: var(--theia-editor-font-family);
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: pre;
+}
+
+.flow__artifact-markdown :not(pre) > code {
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--theia-textCodeBlock-background, var(--theia-editorWidget-background));
+    font-family: var(--theia-editor-font-family);
+    font-size: 0.92em;
+}
+
+.flow__artifact-patch {
+    display: grid;
+}
+
+.flow__artifact-patch-added {
+    color: var(--theia-gitDecoration-addedResourceForeground);
+}
+
+.flow__artifact-patch-removed {
+    color: var(--theia-gitDecoration-deletedResourceForeground);
+}
+
+.flow__artifact-patch-hunk {
+    color: var(--theia-textLink-foreground);
+}
+
+.flow__artifact-issues article {
+    display: grid;
+    gap: 3px;
+    border-left: 3px solid var(--theia-charts-yellow);
+    padding: 4px 7px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__artifact-issues small,
+.flow__artifact-image span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__artifact-image {
+    display: grid;
+    gap: 6px;
+}
+
+.flow__artifact-image img {
+    max-width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editor-background);
+}
+
+.flow__artifact-image-error {
+    margin: 0;
+    color: var(--theia-errorForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__artifact-image-meta {
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.flow__run-list strong,
+.flow__run-list span,
+.flow__run-list p,
+.flow__link-button,
+.flow__link-button strong,
+.flow__event-summary p,
+.flow__run-observability p {
+    overflow-wrap: anywhere;
+}
+
+.flow__link-button {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--theia-textLink-foreground);
+    text-align: left;
+    cursor: pointer;
+}
+
+.flow__link-button:hover strong {
+    text-decoration: underline;
+}
+
+.flow__run-list span,
+.flow__run-list p,
+.flow__event-summary p,
+.flow__run-observability p {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__kv {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.flow__kv span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__kv strong {
+    overflow-wrap: anywhere;
+}
+
+.flow__gate {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+}
+
+.flow__gate small {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.flow__gate-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__ops {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr) minmax(320px, 0.75fr);
+    min-height: 230px;
+}
+
+.flow__kanban {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(128px, 1fr));
+    gap: 8px;
+    overflow: auto;
+    padding: 8px;
+}
+
+.flow__kanban-column {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-height: 160px;
+}
+
+.flow__kanban-column h3 {
+    font-size: 12px;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__workload {
+    display: grid;
+    gap: 3px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+    padding: 8px;
+}
+
+.flow__workload strong,
+.flow__workload span,
+.flow__workload small {
+    overflow-wrap: anywhere;
+}
+
+.flow__workload small {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__workload-artifacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+.flow__workload-artifacts button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.flow__workload-artifacts span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__events {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+    overflow: auto;
+}
+
+.flow__run-observability {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 8px;
+    overflow: auto;
+}
+
+.flow__run-observability h3 {
+    font-size: 14px;
+}
+
+.flow__events h3 {
+    font-size: 14px;
+}
+
+.flow__events-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.flow__events-header span {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__event-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)) 32px;
+    gap: 6px;
+    align-items: end;
+}
+
+.flow__event-filters label {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.flow__event-filters label span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__event-filters select {
+    min-width: 0;
+    height: 26px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+}
+
+.flow__event-filters button {
+    width: 32px;
+    min-height: 26px;
+    padding: 0;
+}
+
+.flow__events article {
+    display: grid;
+    grid-template-columns: 70px 150px minmax(0, 1fr);
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.flow__events time,
+.flow__events strong {
+    color: var(--theia-descriptionForeground);
+}
+
+/* CyberVinci Flow console skin: adapted for the separated legacy Flow DOM. */
+.flow-widget {
+    background: #050a12;
+}
+
+.flow {
+    --flow-console-bg: #050a12;
+    --flow-panel: rgba(8, 18, 31, 0.92);
+    --flow-panel-strong: rgba(12, 28, 47, 0.96);
+    --flow-text: #d9f7ff;
+    --flow-muted: #86a3b7;
+    --flow-accent: #4fe0ff;
+    --flow-accent-soft: rgba(79, 224, 255, 0.18);
+    --flow-success: #5dff9a;
+    --flow-warning: #ffb84d;
+    --flow-danger: #ff5c7a;
+    --flow-border: rgba(105, 147, 178, 0.22);
+    --flow-border-strong: rgba(79, 224, 255, 0.48);
+    --flow-shadow: rgba(0, 0, 0, 0.38);
+    --flow-space-1: 4px;
+    --flow-space-2: 8px;
+    --flow-space-3: 12px;
+    --flow-radius-sm: 8px;
+    --flow-radius-md: 12px;
+    --flow-radius-lg: 18px;
+
+    gap: var(--flow-space-2);
+    color: var(--flow-text);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(79, 224, 255, 0.11), transparent 26%),
+        radial-gradient(circle at 86% 14%, rgba(93, 255, 154, 0.08), transparent 22%),
+        linear-gradient(180deg, #07111f 0%, var(--flow-console-bg) 42%, #03070d 100%);
+    scrollbar-color: color-mix(in srgb, var(--flow-accent) 34%, var(--flow-border)) transparent;
+}
+
+.flow::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    height: 2px;
+    margin: calc(-1 * var(--flow-space-3)) calc(-1 * var(--flow-space-3)) 0;
+    background: linear-gradient(90deg, transparent, var(--flow-accent), var(--flow-success), var(--flow-warning), transparent);
+    box-shadow: 0 0 22px rgba(79, 224, 255, 0.62);
+}
+
+.flow button,
+.flow select,
+.flow textarea,
+.flow input {
+    border-color: var(--flow-border);
+    border-radius: var(--flow-radius-sm);
+    background: rgba(4, 11, 20, 0.86);
+    color: var(--flow-text);
+}
+
+.flow button {
+    background: linear-gradient(180deg, rgba(31, 64, 91, 0.88), rgba(10, 24, 42, 0.96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 18px rgba(0, 0, 0, 0.22);
+    color: var(--flow-text);
+    font-weight: 600;
+}
+
+.flow button:hover:not(:disabled) {
+    border-color: var(--flow-border-strong);
+    color: #ffffff;
+    box-shadow: 0 0 0 1px var(--flow-accent-soft), 0 0 18px rgba(79, 224, 255, 0.24);
+}
+
+.flow button:focus-visible,
+.flow select:focus-visible,
+.flow textarea:focus-visible,
+.flow input:focus-visible,
+.flow__flow:focus {
+    outline: 2px solid var(--flow-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--flow-accent-soft);
+}
+
+.flow button:disabled,
+.flow select:disabled,
+.flow textarea:disabled,
+.flow input:disabled {
+    opacity: 0.44;
+    cursor: not-allowed;
+    filter: saturate(0.55);
+}
+
+.flow__header,
+.flow__prompt,
+.flow__agent-library,
+.flow__main,
+.flow__ops {
+    position: relative;
+}
+
+.flow__header {
+    padding: var(--flow-space-3);
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius-lg);
+    background:
+        linear-gradient(90deg, rgba(79, 224, 255, 0.12), transparent 38%),
+        linear-gradient(135deg, rgba(11, 25, 43, 0.98), rgba(5, 11, 20, 0.96));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 40px var(--flow-shadow);
+}
+
+.flow__header h2 {
+    color: var(--flow-text);
+    font-size: 20px;
+    letter-spacing: 0.01em;
+    text-shadow: 0 0 18px rgba(79, 224, 255, 0.26);
+}
+
+.flow__header span,
+.flow__workflow-factories > span,
+.flow__status-pill span,
+.flow__flow-toolbar span,
+.flow__run-list span,
+.flow__run-list p,
+.flow__event-summary p,
+.flow__run-observability p,
+.flow__gate small,
+.flow__kv span {
+    color: var(--flow-muted);
+}
+
+.flow__workflow-factories {
+    gap: var(--flow-space-2);
+}
+
+.flow__workflow-factories > span,
+.flow__state-editor h4,
+.flow__transition-editor h4,
+.flow__branch-editor h4,
+.flow__agent-markdown h4,
+.flow__run-list h4,
+.flow__json-block h4,
+.flow__event-summary h4,
+.flow__context-pack h4,
+.flow__audit-summary h4,
+.flow__final-report-summary h4,
+.flow__second-run-suggestion h4,
+.flow__event-filters label span {
+    color: var(--flow-accent);
+    letter-spacing: 0.12em;
+}
+
+.flow__actions {
+    max-width: 528px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: var(--flow-space-1);
+    border: 1px solid rgba(79, 224, 255, 0.18);
+    border-radius: var(--flow-radius-md);
+    background: rgba(3, 9, 17, 0.56);
+}
+
+.flow__actions button,
+.flow__flow-toolbar button {
+    color: var(--flow-accent);
+}
+
+.flow__prompt {
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius-md);
+    background: linear-gradient(180deg, rgba(13, 30, 50, 0.88), rgba(6, 14, 25, 0.88));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px rgba(0, 0, 0, 0.2);
+    padding: var(--flow-space-2);
+}
+
+.flow__prompt input {
+    height: 38px;
+    border-color: var(--flow-border);
+    background: rgba(2, 7, 13, 0.84);
+    color: var(--flow-text);
+}
+
+.flow__status-pill,
+.flow__branch-list span {
+    border: 1px solid var(--flow-border);
+    border-radius: 999px;
+    background: rgba(3, 9, 17, 0.72);
+    padding: 3px 8px;
+}
+
+.flow__status-pill::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: var(--flow-space-1);
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+}
+
+.flow__status-pill--external,
+.flow__status-pill--available {
+    border-color: var(--flow-accent);
+    color: var(--flow-accent);
+}
+
+.flow__status-pill--simulated,
+.flow__status-pill--mock {
+    border-color: var(--flow-warning);
+    color: var(--flow-warning);
+}
+
+.flow__status-pill--capability-missing,
+.flow__status-pill--missing,
+.flow__status-pill--blocked,
+.flow__status-pill--fallback-error {
+    border-color: var(--flow-danger);
+    color: var(--flow-danger);
+}
+
+.flow__agent-library,
+.flow__canvas-pane,
+.flow__inspector,
+.flow__kanban,
+.flow__run-observability,
+.flow__events,
+.flow__panel,
+.flow__workflow-json,
+.flow__save-preview,
+.flow__artifact-viewer,
+.flow__effect-card,
+.flow__memory-candidate,
+.flow__workload,
+.flow__gate {
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius-md);
+    background: linear-gradient(180deg, var(--flow-panel-strong), var(--flow-panel));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px rgba(0, 0, 0, 0.26);
+}
+
+.flow__agent-library-search,
+.flow__agent-library-item,
+.flow__artifact-selector-item,
+.flow__events article,
+.flow__run-list article,
+.flow__workflow-json-issue,
+.flow__artifact-issues article {
+    border-color: rgba(105, 147, 178, 0.18);
+    border-radius: var(--flow-radius-sm);
+    background: rgba(4, 11, 20, 0.72);
+}
+
+.flow__agent-library-open {
+    color: var(--flow-text) !important;
+}
+
+.flow__main {
+    grid-template-columns: minmax(560px, 1fr) minmax(330px, 0.34fr);
+    min-height: 620px;
+}
+
+.flow__canvas-pane {
+    border-radius: var(--flow-radius-lg);
+    background: #050b14;
+}
+
+.flow__inspector {
+    border-radius: var(--flow-radius-lg);
+    background: linear-gradient(180deg, rgba(11, 24, 41, 0.98), rgba(5, 11, 20, 0.98));
+}
+
+.flow__flow {
+    min-height: 430px;
+    background:
+        radial-gradient(circle at 14px 14px, rgba(79, 224, 255, 0.32) 1px, transparent 1.5px),
+        linear-gradient(rgba(105, 147, 178, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(105, 147, 178, 0.09) 1px, transparent 1px),
+        radial-gradient(circle at 68% 22%, rgba(93, 255, 154, 0.09), transparent 28%),
+        linear-gradient(180deg, #06101d, #03070d);
+    background-size: 28px 28px, 56px 56px, 56px 56px, auto, auto;
+}
+
+.flow__flow-toolbar,
+.flow__flow-palette,
+.flow__flow-minimap {
+    border: 1px solid var(--flow-border-strong);
+    border-radius: var(--flow-radius-md);
+    background: rgba(3, 9, 17, 0.82);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 24px rgba(79, 224, 255, 0.14), 0 14px 28px rgba(0, 0, 0, 0.32);
+}
+
+.flow__flow-palette {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 176px;
+    padding: var(--flow-space-2);
+}
+
+.flow__flow-palette button {
+    min-height: 30px;
+    border-color: rgba(79, 224, 255, 0.22);
+    background: linear-gradient(90deg, rgba(79, 224, 255, 0.12), rgba(5, 14, 25, 0.92));
+}
+
+.flow__flow-node {
+    border: 1px solid rgba(79, 224, 255, 0.42);
+    border-radius: var(--flow-radius-lg);
+    background:
+        linear-gradient(135deg, rgba(79, 224, 255, 0.13), transparent 42%),
+        linear-gradient(180deg, rgba(16, 36, 58, 0.97), rgba(5, 14, 26, 0.98));
+    color: var(--flow-text);
+    box-shadow: 0 0 0 1px rgba(79, 224, 255, 0.08), 0 18px 36px rgba(0, 0, 0, 0.36);
+}
+
+.flow__flow-node strong {
+    color: #ffffff;
+    letter-spacing: 0.01em;
+}
+
+.flow__flow-node span,
+.flow__flow-node small,
+.flow__panel pre,
+.flow__workload small,
+.flow__artifact-selector-item small,
+.flow__artifact-viewer header span,
+.flow__effect-card header span,
+.flow__effect-card header code,
+.flow__events time,
+.flow__events strong {
+    color: var(--flow-muted);
+}
+
+.flow__flow-node--selected,
+.flow__flow-node--connecting {
+    border-color: var(--flow-accent);
+    box-shadow: 0 0 0 2px var(--flow-accent-soft), 0 0 28px rgba(79, 224, 255, 0.44), 0 22px 36px rgba(0, 0, 0, 0.42);
+}
+
+.flow__flow-node--running {
+    border-color: var(--flow-accent);
+    box-shadow: 0 0 26px rgba(79, 224, 255, 0.34), 0 18px 36px rgba(0, 0, 0, 0.38);
+}
+
+.flow__flow-node--done {
+    border-color: var(--flow-success);
+    box-shadow: 0 0 24px rgba(93, 255, 154, 0.28), 0 18px 36px rgba(0, 0, 0, 0.38);
+}
+
+.flow__flow-node--waiting,
+.flow__flow-node--review,
+.flow__flow-node--warning {
+    border-color: var(--flow-warning);
+    box-shadow: 0 0 24px rgba(255, 184, 77, 0.28), 0 18px 36px rgba(0, 0, 0, 0.38);
+}
+
+.flow__flow-node--failed,
+.flow__flow-node--error {
+    border-color: var(--flow-danger);
+    box-shadow: 0 0 24px rgba(255, 92, 122, 0.3), 0 18px 36px rgba(0, 0, 0, 0.38);
+}
+
+.flow__flow-node-connector {
+    border-color: var(--flow-accent);
+    background: linear-gradient(180deg, rgba(79, 224, 255, 0.22), rgba(7, 20, 34, 0.96));
+    color: var(--flow-accent);
+    box-shadow: 0 0 16px rgba(79, 224, 255, 0.26);
+}
+
+.flow__flow-node-connector:hover,
+.flow__flow-node-connector:focus {
+    outline: 2px solid var(--flow-accent);
+    outline-offset: 2px;
+}
+
+.flow__flow-edge line,
+.flow__flow-edge marker path {
+    stroke: var(--flow-accent);
+    fill: var(--flow-accent);
+    filter: drop-shadow(0 0 5px rgba(79, 224, 255, 0.65));
+}
+
+.flow__flow-edge text {
+    fill: var(--flow-muted);
+}
+
+.flow__flow-edge--selected line,
+.flow__flow-edge:focus line {
+    stroke: var(--flow-success);
+}
+
+.flow__flow-edge--warning line,
+.flow__flow-edge--warning marker path,
+.flow__flow-edge-guard {
+    stroke: var(--flow-warning);
+    fill: var(--flow-warning) !important;
+}
+
+.flow__flow-edge--error line,
+.flow__flow-edge--error marker path,
+.flow__flow-issue-marker {
+    stroke: var(--flow-danger);
+    fill: var(--flow-danger) !important;
+}
+
+.flow__flow-minimap-node {
+    border-color: rgba(79, 224, 255, 0.38);
+    background: rgba(79, 224, 255, 0.12);
+}
+
+.flow__flow-minimap-viewport {
+    border-color: var(--flow-success);
+    background: rgba(93, 255, 154, 0.14);
+}
+
+.flow__flow-minimap-node--done {
+    border-color: var(--flow-success);
+}
+
+.flow__flow-minimap-node--review,
+.flow__flow-minimap-node--waiting {
+    border-color: var(--flow-warning);
+}
+
+.flow__flow-minimap-node--failed {
+    border-color: var(--flow-danger);
+}
+
+.flow__panel,
+.flow__workflow-json,
+.flow__artifact-viewer {
+    margin: var(--flow-space-2);
+    padding: var(--flow-space-3);
+}
+
+.flow__state-editor,
+.flow__transition-editor,
+.flow__branch-editor,
+.flow__agent-markdown,
+.flow__run-list,
+.flow__json-block,
+.flow__event-summary,
+.flow__context-pack,
+.flow__audit-summary,
+.flow__final-report-summary,
+.flow__second-run-suggestion {
+    border-top-color: rgba(79, 224, 255, 0.18);
+}
+
+.flow__state-editor input,
+.flow__state-editor textarea,
+.flow__transition-editor input,
+.flow__transition-editor select,
+.flow__transition-editor textarea,
+.flow__workflow-json textarea,
+.flow__memory-candidate textarea,
+.flow__memory-controls input,
+.flow__memory-controls select,
+.flow__event-filters select,
+.flow__workflow-factories select {
+    border-color: var(--flow-border);
+    background: rgba(2, 7, 13, 0.84);
+    color: var(--flow-text);
+}
+
+.flow__kv {
+    align-items: baseline;
+    border-bottom: 1px solid rgba(105, 147, 178, 0.12);
+    padding-bottom: var(--flow-space-1);
+}
+
+.flow__gate {
+    border-color: color-mix(in srgb, var(--flow-warning) 48%, var(--flow-border));
+    background:
+        linear-gradient(90deg, rgba(255, 184, 77, 0.14), transparent 42%),
+        linear-gradient(180deg, rgba(30, 22, 9, 0.9), rgba(8, 12, 18, 0.96));
+    box-shadow: 0 0 24px rgba(255, 184, 77, 0.14), 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.flow__gate-actions button:nth-child(1),
+.flow__memory-actions button:nth-last-child(1),
+.flow__effect-actions button:nth-last-child(1),
+.flow__second-run-actions button:nth-child(1) {
+    border-color: color-mix(in srgb, var(--flow-success) 64%, var(--flow-border));
+    background: linear-gradient(180deg, rgba(38, 154, 97, 0.86), rgba(9, 65, 45, 0.96));
+}
+
+.flow__gate-actions button:nth-child(2),
+.flow__memory-actions button:nth-child(1) {
+    border-color: color-mix(in srgb, var(--flow-warning) 64%, var(--flow-border));
+    background: linear-gradient(180deg, rgba(171, 104, 24, 0.88), rgba(67, 37, 7, 0.96));
+}
+
+.flow__gate-actions button:nth-child(3),
+.flow__memory-actions button:nth-child(2),
+.flow__effect-actions button:nth-child(1) {
+    border-color: color-mix(in srgb, var(--flow-danger) 64%, var(--flow-border));
+    background: linear-gradient(180deg, rgba(154, 43, 69, 0.9), rgba(67, 13, 28, 0.96));
+}
+
+.flow__ops {
+    grid-template-columns: minmax(230px, 0.72fr) minmax(320px, 1fr) minmax(320px, 0.86fr);
+}
+
+.flow__kanban,
+.flow__run-observability,
+.flow__events {
+    border-radius: var(--flow-radius-lg);
+}
+
+.flow__kanban {
+    background: rgba(5, 12, 22, 0.86);
+}
+
+.flow__kanban-column {
+    border-left: 1px dashed rgba(79, 224, 255, 0.16);
+    padding-left: var(--flow-space-2);
+}
+
+.flow__kanban-column h3,
+.flow__panel h3,
+.flow__run-observability h3,
+.flow__events h3,
+.flow__agent-library-header h3,
+.flow__workflow-json-header h3 {
+    color: var(--flow-text);
+}
+
+.flow__workload {
+    border-left: 3px solid var(--flow-accent);
+}
+
+.flow__workload-artifacts button,
+.flow__artifact-selector-item--selected {
+    border-color: var(--flow-accent);
+    box-shadow: 0 0 16px rgba(79, 224, 255, 0.16);
+}
+
+.flow__artifact-viewer,
+.flow__artifact-json pre,
+.flow__artifact-markdown pre,
+.flow__artifact-patch,
+.flow__artifact-log,
+.flow__panel pre,
+.flow__second-run-suggestion pre {
+    background: rgba(2, 7, 13, 0.92);
+    border-color: rgba(79, 224, 255, 0.18);
+    color: var(--flow-text);
+}
+
+.flow__effect-card {
+    border-left-color: var(--flow-muted);
+}
+
+.flow__effect-card--applied,
+.flow__effect-card--approved,
+.flow__memory-candidate--written,
+.flow__save-preview-item--added {
+    border-left-color: var(--flow-success);
+    border-color: color-mix(in srgb, var(--flow-success) 38%, var(--flow-border));
+}
+
+.flow__effect-card--blocked,
+.flow__effect-card--failed,
+.flow__effect-card--rejected,
+.flow__memory-candidate--rejected,
+.flow__save-preview-item--removed {
+    border-left-color: var(--flow-danger);
+    border-color: color-mix(in srgb, var(--flow-danger) 38%, var(--flow-border));
+}
+
+.flow__effect-card--proposed,
+.flow__save-preview-item--changed {
+    border-left-color: var(--flow-warning);
+    border-color: color-mix(in srgb, var(--flow-warning) 38%, var(--flow-border));
+}
+
+.flow__events article {
+    border-bottom: 0;
+    padding: var(--flow-space-2);
+}
+
+.flow__error,
+.flow__validation,
+.flow__inline-validation,
+.flow__runtime-status-warning {
+    border-color: var(--flow-danger);
+    border-left-color: var(--flow-danger);
+    border-radius: var(--flow-radius-sm);
+    background: rgba(64, 9, 24, 0.5);
+    color: #ffdbe2;
+}
+
+.flow__inline-validation:not(.flow__inline-validation--error) {
+    border-left-color: var(--flow-warning);
+    background: rgba(73, 44, 8, 0.48);
+}
+
+.flow__link-button,
+.flow__workflow-json-selection code,
+.flow__workflow-json-issue code {
+    color: var(--flow-accent);
+}
+
+@media (max-width: 1180px) {
+    .flow__ops {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 940px) {
+    .flow__header,
+    .flow__main,
+    .flow__ops {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flow__actions {
+        justify-content: flex-start;
+    }
+}
+
+/* CyberVinci Flow ergonomic restyle. Keep this block last so it overrides the legacy console skin. */
+.flow-widget {
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+}
+
+.flow {
+    --flow-bg: var(--theia-editor-background);
+    --flow-surface: var(--theia-sideBar-background);
+    --flow-panel: var(--theia-editorWidget-background);
+    --flow-panel-alt: var(--theia-input-background);
+    --flow-text: var(--theia-editor-foreground);
+    --flow-muted: var(--theia-descriptionForeground);
+    --flow-border: var(--theia-panel-border);
+    --flow-focus: var(--theia-focusBorder);
+    --flow-link: var(--theia-textLink-foreground);
+    --flow-success: var(--theia-charts-green);
+    --flow-warning: var(--theia-charts-yellow);
+    --flow-danger: var(--theia-errorForeground);
+    --flow-radius: 8px;
+    --flow-radius-sm: 6px;
+    --flow-space: 12px;
+
+    min-width: 0;
+    gap: var(--flow-space);
+    padding: var(--flow-space);
+    color: var(--flow-text);
+    background: var(--flow-bg);
+    overflow: auto;
+    scrollbar-color: color-mix(in srgb, var(--flow-muted) 45%, transparent) transparent;
+}
+
+.flow::before {
+    content: none;
+}
+
+.flow *,
+.flow *::before,
+.flow *::after {
+    box-sizing: border-box;
+}
+
+.flow button,
+.flow select,
+.flow textarea,
+.flow input {
+    min-width: 0;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius-sm);
+    background: var(--flow-panel-alt);
+    color: var(--flow-text);
+    font-family: var(--theia-ui-font-family);
+    font-size: 12px;
+    box-shadow: none;
+}
+
+.flow input,
+.flow select {
+    min-height: 30px;
+}
+
+.flow textarea {
+    width: 100%;
+    min-height: 72px;
+    resize: vertical;
+    line-height: 1.45;
+}
+
+.flow input::placeholder,
+.flow textarea::placeholder {
+    color: color-mix(in srgb, var(--flow-muted) 72%, transparent);
+}
+
+.flow button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 0 10px;
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.flow button:hover:not(:disabled) {
+    border-color: var(--flow-focus);
+    box-shadow: none;
+}
+
+.flow button:focus-visible,
+.flow select:focus-visible,
+.flow textarea:focus-visible,
+.flow input:focus-visible,
+.flow__flow:focus {
+    outline: 1px solid var(--flow-focus);
+    outline-offset: 1px;
+    box-shadow: none;
+}
+
+.flow button:disabled,
+.flow select:disabled,
+.flow textarea:disabled,
+.flow input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.flow__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, auto);
+    gap: var(--flow-space);
+    align-items: start;
+    padding: var(--flow-space);
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-surface);
+    box-shadow: none;
+}
+
+.flow__header-primary,
+.flow__title-block,
+.flow__workflow-factories {
+    min-width: 0;
+}
+
+.flow__title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+}
+
+.flow__title-block h2 {
+    margin: 0;
+    color: var(--flow-text);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-shadow: none;
+}
+
+.flow__meta-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    margin-top: 6px;
+}
+
+.flow__meta-line span {
+    max-width: min(100%, 520px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid color-mix(in srgb, var(--flow-border) 78%, transparent);
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: var(--flow-panel);
+    color: var(--flow-muted);
+    font-size: 11px;
+}
+
+.flow__workflow-factories {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr) auto auto;
+    gap: 8px;
+    align-items: end;
+    margin-top: 10px;
+}
+
+.flow__factory-field,
+.flow__prompt-field,
+.flow__state-editor label,
+.flow__transition-editor label,
+.flow__memory-controls label,
+.flow__event-filters label {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+}
+
+.flow__factory-field span,
+.flow__prompt-field span,
+.flow__state-editor label > span,
+.flow__transition-editor label > span,
+.flow__memory-controls label > span,
+.flow__event-filters label > span {
+    color: var(--flow-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.flow__workflow-factories select {
+    width: 100%;
+    min-height: 30px;
+}
+
+.flow__actions {
+    display: grid;
+    gap: 6px;
+    max-width: none;
+    padding: 8px;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-panel);
+}
+
+.flow__action-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+}
+
+.flow__action-group + .flow__action-group {
+    padding-top: 6px;
+    border-top: 1px solid color-mix(in srgb, var(--flow-border) 70%, transparent);
+}
+
+.flow__actions button,
+.flow__flow-toolbar button,
+.flow__agent-library-item div button {
+    width: 30px;
+    min-width: 30px;
+    min-height: 28px;
+    padding: 0;
+}
+
+.flow__action-group--run button:first-child {
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+}
+
+.flow__runtime-status {
+    margin-top: 10px;
+    padding: 0;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-panel);
+}
+
+.flow__runtime-status summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--flow-muted);
+}
+
+.flow__runtime-status summary strong {
+    color: var(--flow-text);
+    font-weight: 600;
+}
+
+.flow__runtime-status summary small {
+    color: var(--flow-danger);
+}
+
+.flow__runtime-status-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 10px 8px;
+}
+
+.flow__runtime-status-grid--capabilities {
+    max-width: none;
+}
+
+.flow__status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 260px;
+    min-height: 24px;
+    border: 1px solid var(--flow-border);
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: var(--flow-bg);
+    font-size: 11px;
+    color: var(--flow-muted);
+}
+
+.flow__status-pill::before {
+    content: none;
+}
+
+.flow__status-pill span,
+.flow__status-pill strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__status-pill--external,
+.flow__status-pill--available {
+    border-color: color-mix(in srgb, var(--flow-success) 55%, var(--flow-border));
+    color: var(--flow-success);
+}
+
+.flow__status-pill--simulated,
+.flow__status-pill--mock {
+    border-color: color-mix(in srgb, var(--flow-warning) 55%, var(--flow-border));
+    color: var(--flow-warning);
+}
+
+.flow__status-pill--capability-missing,
+.flow__status-pill--missing,
+.flow__status-pill--blocked,
+.flow__status-pill--fallback-error {
+    border-color: color-mix(in srgb, var(--flow-danger) 55%, var(--flow-border));
+    color: var(--flow-danger);
+}
+
+.flow__prompt {
+    padding: var(--flow-space);
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-surface);
+    box-shadow: none;
+}
+
+.flow__prompt textarea {
+    min-height: 76px;
+}
+
+.flow__agent-library,
+.flow__kanban,
+.flow__run-observability,
+.flow__events,
+.flow__save-preview {
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-surface);
+    box-shadow: none;
+}
+
+.flow__agent-library {
+    padding: var(--flow-space);
+}
+
+.flow__agent-library-header h3,
+.flow__panel h3,
+.flow__run-observability h3,
+.flow__events h3,
+.flow__workflow-json-header h3,
+.flow__flow-header h3 {
+    margin: 0;
+    color: var(--flow-text);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-shadow: none;
+}
+
+.flow__agent-library-list {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    max-height: 150px;
+    padding-right: 2px;
+}
+
+.flow__agent-library-item,
+.flow__artifact-selector-item,
+.flow__events article,
+.flow__run-list article,
+.flow__workflow-json-issue,
+.flow__artifact-issues article {
+    border: 1px solid color-mix(in srgb, var(--flow-border) 80%, transparent);
+    border-radius: var(--flow-radius-sm);
+    background: var(--flow-panel);
+    box-shadow: none;
+}
+
+.flow__agent-library-item {
+    grid-template-columns: minmax(0, 1fr) minmax(72px, auto) auto;
+    padding: 6px;
+}
+
+.flow__agent-library-open {
+    width: 100%;
+    color: var(--flow-link) !important;
+}
+
+.flow__main {
+    grid-template-columns: minmax(460px, 1fr) minmax(340px, 420px);
+    gap: var(--flow-space);
+    min-height: 640px;
+}
+
+.flow__canvas-pane {
+    display: grid;
+    grid-template-rows: minmax(460px, 1fr) auto;
+    gap: var(--flow-space);
+    min-width: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.flow__flow {
+    display: flex;
+    flex-direction: column;
+    min-height: 520px;
+    overflow: hidden;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-surface);
+}
+
+.flow__flow-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--flow-border);
+    background: var(--flow-panel);
+}
+
+.flow__flow-header div,
+.flow__flow-header span {
+    min-width: 0;
+}
+
+.flow__flow-header span {
+    overflow: hidden;
+    color: var(--flow-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 460px;
+    overflow: hidden;
+    background:
+        linear-gradient(color-mix(in srgb, var(--flow-border) 35%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--flow-border) 35%, transparent) 1px, transparent 1px),
+        var(--flow-bg);
+    background-size: 28px 28px;
+}
+
+.flow__flow-toolbar,
+.flow__flow-palette,
+.flow__flow-minimap {
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: color-mix(in srgb, var(--flow-panel) 94%, transparent);
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.flow__flow-toolbar {
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 220px);
+    flex-wrap: wrap;
+}
+
+.flow__flow-toolbar span {
+    color: var(--flow-muted);
+}
+
+.flow__flow-palette {
+    top: 10px;
+    right: 10px;
+    left: auto;
+    width: 184px;
+    max-width: 184px;
+    max-height: calc(100% - 124px);
+    overflow: auto;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 8px;
+}
+
+.flow__flow-palette-title {
+    display: block;
+    padding: 2px 2px 4px;
+    color: var(--flow-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.flow__flow-palette button {
+    min-height: 30px;
+    justify-content: start;
+    border-color: var(--flow-border);
+    background: var(--flow-panel-alt);
+    color: var(--flow-text);
+}
+
+.flow__flow-viewport {
+    inset: 0;
+}
+
+.flow__flow-node {
+    align-content: center;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--flow-border);
+    border-left: 4px solid var(--flow-muted);
+    border-radius: var(--flow-radius);
+    background: var(--flow-panel);
+    color: var(--flow-text);
+    box-shadow: none;
+}
+
+.flow__flow-node strong,
+.flow__flow-node span,
+.flow__flow-node small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-node strong {
+    color: var(--flow-text);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.flow__flow-node span,
+.flow__flow-node small {
+    color: var(--flow-muted);
+}
+
+.flow__flow-node--running {
+    border-left-color: var(--flow-link);
+}
+
+.flow__flow-node--done {
+    border-left-color: var(--flow-success);
+}
+
+.flow__flow-node--waiting,
+.flow__flow-node--review,
+.flow__flow-node--warning {
+    border-left-color: var(--flow-warning);
+}
+
+.flow__flow-node--failed,
+.flow__flow-node--error {
+    border-left-color: var(--flow-danger);
+}
+
+.flow__flow-node--selected,
+.flow__flow-node--connecting {
+    border-color: var(--flow-focus);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--flow-focus) 28%, transparent);
+}
+
+.flow__flow-node-connector {
+    right: -13px;
+    border-color: var(--flow-focus);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+    box-shadow: none;
+}
+
+.flow__flow-edge line,
+.flow__flow-edge marker path {
+    stroke: var(--flow-muted);
+    fill: var(--flow-muted);
+    filter: none;
+}
+
+.flow__flow-edge text {
+    fill: var(--flow-muted);
+    stroke: var(--flow-bg);
+    stroke-width: 4px;
+    paint-order: stroke;
+    font-size: 11px;
+}
+
+.flow__flow-edge--selected line,
+.flow__flow-edge:focus line {
+    stroke: var(--flow-focus);
+}
+
+.flow__flow-edge--warning line,
+.flow__flow-edge--warning marker path,
+.flow__flow-edge-guard {
+    stroke: var(--flow-warning);
+    fill: var(--flow-warning) !important;
+}
+
+.flow__flow-edge--error line,
+.flow__flow-edge--error marker path,
+.flow__flow-issue-marker {
+    stroke: var(--flow-danger);
+    fill: var(--flow-danger) !important;
+}
+
+.flow__flow-minimap {
+    right: 10px;
+    bottom: 10px;
+}
+
+.flow__workflow-json {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    max-height: 380px;
+    margin: 0;
+    overflow: auto;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-surface);
+    padding: var(--flow-space);
+    box-shadow: none;
+}
+
+.flow__workflow-json-header,
+.flow__workflow-json-selection,
+.flow__save-preview-header {
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.flow__workflow-json textarea {
+    min-height: 220px;
+    max-height: 460px;
+    font-family: var(--theia-editor-font-family);
+}
+
+.flow__workflow-json-issue {
+    grid-template-columns: minmax(80px, 150px) minmax(0, 1fr);
+}
+
+.flow__inspector {
+    min-width: 0;
+    max-height: calc(100vh - 188px);
+    overflow: auto;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-surface);
+    box-shadow: none;
+}
+
+.flow__panel {
+    margin: 0;
+    padding: var(--flow-space);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.flow__kv {
+    grid-template-columns: minmax(78px, 0.34fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    margin-bottom: 7px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid color-mix(in srgb, var(--flow-border) 65%, transparent);
+}
+
+.flow__kv span {
+    color: var(--flow-muted);
+}
+
+.flow__kv strong,
+.flow__run-list strong,
+.flow__run-list span,
+.flow__run-list p,
+.flow__workload strong,
+.flow__workload span,
+.flow__workload small,
+.flow__artifact-viewer header span,
+.flow__effect-card header span,
+.flow__effect-card header code {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.flow__state-editor,
+.flow__transition-editor,
+.flow__branch-editor,
+.flow__agent-markdown,
+.flow__run-list,
+.flow__json-block,
+.flow__event-summary,
+.flow__context-pack,
+.flow__audit-summary,
+.flow__final-report-summary,
+.flow__second-run-suggestion,
+.flow__effect-review,
+.flow__memory-review {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--flow-border);
+}
+
+.flow__section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.flow__section-heading h4,
+.flow__state-editor h4,
+.flow__transition-editor h4,
+.flow__branch-editor h4,
+.flow__agent-markdown h4,
+.flow__run-list h4,
+.flow__json-block h4,
+.flow__event-summary h4,
+.flow__context-pack h4,
+.flow__audit-summary h4,
+.flow__final-report-summary h4,
+.flow__second-run-suggestion h4,
+.flow__memory-review h4,
+.flow__effect-review h4 {
+    margin: 0;
+    color: var(--flow-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.flow__form-section {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--flow-border) 70%, transparent);
+    border-radius: var(--flow-radius);
+    background: color-mix(in srgb, var(--flow-panel) 72%, transparent);
+}
+
+.flow__form-section h5 {
+    margin: 0;
+    color: var(--flow-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.flow__editor-grid,
+.flow__editor-grid--two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+}
+
+.flow__agent-field {
+    grid-template-columns: minmax(0, 1fr) 32px;
+}
+
+.flow__branch-list,
+.flow__branch-actions,
+.flow__gate-actions,
+.flow__memory-actions,
+.flow__effect-actions,
+.flow__second-run-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__branch-list span {
+    max-width: 100%;
+    border-radius: 999px;
+    background: var(--flow-panel);
+    color: var(--flow-muted);
+}
+
+.flow__gate,
+.flow__effect-card,
+.flow__memory-candidate,
+.flow__workload,
+.flow__artifact-viewer {
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius);
+    background: var(--flow-panel);
+    box-shadow: none;
+}
+
+.flow__gate {
+    border-left: 4px solid var(--flow-warning);
+}
+
+.flow__effect-card,
+.flow__memory-candidate--written,
+.flow__memory-candidate--rejected {
+    border-left-width: 4px;
+}
+
+.flow__ops {
+    grid-template-columns: minmax(260px, 0.85fr) minmax(340px, 1.1fr) minmax(320px, 0.95fr);
+    gap: var(--flow-space);
+    align-items: start;
+    min-height: 260px;
+}
+
+.flow__kanban {
+    grid-template-columns: repeat(7, minmax(150px, 1fr));
+    max-height: 380px;
+    padding: 8px;
+}
+
+.flow__kanban-column {
+    min-width: 0;
+    padding-left: 0;
+    border-left: 0;
+}
+
+.flow__kanban-column h3 {
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--flow-border);
+    color: var(--flow-muted);
+}
+
+.flow__workload {
+    border-left: 4px solid var(--flow-link);
+}
+
+.flow__workload-artifacts button {
+    max-width: 100%;
+}
+
+.flow__run-observability,
+.flow__events {
+    max-height: 560px;
+    padding: var(--flow-space);
+}
+
+.flow__artifact-selector {
+    max-height: 180px;
+}
+
+.flow__artifact-selector-item {
+    grid-template-columns: 16px minmax(0, 1fr) minmax(72px, auto);
+}
+
+.flow__artifact-viewer {
+    padding: 10px;
+}
+
+.flow__artifact-json pre,
+.flow__artifact-markdown pre,
+.flow__artifact-patch,
+.flow__artifact-log,
+.flow__panel pre,
+.flow__second-run-suggestion pre {
+    max-width: 100%;
+    max-height: 300px;
+    border: 1px solid var(--flow-border);
+    border-radius: var(--flow-radius-sm);
+    background: var(--flow-bg);
+    color: var(--flow-text);
+    box-shadow: none;
+}
+
+.flow__memory-candidate header,
+.flow__memory-controls {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.flow__memory-controls label {
+    flex: 1 1 150px;
+}
+
+.flow__events {
+    grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.flow__event-filters {
+    grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)) 32px;
+}
+
+.flow__events article {
+    grid-template-columns: minmax(58px, auto) minmax(92px, 0.65fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+}
+
+.flow__events article span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.flow__error,
+.flow__validation,
+.flow__inline-validation,
+.flow__runtime-status-warning {
+    border: 1px solid color-mix(in srgb, var(--flow-danger) 58%, var(--flow-border));
+    border-left: 4px solid var(--flow-danger);
+    border-radius: var(--flow-radius);
+    background: color-mix(in srgb, var(--flow-danger) 12%, var(--flow-panel));
+    color: var(--flow-text);
+}
+
+.flow__inline-validation:not(.flow__inline-validation--error) {
+    border-color: color-mix(in srgb, var(--flow-warning) 58%, var(--flow-border));
+    border-left-color: var(--flow-warning);
+    background: color-mix(in srgb, var(--flow-warning) 12%, var(--flow-panel));
+}
+
+.flow__link-button,
+.flow__workflow-json-selection code,
+.flow__workflow-json-issue code {
+    color: var(--flow-link);
+}
+
+@media (max-width: 1280px) {
+    .flow__header,
+    .flow__main,
+    .flow__ops {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flow__actions,
+    .flow__action-group {
+        justify-content: flex-start;
+    }
+
+    .flow__inspector,
+    .flow__run-observability,
+    .flow__events {
+        max-height: none;
+    }
+}
+
+@media (max-width: 820px) {
+    .flow {
+        padding: 8px;
+    }
+
+    .flow__workflow-factories {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flow__flow-toolbar {
+        max-width: calc(100% - 20px);
+    }
+
+    .flow__flow-palette {
+        position: absolute;
+        top: 54px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-width: none;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    }
+
+    .flow__flow-viewport {
+        inset: 0;
+    }
+
+    .flow__events article,
+    .flow__kv,
+    .flow__save-preview-item {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Native CyberVinci workspace pass: compact chrome, larger canvas, n8n-like nodes. */
+.flow,
+.flow * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.flow button,
+.flow select,
+.flow textarea,
+.flow input,
+.flow__header,
+.flow__prompt,
+.flow__agent-library,
+.flow__canvas-pane,
+.flow__inspector,
+.flow__kanban,
+.flow__run-observability,
+.flow__events,
+.flow__panel,
+.flow__workflow-json,
+.flow__save-preview,
+.flow__artifact-viewer,
+.flow__effect-card,
+.flow__memory-candidate,
+.flow__workload,
+.flow__gate,
+.flow__flow,
+.flow__flow-stage,
+.flow__flow-node,
+.flow__flow-toolbar,
+.flow__flow-palette,
+.flow__flow-minimap,
+.flow__menu-panel,
+.flow__run-history,
+.flow__statusbar {
+    background-image: none !important;
+}
+
+.flow {
+    display: grid;
+    grid-template-rows: auto auto auto minmax(620px, 1fr) auto auto;
+    height: 100%;
+    padding: 8px;
+    gap: 8px;
+    background: var(--theia-editor-background);
+}
+
+.flow__header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 0;
+    border-width: 0 0 1px;
+    background: var(--theia-editor-background);
+}
+
+.flow__title-block h2 {
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.flow__meta-line {
+    margin-top: 3px;
+    gap: 4px;
+}
+
+.flow__meta-line span {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    font-size: 11px;
+}
+
+.flow__top-menus,
+.flow__run-controls,
+.flow__menu-row,
+.flow__menu-grid {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flow__top-menus {
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.flow__menu {
+    position: relative;
+}
+
+.flow__menu summary,
+.flow__history-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0 8px;
+    color: var(--theia-editor-foreground);
+    cursor: pointer;
+    list-style: none;
+    white-space: nowrap;
+}
+
+.flow__menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.flow__menu summary:hover,
+.flow__history-button:hover:not(:disabled) {
+    border-color: var(--theia-panel-border);
+    background: var(--theia-toolbar-hoverBackground, var(--theia-list-hoverBackground));
+}
+
+.flow__menu[open] summary {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+    color: var(--theia-list-activeSelectionForeground);
+}
+
+.flow__menu-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 50;
+    display: grid;
+    gap: 10px;
+    width: min(520px, calc(100vw - 42px));
+    max-height: min(72vh, 720px);
+    overflow: auto;
+    padding: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-menu-background, var(--theia-editorWidget-background));
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+}
+
+.flow__menu--wide .flow__menu-panel {
+    width: min(760px, calc(100vw - 42px));
+}
+
+.flow__menu-panel--workflow {
+    width: min(480px, calc(100vw - 42px));
+}
+
+.flow__menu-row {
+    align-items: end;
+}
+
+.flow__menu-row .flow__factory-field {
+    flex: 1 1 auto;
+}
+
+.flow__menu-grid {
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.flow__menu-grid button,
+.flow__menu-panel > button {
+    justify-content: flex-start;
+    min-width: 146px;
+}
+
+.flow__run-controls {
+    justify-content: flex-end;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.flow__run-controls button {
+    width: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    color: var(--theia-icon-foreground, var(--theia-editor-foreground));
+}
+
+.flow__run-controls button:hover:not(:disabled) {
+    border-color: var(--theia-panel-border);
+    background: var(--theia-toolbar-hoverBackground, var(--theia-list-hoverBackground));
+}
+
+.flow__prompt {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.flow__prompt-field {
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: start;
+}
+
+.flow__prompt-field textarea {
+    min-height: 44px;
+    max-height: 96px;
+}
+
+.flow__run-history {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-sideBar-background);
+}
+
+.flow__run-history .flow__section-heading h3 {
+    margin: 0;
+    font-size: 13px;
+}
+
+.flow__run-history-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px;
+    max-height: 180px;
+    overflow: auto;
+}
+
+.flow__run-history-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 8px;
+    justify-content: stretch;
+    align-items: start;
+    min-height: 54px;
+    padding: 7px 9px;
+    text-align: left;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-editor-foreground);
+}
+
+.flow__run-history-item strong,
+.flow__run-history-item small,
+.flow__run-history-item code {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__run-history-item span {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__run-history-item code {
+    grid-column: 1 / -1;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__run-history-item--active {
+    border-color: var(--theia-focusBorder);
+}
+
+.flow__main {
+    grid-template-columns: minmax(720px, 1fr) minmax(300px, 360px);
+    min-height: min(76vh, 860px);
+    gap: 8px;
+}
+
+.flow__canvas-pane {
+    display: block;
+}
+
+.flow__flow {
+    min-height: min(76vh, 860px);
+    height: 100%;
+    border-radius: 6px;
+    background: var(--theia-editor-background);
+}
+
+.flow__flow-header {
+    min-height: 34px;
+    padding: 6px 10px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-stage {
+    min-height: calc(min(76vh, 860px) - 35px);
+    background:
+        linear-gradient(color-mix(in srgb, var(--theia-panel-border) 45%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--theia-panel-border) 45%, transparent) 1px, transparent 1px),
+        var(--theia-editor-background) !important;
+    background-size: 28px 28px !important;
+}
+
+.flow__flow-toolbar {
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 224px);
+    padding: 3px;
+    border-radius: 5px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-palette {
+    top: 8px;
+    right: 8px;
+    width: 196px;
+    max-width: 196px;
+    border-radius: 5px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-palette button {
+    border-radius: 4px;
+    background: var(--theia-input-background);
+}
+
+.flow__flow-node {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-left: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-node-icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 5px;
+    background: var(--theia-input-background);
+    color: var(--theia-icon-foreground, var(--theia-editor-foreground));
+}
+
+.flow__flow-node-body {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__flow-node-body strong,
+.flow__flow-node-body span,
+.flow__flow-node-body small {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__flow-node--running .flow__flow-node-icon {
+    border-color: var(--theia-textLink-foreground);
+    color: var(--theia-textLink-foreground);
+}
+
+.flow__flow-node--done .flow__flow-node-icon {
+    border-color: var(--theia-charts-green);
+    color: var(--theia-charts-green);
+}
+
+.flow__flow-node--waiting .flow__flow-node-icon,
+.flow__flow-node--review .flow__flow-node-icon,
+.flow__flow-node--warning .flow__flow-node-icon {
+    border-color: var(--theia-charts-yellow);
+    color: var(--theia-charts-yellow);
+}
+
+.flow__flow-node--failed .flow__flow-node-icon,
+.flow__flow-node--error .flow__flow-node-icon {
+    border-color: var(--theia-errorForeground);
+    color: var(--theia-errorForeground);
+}
+
+.flow__flow-node-handle,
+.flow__flow-node-connector {
+    position: absolute;
+    top: 50%;
+    display: block;
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+    padding: 0;
+    border: 2px solid var(--theia-editorWidget-background);
+    border-radius: 50%;
+    background: var(--theia-descriptionForeground);
+    transform: translateY(-50%);
+}
+
+.flow__flow-node-handle--input {
+    left: -7px;
+}
+
+.flow__flow-node-connector {
+    right: -7px;
+    cursor: crosshair;
+}
+
+.flow__flow-node-connector i {
+    display: none;
+}
+
+.flow__flow-node-connector:hover:not(:disabled),
+.flow__flow-node-connector:focus-visible {
+    background: var(--theia-focusBorder);
+    outline: 0;
+}
+
+.flow__flow-edge path {
+    fill: none;
+    stroke: var(--theia-descriptionForeground);
+    stroke-width: 1.6;
+}
+
+.flow__flow-edge line {
+    display: none;
+}
+
+.flow__flow-edge marker path {
+    fill: var(--theia-descriptionForeground);
+}
+
+.flow__flow-edge--selected path,
+.flow__flow-edge:focus path {
+    stroke: var(--theia-focusBorder);
+    stroke-width: 2.2;
+}
+
+.flow__flow-edge--warning path,
+.flow__flow-edge--warning marker path {
+    stroke: var(--theia-charts-yellow);
+    fill: var(--theia-charts-yellow);
+}
+
+.flow__flow-edge--error path,
+.flow__flow-edge--error marker path {
+    stroke: var(--theia-errorForeground);
+    fill: var(--theia-errorForeground);
+}
+
+.flow__inspector {
+    max-height: min(76vh, 860px);
+    border-radius: 6px;
+}
+
+.flow__ops {
+    grid-template-columns: minmax(0, 0.8fr) minmax(360px, 1.1fr) minmax(320px, 0.9fr);
+    max-height: 420px;
+}
+
+.flow__kanban,
+.flow__run-observability,
+.flow__events {
+    max-height: 420px;
+    border-radius: 6px;
+}
+
+.flow__statusbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    min-height: 26px;
+    border-top: 1px solid var(--theia-panel-border);
+    background: var(--theia-statusBar-background, var(--theia-editor-background));
+    color: var(--theia-statusBar-foreground, var(--theia-editor-foreground));
+}
+
+.flow__statusbar .flow__runtime-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 3px 8px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.flow__statusbar .flow__runtime-status-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.flow__statusbar .flow__status-pill {
+    max-width: 160px;
+    min-height: 18px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 11px;
+}
+
+.flow__statusbar .flow__status-pill span::after {
+    content: ':';
+}
+
+.flow__statusbar .flow__runtime-status-warning {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--theia-errorForeground);
+    white-space: nowrap;
+}
+
+.flow .flow__gate-actions button:nth-child(n),
+.flow .flow__memory-actions button:nth-child(n),
+.flow .flow__effect-actions button:nth-child(n),
+.flow .flow__second-run-actions button:nth-child(n) {
+    border-color: var(--theia-button-border, transparent);
+    background: var(--theia-button-background);
+    color: var(--theia-button-foreground);
+}
+
+@media (max-width: 1280px) {
+    .flow__header {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+    }
+
+    .flow__top-menus,
+    .flow__run-controls {
+        justify-content: flex-start;
+    }
+
+    .flow__main {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 680px;
+    }
+
+    .flow__flow,
+    .flow__inspector {
+        max-height: none;
+    }
+}
+
+@media (max-width: 820px) {
+    .flow__top-menus {
+        flex-wrap: wrap;
+    }
+
+    .flow__prompt-field {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flow__menu-panel,
+    .flow__menu--wide .flow__menu-panel {
+        right: auto;
+        left: 0;
+        width: calc(100vw - 30px);
+    }
+
+    .flow__ops {
+        grid-template-columns: minmax(0, 1fr);
+        max-height: none;
+    }
+
+    .flow__kanban,
+    .flow__run-observability,
+    .flow__events {
+        max-height: none;
+    }
+}
+
+/* Final CyberVinci-native tune-up: calm chrome, larger work area, automation-style nodes. */
+.flow {
+    position: relative;
+    grid-template-rows: auto auto auto minmax(700px, 1fr) auto auto;
+    gap: 6px;
+    padding: 6px;
+    color: var(--theia-editor-foreground);
+}
+
+.flow,
+.flow button,
+.flow select,
+.flow textarea,
+.flow input,
+.flow__menu-panel,
+.flow__run-history,
+.flow__flow,
+.flow__flow-stage,
+.flow__flow-node,
+.flow__flow-toolbar,
+.flow__flow-palette,
+.flow__flow-minimap,
+.flow__inspector,
+.flow__kanban,
+.flow__run-observability,
+.flow__events,
+.flow__runtime-status,
+.flow__status-pill {
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.flow__header {
+    grid-template-columns: minmax(180px, 0.7fr) minmax(320px, 1fr) auto;
+    min-height: 38px;
+    padding: 4px 8px;
+    border: 0;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background, var(--theia-editor-background));
+}
+
+.flow__title-block h2 {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__meta-line {
+    max-width: 100%;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__meta-line span {
+    max-width: 150px;
+    color: inherit;
+}
+
+.flow__top-menus {
+    min-width: 0;
+    justify-content: center;
+}
+
+.flow__menu summary,
+.flow__history-button,
+.flow__run-controls button {
+    border-radius: 4px;
+    background: transparent;
+}
+
+.flow__menu[open] summary {
+    border-color: var(--theia-panel-border);
+    background: var(--theia-toolbar-activeBackground, var(--theia-list-hoverBackground));
+    color: var(--theia-editor-foreground);
+}
+
+.flow__menu-panel {
+    top: calc(100% + 4px);
+    border-radius: 4px;
+    background: var(--theia-menu-background, var(--theia-editorWidget-background));
+}
+
+.flow__menu-panel .flow__agent-library,
+.flow__menu-panel .flow__workflow-json {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.flow__menu-panel .flow__agent-library-list {
+    max-height: 360px;
+}
+
+.flow__menu-panel .flow__workflow-json textarea {
+    min-height: 260px;
+    max-height: 46vh;
+}
+
+.flow__menu-grid button,
+.flow__menu-panel > button {
+    min-height: 28px;
+}
+
+.flow__run-controls {
+    gap: 3px;
+}
+
+.flow__run-controls button {
+    width: 26px;
+    min-width: 26px;
+    min-height: 26px;
+}
+
+.flow__prompt {
+    padding: 0 2px;
+}
+
+.flow__prompt-field {
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 8px;
+}
+
+.flow__prompt-field > span {
+    padding-top: 7px;
+}
+
+.flow__prompt-field textarea {
+    min-height: 40px;
+    max-height: 88px;
+    resize: vertical;
+}
+
+.flow__run-history {
+    position: absolute;
+    top: 46px;
+    right: 8px;
+    z-index: 75;
+    width: min(560px, calc(100% - 16px));
+    max-height: min(70vh, 640px);
+    overflow: auto;
+    border-radius: 4px;
+    background: var(--theia-menu-background, var(--theia-editorWidget-background));
+}
+
+.flow__run-history-list {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    max-height: 460px;
+}
+
+.flow__run-history-item {
+    border-radius: 4px;
+}
+
+.flow__main {
+    grid-template-columns: minmax(780px, 1fr) minmax(300px, 340px);
+    min-height: max(700px, calc(100vh - 210px));
+    gap: 8px;
+}
+
+.flow__canvas-pane {
+    min-width: 0;
+}
+
+.flow__flow {
+    min-height: max(680px, calc(100vh - 230px));
+    border-radius: 4px;
+    border-color: var(--theia-panel-border);
+    background: #0d0d0c;
+}
+
+.flow__flow-header {
+    min-height: 32px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__flow-stage {
+    min-height: calc(max(680px, calc(100vh - 230px)) - 33px);
+    background: linear-gradient(180deg, #12110f 0%, #0b0a09 52%, #080807 100%) !important;
+    background-size: auto !important;
+}
+
+.flow__flow-toolbar,
+.flow__flow-palette,
+.flow__flow-minimap {
+    border-color: var(--theia-panel-border);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--theia-editorWidget-background) 96%, transparent);
+}
+
+.flow__flow-toolbar {
+    max-width: calc(100% - 232px);
+}
+
+.flow__flow-palette {
+    width: 204px;
+    max-width: 204px;
+}
+
+.flow__flow-palette-title {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__flow-palette button {
+    border-color: var(--theia-input-border, var(--theia-panel-border));
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground, var(--theia-editor-foreground));
+}
+
+.flow__flow-palette button:hover:not(:disabled),
+.flow__flow-palette button:focus-visible {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-hoverBackground, var(--theia-input-background));
+    color: var(--theia-list-hoverForeground, var(--theia-editor-foreground));
+}
+
+.flow__flow-node {
+    --flow-node-accent: #8aa0ff;
+    --flow-node-accent-soft: rgba(138, 160, 255, 0.14);
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 11px;
+    min-height: 68px;
+    padding: 13px 15px 13px 14px;
+    border: 1px solid rgba(213, 188, 151, 0.14);
+    border-left: 8px solid var(--flow-node-accent);
+    border-radius: 8px;
+    background-color: #201e1b;
+    background-image: linear-gradient(180deg, #282622 0%, #1c1a18 100%);
+    box-shadow:
+        0 18px 32px rgba(0, 0, 0, 0.36),
+        inset 7px 0 18px -17px var(--flow-node-accent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+}
+
+.flow__flow-node--type-input {
+    --flow-node-accent: #5aa7d8;
+    --flow-node-accent-soft: rgba(90, 167, 216, 0.15);
+}
+
+.flow__flow-node--type-context {
+    --flow-node-accent: #9977d9;
+    --flow-node-accent-soft: rgba(153, 119, 217, 0.14);
+}
+
+.flow__flow-node--type-agent {
+    --flow-node-accent: #64bc7d;
+    --flow-node-accent-soft: rgba(100, 188, 125, 0.14);
+}
+
+.flow__flow-node--type-parallel {
+    --flow-node-accent: #c08a52;
+    --flow-node-accent-soft: rgba(192, 138, 82, 0.15);
+}
+
+.flow__flow-node--type-join {
+    --flow-node-accent: #6cb8ae;
+    --flow-node-accent-soft: rgba(108, 184, 174, 0.15);
+}
+
+.flow__flow-node--type-condition {
+    --flow-node-accent: #d0bd62;
+    --flow-node-accent-soft: rgba(208, 189, 98, 0.14);
+}
+
+.flow__flow-node--type-gate {
+    --flow-node-accent: #ce7ca7;
+    --flow-node-accent-soft: rgba(206, 124, 167, 0.14);
+}
+
+.flow__flow-node--type-command {
+    --flow-node-accent: #8da0ad;
+    --flow-node-accent-soft: rgba(141, 160, 173, 0.14);
+}
+
+.flow__flow-node--type-memory_write {
+    --flow-node-accent: #b289d6;
+    --flow-node-accent-soft: rgba(178, 137, 214, 0.14);
+}
+
+.flow__flow-node--type-report {
+    --flow-node-accent: #78b9c8;
+    --flow-node-accent-soft: rgba(120, 185, 200, 0.14);
+}
+
+.flow__flow-node--running {
+    box-shadow: 0 0 0 1px rgba(90, 167, 216, 0.24), 0 18px 34px rgba(0, 0, 0, 0.36) !important;
+}
+
+.flow__flow-node--done {
+    box-shadow: 0 0 0 1px rgba(100, 188, 125, 0.22), 0 18px 34px rgba(0, 0, 0, 0.36) !important;
+}
+
+.flow__flow-node--waiting,
+.flow__flow-node--review,
+.flow__flow-node--warning {
+    box-shadow: 0 0 0 1px rgba(208, 189, 98, 0.22), 0 18px 34px rgba(0, 0, 0, 0.36) !important;
+}
+
+.flow__flow-node--failed,
+.flow__flow-node--error {
+    box-shadow: 0 0 0 1px rgba(210, 92, 105, 0.28), 0 18px 34px rgba(0, 0, 0, 0.36) !important;
+}
+
+.flow__flow-node--selected {
+    border-color: color-mix(in srgb, var(--flow-node-accent) 72%, rgba(213, 188, 151, 0.16));
+    outline: 1px solid color-mix(in srgb, var(--flow-node-accent) 54%, transparent);
+    outline-offset: 2px;
+}
+
+.flow__flow-node .flow__flow-node-icon {
+    width: 34px;
+    height: 34px;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--flow-node-accent);
+    font-size: 22px;
+}
+
+.flow__flow-node .flow__flow-node-icon i {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.flow__flow-node--type-agent .flow__flow-node-icon i {
+    font-size: 25px;
+}
+
+.flow__flow-node-body strong {
+    color: rgba(255, 251, 242, 0.96);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__flow-node-body span,
+.flow__flow-node-body small {
+    font-size: 11px;
+    color: rgba(199, 184, 163, 0.72);
+}
+
+.flow__flow-node-link-handle {
+    position: absolute;
+    top: 50%;
+    display: grid !important;
+    place-items: center;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    color: transparent !important;
+    box-shadow: none !important;
+    cursor: crosshair;
+    transform: translateY(-50%);
+}
+
+.flow__flow-node-link-handle::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 2px solid #171615;
+    border-radius: 999px;
+    background: #9d7a4f;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.24);
+    transition: background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.flow__flow-node-link-handle:hover:not(:disabled)::after,
+.flow__flow-node-link-handle:focus-visible::after {
+    background: #d7a76a;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.28), 0 0 0 8px rgba(215, 167, 106, 0.13);
+    transform: scale(1.1);
+}
+
+.flow__flow-node-link-handle:focus-visible {
+    outline: 0;
+}
+
+.flow__flow-node-connector {
+    right: -21px;
+}
+
+.flow__flow-node-connector i {
+    display: none !important;
+}
+
+.flow__flow-node-handle--input {
+    left: -21px;
+}
+
+.flow__flow-node--connecting .flow__flow-node-connector::after,
+.flow__flow-node--connection-target .flow__flow-node-handle--input::after {
+    background: #d7a76a;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.28), 0 0 0 9px rgba(215, 167, 106, 0.12);
+}
+
+.flow__flow-viewport--connecting .flow__flow-node {
+    cursor: crosshair;
+}
+
+.flow__flow-edge path {
+    stroke: rgba(167, 123, 73, 0.78);
+    stroke-width: 1.65;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.flow__flow-edge text {
+    fill: rgba(205, 181, 143, 0.78);
+    font-size: 11px;
+    stroke: #090908;
+    stroke-width: 4px;
+    paint-order: stroke;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.flow__flow-edge marker path {
+    fill: rgba(167, 123, 73, 0.78);
+}
+
+.flow__flow-edge--pending {
+    pointer-events: none;
+}
+
+.flow__flow-edge--pending path {
+    stroke: #d7a76a;
+    stroke-dasharray: 7 6;
+    stroke-width: 1.8;
+    opacity: 0.9;
+}
+
+.flow__flow-edge--pending marker path {
+    fill: #d7a76a;
+}
+
+.flow__flow-edge--selected path,
+.flow__flow-edge:focus path {
+    stroke: #d7a76a;
+    stroke-width: 2.1;
+}
+
+.flow__inspector {
+    max-height: max(680px, calc(100vh - 230px));
+}
+
+.flow__ops {
+    max-height: 360px;
+}
+
+.flow__kanban,
+.flow__run-observability,
+.flow__events {
+    max-height: 360px;
+}
+
+.flow__statusbar {
+    min-height: 22px;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.flow__statusbar .flow__runtime-status {
+    min-height: 22px;
+    padding: 1px 8px;
+}
+
+.flow__statusbar .flow__runtime-status-grid {
+    gap: 4px;
+}
+
+.flow__statusbar .flow__status-pill {
+    min-height: 18px;
+    max-width: 180px;
+    padding: 0 4px;
+    font-size: 10px;
+}
+
+.flow__statusbar .flow__status-pill strong {
+    font-weight: 600;
+}
+
+@media (max-width: 1280px) {
+    .flow__main {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 680px;
+    }
+
+    .flow__flow,
+    .flow__inspector {
+        min-height: 640px;
+    }
+
+    .flow__flow-stage {
+        min-height: 606px;
+    }
+}
+
+@media (max-width: 820px) {
+    .flow__header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flow__top-menus,
+    .flow__run-controls {
+        justify-content: flex-start;
+    }
+
+    .flow__menu-panel,
+    .flow__menu--wide .flow__menu-panel,
+    .flow__menu-panel--workflow {
+        width: calc(100vw - 28px);
+    }
+
+    .flow__run-history {
+        top: 94px;
+        right: 6px;
+        width: calc(100% - 12px);
+    }
+}
+
+/* CyberVinci menu polish: keep toolbar menus compact and shell-like. */
+.flow__top-menus {
+    align-items: center;
+    gap: 2px;
+}
+
+.flow__menu summary,
+.flow__history-button {
+    min-height: 26px;
+    border-radius: 3px;
+    padding: 0 7px;
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    font-size: 12px;
+}
+
+.flow__menu summary i,
+.flow__history-button i {
+    width: 16px;
+    text-align: center;
+}
+
+.flow__menu summary:hover,
+.flow__history-button:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--theia-menubar-selectionBackground, var(--theia-toolbar-hoverBackground, var(--theia-list-hoverBackground)));
+    color: var(--theia-menubar-selectionForeground, var(--theia-editor-foreground));
+}
+
+.flow__menu[open] summary,
+.flow__history-button--open {
+    border-color: transparent;
+    background: var(--theia-menubar-selectionBackground, var(--theia-list-hoverBackground));
+    color: var(--theia-menubar-selectionForeground, var(--theia-editor-foreground));
+}
+
+.flow__menu-panel {
+    top: calc(100% + 2px);
+    display: grid;
+    gap: 2px;
+    width: 292px;
+    max-height: min(68vh, 520px);
+    padding: 4px;
+    border-color: var(--theia-menu-border, var(--theia-panel-border));
+    border-radius: 3px;
+    background: var(--theia-menu-background, var(--theia-editorWidget-background));
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.26) !important;
+}
+
+.flow__menu-panel--workflow {
+    width: 356px;
+}
+
+.flow__menu-panel--file {
+    width: 248px;
+}
+
+.flow__menu-panel--agents {
+    width: min(520px, calc(100vw - 36px));
+}
+
+.flow__menu-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px;
+    align-items: end;
+    padding: 3px 4px;
+}
+
+.flow__menu-panel .flow__factory-field {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 3px 4px;
+}
+
+.flow__menu-panel .flow__factory-field > span,
+.flow__menu-panel .flow__agent-library-header span,
+.flow__menu-panel .flow__flow-palette-title {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__menu-panel select {
+    width: 100%;
+    min-height: 25px;
+    border-radius: 3px;
+}
+
+.flow__pattern-factory {
+    display: grid;
+    gap: 5px;
+    margin: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--theia-panel-border);
+}
+
+.flow__pattern-factory .flow__section-heading,
+.flow__pattern-stage-overrides .flow__section-heading,
+.flow__model-execution .flow__section-heading,
+.flow__super-node-editor .flow__section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.flow__pattern-factory h4,
+.flow__model-execution h4,
+.flow__super-node-editor h4 {
+    margin: 0;
+    font-size: 12px;
+}
+
+.flow__pattern-description {
+    margin: 0 4px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.flow__pattern-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 4px;
+}
+
+.flow__pattern-stage-overrides {
+    display: grid;
+    gap: 5px;
+    border-top: 1px solid var(--theia-panel-border);
+    padding-top: 6px;
+}
+
+.flow__pattern-stage-grid {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.4fr) repeat(6, minmax(96px, 1fr));
+    gap: 3px;
+    overflow-x: auto;
+}
+
+.flow__pattern-stage-header {
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.flow__pattern-stage-name {
+    min-width: 0;
+    display: grid;
+    gap: 1px;
+    align-content: center;
+}
+
+.flow__pattern-stage-name strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+}
+
+.flow__pattern-stage-name span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+}
+
+.flow__pattern-stage-grid select {
+    min-width: 96px;
+    height: 25px;
+    font-size: 11px;
+}
+
+.flow__factory-field--wide {
+    grid-column: 1 / -1;
+}
+
+.flow__factory-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__factory-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+}
+
+.flow__model-execution,
+.flow__super-node-editor {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background);
+}
+
+.flow__menu-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+}
+
+.flow__menu-grid button,
+.flow__menu-panel > button,
+.flow__menu-row > button,
+.flow__menu-panel .flow__agent-library-header button {
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    min-height: 26px;
+    border: 0;
+    border-radius: 3px;
+    padding: 0 8px;
+    background: transparent;
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    text-align: left;
+}
+
+.flow__menu-grid button i,
+.flow__menu-panel > button i,
+.flow__menu-row > button i,
+.flow__menu-panel .flow__agent-library-header button i {
+    width: 16px;
+    text-align: center;
+}
+
+.flow__menu-grid button:hover:not(:disabled),
+.flow__menu-panel > button:hover:not(:disabled),
+.flow__menu-row > button:hover:not(:disabled),
+.flow__menu-panel .flow__agent-library-header button:hover:not(:disabled),
+.flow__agent-library-item:hover {
+    background: var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground));
+    color: var(--theia-menu-selectionForeground, var(--theia-editor-foreground));
+}
+
+.flow__menu-grid button:disabled,
+.flow__menu-panel > button:disabled,
+.flow__menu-row > button:disabled {
+    opacity: 0.48;
+}
+
+.flow__menu-panel .flow__agent-library {
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.flow__menu-panel .flow__agent-library-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 2px 3px 4px;
+    border-bottom: 1px solid var(--theia-menu-separatorBackground, var(--theia-panel-border));
+}
+
+.flow__menu-panel .flow__agent-library-header h3 {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.flow__menu-panel .flow__agent-library-header button {
+    width: auto;
+    padding: 0 7px;
+}
+
+.flow__menu-panel .flow__agent-library-search {
+    grid-template-columns: 16px minmax(0, 1fr);
+    min-height: 26px;
+    padding: 0 7px;
+    border-radius: 3px;
+}
+
+.flow__menu-panel .flow__agent-library-category {
+    display: grid;
+    gap: 3px;
+    padding: 3px 4px;
+}
+
+.flow__menu-panel .flow__agent-library-category span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__menu-panel .flow__agent-library-category select {
+    width: 100%;
+    min-height: 25px;
+}
+
+.flow__menu-panel .flow__agent-library-search input {
+    height: 26px;
+}
+
+.flow__menu-panel .flow__agent-library-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    max-height: 310px;
+}
+
+.flow__menu-panel .flow__agent-library-list p {
+    margin: 6px 7px;
+}
+
+.flow__menu-panel .flow__agent-library-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px;
+    min-height: 30px;
+    padding: 2px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+}
+
+.flow__menu-panel .flow__agent-library-open {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    align-items: center;
+    gap: 2px 5px;
+    min-height: 26px;
+    padding: 0 5px;
+    text-align: left;
+}
+
+.flow__menu-panel .flow__agent-library-open small {
+    grid-column: 2;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__menu-panel .flow__agent-library-item time {
+    display: none;
+}
+
+.flow__menu-panel .flow__agent-library-item div {
+    gap: 1px;
+}
+
+.flow__menu-panel .flow__agent-library-item div button {
+    width: 24px;
+    min-height: 24px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+}
+
+.flow__run-history {
+    top: 42px;
+    right: 148px;
+    z-index: 76;
+    width: min(340px, calc(100% - 16px));
+    max-height: min(64vh, 480px);
+    gap: 2px;
+    padding: 4px;
+    border-color: var(--theia-menu-border, var(--theia-panel-border));
+    border-radius: 3px;
+    background: var(--theia-menu-background, var(--theia-editorWidget-background));
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.26) !important;
+}
+
+.flow__run-history .flow__section-heading {
+    padding: 2px 3px 4px;
+    border-bottom: 1px solid var(--theia-menu-separatorBackground, var(--theia-panel-border));
+}
+
+.flow__run-history .flow__section-heading h3 {
+    font-size: 12px;
+}
+
+.flow__run-history .flow__section-heading button {
+    width: 24px;
+    min-height: 24px;
+    border: 0;
+    background: transparent;
+}
+
+.flow__run-history-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    max-height: 410px;
+}
+
+.flow__run-history-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 34px;
+    padding: 4px 7px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+}
+
+.flow__run-history-item:hover:not(:disabled) {
+    background: var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground));
+}
+
+.flow__run-history-item--active {
+    background: var(--theia-list-activeSelectionBackground);
+    color: var(--theia-list-activeSelectionForeground);
+}
+
+.flow__run-history-item code {
+    font-size: 10px;
+}
+
+.flow__workflow-source-panel {
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-sideBar-background, var(--theia-editor-background));
+    padding: 8px;
+}
+
+.flow__workflow-source-panel .flow__workflow-json {
+    border: 0;
+    background: transparent;
+}
+
+.flow__menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 26px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 0 7px;
+    background: transparent;
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.flow__menu-trigger i {
+    width: 16px;
+    text-align: center;
+}
+
+.flow__menu-trigger:hover:not(:disabled),
+.flow__menu-trigger:focus-visible,
+.flow__menu--open > .flow__menu-trigger {
+    border-color: transparent;
+    background: var(--theia-menubar-selectionBackground, var(--theia-list-hoverBackground));
+    color: var(--theia-menubar-selectionForeground, var(--theia-editor-foreground));
+    outline: 0;
+}
+
+.flow__top-menus .flow__menu-trigger,
+.flow__top-menus .flow__history-button {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground)) !important;
+    box-shadow: none !important;
+}
+
+.flow__top-menus .flow__menu-trigger:hover:not(:disabled),
+.flow__top-menus .flow__menu-trigger:focus-visible,
+.flow__top-menus .flow__menu--open > .flow__menu-trigger,
+.flow__top-menus .flow__history-button:hover:not(:disabled),
+.flow__top-menus .flow__history-button--open {
+    border-color: transparent !important;
+    background: var(--theia-menubar-selectionBackground, var(--theia-list-hoverBackground)) !important;
+    color: var(--theia-menubar-selectionForeground, var(--theia-editor-foreground)) !important;
+}
+
+@media (max-width: 820px) {
+    .flow__menu-panel,
+    .flow__menu-panel--workflow,
+    .flow__menu-panel--file,
+    .flow__menu-panel--agents {
+        right: auto;
+        left: 0;
+        width: calc(100vw - 28px);
+    }
+
+    .flow__run-history {
+        top: 94px;
+        right: 6px;
+        width: calc(100% - 12px);
+    }
+}
+
+.flow {
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    padding: 12px 12px 0;
+    overflow: hidden;
+}
+
+.flow__main {
+    display: grid;
+    flex: 1 1 0;
+    min-height: 420px !important;
+    height: auto;
+    overflow: hidden;
+}
+
+.flow__ops {
+    flex: 0 0 clamp(170px, 24vh, 260px);
+    min-height: 170px;
+    max-height: 260px !important;
+}
+
+.flow__canvas-pane,
+.flow__inspector,
+.flow__kanban,
+.flow__run-observability,
+.flow__events {
+    min-height: 0;
+}
+
+.flow__canvas-pane {
+    height: 100%;
+}
+
+.flow__flow {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 400px !important;
+}
+
+.flow__flow-stage {
+    flex: 1 1 auto;
+    min-height: 360px !important;
+}
+
+.flow__inspector {
+    overflow: auto;
+}
+
+.flow__statusbar {
+    position: relative;
+    bottom: auto;
+    flex: 0 0 auto;
+    min-height: 22px;
+    margin: 8px -12px 0;
+}
+
+.flow__agent-field {
+    grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1fr) 32px 32px;
+}
+
+.flow__agent-field select,
+.flow__agent-field input {
+    min-width: 0;
+}
+
+.flow__agent-selection-summary {
+    display: grid;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-editorWidget-background);
+}
+
+.flow__agent-selection-summary strong {
+    font-size: 12px;
+}
+
+.flow__agent-selection-summary span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+@media (max-width: 820px) {
+    .flow__agent-field {
+        grid-template-columns: minmax(0, 1fr) 32px 32px;
+    }
+
+    .flow__agent-field select {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Keep run observability out of the fixed layout; expose it through top menus. */
+.flow__main {
+    flex: 1 1 auto;
+    min-height: 0 !important;
+}
+
+.flow__flow,
+.flow__flow-stage {
+    min-height: 0 !important;
+}
+
+.flow__ops {
+    display: none !important;
+}
+
+.flow__statusbar {
+    display: block !important;
+    position: relative;
+    bottom: auto;
+    flex: 0 0 auto;
+    min-height: 22px;
+    max-height: 34px;
+    margin: 6px -12px 0;
+    overflow: hidden;
+}
+
+.flow__statusbar .flow__runtime-status {
+    min-height: 22px;
+    padding: 1px 8px;
+}
+
+.flow__statusbar .flow__runtime-status-grid {
+    gap: 4px;
+}
+
+.flow__statusbar .flow__status-pill {
+    min-height: 18px;
+    max-width: 180px;
+    padding: 0 4px;
+    font-size: 10px;
+}
+
+.flow__top-menus {
+    flex-wrap: wrap;
+    row-gap: 1px;
+}
+
+.flow__menu-panel--ops {
+    width: min(760px, calc(100vw - 36px));
+    max-height: min(76vh, 720px);
+    overflow: auto;
+    padding: 6px;
+}
+
+.flow__menu-panel--workloads {
+    width: min(680px, calc(100vw - 36px));
+}
+
+.flow__menu-panel--run {
+    width: min(760px, calc(100vw - 36px));
+}
+
+.flow__menu-panel--events {
+    width: min(820px, calc(100vw - 36px));
+}
+
+.flow__menu-panel--status {
+    width: min(780px, calc(100vw - 36px));
+}
+
+.flow__menu-panel--ops .flow__kanban,
+.flow__menu-panel--ops .flow__run-observability,
+.flow__menu-panel--ops .flow__events {
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible;
+}
+
+.flow__menu-panel--ops .flow__kanban {
+    grid-template-columns: repeat(4, minmax(132px, 1fr));
+}
+
+.flow__menu-panel--status .flow__runtime-status {
+    min-height: 0;
+    padding: 2px;
+}
+
+.flow__menu-panel--status .flow__runtime-status-grid {
+    grid-template-columns: repeat(auto-fit, minmax(138px, 1fr));
+    gap: 6px;
+}
+
+.flow__menu-panel--status .flow__status-pill {
+    max-width: none;
+    min-height: 28px;
+    padding: 4px 6px;
+}
+
+@media (max-width: 820px) {
+    .flow__menu-panel--ops,
+    .flow__menu-panel--workloads,
+    .flow__menu-panel--run,
+    .flow__menu-panel--events,
+    .flow__menu-panel--status {
+        right: auto;
+        left: 0;
+        width: calc(100vw - 28px);
+    }
+
+    .flow__menu-panel--ops .flow__kanban {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.flow__modal-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.36);
+}
+
+.flow__agent-catalog-modal {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: min(1120px, calc(100vw - 96px));
+    height: min(760px, calc(100vh - 136px));
+    min-height: 520px;
+    overflow: hidden;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+    color: var(--theia-editor-foreground);
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
+}
+
+.flow__agent-catalog-header,
+.flow__agent-catalog-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.flow__agent-catalog-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.flow__agent-catalog-header h3,
+.flow__agent-catalog-preview-header h4 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.flow__agent-catalog-header span,
+.flow__agent-catalog-preview-header span {
+    display: block;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__agent-catalog-header > div:last-child,
+.flow__agent-catalog-preview-header > div:last-child {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.flow__agent-catalog-body {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.flow__agent-catalog-sidebar {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 8px;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    padding: 10px;
+    overflow: hidden;
+    border-right: 1px solid var(--theia-panel-border);
+    background: var(--theia-sideBar-background, var(--theia-editorWidget-background));
+}
+
+.flow__agent-catalog-sidebar .flow__agent-library-category {
+    min-width: 0;
+}
+
+.flow__agent-catalog-sidebar .flow__agent-library-category select {
+    width: 100%;
+}
+
+.flow__agent-catalog-sidebar .flow__agent-library-search {
+    grid-template-columns: 20px minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    min-height: 32px;
+    padding: 0 9px;
+    overflow: hidden;
+}
+
+.flow__agent-catalog-sidebar .flow__agent-library-search input {
+    width: 100%;
+    height: 30px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.flow__agent-catalog-sidebar .flow__agent-library-list {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    overflow: auto;
+}
+
+.flow__agent-catalog-item {
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr);
+    gap: 2px 6px;
+    width: 100%;
+    min-height: 40px;
+    padding: 6px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--theia-editor-foreground);
+    text-align: left;
+}
+
+.flow__agent-catalog-item:hover:not(:disabled),
+.flow__agent-catalog-item--selected {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-hoverBackground);
+}
+
+.flow__agent-catalog-item i {
+    grid-row: 1 / span 2;
+    align-self: start;
+    margin-top: 1px;
+}
+
+.flow__agent-catalog-item span,
+.flow__agent-catalog-item small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__agent-catalog-item span {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.flow__agent-catalog-item small {
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+}
+
+.flow__agent-catalog-preview {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.flow__agent-catalog-preview > p {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__agent-catalog-preview .flow__artifact-markdown {
+    min-height: 0;
+    overflow: auto;
+    padding: 12px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-editor-background);
+}
+
+.flow__agent-catalog-preview .flow__artifact-markdown pre {
+    max-height: none;
+}
+
+.flow__agent-catalog-preview .flow__artifact-markdown table {
+    width: max-content;
+    max-width: 100%;
+}
+
+@media (max-width: 900px) {
+    .flow__modal-backdrop {
+        padding: 10px;
+    }
+
+    .flow__agent-catalog-modal {
+        width: calc(100vw - 20px);
+        height: calc(100vh - 80px);
+        min-height: 0;
+    }
+
+    .flow__agent-catalog-body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(180px, 38%) minmax(0, 1fr);
+    }
+
+    .flow__agent-catalog-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--theia-panel-border);
+    }
+}

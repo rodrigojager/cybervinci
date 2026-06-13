@@ -1,0 +1,2 @@
+[`[role="dialog"][data-state="open"]`,`[role="menu"][data-state="open"]`,`[role="listbox"][data-state="open"]`].join(`, `);var e=`[data-codex-terminal]`;[e,`dil-renderer`].join(`, `);function t(){let e=document.querySelector(`[data-codex-composer]`);e&&requestAnimationFrame(()=>{e.focus()})}function n(t=document){(t.querySelector(e)?.querySelector(`textarea`))?.focus()}export{n,t};
+//# sourceMappingURL=focus-composer-CqFY7PBs.js.map

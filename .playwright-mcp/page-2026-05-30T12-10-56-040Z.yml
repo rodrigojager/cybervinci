@@ -1,0 +1,330 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - generic "Explorer" [ref=e56]
+            - button "More Actions..." [ref=e61] [cursor=pointer]: 
+          - generic [ref=e62]:
+            - text:      
+            - tabpanel " Explorer" [ref=e63]:
+              - generic [ref=e65]:
+                - generic [ref=e67] [cursor=pointer]:
+                  - generic [ref=e68]: 
+                  - generic "Open Editors" [ref=e69]
+                  - text:  
+                - generic [ref=e71]:
+                  - generic [ref=e72] [cursor=pointer]:
+                    - generic [ref=e73]: 
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy" [ref=e74]: cloud-ws-5fflzy
+                    - text:     
+                  - generic [ref=e80]:
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\.theia" [ref=e82]:
+                      - generic [ref=e83]:
+                        - generic [ref=e84]: 
+                        - generic [ref=e85]: 
+                        - generic [ref=e86]: .theia
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\ai-real-design.op" [ref=e88]:
+                      - generic [ref=e89]:
+                        - generic [ref=e90]: 
+                        - generic [ref=e91]: ai-real-design.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\ai-real-design.openpencil-ai-preview.json" [ref=e93]:
+                      - generic [ref=e94]:
+                        - generic [ref=e95]: 
+                        - generic [ref=e96]: ai-real-design.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\canvas-acceptance.op" [ref=e98]:
+                      - generic [ref=e99]:
+                        - generic [ref=e100]: 
+                        - generic [ref=e101]: canvas-acceptance.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\Crie um design identico ao da página inicial do Mercado Livre, mas com o nome Mercado Privado ao invés de Mercado Livre..op" [ref=e103]:
+                      - generic [ref=e104]:
+                        - generic [ref=e105]: 
+                        - generic [ref=e106]: Crie um design identico ao da página inicial do Mercado Livre, mas com o nome Mercado Privado ao invés de Mercado Livre..op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\Crie um design identico ao da página inicial do Mercado Livre, mas com o nome Mercado Privado ao invés de Mercado Livre..openpencil-ai-preview.json" [ref=e108]:
+                      - generic [ref=e109]:
+                        - generic [ref=e110]: 
+                        - generic [ref=e111]: Crie um design identico ao da página inicial do Mercado Livre, mas com o nome Mercado Privado ao invés de Mercado Livre..openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\design.op" [ref=e113]:
+                      - generic [ref=e114]:
+                        - generic [ref=e115]: 
+                        - generic [ref=e116]: design.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\design.openpencil-ai-preview.json" [ref=e118]:
+                      - generic [ref=e119]:
+                        - generic [ref=e120]: 
+                        - generic [ref=e121]: design.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\mercado.op" [ref=e123]:
+                      - generic [ref=e124]:
+                        - generic [ref=e125]: 
+                        - generic [ref=e126]: mercado.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\new-ui-page.builder.json" [ref=e128]:
+                      - generic [ref=e129]:
+                        - generic [ref=e130]: 
+                        - generic [ref=e131]: new-ui-page.builder.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\qa-continuation-action-2.op" [ref=e133]:
+                      - generic [ref=e134]:
+                        - generic [ref=e135]: 
+                        - generic [ref=e136]: qa-continuation-action-2.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\qa-continuation-action-3.op" [ref=e138]:
+                      - generic [ref=e139]:
+                        - generic [ref=e140]: 
+                        - generic [ref=e141]: qa-continuation-action-3.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\qa-continuation-action-3.openpencil-ai-preview.json" [ref=e143]:
+                      - generic [ref=e144]:
+                        - generic [ref=e145]: 
+                        - generic [ref=e146]: qa-continuation-action-3.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\qa-continuation-stable.op" [ref=e148]:
+                      - generic [ref=e149]:
+                        - generic [ref=e150]: 
+                        - generic [ref=e151]: qa-continuation-stable.op
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\qa-continuation-stable.openpencil-ai-preview.json" [ref=e153]:
+                      - generic [ref=e154]:
+                        - generic [ref=e155]: 
+                        - generic [ref=e156]: qa-continuation-stable.openpencil-ai-preview.json
+                    - generic "C:\\Users\\Rodrigo\\AppData\\Local\\Temp\\cloud-ws-5fflzy\\qa-continuation-test.op" [ref=e158]:
+                      - generic [ref=e159]:
+                        - generic [ref=e160]: 
+                        - generic [ref=e161]: qa-continuation-test.op
+            - text:                                                
+      - generic [ref=e162]:
+        - generic [ref=e163]:
+          - tablist [ref=e167] [cursor=pointer]:
+            - listitem [ref=e168]:
+              - generic [ref=e170]: Welcome
+              - generic "Close" [ref=e171]
+            - listitem [ref=e539]:
+              - generic [ref=e541]: Flow
+              - generic "Close" [ref=e542]: 
+            - listitem [ref=e172]:
+              - generic [ref=e173]:
+                - generic [ref=e174]: 
+                - generic [ref=e175]: ai-real-design.op
+              - generic "Close" [ref=e176]
+          - text:              
+          - tabpanel [ref=e543]:
+            - generic [ref=e544]:
+              - banner [ref=e545]:
+                - generic [ref=e546]:
+                  - generic [ref=e547]: CyberVinci Flow
+                  - heading "No workflow loaded" [level=2] [ref=e548]
+                  - paragraph [ref=e549]: Compose, run, inspect, and audit arbitrary pipeline workflows from one extension surface.
+                  - generic "Workflow metadata" [ref=e550]:
+                    - generic "No workflow loaded" [ref=e551]: No workflow
+                - generic "Run request composer" [ref=e552]:
+                  - generic [ref=e553]: Run request
+                  - textbox "Run prompt" [ref=e554]:
+                    - /placeholder: Describe the goal, inputs, expected artifacts, constraints, and approval requirements for this workflow run.
+                    - text: Describe the workflow request, expected outputs, constraints, and review gates for this run.
+                  - generic [ref=e555]:
+                    - generic [ref=e556]: Load or create a workflow first
+                    - button " Start run" [disabled] [ref=e557]:
+                      - generic [ref=e558]: 
+                      - text: Start run
+              - region "Flow actions and runtime status" [ref=e559]:
+                - generic "Workflow creation" [ref=e560]:
+                  - strong [ref=e561]: Build workflow
+                  - generic [ref=e562]:
+                    - generic [ref=e563]: Template
+                    - combobox "Workflow template" [disabled] [ref=e564]
+                  - button " Create" [disabled] [ref=e565]:
+                    - generic [ref=e566]: 
+                    - text: Create
+                  - generic [ref=e567]:
+                    - generic [ref=e568]: Preset
+                    - combobox "Pipeline preset" [disabled] [ref=e569]
+                  - button " Use preset" [disabled] [ref=e570]:
+                    - generic [ref=e571]: 
+                    - text: Use preset
+                  - button " Save preset" [disabled] [ref=e572]:
+                    - generic [ref=e573]: 
+                    - text: Save preset
+                - generic "Workflow file actions" [ref=e574]:
+                  - strong [ref=e575]: Workflow file
+                  - button " Refresh" [disabled] [ref=e576]:
+                    - generic [ref=e577]: 
+                    - text: Refresh
+                  - button " Reload" [disabled] [ref=e578]:
+                    - generic [ref=e579]: 
+                    - text: Reload
+                  - button " Undo" [disabled] [ref=e580]:
+                    - generic [ref=e581]: 
+                    - text: Undo
+                  - button " Redo" [disabled] [ref=e582]:
+                    - generic [ref=e583]: 
+                    - text: Redo
+                  - button " Save" [disabled] [ref=e584]:
+                    - generic [ref=e585]: 
+                    - text: Save
+                  - button " Import" [disabled] [ref=e586]:
+                    - generic [ref=e587]: 
+                    - text: Import
+                  - button " Export" [disabled] [ref=e588]:
+                    - generic [ref=e589]: 
+                    - text: Export
+                  - button " Versions" [disabled] [ref=e590]:
+                    - generic [ref=e591]: 
+                    - text: Versions
+                  - button " Restore" [disabled] [ref=e592]:
+                    - generic [ref=e593]: 
+                    - text: Restore
+                - generic "Run controls" [ref=e594]:
+                  - strong [ref=e595]: Run controls
+                  - button " Import run" [disabled] [ref=e596]:
+                    - generic [ref=e597]: 
+                    - text: Import run
+                  - button " Export run" [disabled] [ref=e598]:
+                    - generic [ref=e599]: 
+                    - text: Export run
+                  - button " Tick" [disabled] [ref=e600]:
+                    - generic [ref=e601]: 
+                    - text: Tick
+                  - button " Pause" [disabled] [ref=e602]:
+                    - generic [ref=e603]: 
+                    - text: Pause
+                  - button " Resume" [disabled] [ref=e604]:
+                    - generic [ref=e605]: 
+                    - text: Resume
+                  - button " Cancel" [disabled] [ref=e606]:
+                    - generic [ref=e607]: 
+                    - text: Cancel
+                  - button " Finalize" [disabled] [ref=e608]:
+                    - generic [ref=e609]: 
+                    - text: Finalize
+              - region "Agent Markdown library" [ref=e610]:
+                - generic [ref=e611]:
+                  - generic [ref=e612]:
+                    - heading "Prompt assets" [level=3] [ref=e613]
+                    - generic [ref=e614]: 0 of 0 Markdown files
+                  - button " New" [disabled] [ref=e615]:
+                    - generic [ref=e616]: 
+                    - text: New
+                - generic [ref=e617]:
+                  - generic [ref=e618]: 
+                  - textbox "Search agent Markdown files" [ref=e619]:
+                    - /placeholder: Search by path
+                - paragraph [ref=e621]: No prompt asset matches the current search.
+              - main [ref=e622]:
+                - complementary [ref=e624]:
+                  - generic [ref=e625]:
+                    - heading "Inspector" [level=3] [ref=e626]
+                    - paragraph [ref=e627]: No workflow loaded.
+              - generic [ref=e628]:
+                - region "Run history snapshot" [ref=e629]:
+                  - generic [ref=e630]:
+                    - heading "Run history" [level=3] [ref=e631]
+                    - generic [ref=e632]: No snapshot
+                  - paragraph [ref=e633]: No active or imported run snapshot. Persistent run history is not exposed by this extension yet.
+                - region "Workloads" [ref=e634]:
+                  - heading "Pending" [level=3] [ref=e636]
+                  - heading "Ready" [level=3] [ref=e638]
+                  - heading "Running" [level=3] [ref=e640]
+                  - heading "Waiting" [level=3] [ref=e642]
+                  - heading "Review" [level=3] [ref=e644]
+                  - heading "Done" [level=3] [ref=e646]
+                  - heading "Failed" [level=3] [ref=e648]
+                - region "Run observability" [ref=e649]:
+                  - heading "Run" [level=3] [ref=e650]
+                  - paragraph [ref=e651]: No active run.
+                - region "Run events" [ref=e652]:
+                  - generic [ref=e653]:
+                    - heading "Events" [level=3] [ref=e654]
+                    - generic [ref=e655]: 0 / 0
+                  - generic "Event filters" [ref=e656]:
+                    - generic [ref=e657]:
+                      - generic [ref=e658]: State
+                      - combobox "State" [ref=e659]:
+                        - option "All" [selected]
+                    - generic [ref=e660]:
+                      - generic [ref=e661]: Workload
+                      - combobox "Workload" [ref=e662]:
+                        - option "All" [selected]
+                    - generic [ref=e663]:
+                      - generic [ref=e664]: Type
+                      - combobox "Type" [ref=e665]:
+                        - option "All" [selected]
+                    - generic [ref=e666]:
+                      - generic [ref=e667]: Gate
+                      - combobox "Gate" [ref=e668]:
+                        - option "All" [selected]
+                    - generic [ref=e669]:
+                      - generic [ref=e670]: Artifact
+                      - combobox "Artifact" [ref=e671]:
+                        - option "All" [selected]
+                    - generic [ref=e672]:
+                      - generic [ref=e673]: Effect
+                      - combobox "Effect" [ref=e674]:
+                        - option "All" [selected]
+                    - generic [ref=e675]:
+                      - generic [ref=e676]: Severity
+                      - combobox "Severity" [ref=e677]:
+                        - option "All" [selected]
+                    - button "" [disabled] [ref=e678]:
+                      - generic [ref=e679]: 
+                  - paragraph [ref=e681]: No events match the current filters.
+        - text:           
+      - generic [ref=e255]:
+        - tablist [ref=e260] [cursor=pointer]:
+          - listitem [ref=e261]:
+            - generic [ref=e263]: 
+          - listitem [ref=e264]:
+            - generic [ref=e266]: 
+          - listitem [ref=e267]
+        - generic:      +   
+    - generic [ref=e270]:
+      - generic [ref=e271]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e272]:
+          - generic [ref=e273]: 
+          - generic [ref=e274]: "0"
+          - generic [ref=e275]: 
+          - generic [ref=e276]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e277]:
+          - generic [ref=e278]: 
+          - generic [ref=e279]: Collaborate
+      - generic [ref=e280]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e281]:
+          - generic [ref=e282]: 
+          - generic [ref=e283]: Sign in to GitHub Copilot
+        - generic "No Notifications" [ref=e284]:
+          - generic [ref=e285]: 
+        - button "Toggle Bottom Panel" [ref=e286]:
+          - generic [ref=e287]: 
+  - generic:
+    - generic:  
+  - generic [ref=e288]:
+    - alert
+    - alert

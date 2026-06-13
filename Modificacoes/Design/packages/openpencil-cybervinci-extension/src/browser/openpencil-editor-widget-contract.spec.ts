@@ -93,6 +93,11 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(styles).to.contain('--openpencil-card: var(--theia-sideBar-background, var(--theia-editor-background))');
         expect(styles).to.contain('--openpencil-accent: var(--theia-list-activeSelectionBackground, var(--theia-toolbar-activeBackground))');
         expect(styles).to.contain('--openpencil-sdk-component: var(--theia-list-activeSelectionBackground, var(--openpencil-sdk-ring))');
+        expect(styles).to.contain('Theme-bound Canvas chrome');
+        expect(styles).to.contain('--openpencil-accent: var(--theia-button-background, var(--theia-list-activeSelectionBackground, var(--theia-focusBorder)))');
+        expect(styles).to.contain('.openpencil-sdk-shell .openpencil-sdk-toolbar button[aria-pressed="true"]');
+        expect(styles).not.to.contain('openpencil-figma');
+        expect(styles).not.to.contain('#0d99ff');
         expect(styles).not.to.contain('rgba(');
         expect(styles).not.to.contain('#3b82f6');
         expect(styles).not.to.contain('#2563eb');

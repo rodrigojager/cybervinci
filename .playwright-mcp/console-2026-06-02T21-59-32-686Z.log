@@ -1,0 +1,971 @@
+[   13368ms] [INFO] sending initial connect on zaP3NKHBIWtAggorAAAT @ http://127.0.0.1:3001/bundle.js:67846
+[   13491ms] [INFO] initial connect received on zaP3NKHBIWtAggorAAAT @ http://127.0.0.1:3001/bundle.js:67841
+[   19629ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[   19659ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[   19675ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[   19685ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[   19839ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[   19841ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[   20224ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[   20707ms] [WARNING] 2026-06-02T21:59:53.393Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[   22685ms] [WARNING] 2026-06-02T21:59:55.371Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 2451.2 ms [22.681 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   22853ms] [WARNING] 2026-06-02T21:59:55.538Z root WARN Frontend CommonFrontendContribution.configure took longer than the expected maximum 100 milliseconds: 165.7 ms [22.848 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   22903ms] [INFO] 2026-06-02T21:59:55.589Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[   22945ms] [WARNING] 2026-06-02T21:59:55.631Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[   23233ms] [WARNING] 2026-06-02T21:59:55.919Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[   23233ms] [WARNING] 2026-06-02T21:59:55.919Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[   26857ms] [INFO] 2026-06-02T21:59:59.542Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[   26858ms] [WARNING] 2026-06-02T21:59:59.543Z root WARN Frontend SkillPromptCoordinator.onStart took longer than the expected maximum 100 milliseconds: 3920.0 ms [26.852 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   26871ms] [INFO] 2026-06-02T21:59:59.557Z root INFO [0e5841fa-f353-48aa-bf9d-db3c6ec7b449] Waiting for backend deployment: 6.8 ms [26.866 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   26880ms] [INFO] 2026-06-02T21:59:59.565Z root INFO Start frontend contributions: 6697.4 ms [26.871 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   26880ms] [INFO] 2026-06-02T21:59:59.566Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[   26881ms] [INFO] 2026-06-02T21:59:59.567Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[   26881ms] [INFO] 2026-06-02T21:59:59.567Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[   26949ms] [INFO] 2026-06-02T21:59:59.635Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[   26951ms] [INFO] 2026-06-02T21:59:59.637Z root INFO Initialize the workbench layout: 68.4 ms [26.945 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   26952ms] [INFO] 2026-06-02T21:59:59.637Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[   26983ms] [WARNING] 2026-06-02T21:59:59.669Z terminal WARN Failed attaching to terminal id 2058993439, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[   27632ms] [INFO] 2026-06-02T22:00:00.317Z root INFO [0e5841fa-f353-48aa-bf9d-db3c6ec7b449] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[   27810ms] [INFO] 2026-06-02T22:00:00.495Z root INFO Replace loading indicator with ready workbench UI (animation): 856.7 ms [27.805 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   27811ms] [INFO] 2026-06-02T22:00:00.496Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[   27811ms] [INFO] 2026-06-02T22:00:00.496Z root INFO All frontend contributions settled: 7631.9 ms [27.805 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   29813ms] [WARNING] 2026-06-02T22:00:02.499Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://127.0.0.1:3001/bundle.js:192090
+[   38130ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[   40250ms] [WARNING] 2026-06-02T22:00:12.936Z root WARN Widget was activated, but did not accept focus after 2000ms: code-editor-opener:file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/sample.cshtml:8981187891833411 @ http://127.0.0.1:3001/bundle.js:192090
+[   40282ms] [WARNING] 2026-06-02T22:00:12.968Z root WARN Widget was activated, but did not accept focus after 2000ms: cybervinci.razorVisualEditor.widget:file:///c%3A/Users/Rodrigo/AppData/Local/Temp/cloud-ws-5fflzy/sample.cshtml @ http://127.0.0.1:3001/bundle.js:192090
+[  142553ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6n8058ni:0
+[  146344ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6nauo8kd:0
+[  153098ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6ngjplhl:0
+[  160705ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6nmygsqf:0
+[  174067ms] [INFO] 2026-06-02T22:02:26.752Z root INFO sending reconnect on 4PGghSVbkO5LZiWxAAAL @ http://127.0.0.1:3001/bundle.js:192090
+[  174754ms] [INFO] 2026-06-02T22:02:27.440Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3001/bundle.js:192090
+[  174755ms] [INFO] 2026-06-02T22:02:27.440Z root INFO >>> Storing the layout... @ http://127.0.0.1:3001/bundle.js:192090
+[  174755ms] [INFO] 2026-06-02T22:02:27.440Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3001/bundle.js:192090
+[  174755ms] [INFO] 2026-06-02T22:02:27.440Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3001/bundle.js:192090
+[  174755ms] [INFO] 2026-06-02T22:02:27.440Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3001/bundle.js:192090
+[  177440ms] [INFO] sending initial connect on UMW6OiUwWcj5E9d8AAAT @ http://127.0.0.1:3001/bundle.js:67846
+[  177601ms] [INFO] initial connect received on UMW6OiUwWcj5E9d8AAAT @ http://127.0.0.1:3001/bundle.js:67841
+[  179112ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[  179135ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[  179148ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[  179160ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[  179323ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[  179325ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[  179804ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[  181346ms] [WARNING] 2026-06-02T22:02:34.032Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[  182522ms] [WARNING] 2026-06-02T22:02:35.208Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 2709.5 ms [8.430 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  182653ms] [INFO] 2026-06-02T22:02:35.339Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[  182696ms] [WARNING] 2026-06-02T22:02:35.381Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[  183017ms] [WARNING] 2026-06-02T22:02:35.703Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[  183017ms] [WARNING] 2026-06-02T22:02:35.703Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[  183230ms] [INFO] 2026-06-02T22:02:35.916Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[  183231ms] [WARNING] 2026-06-02T22:02:35.917Z root WARN Frontend SkillPromptCoordinator.onStart took longer than the expected maximum 100 milliseconds: 535.2 ms [9.138 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  183264ms] [INFO] 2026-06-02T22:02:35.950Z root INFO [0058d038-555f-4793-8c71-81c8c5603594] Waiting for backend deployment: 22.0 ms [9.171 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  183282ms] [INFO] 2026-06-02T22:02:35.968Z root INFO Start frontend contributions: 3516.2 ms [9.184 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  183283ms] [INFO] 2026-06-02T22:02:35.968Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[  183628ms] [INFO] 2026-06-02T22:02:36.314Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[  183628ms] [INFO] 2026-06-02T22:02:36.314Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[  185181ms] [INFO] 2026-06-02T22:02:37.867Z root INFO [0058d038-555f-4793-8c71-81c8c5603594] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[  185235ms] [WARNING] 2026-06-02T22:02:37.920Z terminal WARN Failed attaching to terminal id 1169597240, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[  193892ms] [INFO] 2026-06-02T22:02:46.577Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[  193894ms] [INFO] 2026-06-02T22:02:46.579Z root INFO Initialize the workbench layout: 10264.2 ms [19.799 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  193894ms] [INFO] 2026-06-02T22:02:46.580Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[  194706ms] [INFO] 2026-06-02T22:02:47.392Z root INFO Replace loading indicator with ready workbench UI (animation): 810.7 ms [20.613 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  194707ms] [INFO] 2026-06-02T22:02:47.392Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[  194707ms] [INFO] 2026-06-02T22:02:47.392Z root INFO All frontend contributions settled: 14945.6 ms [20.613 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  208561ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[  674293ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6ym3kh62:0
+[  678427ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6yphmire:0
+[  684206ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=6yurvj4h:0
+[  694214ms] [INFO] 2026-06-02T22:11:06.900Z root INFO sending reconnect on HlLn4qLt2rpCWdiOAAAJ @ http://127.0.0.1:3001/bundle.js:192090
+[  694251ms] [INFO] 2026-06-02T22:11:06.936Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3001/bundle.js:192090
+[  694251ms] [INFO] 2026-06-02T22:11:06.936Z root INFO >>> Storing the layout... @ http://127.0.0.1:3001/bundle.js:192090
+[  694251ms] [INFO] 2026-06-02T22:11:06.936Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3001/bundle.js:192090
+[  694251ms] [INFO] 2026-06-02T22:11:06.936Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3001/bundle.js:192090
+[  694251ms] [INFO] 2026-06-02T22:11:06.936Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3001/bundle.js:192090
+[  697100ms] [INFO] sending initial connect on 7CD49mlEc4sE-GX-AAAS @ http://127.0.0.1:3001/bundle.js:67846
+[  697134ms] [INFO] initial connect received on 7CD49mlEc4sE-GX-AAAS @ http://127.0.0.1:3001/bundle.js:67841
+[  697967ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[  698001ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[  698023ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[  698037ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[  698237ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[  698238ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[  698821ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[  700340ms] [WARNING] 2026-06-02T22:11:13.026Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[  704242ms] [WARNING] 2026-06-02T22:11:16.928Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 5403.7 ms [10.005 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  706809ms] [WARNING] 2026-06-02T22:11:19.494Z root WARN Frontend CommonFrontendContribution.configure took longer than the expected maximum 100 milliseconds: 2564.7 ms [12.572 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  706857ms] [INFO] 2026-06-02T22:11:19.542Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[  707202ms] [WARNING] 2026-06-02T22:11:19.887Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[  707202ms] [WARNING] 2026-06-02T22:11:19.888Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[  707954ms] [WARNING] 2026-06-02T22:11:20.639Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[  709046ms] [INFO] 2026-06-02T22:11:21.731Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[  709048ms] [WARNING] 2026-06-02T22:11:21.733Z root WARN Frontend SkillPromptCoordinator.onStart took longer than the expected maximum 100 milliseconds: 2155.4 ms [14.809 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  709149ms] [INFO] 2026-06-02T22:11:21.835Z root INFO [7e5c96fb-d7d0-40b5-9879-6ae0476b423d] Waiting for backend deployment: 93.7 ms [14.912 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  709157ms] [WARNING] 2026-06-02T22:11:21.843Z root WARN Frontend ClaudeCodeSlashCommandsContribution.onStart took longer than the expected maximum 100 milliseconds: 101.0 ms [14.920 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  709170ms] [INFO] 2026-06-02T22:11:21.856Z root INFO Start frontend contributions: 10395.3 ms [14.926 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  709171ms] [INFO] 2026-06-02T22:11:21.856Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[  709172ms] [INFO] 2026-06-02T22:11:21.857Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[  709172ms] [INFO] 2026-06-02T22:11:21.858Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[  709374ms] [WARNING] 2026-06-02T22:11:22.059Z terminal WARN Failed attaching to terminal id 1988108137, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[  710690ms] [INFO] 2026-06-02T22:11:23.375Z root INFO [7e5c96fb-d7d0-40b5-9879-6ae0476b423d] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[  712901ms] [INFO] 2026-06-02T22:11:25.586Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[  712903ms] [INFO] 2026-06-02T22:11:25.588Z root INFO Initialize the workbench layout: 3729.4 ms [18.663 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  712903ms] [INFO] 2026-06-02T22:11:25.589Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[  713729ms] [INFO] 2026-06-02T22:11:26.415Z root INFO Replace loading indicator with ready workbench UI (animation): 824.4 ms [19.491 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  713730ms] [INFO] 2026-06-02T22:11:26.415Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[  713730ms] [INFO] 2026-06-02T22:11:26.415Z root INFO All frontend contributions settled: 14961.9 ms [19.492 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[  732160ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[  992329ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=75fkxfa3:0
+[  996952ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=75jb7o08:0
+[ 1004445ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=75ou8v0m:0
+[ 1012217ms] [INFO] 2026-06-02T22:16:24.902Z root INFO sending reconnect on 70UII6nBJj2tNMr6AAAD @ http://127.0.0.1:3001/bundle.js:192090
+[ 1012264ms] [INFO] 2026-06-02T22:16:24.949Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1012264ms] [INFO] 2026-06-02T22:16:24.949Z root INFO >>> Storing the layout... @ http://127.0.0.1:3001/bundle.js:192090
+[ 1012264ms] [INFO] 2026-06-02T22:16:24.949Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1012264ms] [INFO] 2026-06-02T22:16:24.949Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3001/bundle.js:192090
+[ 1012264ms] [INFO] 2026-06-02T22:16:24.949Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1013956ms] [INFO] sending initial connect on TQNA3K59BjIbxWOMAAAG @ http://127.0.0.1:3001/bundle.js:67846
+[ 1013962ms] [INFO] initial connect received on TQNA3K59BjIbxWOMAAAG @ http://127.0.0.1:3001/bundle.js:67841
+[ 1014092ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014133ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[ 1014152ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014170ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014349ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014351ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014841ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[ 1014917ms] [WARNING] 2026-06-02T22:16:27.603Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[ 1014973ms] [WARNING] 2026-06-02T22:16:27.659Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[ 1014978ms] [INFO] 2026-06-02T22:16:27.664Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015157ms] [WARNING] 2026-06-02T22:16:27.843Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 301.0 ms [2.915 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015218ms] [INFO] 2026-06-02T22:16:27.903Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015288ms] [INFO] 2026-06-02T22:16:27.974Z root INFO [d77ee00f-a1c7-4fb9-8d17-e6d72325a64d] Waiting for backend deployment: 21.3 ms [3.046 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015305ms] [INFO] 2026-06-02T22:16:27.991Z root INFO Start frontend contributions: 510.0 ms [3.053 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015306ms] [INFO] 2026-06-02T22:16:27.991Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015520ms] [WARNING] 2026-06-02T22:16:28.206Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015520ms] [WARNING] 2026-06-02T22:16:28.206Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015619ms] [INFO] 2026-06-02T22:16:28.304Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015619ms] [INFO] 2026-06-02T22:16:28.304Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015635ms] [INFO] 2026-06-02T22:16:28.320Z root INFO [d77ee00f-a1c7-4fb9-8d17-e6d72325a64d] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[ 1015817ms] [WARNING] 2026-06-02T22:16:28.502Z terminal WARN Failed attaching to terminal id 209647408, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1016921ms] [INFO] 2026-06-02T22:16:29.606Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1016923ms] [INFO] 2026-06-02T22:16:29.608Z root INFO Initialize the workbench layout: 1302.7 ms [4.678 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 1016924ms] [INFO] 2026-06-02T22:16:29.609Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1018436ms] [INFO] 2026-06-02T22:16:31.121Z root INFO Replace loading indicator with ready workbench UI (animation): 1510.3 ms [6.193 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 1018436ms] [INFO] 2026-06-02T22:16:31.122Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 1018436ms] [INFO] 2026-06-02T22:16:31.122Z root INFO All frontend contributions settled: 3651.1 ms [6.194 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 1022463ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2484031ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2484031ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2484680ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2484680ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2484888ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2484888ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2485346ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2485346ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2485483ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2485483ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2485630ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2485631ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486027ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486027ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486158ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486158ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486318ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486318ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486635ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486635ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486760ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486760ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486899ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2486899ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487219ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487219ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487352ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487352ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487515ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487515ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487646ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487646ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487771ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487771ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487911ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2487911ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488051ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488051ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488193ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488193ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488332ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488332ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488456ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488456ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488561ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2488561ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2490557ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2491995ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2494357ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2497768ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2499445ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2505450ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2507050ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2517848ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2517848ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2518448ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2518449ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2519553ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2521278ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2523935ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2523935ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2524296ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2524296ms] TypeError: Cannot read properties of undefined (reading 'getComponent')
+    at n8.getCss (http://127.0.0.1:3001/bundle.js:1113095:225)
+    at t9.getCss (http://127.0.0.1:3001/bundle.js:1113553:30)
+    at RazorVisualEditorWidget.currentCss (http://127.0.0.1:3001/bundle.js:1116512:31)
+    at RazorVisualEditorWidget.currentCssForSave (http://127.0.0.1:3001/bundle.js:1116515:50)
+    at RazorVisualEditorWidget.currentHtmlWithCss (http://127.0.0.1:3001/bundle.js:1116518:28)
+    at RazorVisualEditorWidget.showDiff (http://127.0.0.1:3001/bundle.js:1116473:34)
+    at onShowDiff (http://127.0.0.1:3001/bundle.js:1116374:430)
+    at HTMLUnknownElement.callCallback2 (http://127.0.0.1:3001/bundle.js:217699:24)
+    at Object.invokeGuardedCallbackDev (http://127.0.0.1:3001/bundle.js:217724:26)
+    at invokeGuardedCallback (http://127.0.0.1:3001/bundle.js:217758:41)
+[ 2524886ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2526983ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 2911287ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8akd34xh:0
+[ 2915932ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8anr0l19:0
+[ 2920937ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8arpy38j:0
+[ 2932684ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8b0wj95z:0
+[ 2943728ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8b9yl2wa:0
+[ 2953880ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8bihegkr:0
+[ 2965893ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8bqbt9l5:0
+[ 2977943ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8bzl0q5m:0
+[ 2990003ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8c8we1rg:0
+[ 3002035ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8ci6ylpq:0
+[ 3014074ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8crgyybm:0
+[ 3026106ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8d0rgs5s:0
+[ 3038185ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8da1l9ku:0
+[ 3050230ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8djd417j:0
+[ 3062279ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8dsnq3gi:0
+[ 3074308ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8e1ydymx:0
+[ 3086339ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8eb8kt1t:0
+[ 3098359ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8ekirwlj:0
+[ 3110399ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8etsw8bf:0
+[ 3122426ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8f3360h8:0
+[ 3134459ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8fcd49pu:0
+[ 3146502ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8flnhwpb:0
+[ 3158546ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=8fuy2pq4:0
+[ 3168568ms] [INFO] 2026-06-02T22:52:21.253Z root INFO sending reconnect on -_5xIc7WC8R19cBPAAAI @ http://127.0.0.1:3001/bundle.js:192090
+[ 3171104ms] [INFO] 2026-06-02T22:52:23.789Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3171104ms] [INFO] 2026-06-02T22:52:23.790Z root INFO >>> Storing the layout... @ http://127.0.0.1:3001/bundle.js:192090
+[ 3171104ms] [INFO] 2026-06-02T22:52:23.790Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3171104ms] [INFO] 2026-06-02T22:52:23.790Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3001/bundle.js:192090
+[ 3171104ms] [INFO] 2026-06-02T22:52:23.790Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3173667ms] [INFO] sending initial connect on VS_Geo4XDn5JCwfIAAAb @ http://127.0.0.1:3001/bundle.js:67846
+[ 3173805ms] [INFO] initial connect received on VS_Geo4XDn5JCwfIAAAb @ http://127.0.0.1:3001/bundle.js:67841
+[ 3177101ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177135ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[ 3177152ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177174ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177318ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177320ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3177665ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[ 3181243ms] [WARNING] 2026-06-02T22:52:33.929Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[ 3215831ms] [WARNING] 2026-06-02T22:53:08.516Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 38155.8 ms [44.750 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3215959ms] [INFO] 2026-06-02T22:53:08.645Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[ 3216364ms] [WARNING] 2026-06-02T22:53:09.049Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3216364ms] [WARNING] 2026-06-02T22:53:09.049Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3217948ms] [WARNING] 2026-06-02T22:53:10.633Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218638ms] [INFO] 2026-06-02T22:53:11.323Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218639ms] [WARNING] 2026-06-02T22:53:11.324Z root WARN Frontend SkillPromptCoordinator.onStart took longer than the expected maximum 100 milliseconds: 2616.1 ms [47.557 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218659ms] [INFO] 2026-06-02T22:53:11.345Z root INFO [bd1ebfa7-4bbe-42dc-b2d7-7be68bc89bc8] Waiting for backend deployment: 13.1 ms [47.578 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218686ms] [INFO] 2026-06-02T22:53:11.372Z root INFO Start frontend contributions: 41054.6 ms [47.599 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218687ms] [INFO] 2026-06-02T22:53:11.372Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218688ms] [INFO] 2026-06-02T22:53:11.374Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218688ms] [INFO] 2026-06-02T22:53:11.374Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218768ms] [WARNING] 2026-06-02T22:53:11.453Z terminal WARN Failed attaching to terminal id 2132769255, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3218859ms] [INFO] 2026-06-02T22:53:11.544Z root INFO [bd1ebfa7-4bbe-42dc-b2d7-7be68bc89bc8] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[ 3223857ms] [INFO] 2026-06-02T22:53:16.542Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3223859ms] [INFO] 2026-06-02T22:53:16.544Z root INFO Initialize the workbench layout: 5168.8 ms [52.775 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3223859ms] [INFO] 2026-06-02T22:53:16.544Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3224666ms] [INFO] 2026-06-02T22:53:17.352Z root INFO Replace loading indicator with ready workbench UI (animation): 805.6 ms [53.584 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3224667ms] [INFO] 2026-06-02T22:53:17.353Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 3224667ms] [INFO] 2026-06-02T22:53:17.353Z root INFO All frontend contributions settled: 47040.2 ms [53.585 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 3234920ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 3345036ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+[ 3345036ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+[ 3362309ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3367695ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3367891ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3368692ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3369094ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3369635ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3369895ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3575806ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3576687ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3576862ms] Error: A resource provider for 'inmemory://model/8' is not registered.
+    at DefaultResourceProvider.get (http://127.0.0.1:3001/bundle.js:208466:33)
+    at async MonacoTextModelService.loadModel (http://127.0.0.1:3001/bundle.js:489170:28)
+    at async ReferenceCollection2.getOrCreateValue (http://127.0.0.1:3001/bundle.js:200263:28)
+    at async ReferenceCollection2.acquire (http://127.0.0.1:3001/bundle.js:200251:26)
+    at async WordHighlighter2._run (http://127.0.0.1:3001/bundle.js:473860:35)
+[ 3836225ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0
+[ 4616627ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=9b40luii:0
+[ 4620982ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=9b7l1y82:0
+[ 4625959ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=9bc8m0jn:0
+[ 4634401ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3001/socket.io/?EIO=4&transport=polling&t=9bhq45cl:0
+[ 4644417ms] [INFO] 2026-06-02T23:16:57.103Z root INFO sending reconnect on uqtk8WFn8uksj-LYAAAD @ http://127.0.0.1:3001/bundle.js:192090
+[ 4644454ms] [INFO] 2026-06-02T23:16:57.140Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4644454ms] [INFO] 2026-06-02T23:16:57.140Z root INFO >>> Storing the layout... @ http://127.0.0.1:3001/bundle.js:192090
+[ 4644454ms] [INFO] 2026-06-02T23:16:57.140Z root INFO <<< The layout has been successfully stored. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4644454ms] [INFO] 2026-06-02T23:16:57.140Z root INFO >>> Stopping frontend contributions... @ http://127.0.0.1:3001/bundle.js:192090
+[ 4644454ms] [INFO] 2026-06-02T23:16:57.140Z root INFO <<< All frontend contributions have been stopped. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4646574ms] [INFO] sending initial connect on A75ZkRktUwkUZDd_AAAN @ http://127.0.0.1:3001/bundle.js:67846
+[ 4646579ms] [INFO] initial connect received on A75ZkRktUwkUZDd_AAAN @ http://127.0.0.1:3001/bundle.js:67841
+[ 4646673ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646704ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[ 4646724ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646737ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646917ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4646919ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4647457ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[ 4647521ms] [WARNING] 2026-06-02T23:17:00.206Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[ 4647559ms] [WARNING] 2026-06-02T23:17:00.244Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[ 4647562ms] [INFO] 2026-06-02T23:17:00.247Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648269ms] [WARNING] 2026-06-02T23:17:00.955Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 800.1 ms [3.829 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648355ms] [INFO] 2026-06-02T23:17:01.040Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648442ms] [INFO] 2026-06-02T23:17:01.127Z root INFO [2021881c-ef28-4816-8b92-eef4cf16d029] Waiting for backend deployment: 26.9 ms [4.001 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648463ms] [INFO] 2026-06-02T23:17:01.148Z root INFO Start frontend contributions: 1058.6 ms [4.017 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648463ms] [INFO] 2026-06-02T23:17:01.149Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648466ms] [INFO] 2026-06-02T23:17:01.151Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648466ms] [INFO] 2026-06-02T23:17:01.151Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648796ms] [WARNING] 2026-06-02T23:17:01.482Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648796ms] [WARNING] 2026-06-02T23:17:01.482Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648801ms] [WARNING] 2026-06-02T23:17:01.486Z terminal WARN Failed attaching to terminal id 1230195095, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4648847ms] [INFO] 2026-06-02T23:17:01.532Z root INFO [2021881c-ef28-4816-8b92-eef4cf16d029] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[ 4656319ms] [INFO] 2026-06-02T23:17:09.005Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4656322ms] [INFO] 2026-06-02T23:17:09.008Z root INFO Initialize the workbench layout: 7853.6 ms [11.879 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 4656323ms] [INFO] 2026-06-02T23:17:09.009Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4657131ms] [INFO] 2026-06-02T23:17:09.817Z root INFO Replace loading indicator with ready workbench UI (animation): 806.2 ms [12.690 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 4657132ms] [INFO] 2026-06-02T23:17:09.817Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[ 4657132ms] [INFO] 2026-06-02T23:17:09.817Z root INFO All frontend contributions settled: 9732.8 ms [12.691 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[ 4666600ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3001/~/Content/site.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3001/:0

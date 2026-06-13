@@ -1,0 +1,36 @@
+[   25763ms] [INFO] sending initial connect on ROQ0YDm_WZu4aNVrAAAV @ http://127.0.0.1:3001/bundle.js:67846
+[   25767ms] [INFO] initial connect received on ROQ0YDm_WZu4aNVrAAAV @ http://127.0.0.1:3001/bundle.js:67841
+[   25939ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[   25960ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3001/bundle.js:235627
+[   25974ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3001/bundle.js:56469
+[   25983ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3001/bundle.js:56469
+[   26117ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3001/bundle.js:56469
+[   26118ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3001/bundle.js:56469
+[   26474ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:56469
+[   26521ms] [WARNING] 2026-06-02T07:28:04.654Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3001/bundle.js:192090
+[   28390ms] [WARNING] 2026-06-02T07:28:06.523Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 1906.3 ms [28.388 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   28511ms] [INFO] 2026-06-02T07:28:06.644Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3001/bundle.js:192090
+[   28591ms] [WARNING] 2026-06-02T07:28:06.724Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3001/bundle.js:192090
+[   28594ms] [INFO] 2026-06-02T07:28:06.727Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3001/bundle.js:192090
+[   28606ms] [INFO] 2026-06-02T07:28:06.740Z root INFO [49332d63-05a7-4b43-ad63-3c10b350a6b3] Waiting for backend deployment: 6.2 ms [28.604 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   28614ms] [INFO] 2026-06-02T07:28:06.748Z root INFO Start frontend contributions: 2177.5 ms [28.608 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   28615ms] [INFO] 2026-06-02T07:28:06.748Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3001/bundle.js:192090
+[   28617ms] [INFO] 2026-06-02T07:28:06.751Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3001/bundle.js:192090
+[   28617ms] [INFO] 2026-06-02T07:28:06.751Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3001/bundle.js:192090
+[   28709ms] [WARNING] 2026-06-02T07:28:06.842Z terminal WARN Failed attaching to terminal id 1085975532, the terminal is most likely gone. Starting up a new terminal instead. @ http://127.0.0.1:3001/bundle.js:192090
+[   28860ms] [WARNING] 2026-06-02T07:28:06.994Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[   28860ms] [WARNING] 2026-06-02T07:28:06.994Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3001/bundle.js:192090
+[   28866ms] [INFO] 2026-06-02T07:28:07.000Z root INFO [49332d63-05a7-4b43-ad63-3c10b350a6b3] Loading plugin contributions @ http://127.0.0.1:3001/bundle.js:192090
+[   31807ms] [INFO] 2026-06-02T07:28:09.941Z root INFO <<< The layout has been successfully restored. @ http://127.0.0.1:3001/bundle.js:192090
+[   31814ms] [INFO] 2026-06-02T07:28:09.948Z root INFO Initialize the workbench layout: 3190.3 ms [31.805 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   31815ms] [INFO] 2026-06-02T07:28:09.948Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3001/bundle.js:192090
+[   32622ms] [INFO] 2026-06-02T07:28:10.756Z root INFO Replace loading indicator with ready workbench UI (animation): 805.4 ms [32.620 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090
+[   32623ms] [INFO] 2026-06-02T07:28:10.756Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3001/bundle.js:192090
+[   32623ms] [INFO] 2026-06-02T07:28:10.756Z root INFO All frontend contributions settled: 6189.8 ms [32.620 s since frontend page start] @ http://127.0.0.1:3001/bundle.js:192090

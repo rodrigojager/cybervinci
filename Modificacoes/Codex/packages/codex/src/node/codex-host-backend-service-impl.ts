@@ -4,14 +4,21 @@
 // SPDX-License-Identifier: EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0
 // *****************************************************************************
 
-import { inject, injectable, postConstruct } from '@theia/core/shared/inversify';
+import { inject, injectable, optional, postConstruct } from '@theia/core/shared/inversify';
 import { PreferenceService } from '@theia/core/lib/common/preferences';
-import { CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { FileUri } from '@theia/core/lib/common/file-uri';
+import { CodexProviderAppServerNotification, CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { FlowService } from '@cybervinci/flow/lib/common';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 import {
     CHATGPT_CONFIGURATION_KEYS,
     CodexExtensionPreferences
 } from '../common/codex-preferences';
 import {
+    CODEX_OFFICIAL_EXTENSION_VERSION,
     CodexFetchRequest,
     CodexFetchResponse,
     CODEX_VSCODE_RPC_PREFIX,
@@ -74,6 +81,9 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
     @inject(CodexProviderService)
     protected readonly codexProvider: CodexProviderService;
 
+    @inject(FlowService) @optional()
+    protected readonly flowService?: FlowService;
+
     protected client: CodexHostBackendClient | undefined;
 
     @postConstruct()
@@ -85,6 +95,7 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                 kind: 'local'
             });
         }
+        this.codexProvider.onAppServerNotification(notification => this.forwardAppServerNotification(notification));
     }
 
     setClient(client: CodexHostBackendClient | undefined): void {
@@ -98,13 +109,13 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             case 'get-configuration': {
                 const key = this.extractParamKey(params);
                 if (key) {
-                    return this.preferences.get(key);
+                    return { value: this.preferences.get(key) };
                 }
                 const config: Record<string, unknown> = {};
                 for (const configKey of CHATGPT_CONFIGURATION_KEYS) {
                     config[configKey] = this.preferences.get(configKey);
                 }
-                return config;
+                return { config, values: config };
             }
             case 'set-configuration': {
                 const entries = this.extractConfigEntries(params);
@@ -113,9 +124,22 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                 }
                 return { ok: true };
             }
+            case 'get-settings':
+                return { values: this.buildSettingsValues() };
+            case 'get-setting': {
+                const key = this.extractSettingKey(params);
+                return { value: key ? this.readSettingValue(key) : undefined };
+            }
+            case 'set-setting': {
+                const { key, value } = this.extractKeyValue(params);
+                if (key) {
+                    await this.writeSettingValue(key, value);
+                }
+                return { ok: true };
+            }
             case 'get-global-state': {
                 const key = this.extractParamKey(params);
-                return key ? this.globalState.get(key) : this.globalState.getSnapshot();
+                return key ? { value: this.globalState.get(key) } : this.globalState.getSnapshot();
             }
             case 'set-global-state': {
                 const { key, value } = this.extractKeyValue(params);
@@ -146,6 +170,49 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                 }
                 return this.fileBridge.readMetadata(uri);
             }
+            case 'list-pinned-threads': {
+                const threadIds = this.globalState.get('pinnedThreadIds');
+                return {
+                    threadIds: Array.isArray(threadIds)
+                        ? threadIds.filter((entry): entry is string => typeof entry === 'string')
+                        : []
+                };
+            }
+            case 'set-pinned-threads-order': {
+                const record = parseCodexRpcParams(params);
+                const threadIds = Array.isArray(record.threadIds)
+                    ? record.threadIds.filter((entry): entry is string => typeof entry === 'string')
+                    : [];
+                this.globalState.set('pinnedThreadIds', threadIds);
+                return { threadIds };
+            }
+            case 'extension-info':
+                return {
+                    appName: 'Codex',
+                    displayName: 'Codex',
+                    extensionId: 'openai.chatgpt',
+                    extensionVersion: CODEX_OFFICIAL_EXTENSION_VERSION,
+                    name: 'chatgpt',
+                    publisher: 'openai',
+                    version: CODEX_OFFICIAL_EXTENSION_VERSION
+                };
+            case 'os-info':
+                return {
+                    arch: process.arch,
+                    platform: process.platform,
+                    release: os.release(),
+                    homedir: os.homedir(),
+                    tmpdir: os.tmpdir()
+                };
+            case 'active-workspace-roots':
+                return this.workspaceRootOptions(params);
+            case 'locale-info':
+                return {
+                    ideLocale: process.env.LANG || 'en-US',
+                    systemLocale: Intl.DateTimeFormat().resolvedOptions().locale || 'en-US'
+                };
+            case 'openai-api-key':
+                return { value: process.env.OPENAI_API_KEY ?? null };
             case 'paths-exist': {
                 const record = parseCodexRpcParams(params);
                 const paths = Array.isArray(record.paths)
@@ -160,6 +227,8 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                 return this.gitBridge.gitMergeBase(params);
             case 'git-create-branch':
                 return this.gitBridge.gitCreateBranch(params);
+            case 'git-checkout-branch':
+                return this.gitBridge.gitCheckoutBranch(params);
             case 'git-push':
                 return this.gitBridge.gitPush(params);
             case 'refresh-remote-connections':
@@ -185,39 +254,59 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             case 'resolve-worktree-for-thread':
                 return { worktree: null };
             case 'open-in-targets':
-                return { preferredTarget: null, availableTargets: [], targets: [] };
+                return this.openInTargets(params);
             case 'set-preferred-app':
-                return { success: false };
+                return this.setPreferredApp(params);
             case 'terminal-shell-options':
-                return { availableShells: [] };
+                return this.terminalShellOptions();
             case 'thread-terminal-snapshot':
-                return { session: null };
+                return this.threadTerminalSnapshot(params);
             case 'local-environments':
-                return { environments: [] };
+                return this.localEnvironments(params);
             case 'local-environment':
-                return { environment: null };
+                return this.localEnvironment(params);
             case 'local-environment-config':
-                return { config: null };
+                return this.localEnvironmentConfig(params);
             case 'local-environment-config-save':
-                return { success: false };
+                return this.localEnvironmentConfigSave(params);
             case 'worktree-shell-environment-config':
-                return { shellEnvironment: null };
+                return this.worktreeShellEnvironmentConfig(params);
             case 'mcp-codex-config':
-                return { config: null };
+                return this.mcpCodexConfig(params);
             case 'ipc-request':
                 return this.handleIpcRequest(params);
             case 'set-vs-context':
                 return { ok: true };
             case 'apply-patch':
-                return { success: false };
+                return this.gitBridge.applyPatch(params);
             case 'prepare-worktree-snapshot':
+                return this.worktrees.prepareWorktreeSnapshot(params);
             case 'upload-worktree-snapshot':
-                return { success: false };
+                return this.worktrees.uploadWorktreeSnapshot(params);
+            case 'gh-cli-status':
+                return this.gitBridge.ghCliStatus(params);
+            case 'gh-current-user':
+                return this.gitBridge.ghCurrentUser(params);
             case 'gh-pr-create':
+                return this.gitBridge.ghPrCreate(params);
+            case 'gh-pr-board':
+                return this.gitBridge.ghPrBoard(params);
+            case 'gh-pr-body':
+                return this.gitBridge.ghPrBody(params);
+            case 'gh-pr-checks':
+                return this.gitBridge.ghPrChecks(params);
+            case 'gh-pr-comments':
+                return this.gitBridge.ghPrComments(params);
+            case 'gh-pr-status':
+                return this.gitBridge.ghPrStatus(params);
+            case 'gh-pr-diff':
+                return this.gitBridge.ghPrDiff(params);
             case 'gh-pr-merge':
+                return this.gitBridge.ghPrMerge(params);
             case 'gh-pr-update':
+                return this.gitBridge.ghPrUpdate(params);
             case 'gh-pr-comment':
-                return { success: false };
+                return this.gitBridge.ghPrComment(params);
             case 'queued-follow-up-send-lock-acquire':
             case 'queued-follow-up-send-lock-release':
                 return { acquired: false, released: false };
@@ -226,10 +315,21 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                 return { success: false };
             case 'submit-trace-recording-details':
                 return { success: false };
+            case 'chrome-native-host-install':
+            case 'chrome-native-host-uninstall':
+                return {
+                    success: false,
+                    unavailable: true,
+                    reason: 'Chrome native host integration is not available in the Theia host.'
+                };
             case 'account-info':
                 return this.codexProvider.getStatus({ executablePath: this.getCliExecutable() });
             case 'is-copilot-api-available':
-                return { available: true };
+                return { available: false };
+            case 'get-copilot-api-proxy-info':
+                return null;
+            case 'has-custom-cli-executable':
+                return { hasCustomCliExecutable: this.hasCustomCliExecutable() };
             case 'recommended-skills':
                 return this.skills.recommendedSkills(params);
             case 'install-recommended-skill':
@@ -245,10 +345,26 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             case 'write-config-value':
             case 'batch-write-config-value':
                 return { ok: true };
+            case 'fast-mode-rollout-metrics':
+                return null;
+            case 'flow-list-workflows':
+                return this.flowListWorkflows(params);
+            case 'flow-list-workflow-patterns':
+                return this.flowListWorkflowPatterns();
+            case 'flow-ai-authoring-spec':
+                return this.flowAiAuthoringSpec();
+            case 'flow-create-workflow-from-ai-authoring-draft':
+                return this.flowCreateWorkflowFromAiAuthoringDraft(params);
+            case 'flow-plan-dynamic-workflow':
+                return this.flowPlanDynamicWorkflow(params);
+            case 'flow-start-workflow':
+                return this.flowStartWorkflow(params);
+            case 'flow-run-dynamic-workflow':
+                return this.flowRunDynamicWorkflow(params);
             case 'list-mcp-server-status':
-                return { servers: [], cursor: null };
+                return this.listMcpServerStatus(params);
             case 'read-mcp-resource':
-                return { contents: [] };
+                return this.readMcpResource(params);
             case 'set-thread-title':
                 return { ok: true };
             case 'fork-conversation-from-latest':
@@ -267,28 +383,415 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             case 'home-directory':
                 return { path: process.env.HOME ?? process.cwd() };
             case 'workspace-root-options':
-                return { roots: [process.cwd()] };
+                return this.workspaceRootOptions(params);
             case 'list-hooks-for-host':
-                return { hooks: [] };
+                return this.listHooksForHost(params);
             default:
                 throw new Error(`Unknown Codex RPC method: ${method}`);
         }
     }
 
-    protected async handleIpcRequest(params: unknown): Promise<unknown> {
+    protected workspaceRootOptions(params: unknown): Record<string, unknown> {
         const record = parseCodexRpcParams(params);
-        const method = typeof record.method === 'string' ? record.method : undefined;
-        const requestId = typeof record.requestId === 'string' ? record.requestId : '';
+        const roots = this.extractStringArray(record.roots);
+        const cwd = this.extractString(record, ['cwd', 'workspaceRoot', 'root', 'gitRoot']) ?? process.cwd();
+        const resolvedRoots = roots.length > 0 ? roots : [cwd];
+        const labels = Object.fromEntries(resolvedRoots.map(root => [root, path.basename(root) || root]));
+        return { roots: resolvedRoots, labels };
+    }
+
+    protected async flowListWorkflows(params: unknown): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const workspaceRootUri = this.extractFlowWorkspaceRootUri(params);
+        const workflows = await flow.listWorkflows(workspaceRootUri ? { workspaceRootUri } : {});
+        return { workflows };
+    }
+
+    protected async flowListWorkflowPatterns(): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const patterns = await flow.listWorkflowPatterns();
+        return { patterns };
+    }
+
+    protected async flowAiAuthoringSpec(): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const authoringFlow = flow as FlowService & { getAiAuthoringSpec?: () => Promise<unknown> };
+        if (!authoringFlow.getAiAuthoringSpec) {
+            throw new Error('CyberVinci Flow AI authoring spec is not available in this host.');
+        }
+        const spec = await authoringFlow.getAiAuthoringSpec();
+        return { spec };
+    }
+
+    protected async flowCreateWorkflowFromAiAuthoringDraft(params: unknown): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const authoringFlow = flow as FlowService & { createWorkflowFromAiAuthoringDraft?: (request: { workspaceRootUri?: string; draft: unknown }) => Promise<unknown> };
+        if (!authoringFlow.createWorkflowFromAiAuthoringDraft) {
+            throw new Error('CyberVinci Flow AI authoring draft materialization is not available in this host.');
+        }
+        const record = parseCodexRpcParams(params);
+        const draft = this.isRecord(record.authoringDraft) ? record.authoringDraft : this.isRecord(record.draft) ? record.draft : undefined;
+        if (!draft) {
+            throw new Error('flow-create-workflow-from-ai-authoring-draft requires draft or authoringDraft.');
+        }
+        const workspaceRootUri = this.extractFlowWorkspaceRootUri(record);
+        const workflow = await authoringFlow.createWorkflowFromAiAuthoringDraft(workspaceRootUri ? { workspaceRootUri, draft } : { draft });
+        return { workflow };
+    }
+
+    protected async flowPlanDynamicWorkflow(params: unknown): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const record = parseCodexRpcParams(params);
+        const prompt = this.extractString(record, ['prompt', 'message', 'input']) || '';
+        if (!prompt.trim()) {
+            throw new Error('flow-plan-dynamic-workflow requires prompt, message, or input.');
+        }
+        const workspaceRootUri = this.extractFlowWorkspaceRootUri(record);
+        const request = {
+            prompt,
+            preferSaved: record.preferSaved !== false
+        };
+        const plan = await flow.planDynamicWorkflow(workspaceRootUri ? { ...request, workspaceRootUri } : request);
+        return { plan };
+    }
+
+    protected async flowStartWorkflow(params: unknown): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const record = parseCodexRpcParams(params);
+        const workflowId = this.extractString(record, ['workflowId', 'workflow', 'id']);
+        const prompt = this.extractString(record, ['prompt', 'message', 'input']) || '';
+        if (!workflowId) {
+            throw new Error('flow-start-workflow requires workflowId.');
+        }
+        if (!prompt.trim()) {
+            throw new Error('flow-start-workflow requires prompt, message, or input.');
+        }
+        const workspaceRootUri = this.extractFlowWorkspaceRootUri(record);
+        const request = {
+            workflowId,
+            prompt
+        };
+        const run = await flow.startRun(workspaceRootUri ? { ...request, workspaceRootUri } : request);
+        return { run };
+    }
+
+    protected async flowRunDynamicWorkflow(params: unknown): Promise<Record<string, unknown>> {
+        const flow = this.requireFlowService();
+        const record = parseCodexRpcParams(params);
+        const prompt = this.extractString(record, ['prompt', 'message', 'input']) || '';
+        if (!prompt.trim()) {
+            throw new Error('flow-run-dynamic-workflow requires prompt, message, or input.');
+        }
+        const workspaceRootUri = this.extractFlowWorkspaceRootUri(record);
+        const request = {
+            prompt,
+            preferSaved: record.preferSaved !== false
+        };
+        const parameters = this.isRecord(record.parameters) ? { parameters: record.parameters } : {};
+        const roleOverrides = this.isRecord(record.roleOverrides) ? { roleOverrides: record.roleOverrides } : {};
+        const authoringDraft = this.isRecord(record.authoringDraft) ? { authoringDraft: record.authoringDraft } : this.isRecord(record.draft) ? { authoringDraft: record.draft } : {};
+        const run = await flow.runDynamicWorkflow(workspaceRootUri ? { ...request, ...parameters, ...roleOverrides, ...authoringDraft, workspaceRootUri } : { ...request, ...parameters, ...roleOverrides, ...authoringDraft });
+        return { run };
+    }
+
+    protected requireFlowService(): FlowService {
+        if (!this.flowService) {
+            throw new Error('CyberVinci Flow service is not available in this host.');
+        }
+        return this.flowService;
+    }
+
+    protected extractFlowWorkspaceRootUri(params: unknown): string | undefined {
+        const record = parseCodexRpcParams(params);
+        const explicitUri = this.extractString(record, ['workspaceRootUri', 'workspaceUri', 'rootUri']);
+        if (explicitUri) {
+            return explicitUri;
+        }
+        const workspaceRoot = this.extractString(record, ['workspaceRoot', 'workspacePath', 'cwd', 'root', 'gitRoot']);
+        return workspaceRoot ? FileUri.create(path.resolve(workspaceRoot)).toString() : undefined;
+    }
+
+    protected openInTargets(_params: unknown): Record<string, unknown> {
+        const preferredTarget = this.globalState.get('preferredOpenTarget');
+        const fileManagerLabel = process.platform === 'darwin'
+            ? 'Finder'
+            : process.platform === 'win32'
+                ? 'File Explorer'
+                : 'File Manager';
+        const targets = [
+            {
+                id: 'theia',
+                target: 'editor',
+                label: 'Theia',
+                kind: 'editor',
+                icon: null,
+                hidden: false
+            },
+            {
+                id: 'system-default',
+                target: 'systemDefault',
+                label: 'System default',
+                kind: 'native',
+                icon: null,
+                hidden: false
+            },
+            {
+                id: 'file-manager',
+                target: 'fileManager',
+                label: fileManagerLabel,
+                kind: 'native',
+                icon: null,
+                hidden: false
+            }
+        ];
+        return {
+            mode: 'editor',
+            preferredTarget: typeof preferredTarget === 'string' ? preferredTarget : 'editor',
+            availableTargets: targets.map(target => target.target),
+            targets
+        };
+    }
+
+    protected setPreferredApp(params: unknown): Record<string, unknown> {
+        const record = parseCodexRpcParams(params);
+        const target = this.extractString(record, ['target', 'preferredTarget', 'appId', 'id']);
+        if (target) {
+            this.globalState.set('preferredOpenTarget', target);
+        }
+        return { success: !!target, preferredTarget: target ?? null };
+    }
+
+    protected terminalShellOptions(): Record<string, unknown> {
+        const shells = process.platform === 'win32'
+            ? [
+                { id: 'powershell', label: 'PowerShell', path: 'powershell.exe', args: ['-NoLogo'] },
+                { id: 'pwsh', label: 'PowerShell 7', path: 'pwsh.exe', args: ['-NoLogo'] },
+                { id: 'cmd', label: 'Command Prompt', path: 'cmd.exe', args: [] }
+            ]
+            : [
+                { id: 'bash', label: 'bash', path: process.env.SHELL || '/bin/bash', args: [] },
+                { id: 'sh', label: 'sh', path: '/bin/sh', args: [] }
+            ];
+        return {
+            defaultShell: shells[0]?.id ?? null,
+            availableShells: shells,
+            shells
+        };
+    }
+
+    protected threadTerminalSnapshot(params: unknown): Record<string, unknown> {
+        const record = parseCodexRpcParams(params);
+        return {
+            session: null,
+            terminal: null,
+            cwd: this.extractString(record, ['cwd', 'workspaceRoot']) ?? process.cwd(),
+            scrollback: ''
+        };
+    }
+
+    protected async localEnvironments(params: unknown): Promise<Record<string, unknown>> {
+        const record = parseCodexRpcParams(params);
+        const workspaceRoot = this.extractString(record, ['workspaceRoot', 'cwd', 'root']) ?? process.cwd();
+        const envDir = path.join(workspaceRoot, '.codex', 'environments');
+        const environments: Record<string, unknown>[] = [];
+        try {
+            const entries = await fs.readdir(envDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (!entry.isFile() || !entry.name.endsWith('.toml')) {
+                    continue;
+                }
+                const configPath = path.join(envDir, entry.name);
+                environments.push(await this.readLocalEnvironmentConfig(configPath));
+            }
+        } catch {
+            // No environment directory yet.
+        }
+        const legacyPath = path.join(workspaceRoot, '.codex', 'environment.toml');
+        try {
+            await fs.access(legacyPath);
+            if (!environments.some(environment => environment.configPath === legacyPath)) {
+                environments.unshift(await this.readLocalEnvironmentConfig(legacyPath));
+            }
+        } catch {
+            // No legacy config.
+        }
+        return { environments };
+    }
+
+    protected async localEnvironment(params: unknown): Promise<Record<string, unknown>> {
+        const record = parseCodexRpcParams(params);
+        const configPath = this.extractString(record, ['configPath', 'path']);
+        if (configPath) {
+            return { environment: await this.readLocalEnvironmentConfig(configPath) };
+        }
+        const environments = await this.localEnvironments(params);
+        const list = Array.isArray(environments.environments) ? environments.environments : [];
+        return { environment: list[0] ?? null };
+    }
+
+    protected async localEnvironmentConfig(params: unknown): Promise<Record<string, unknown>> {
+        const record = parseCodexRpcParams(params);
+        const configPath = this.extractString(record, ['configPath', 'path']);
+        if (!configPath) {
+            return { config: null };
+        }
+        return { config: await this.readLocalEnvironmentConfig(configPath) };
+    }
+
+    protected async localEnvironmentConfigSave(params: unknown): Promise<Record<string, unknown>> {
+        const record = parseCodexRpcParams(params);
+        const configPath = this.extractString(record, ['configPath', 'path']);
+        const raw = typeof record.raw === 'string'
+            ? record.raw
+            : typeof record.contents === 'string'
+                ? record.contents
+                : typeof record.content === 'string'
+                    ? record.content
+                    : undefined;
+        if (!configPath || raw === undefined) {
+            return { success: false, error: 'Missing configPath or raw config content' };
+        }
+        await fs.mkdir(path.dirname(configPath), { recursive: true });
+        await fs.writeFile(configPath, raw, 'utf8');
+        return { success: true, config: await this.readLocalEnvironmentConfig(configPath) };
+    }
+
+    protected async worktreeShellEnvironmentConfig(params: unknown): Promise<Record<string, unknown>> {
+        const environment = (await this.localEnvironment(params)).environment ?? null;
+        return {
+            shellEnvironment: environment,
+            environment
+        };
+    }
+
+    protected async readLocalEnvironmentConfig(configPath: string): Promise<Record<string, unknown>> {
+        try {
+            const raw = await fs.readFile(configPath, 'utf8');
+            return {
+                type: 'success',
+                configPath,
+                name: path.basename(configPath, '.toml'),
+                raw,
+                config: this.extractSimpleTomlConfig(raw)
+            };
+        } catch (error) {
+            return {
+                type: 'error',
+                configPath,
+                name: path.basename(configPath, '.toml'),
+                error: error instanceof Error ? error.message : String(error)
+            };
+        }
+    }
+
+    protected extractSimpleTomlConfig(raw: string): Record<string, unknown> {
+        const config: Record<string, unknown> = {};
+        for (const line of raw.split(/\r?\n/)) {
+            const match = /^\s*([A-Za-z0-9_.-]+)\s*=\s*(.+?)\s*$/.exec(line);
+            if (!match) {
+                continue;
+            }
+            const [, key, value] = match;
+            if (!key || value === undefined) {
+                continue;
+            }
+            config[key] = this.parseSimpleTomlValue(value);
+        }
+        return config;
+    }
+
+    protected parseSimpleTomlValue(value: string): unknown {
+        const trimmed = value.trim();
+        if (trimmed === 'true') {
+            return true;
+        }
+        if (trimmed === 'false') {
+            return false;
+        }
+        if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) {
+            return Number(trimmed);
+        }
+        const quoted = /^["'](.*)["']$/.exec(trimmed);
+        return quoted ? quoted[1] : trimmed;
+    }
+
+    protected async mcpCodexConfig(params: unknown): Promise<Record<string, unknown>> {
+        const config = this.buildReadConfigForHostResponse(params);
+        const record = this.isRecord(config) ? config : {};
+        return {
+            config: this.isRecord(record.config) ? record.config.mcp_servers ?? {} : {},
+            mcpServers: this.isRecord(record.config) ? record.config.mcp_servers ?? {} : {}
+        };
+    }
+
+    protected async listMcpServerStatus(params: unknown): Promise<Record<string, unknown>> {
+        try {
+            const result = await this.tryInvokeCliIpc('mcpServerStatus/list', params);
+            const record = parseCodexRpcParams(result);
+            const data = this.extractArray(record.data) ?? this.extractArray(record.servers) ?? [];
+            return {
+                ...record,
+                data,
+                servers: data,
+                nextCursor: this.extractCursor(record),
+                cursor: this.extractCursor(record)
+            };
+        } catch {
+            return { data: [], servers: [], nextCursor: null, cursor: null };
+        }
+    }
+
+    protected async readMcpResource(params: unknown): Promise<Record<string, unknown>> {
+        const record = parseCodexRpcParams(params);
+        for (const method of ['mcp/resource/read', 'resources/read', 'mcpServerResource/read']) {
+            try {
+                const result = await this.tryInvokeCliIpc(method, params);
+                const normalized = parseCodexRpcParams(result);
+                if (Array.isArray(normalized.contents)) {
+                    return { contents: normalized.contents };
+                }
+            } catch {
+                // Try the next app-server method name; CLI builds have used different internal names.
+            }
+        }
+        const uri = this.extractString(record, ['uri', 'resourceUri']);
+        if (uri?.startsWith('file://')) {
+            try {
+                const filePath = fileURLToPath(uri);
+                const text = await fs.readFile(filePath, 'utf8');
+                return { contents: [{ uri, text, mimeType: 'text/plain' }] };
+            } catch {
+                return { contents: [] };
+            }
+        }
+        return { contents: [] };
+    }
+
+    protected async listHooksForHost(params: unknown): Promise<Record<string, unknown>> {
+        try {
+            const result = await this.tryInvokeCliIpc('hooks/list', params);
+            const record = parseCodexRpcParams(result);
+            const hooks = this.extractArray(record.hooks) ?? this.extractArray(record.data) ?? [];
+            return { ...record, hooks, data: hooks, nextCursor: this.extractCursor(record) };
+        } catch {
+            return { hooks: [], data: [], nextCursor: null };
+        }
+    }
+
+    protected async handleIpcRequest(params: unknown): Promise<unknown> {
+        const record = this.extractIpcRequest(params);
+        const method = record.method;
+        const requestId = record.requestId;
         if (!method) {
             return {
                 requestId,
                 type: 'response',
-                resultType: 'error',
-                error: 'Missing method for ipc-request'
+                resultType: 'success',
+                result: { ok: true, unsupported: true, method: 'unknown' }
             };
         }
         try {
-            const result = await this.tryInvokeCliIpc(method, record.params);
+            const result = this.normalizeIpcResult(method, await this.tryInvokeCliIpc(method, record.params));
             return {
                 requestId,
                 type: 'response',
@@ -299,7 +802,7 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             const cliMessage = cliError instanceof Error ? cliError.message : String(cliError);
             console.info(`[Codex] ipc-request fallback (${method}): ${cliMessage}`);
             try {
-                const result = this.handleLocalIpcRequest(method, record.params);
+                const result = this.normalizeIpcResult(method, this.handleLocalIpcRequest(method, record.params));
                 return {
                     requestId,
                     type: 'response',
@@ -318,17 +821,98 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
         }
     }
 
+    protected extractIpcRequest(params: unknown): { requestId: string, method?: string, params?: unknown } {
+        const record = this.isRecord(params) ? params : {};
+        const nested = this.isRecord(record.params) ? record.params : undefined;
+        const source = typeof record.method === 'string'
+            ? record
+            : nested && typeof nested.method === 'string'
+                ? nested
+                : record;
+        const requestId = typeof source.requestId === 'string' || typeof source.requestId === 'number'
+            ? String(source.requestId)
+            : '';
+        return {
+            requestId,
+            method: typeof source.method === 'string' ? source.method : undefined,
+            params: source.params
+        };
+    }
+
     protected async tryInvokeCliIpc(method: string, params: unknown): Promise<unknown> {
         const executablePath = this.getCliExecutable();
-        if (!executablePath) {
-            throw new Error('Codex Provider is not configured (chatgpt.cliExecutable)');
-        }
         return this.codexProvider.invokeAppServerRequest({
             method,
             params,
             executablePath,
-            timeoutMs: 10_000
+            timeoutMs: method === 'account/login/start' ? 30_000 : 10_000
         });
+    }
+
+    protected normalizeIpcResult(method: string, result: unknown): unknown {
+        const record = parseCodexRpcParams(result);
+        switch (method) {
+            case 'conversation/list':
+            case 'thread/list': {
+                const data = this.extractArray(record.data)
+                    ?? this.extractArray(record.threads)
+                    ?? this.extractArray(record.conversations)
+                    ?? [];
+                return {
+                    ...record,
+                    data,
+                    conversations: this.extractArray(record.conversations) ?? data,
+                    threads: this.extractArray(record.threads) ?? data,
+                    nextCursor: this.extractCursor(record)
+                };
+            }
+            case 'notification/list': {
+                const data = this.extractArray(record.data) ?? this.extractArray(record.notifications) ?? [];
+                return {
+                    ...record,
+                    data,
+                    notifications: this.extractArray(record.notifications) ?? data,
+                    nextCursor: this.extractCursor(record)
+                };
+            }
+            case 'model/list': {
+                const data = this.extractArray(record.data) ?? this.extractArray(record.models) ?? [];
+                return {
+                    ...record,
+                    data,
+                    models: this.extractArray(record.models) ?? data
+                };
+            }
+            case 'account/login/start':
+                return this.normalizeLoginStartResponse(result);
+            case 'mcpServerStatus/list':
+            case 'app/list':
+            case 'plugin/list':
+            case 'skills/list':
+            case 'externalAgentConfig/list':
+            case 'experimentalFeature/list':
+                return {
+                    ...record,
+                    data: this.extractArray(record.data) ?? [],
+                    nextCursor: this.extractCursor(record)
+                };
+            default:
+                return result;
+        }
+    }
+
+    protected extractArray(value: unknown): unknown[] | undefined {
+        return Array.isArray(value) ? value : undefined;
+    }
+
+    protected extractCursor(record: Record<string, unknown>): string | null {
+        if (typeof record.nextCursor === 'string') {
+            return record.nextCursor;
+        }
+        if (typeof record.cursor === 'string') {
+            return record.cursor;
+        }
+        return null;
     }
 
     protected handleLocalIpcRequest(method: string, params: unknown): unknown {
@@ -341,14 +925,18 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                     userCapabilities: {}
                 };
             case 'account/read':
-                return { type: 'logged-out' };
+                return { account: null, requiresOpenaiAuth: true };
             case 'account/info':
             case 'account/status':
-                return { type: 'logged-out' };
+                return { account: null, requiresOpenaiAuth: true };
+            case 'account/login/start':
+            case 'account/login/cancel':
+            case 'account/logout':
+                throw new Error(`${method} requires a running Codex CLI app-server. Install the codex CLI or configure chatgpt.cliExecutable.`);
             case 'model/list':
-                return { models: [] };
+                return { data: [], models: [] };
             case 'modelProvider/capabilities/read':
-                return { capabilities: {} };
+                return { capabilities: {}, data: { capabilities: {} } };
             case 'configRequirements/read':
                 return { requirements: null };
             case 'config/read':
@@ -357,9 +945,17 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
                 return this.buildReadConfigForHostResponse(params);
             case 'conversation/list':
             case 'thread/list':
-                return { conversations: [], threads: [] };
+                return { data: [], nextCursor: null, conversations: [], threads: [] };
             case 'notification/list':
-                return { notifications: [] };
+                return { data: [], nextCursor: null, notifications: [] };
+            case 'mcpServerStatus/list':
+                return { data: [], nextCursor: null, servers: [] };
+            case 'app/list':
+            case 'plugin/list':
+            case 'skills/list':
+            case 'externalAgentConfig/list':
+            case 'experimentalFeature/list':
+                return { data: [], nextCursor: null };
             case 'host/read':
             case 'host/list':
                 return {
@@ -404,6 +1000,14 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             service_tier: null,
             model_verbosity: null,
             analytics: null,
+            features: {
+                remote_connections: false,
+                remote_control_connections: false,
+                request_permissions_tool: false
+            },
+            'features.remote_connections': false,
+            'features.remote_control_connections': false,
+            'features.request_permissions_tool': false,
             mcp_servers: {},
             apps: {
                 _default: {
@@ -427,6 +1031,112 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
             origins: {},
             ...(includeLayers ? { layers: [] } : {})
         };
+    }
+
+    protected normalizeLoginStartResponse(result: unknown): unknown {
+        const record = this.unwrapLoginStartResponse(result);
+        switch (record.type) {
+            case 'apiKey':
+            case 'chatgptAuthTokens':
+                return record;
+            case 'chatgpt':
+                if (typeof record.loginId === 'string' && typeof record.authUrl === 'string') {
+                    return record;
+                }
+                break;
+            case 'chatgptDeviceCode':
+                if (typeof record.loginId === 'string' &&
+                    typeof record.verificationUrl === 'string' &&
+                    typeof record.userCode === 'string') {
+                    return record;
+                }
+                break;
+        }
+        if (typeof record.loginId === 'string' && typeof record.authUrl === 'string') {
+            return { ...record, type: 'chatgpt' };
+        }
+        throw new Error('Codex CLI app-server returned an invalid account/login/start response.');
+    }
+
+    protected unwrapLoginStartResponse(result: unknown): Record<string, unknown> {
+        let current = result;
+        for (let index = 0; index < 4; index++) {
+            const record = parseCodexRpcParams(current);
+            if (record.type !== undefined || !('result' in record)) {
+                return record;
+            }
+            current = record.result;
+        }
+        return parseCodexRpcParams(current);
+    }
+
+    protected buildSettingsValues(): Record<string, unknown> {
+        const values: Record<string, unknown> = {};
+        for (const key of CHATGPT_CONFIGURATION_KEYS) {
+            values[key] = this.preferences.get(key);
+        }
+        for (const [key, value] of Object.entries(this.globalState.getSnapshot())) {
+            if (key.startsWith('setting:')) {
+                values[key.slice('setting:'.length)] = value;
+            }
+        }
+        return values;
+    }
+
+    protected extractSettingKey(params: unknown): string | undefined {
+        const key = parseCodexRpcParams(params).key;
+        if (typeof key === 'string') {
+            return key;
+        }
+        const record = this.isRecord(key) ? key : {};
+        return typeof record.key === 'string' ? record.key : undefined;
+    }
+
+    protected readSettingValue(key: string): unknown {
+        const preferenceValue = this.preferences.get(key);
+        return preferenceValue !== undefined
+            ? preferenceValue
+            : this.globalState.get(this.getSettingStateKey(key));
+    }
+
+    protected async writeSettingValue(key: string, value: unknown): Promise<void> {
+        if (this.isKnownConfigurationKey(key)) {
+            await this.preferences.set(key, value);
+            return;
+        }
+        this.globalState.set(this.getSettingStateKey(key), value);
+    }
+
+    protected isKnownConfigurationKey(key: string): key is typeof CHATGPT_CONFIGURATION_KEYS[number] {
+        return CHATGPT_CONFIGURATION_KEYS.includes(key as typeof CHATGPT_CONFIGURATION_KEYS[number]);
+    }
+
+    protected getSettingStateKey(key: string): string {
+        return `setting:${key}`;
+    }
+
+    protected isRecord(value: unknown): value is Record<string, unknown> {
+        return !!value && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    protected extractString(record: Record<string, unknown>, keys: string[]): string | undefined {
+        for (const key of keys) {
+            const value = record[key];
+            if (typeof value === 'string' && value.length > 0) {
+                return value;
+            }
+        }
+        return undefined;
+    }
+
+    protected extractStringArray(value: unknown): string[] {
+        return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+    }
+
+    protected forwardAppServerNotification(notification: CodexProviderAppServerNotification): void {
+        if (notification.method) {
+            this.client?.notifyMcpNotification?.('local', notification.method, notification.params);
+        }
     }
 
     protected async startConversation(params: unknown): Promise<string> {
@@ -569,7 +1279,12 @@ export class CodexHostBackendServiceImpl implements CodexHostBackendService {
     }
 
     protected getCliExecutable(): string | undefined {
-        return this.preferences.get<string>(CodexExtensionPreferences.CLI_EXECUTABLE, undefined);
+        const configured = this.preferences.get<string>(CodexExtensionPreferences.CLI_EXECUTABLE, undefined);
+        return configured?.trim() || undefined;
+    }
+
+    protected hasCustomCliExecutable(): boolean {
+        return this.getCliExecutable() !== undefined;
     }
 
     protected extractParamKey(params: unknown): string | undefined {

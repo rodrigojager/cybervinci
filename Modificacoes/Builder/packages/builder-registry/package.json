@@ -1,6 +1,6 @@
 {
   "name": "@cybervinci/builder-registry",
-  "version": "1.71.0",
+  "version": "1.72.0",
   "description": "CyberVinci UI component registry",
   "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
   "main": "lib/common",
@@ -10,11 +10,11 @@
     "src"
   ],
   "dependencies": {
-    "@cybervinci/builder-schema": "1.71.0",
+    "@cybervinci/builder-schema": "1.72.0",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@theia/ext-scripts": "1.71.0"
+    "@theia/ext-scripts": "1.72.0"
   },
   "scripts": {
     "build": "theiaext build",

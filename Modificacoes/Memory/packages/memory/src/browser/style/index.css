@@ -1,8 +1,19 @@
+.memory,
+.memory-context-cart {
+    --memory-panel: color-mix(in srgb, var(--theia-editorWidget-background) 76%, transparent);
+    --memory-panel-strong: color-mix(in srgb, var(--theia-editorWidget-background) 88%, var(--theia-editor-background));
+    --memory-panel-subtle: color-mix(in srgb, var(--theia-editorWidget-background) 46%, transparent);
+    --memory-border: color-mix(in srgb, var(--theia-panel-border) 72%, transparent);
+    --memory-accent-soft: color-mix(in srgb, var(--theia-focusBorder) 16%, transparent);
+}
+
 .memory {
     height: 100%;
     overflow: auto;
     color: var(--theia-foreground);
-    background: var(--theia-editor-background);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theia-focusBorder) 7%, transparent), transparent 180px),
+        var(--theia-editor-background);
 }
 
 .memory-header {
@@ -11,7 +22,9 @@
     justify-content: space-between;
     gap: 12px;
     padding: 14px 16px 10px;
-    border-bottom: 1px solid var(--theia-panel-border);
+    border-bottom: 1px solid var(--memory-border);
+    background: color-mix(in srgb, var(--theia-editor-background) 88%, transparent);
+    backdrop-filter: blur(10px);
 }
 
 .memory-header h2,
@@ -51,7 +64,9 @@
     display: flex;
     gap: 2px;
     padding: 8px;
-    border-bottom: 1px solid var(--theia-panel-border);
+    border-bottom: 1px solid var(--memory-border);
+    background: color-mix(in srgb, var(--theia-editor-background) 74%, transparent);
+    backdrop-filter: blur(10px);
     overflow-x: auto;
 }
 
@@ -61,14 +76,16 @@
     gap: 6px;
     height: 30px;
     padding: 0 9px;
-    border: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
     color: var(--theia-foreground);
     background: transparent;
     white-space: nowrap;
 }
 
 .memory-tabs button.active {
-    background: var(--theia-list-activeSelectionBackground);
+    border-color: var(--theia-focusBorder);
+    background: color-mix(in srgb, var(--theia-list-activeSelectionBackground) 78%, transparent);
     color: var(--theia-list-activeSelectionForeground);
 }
 
@@ -81,10 +98,11 @@
     display: grid;
     gap: 10px;
     margin: 12px 16px 0;
-    border: 1px solid var(--theia-panel-border);
+    border: 1px solid var(--memory-border);
     border-left: 3px solid var(--theia-notificationsWarningIcon-foreground);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border-radius: 8px;
+    background: var(--memory-panel);
+    backdrop-filter: blur(10px);
 }
 
 .memory-initial-consent strong,
@@ -109,9 +127,10 @@
     gap: 10px;
     min-height: 54px;
     padding: 10px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background: var(--memory-panel);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--theia-foreground) 8%, transparent);
 }
 
 .memory-metric i {
@@ -142,9 +161,10 @@
 .memory-node-list div,
 .memory-events div {
     padding: 10px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background: var(--memory-panel);
+    backdrop-filter: blur(8px);
 }
 
 .memory-results article div,
@@ -173,19 +193,21 @@
 
 .memory-source-chips span {
     padding: 2px 6px;
-    border: 1px solid var(--theia-badge-background);
-    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--theia-badge-background) 80%, var(--theia-focusBorder));
+    border-radius: 999px;
     color: var(--theia-badge-foreground);
-    background: var(--theia-badge-background);
+    background: color-mix(in srgb, var(--theia-badge-background) 72%, transparent);
     font-size: 11px;
     line-height: 16px;
 }
 
 .memory-graph {
     height: 360px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 20% 18%, var(--memory-accent-soft), transparent 34%),
+        var(--memory-panel);
     overflow: hidden;
 }
 
@@ -309,9 +331,10 @@
     gap: 5px;
     min-height: 28px;
     padding: 0 8px;
-    border: 1px solid var(--theia-panel-border);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
     color: var(--theia-foreground);
-    background: var(--theia-editorWidget-background);
+    background: var(--memory-panel-subtle);
 }
 
 .memory-filterbar select,
@@ -322,7 +345,7 @@
 
 .memory-filterbar button.active {
     border-color: var(--theia-focusBorder);
-    background: var(--theia-list-activeSelectionBackground);
+    background: color-mix(in srgb, var(--theia-list-activeSelectionBackground) 78%, transparent);
     color: var(--theia-list-activeSelectionForeground);
 }
 
@@ -351,7 +374,8 @@
     margin-top: 10px;
     padding: 10px;
     border: 1px solid var(--theia-focusBorder);
-    background: var(--theia-editorWidget-background);
+    border-radius: 8px;
+    background: var(--memory-panel);
 }
 
 .memory-node-details > div:first-child {
@@ -397,8 +421,9 @@
 
 .memory-citation-list article {
     border-left: 2px solid var(--theia-focusBorder);
+    border-radius: 0 8px 8px 0;
     padding: 6px 8px;
-    background: var(--theia-editorWidget-background);
+    background: var(--memory-panel-subtle);
 }
 
 .memory-citation-list article div {
@@ -437,10 +462,10 @@
 
 .memory-signals span {
     padding: 3px 7px;
-    border: 1px solid var(--theia-panel-border);
+    border: 1px solid var(--memory-border);
     border-radius: 999px;
     color: var(--theia-descriptionForeground);
-    background: var(--theia-editor-background);
+    background: var(--memory-panel-subtle);
     font-size: 12px;
 }
 
@@ -484,9 +509,9 @@
     gap: 5px;
     min-width: 0;
     padding: 9px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background: var(--memory-panel);
 }
 
 .memory-space > div {
@@ -521,9 +546,9 @@
     gap: 6px;
     align-items: center;
     padding: 9px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background: var(--memory-panel);
 }
 
 .memory-breakdown > div > span {
@@ -558,8 +583,9 @@
     gap: 10px;
     align-items: flex-start;
     padding: 10px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background: var(--memory-panel-subtle);
 }
 
 .memory-toggle strong,
@@ -571,8 +597,9 @@
     display: grid;
     gap: 8px;
     padding: 10px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 6px;
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
+    background: var(--memory-panel-subtle);
 }
 
 .memory-settings-card strong,
@@ -592,10 +619,10 @@
     display: grid;
     gap: 10px;
     padding: 12px;
-    border: 1px solid var(--theia-panel-border);
+    border: 1px solid var(--memory-border);
     border-left: 3px solid var(--theia-notificationsWarningIcon-foreground);
-    border-radius: 6px;
-    background: var(--theia-editorWidget-background);
+    border-radius: 8px;
+    background: var(--memory-panel);
 }
 
 .memory-consent-status.enabled {
@@ -619,9 +646,10 @@
     align-items: center;
     min-width: 0;
     padding: 4px 6px;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 4px;
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
     color: var(--theia-descriptionForeground);
+    background: var(--memory-panel-subtle);
 }
 
 .memory-consent-grid span.enabled {
@@ -869,7 +897,9 @@
     height: 100%;
     overflow: auto;
     color: var(--theia-foreground);
-    background: var(--theia-editor-background);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--theia-focusBorder) 6%, transparent), transparent 160px),
+        var(--theia-editor-background);
 }
 
 .memory-context-cart-header,
@@ -877,7 +907,7 @@
 .memory-context-cart-items,
 .memory-context-cart-pack {
     padding: 12px 14px;
-    border-bottom: 1px solid var(--theia-panel-border);
+    border-bottom: 1px solid var(--memory-border);
 }
 
 .memory-context-cart-header {
@@ -885,6 +915,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    background: color-mix(in srgb, var(--theia-editor-background) 88%, transparent);
+    backdrop-filter: blur(10px);
 }
 
 .memory-context-cart-header h2 {
@@ -907,8 +939,9 @@
     resize: vertical;
     padding: 8px;
     color: var(--theia-input-foreground);
-    background: var(--theia-input-background);
+    background: color-mix(in srgb, var(--theia-input-background) 82%, transparent);
     border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 8px;
     font-family: var(--theia-ui-font-family);
 }
 
@@ -930,14 +963,14 @@
     height: 26px;
     padding: 0 8px;
     color: var(--theia-foreground);
-    background: transparent;
-    border: 1px solid var(--theia-panel-border);
-    border-radius: 4px;
+    background: var(--memory-panel-subtle);
+    border: 1px solid var(--memory-border);
+    border-radius: 8px;
 }
 
 .memory-context-cart-source-row button.active {
     color: var(--theia-list-activeSelectionForeground);
-    background: var(--theia-list-activeSelectionBackground);
+    background: color-mix(in srgb, var(--theia-list-activeSelectionBackground) 78%, transparent);
     border-color: var(--theia-focusBorder);
 }
 

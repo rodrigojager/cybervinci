@@ -1,0 +1,464 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - tablist [ref=e59] [cursor=pointer]:
+            - listitem [ref=e60]:
+              - generic [ref=e62]: Welcome
+              - generic "Close" [ref=e63]
+            - listitem [ref=e399]:
+              - generic [ref=e401]: Flow
+              - generic "Close" [ref=e402]: 
+          - text:     
+          - tabpanel [ref=e403]:
+            - generic [ref=e404]:
+              - banner [ref=e405]:
+                - generic [ref=e406]:
+                  - heading "Sisyphus Ultrawork Coordinator 2" [level=2] [ref=e758]
+                  - text: sisyphus_ultrawork_coordinator_2c:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.theia\flow\workflows\sisyphus_ultrawork_coordinator_2.json
+                  - region "Flow runtime status" [ref=e408]:
+                    - generic [ref=e409]:
+                      - 'generic "Kernel: Kernel externo" [ref=e410]':
+                        - generic [ref=e411]: Kernel
+                        - strong [ref=e412]: Kernel externo
+                      - 'generic "Host mode: Normal" [ref=e413]':
+                        - generic [ref=e414]: Host mode
+                        - strong [ref=e415]: Normal
+                      - 'generic "LLM provider: configured" [ref=e416]':
+                        - generic [ref=e417]: LLM provider
+                        - strong [ref=e418]: configured
+                      - generic "Kernel run event streaming is not available in the current host." [ref=e419]:
+                        - generic [ref=e420]: Run updates
+                        - strong [ref=e421]: Unavailable
+                    - generic [ref=e422]:
+                      - 'generic "llm.agent.execute: available" [ref=e423]':
+                        - generic [ref=e424]: llm.agent.execute
+                        - strong [ref=e425]: available
+                      - 'generic "filesystem.edit: available / policy configured" [ref=e426]':
+                        - generic [ref=e427]: filesystem.edit
+                        - strong [ref=e428]: available / policy configured
+                      - 'generic "image.generate: unavailable / provider missing" [ref=e429]':
+                        - generic [ref=e430]: image.generate
+                        - strong [ref=e431]: unavailable / provider missing
+                      - 'generic "command.execute: blocked / policy blocked" [ref=e432]':
+                        - generic [ref=e433]: command.execute
+                        - strong [ref=e434]: blocked / policy blocked
+                      - 'generic "Memory: local" [ref=e435]':
+                        - generic [ref=e436]: Memory
+                        - strong [ref=e437]: local
+                      - 'generic "run.event_stream: unavailable" [ref=e438]':
+                        - generic [ref=e439]: run.event_stream
+                        - strong [ref=e440]: unavailable
+                  - generic [ref=e441]:
+                    - generic [ref=e442]: Template
+                    - combobox "Workflow template" [disabled] [ref=e443]:
+                      - option "Simple Specialist" [selected]
+                      - option "Linear Chain"
+                      - option "Review Loop"
+                      - option "Contracted Parallel Delivery"
+                      - option "Content Factory"
+                      - option "Conditional Contract"
+                      - option "Human Approval Gate"
+                      - option "Memory Consolidation"
+                    - button " Create" [disabled] [ref=e444]:
+                      - generic [ref=e445]: 
+                      - text: Create
+                    - generic [ref=e446]: Preset
+                    - combobox "Pipeline preset" [disabled] [ref=e447]:
+                      - option "Sisyphus Ultrawork Coordinator (built-in)" [selected]
+                    - button " Create" [disabled] [ref=e448]:
+                      - generic [ref=e449]: 
+                      - text: Create
+                    - button " Save preset" [disabled] [ref=e450]:
+                      - generic [ref=e451]: 
+                      - text: Save preset
+                - generic [ref=e452]:
+                  - button "" [disabled] [ref=e453]:
+                    - generic [ref=e454]: 
+                  - button "" [disabled] [ref=e455]:
+                    - generic [ref=e456]: 
+                  - button "" [disabled] [ref=e457]:
+                    - generic [ref=e458]: 
+                  - button "" [disabled] [ref=e459]:
+                    - generic [ref=e460]: 
+                  - button "" [disabled] [ref=e461]:
+                    - generic [ref=e462]: 
+                  - button "" [disabled] [ref=e463]:
+                    - generic [ref=e464]: 
+                  - button "" [disabled] [ref=e465]:
+                    - generic [ref=e466]: 
+                  - button "" [disabled] [ref=e467]:
+                    - generic [ref=e468]: 
+                  - button "" [disabled] [ref=e469]:
+                    - generic [ref=e470]: 
+                  - button "" [disabled] [ref=e471]:
+                    - generic [ref=e472]: 
+                  - button "" [disabled] [ref=e473]:
+                    - generic [ref=e474]: 
+                  - button "" [disabled] [ref=e475]:
+                    - generic [ref=e476]: 
+                  - button "" [disabled] [ref=e477]:
+                    - generic [ref=e478]: 
+                  - button "" [disabled] [ref=e479]:
+                    - generic [ref=e480]: 
+                  - button "" [disabled] [ref=e481]:
+                    - generic [ref=e482]: 
+                  - button "" [disabled] [ref=e483]:
+                    - generic [ref=e484]: 
+                  - button "" [disabled] [ref=e485]:
+                    - generic [ref=e486]: 
+              - textbox "Run prompt" [active] [ref=e488]: Build the next CyberVinci feature with explicit artifacts and a human review gate.
+              - region "Agent Markdown library" [ref=e489]:
+                - generic [ref=e490]:
+                  - generic [ref=e491]:
+                    - heading "Agentes Markdown" [level=3] [ref=e492]
+                    - generic [ref=e493]: 3 de 3
+                  - button " Novo" [disabled] [ref=e494]:
+                    - generic [ref=e495]: 
+                    - text: Novo
+                - generic [ref=e496]:
+                  - generic [ref=e497]: 
+                  - textbox "Buscar agentes Markdown" [ref=e498]:
+                    - /placeholder: Buscar por caminho
+                - generic [ref=e499]:
+                  - article [ref=e500]:
+                    - button " sisyphus/coordinator.md" [disabled] [ref=e501]:
+                      - generic [ref=e502]: 
+                      - generic [ref=e503]: sisyphus/coordinator.md
+                    - time [ref=e504]: 27/05/2026, 23:30:32
+                    - generic [ref=e505]:
+                      - button "" [disabled] [ref=e506]:
+                        - generic [ref=e507]: 
+                      - button "" [disabled] [ref=e508]:
+                        - generic [ref=e509]: 
+                  - article [ref=e510]:
+                    - button " sisyphus/reviewer.md" [disabled] [ref=e511]:
+                      - generic [ref=e512]: 
+                      - generic [ref=e513]: sisyphus/reviewer.md
+                    - time [ref=e514]: 27/05/2026, 23:30:37
+                    - generic [ref=e515]:
+                      - button "" [disabled] [ref=e516]:
+                        - generic [ref=e517]: 
+                      - button "" [disabled] [ref=e518]:
+                        - generic [ref=e519]: 
+                  - article [ref=e520]:
+                    - button " sisyphus/ultraworker.md" [disabled] [ref=e521]:
+                      - generic [ref=e522]: 
+                      - generic [ref=e523]: sisyphus/ultraworker.md
+                    - time [ref=e524]: 27/05/2026, 23:30:33
+                    - generic [ref=e525]:
+                      - button "" [disabled] [ref=e526]:
+                        - generic [ref=e527]: 
+                      - button "" [disabled] [ref=e528]:
+                        - generic [ref=e529]: 
+              - main [ref=e530]:
+                - generic [ref=e531]:
+                  - application "Sisyphus Ultrawork Coordinator 2 workflow canvas" [ref=e759]:
+                    - generic "Canvas controls" [ref=e533]:
+                      - button "" [ref=e534]:
+                        - generic [ref=e535]: 
+                      - generic [ref=e536]: 100%
+                      - button "" [ref=e537]:
+                        - generic [ref=e538]: 
+                      - button "" [ref=e539]:
+                        - generic [ref=e540]: 
+                      - button "" [ref=e541]:
+                        - generic [ref=e542]: 
+                      - button "" [disabled] [ref=e543]:
+                        - generic [ref=e544]: 
+                      - button "" [disabled] [ref=e545]:
+                        - generic [ref=e546]: 
+                      - button "" [ref=e547]:
+                        - generic [ref=e548]: 
+                    - generic "New workflow states" [ref=e549]:
+                      - button " input" [ref=e550]:
+                        - generic [ref=e551]: 
+                        - generic [ref=e552]: input
+                      - button " context" [ref=e553]:
+                        - generic [ref=e554]: 
+                        - generic [ref=e555]: context
+                      - button " agent" [ref=e556]:
+                        - generic [ref=e557]: 
+                        - generic [ref=e558]: agent
+                      - button " parallel" [ref=e559]:
+                        - generic [ref=e560]: 
+                        - generic [ref=e561]: parallel
+                      - button " join" [ref=e562]:
+                        - generic [ref=e563]: 
+                        - generic [ref=e564]: join
+                      - button " condition" [ref=e565]:
+                        - generic [ref=e566]: 
+                        - generic [ref=e567]: condition
+                      - button " gate" [ref=e568]:
+                        - generic [ref=e569]: 
+                        - generic [ref=e570]: gate
+                      - button " command" [ref=e571]:
+                        - generic [ref=e572]: 
+                        - generic [ref=e573]: command
+                      - button " memory write" [ref=e574]:
+                        - generic [ref=e575]: 
+                        - generic [ref=e576]: memory write
+                      - button " report" [ref=e577]:
+                        - generic [ref=e578]: 
+                        - generic [ref=e579]: report
+                    - generic "Workflow viewport. Drag empty space to pan, use Control plus mouse wheel to zoom, Alt plus left or right arrow to move selection." [ref=e580]:
+                      - generic [ref=e581]:
+                        - img:
+                          - button "Transition input to sisyphus_coordinator on run.started" [ref=e760]:
+                            - generic: run.started
+                          - button "Transition sisyphus_coordinator to plan_gate on workload.completed" [ref=e761]:
+                            - generic: workload.completed
+                            - generic: artifact.exists
+                          - button "Transition plan_gate to sisyphus_ultraworker on gate.approved" [ref=e762]:
+                            - generic: gate.approved
+                            - generic: gate.status
+                          - button "Transition sisyphus_ultraworker to sisyphus_reviewer on workload.completed" [ref=e763]:
+                            - generic: workload.completed
+                            - generic: artifact.exists
+                          - button "Transition sisyphus_reviewer to final_report on workload.completed" [ref=e764]:
+                            - generic: workload.completed
+                            - generic: artifact.exists
+                        - button "input input pending Start transition from input" [ref=e765]:
+                          - strong [ref=e766]: input
+                          - generic [ref=e767]: input
+                          - generic [ref=e768]: pending
+                          - button "Start transition from input" [ref=e769]:
+                            - generic [ref=e770]: 
+                        - button "sisyphus coordinator agent / sisyphus_coordinator pending Start transition from sisyphus_coordinator" [ref=e771]:
+                          - strong [ref=e772]: sisyphus coordinator
+                          - generic [ref=e773]: agent / sisyphus_coordinator
+                          - generic [ref=e774]: pending
+                          - button "Start transition from sisyphus_coordinator" [ref=e775]:
+                            - generic [ref=e776]: 
+                        - button "plan gate gate pending Start transition from plan_gate" [ref=e777]:
+                          - strong [ref=e778]: plan gate
+                          - generic [ref=e779]: gate
+                          - generic [ref=e780]: pending
+                          - button "Start transition from plan_gate" [ref=e781]:
+                            - generic [ref=e782]: 
+                        - button "sisyphus ultraworker agent / sisyphus_ultraworker pending Start transition from sisyphus_ultraworker" [ref=e783]:
+                          - strong [ref=e784]: sisyphus ultraworker
+                          - generic [ref=e785]: agent / sisyphus_ultraworker
+                          - generic [ref=e786]: pending
+                          - button "Start transition from sisyphus_ultraworker" [ref=e787]:
+                            - generic [ref=e788]: 
+                        - button "sisyphus reviewer agent / sisyphus_reviewer pending Start transition from sisyphus_reviewer" [ref=e789]:
+                          - strong [ref=e790]: sisyphus reviewer
+                          - generic [ref=e791]: agent / sisyphus_reviewer
+                          - generic [ref=e792]: pending
+                          - button "Start transition from sisyphus_reviewer" [ref=e793]:
+                            - generic [ref=e794]: 
+                        - button "final report report pending Start transition from final_report" [ref=e610]:
+                          - strong [ref=e611]: final report
+                          - generic [ref=e612]: report
+                          - generic [ref=e613]: pending
+                          - button "Start transition from final_report" [ref=e614]:
+                            - generic [ref=e615]: 
+                  - region "Workflow JSON editor" [ref=e622]:
+                    - generic [ref=e623]:
+                      - heading "Workflow JSON" [level=3] [ref=e624]
+                      - generic [ref=e625]: valid
+                      - button " Apply" [ref=e626]:
+                        - generic [ref=e627]: 
+                        - text: Apply
+                    - generic [ref=e628]:
+                      - generic [ref=e629]: Selection
+                      - code [ref=e630]: states.input
+                    - textbox "Workflow JSON source" [ref=e631]: "{ \"version\": \"flow.workflow/v1\", \"id\": \"sisyphus_ultrawork_coordinator_2\", \"name\": \"Sisyphus Ultrawork Coordinator 2\", \"description\": \"input -> sisyphus_coordinator -> plan gate -> sisyphus_ultraworker -> sisyphus_reviewer -> final report\", \"agents\": { \"sisyphus_coordinator\": \"sisyphus/coordinator.md\", \"sisyphus_ultraworker\": \"sisyphus/ultraworker.md\", \"sisyphus_reviewer\": \"sisyphus/reviewer.md\" }, \"requires\": { \"capabilities\": [ \"llm.agent.execute\", \"human.approval\", \"filesystem.artifacts\" ] }, \"states\": { \"input\": { \"type\": \"input\", \"outputs\": [ \"input/request.md\" ] }, \"sisyphus_coordinator\": { \"type\": \"agent\", \"agent\": \"sisyphus_coordinator\", \"systemPrompt\": \"You are the Sisyphus coordinator for a Flow ultrawork pipeline.\\nTurn the user request into a bounded plan, identify risks, and define acceptance criteria before work begins.\\nDo not execute implementation work in this step; create a reviewable plan and work order for the ultraworker.\", \"taskPrompt\": \"Read the incoming task and produce:\\n- plan/plan.md with scope, constraints, and ordered execution steps.\\n- plan/acceptance-criteria.md with measurable completion criteria.\\n- plan/work-order.md with the exact task for the ultraworker.\", \"input\": { \"include\": [ \"input/request.md\" ] }, \"outputs\": [ \"plan/plan.md\", \"plan/acceptance-criteria.md\", \"plan/work-order.md\" ], \"deliverables\": [ { \"path\": \"plan/plan.md\", \"description\": \"Approved implementation plan\", \"required\": true, \"kind\": \"markdown\" }, { \"path\": \"plan/acceptance-criteria.md\", \"description\": \"Measurable validation criteria\", \"required\": true, \"kind\": \"markdown\" }, { \"path\": \"plan/work-order.md\", \"description\": \"Scoped work order for the ultraworker\", \"required\": true, \"kind\": \"markdown\" } ] }, \"plan_gate\": { \"type\": \"gate\", \"input\": { \"include\": [ \"plan/plan.md\", \"plan/acceptance-criteria.md\", \"plan/work-order.md\" ] }, \"gates\": [ { \"id\": \"sisyphus_plan_approval\", \"title\": \"Approve Sisyphus plan\", \"prompt\": \"Review the coordinator plan and approve before ultrawork execution starts.\" } ] }, \"sisyphus_ultraworker\": { \"type\": \"agent\", \"agent\": \"sisyphus_ultraworker\", \"systemPrompt\": \"You are the Sisyphus ultraworker.\\nExecute only the approved plan, keep changes scoped, preserve existing behavior unless instructed, and record evidence.\\nDo not invent provider fallbacks or bypass Flow runtime validation.\", \"taskPrompt\": \"Use the approved plan and original request to implement the work.\\nProduce work/summary.md, work/changes.md, and work/evidence.md describing changed files and verification evidence.\", \"input\": { \"include\": [ \"input/request.md\", \"plan/plan.md\", \"plan/acceptance-criteria.md\", \"plan/work-order.md\" ] }, \"outputs\": [ \"work/summary.md\", \"work/changes.md\", \"work/evidence.md\" ], \"deliverables\": [ { \"path\": \"work/summary.md\", \"description\": \"Implementation summary\", \"required\": true, \"kind\": \"markdown\" }, { \"path\": \"work/changes.md\", \"description\": \"Changed files and rationale\", \"required\": true, \"kind\": \"markdown\" }, { \"path\": \"work/evidence.md\", \"description\": \"Verification evidence and commands run\", \"required\": true, \"kind\": \"markdown\" } ] }, \"sisyphus_reviewer\": { \"type\": \"agent\", \"agent\": \"sisyphus_reviewer\", \"systemPrompt\": \"You are the Sisyphus reviewer.\\nValidate the ultrawork result against the approved plan, task constraints, deliverables, and verification evidence.\\nReport concrete failures and required fixes; do not approve incomplete work.\", \"taskPrompt\": \"Review the plan, original request, and ultraworker outputs.\\nProduce review/review.md with pass/fail status, findings, and required follow-up actions.\\nEmit review/status.json with { \\\"status\\\": \\\"passed\\\" | \\\"failed\\\" }.\", \"input\": { \"include\": [ \"input/request.md\", \"plan/plan.md\", \"plan/acceptance-criteria.md\", \"work/summary.md\", \"work/changes.md\", \"work/evidence.md\" ] }, \"outputs\": [ \"review/review.md\", \"review/status.json\" ], \"deliverables\": [ { \"path\": \"review/review.md\", \"description\": \"Pass/fail review with findings\", \"required\": true, \"kind\": \"markdown\" }, { \"path\": \"review/status.json\", \"description\": \"Machine-readable review status\", \"required\": true, \"kind\": \"json\" } ] }, \"final_report\": { \"type\": \"report\", \"input\": { \"include\": [ \"plan/plan.md\", \"work/summary.md\", \"work/evidence.md\", \"review/review.md\", \"review/status.json\" ] }, \"outputs\": [ \"final/report.md\" ] } }, \"transitions\": [ { \"id\": \"input_to_sisyphus_coordinator\", \"from\": \"input\", \"to\": \"sisyphus_coordinator\", \"on\": \"run.started\" }, { \"id\": \"sisyphus_coordinator_to_plan_gate\", \"from\": \"sisyphus_coordinator\", \"to\": \"plan_gate\", \"on\": \"workload.completed\", \"guard\": { \"artifact.exists\": \"plan/plan.md\" } }, { \"id\": \"plan_gate_to_sisyphus_ultraworker\", \"from\": \"plan_gate\", \"to\": \"sisyphus_ultraworker\", \"on\": \"gate.approved\", \"guard\": { \"gate.status\": { \"id\": \"sisyphus_plan_approval\", \"value\": \"approved\" } } }, { \"id\": \"sisyphus_ultraworker_to_sisyphus_reviewer\", \"from\": \"sisyphus_ultraworker\", \"to\": \"sisyphus_reviewer\", \"on\": \"workload.completed\", \"guard\": { \"artifact.exists\": \"work/summary.md\" } }, { \"id\": \"sisyphus_reviewer_to_final_report\", \"from\": \"sisyphus_reviewer\", \"to\": \"final_report\", \"on\": \"workload.completed\", \"guard\": { \"artifact.exists\": \"review/review.md\" } } ] }"
+                - complementary [ref=e632]:
+                  - generic [ref=e633]:
+                    - heading "State" [level=3] [ref=e634]
+                    - generic [ref=e635]:
+                      - generic [ref=e636]: Id
+                      - strong [ref=e637]: input
+                    - generic [ref=e638]:
+                      - generic [ref=e639]: Type
+                      - strong [ref=e640]: input
+                    - generic [ref=e641]:
+                      - generic [ref=e642]: Agent
+                      - strong [ref=e643]: none
+                    - generic [ref=e644]:
+                      - generic [ref=e645]: Inputs
+                      - strong [ref=e646]: none
+                    - generic [ref=e647]:
+                      - generic [ref=e648]: Outputs
+                      - strong [ref=e649]: input/request.md
+                    - generic [ref=e650]:
+                      - generic [ref=e651]: Signals
+                      - strong [ref=e652]: none
+                    - generic [ref=e653]:
+                      - generic [ref=e654]: Timeout
+                      - strong [ref=e655]: none
+                    - generic [ref=e656]:
+                      - generic [ref=e657]: Retry
+                      - strong [ref=e658]: none
+                    - generic [ref=e659]:
+                      - generic [ref=e660]: Workloads
+                      - strong [ref=e661]: "0"
+                    - region "State editor" [ref=e662]:
+                      - generic [ref=e663]:
+                        - heading "Workflow fields" [level=4] [ref=e664]
+                        - button " Save" [ref=e665]:
+                          - generic [ref=e666]: 
+                          - text: Save
+                        - button " Delete" [ref=e667]:
+                          - generic [ref=e668]: 
+                          - text: Delete
+                      - generic [ref=e669]:
+                        - generic [ref=e670]: Agent
+                        - generic [ref=e671]:
+                          - textbox "Agent " [ref=e672]
+                          - button "" [disabled] [ref=e673]:
+                            - generic [ref=e674]: 
+                      - generic [ref=e675]:
+                        - generic [ref=e676]: Input includes
+                        - textbox "Input includes" [ref=e677]
+                      - generic [ref=e678]:
+                        - generic [ref=e679]: Input signals
+                        - textbox "Input signals" [ref=e680]
+                      - generic [ref=e681]:
+                        - generic [ref=e682]: Outputs
+                        - textbox "Outputs" [ref=e683]: input/request.md
+                      - generic [ref=e684]:
+                        - generic [ref=e685]:
+                          - generic [ref=e686]: Timeout ms
+                          - spinbutton "Timeout ms" [ref=e687]
+                        - generic [ref=e688]:
+                          - generic [ref=e689]: Retry max
+                          - spinbutton "Retry max" [ref=e690]
+                        - generic [ref=e691]:
+                          - generic [ref=e692]: Retry counter
+                          - textbox "Retry counter" [ref=e693]
+                    - generic [ref=e694]:
+                      - heading "Artifacts" [level=4] [ref=e695]
+                      - paragraph [ref=e696]: No artifacts for this state.
+                    - generic [ref=e697]:
+                      - heading "Effects" [level=4] [ref=e698]
+                      - paragraph [ref=e699]: No effects for this state.
+                    - generic [ref=e700]:
+                      - heading "Signals" [level=4] [ref=e701]
+                      - paragraph [ref=e702]: No signals for this state.
+                    - generic [ref=e703]:
+                      - heading "Workload details" [level=4] [ref=e704]
+                      - paragraph [ref=e705]: No workloads for this state.
+                    - generic [ref=e706]:
+                      - heading "Relevant events" [level=4] [ref=e707]
+                      - paragraph [ref=e708]: No events for this state.
+              - generic [ref=e709]:
+                - region "Workloads" [ref=e710]:
+                  - heading "Pending" [level=3] [ref=e712]
+                  - heading "Ready" [level=3] [ref=e714]
+                  - heading "Running" [level=3] [ref=e716]
+                  - heading "Waiting" [level=3] [ref=e718]
+                  - heading "Review" [level=3] [ref=e720]
+                  - heading "Done" [level=3] [ref=e722]
+                  - heading "Failed" [level=3] [ref=e724]
+                - region "Run observability" [ref=e725]:
+                  - heading "Run" [level=3] [ref=e726]
+                  - paragraph [ref=e727]: No active run.
+                - region "Run events" [ref=e728]:
+                  - generic [ref=e729]:
+                    - heading "Events" [level=3] [ref=e730]
+                    - generic [ref=e731]: 0 / 0
+                  - generic "Event filters" [ref=e732]:
+                    - generic [ref=e733]:
+                      - generic [ref=e734]: State
+                      - combobox "State" [ref=e735]:
+                        - option "All" [selected]
+                    - generic [ref=e736]:
+                      - generic [ref=e737]: Workload
+                      - combobox "Workload" [ref=e738]:
+                        - option "All" [selected]
+                    - generic [ref=e739]:
+                      - generic [ref=e740]: Type
+                      - combobox "Type" [ref=e741]:
+                        - option "All" [selected]
+                    - generic [ref=e742]:
+                      - generic [ref=e743]: Gate
+                      - combobox "Gate" [ref=e744]:
+                        - option "All" [selected]
+                    - generic [ref=e745]:
+                      - generic [ref=e746]: Artifact
+                      - combobox "Artifact" [ref=e747]:
+                        - option "All" [selected]
+                    - generic [ref=e748]:
+                      - generic [ref=e749]: Effect
+                      - combobox "Effect" [ref=e750]:
+                        - option "All" [selected]
+                    - generic [ref=e751]:
+                      - generic [ref=e752]: Severity
+                      - combobox "Severity" [ref=e753]:
+                        - option "All" [selected]
+                    - button "" [disabled] [ref=e754]:
+                      - generic [ref=e755]: 
+                  - paragraph [ref=e757]: No events match the current filters.
+        - text:           
+      - generic [ref=e142]:
+        - tablist [ref=e147] [cursor=pointer]:
+          - listitem [ref=e148]:
+            - generic [ref=e150]: 
+          - listitem [ref=e151]:
+            - generic [ref=e153]: 
+          - listitem [ref=e154]
+        - generic:      +   
+    - generic [ref=e157]:
+      - generic [ref=e158]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e159]:
+          - generic [ref=e160]: 
+          - generic [ref=e161]: "0"
+          - generic [ref=e162]: 
+          - generic [ref=e163]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e164]:
+          - generic [ref=e165]: 
+          - generic [ref=e166]: Collaborate
+      - generic [ref=e167]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e168]:
+          - generic [ref=e169]: 
+          - generic [ref=e170]: Sign in to GitHub Copilot
+        - generic "No Notifications" [ref=e171]:
+          - generic [ref=e172]: 
+        - button "Toggle Bottom Panel" [ref=e173]:
+          - generic [ref=e174]: 
+  - generic:
+    - generic:  
+  - generic [ref=e374]:
+    - alert
+    - alert

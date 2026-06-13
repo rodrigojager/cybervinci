@@ -8,6 +8,8 @@ import { MCPBackendContribution } from '@theia/ai-mcp-server/lib/node/mcp-theia-
 import { nls } from '@theia/core';
 import { inject, injectable } from '@theia/core/shared/inversify';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { z } from 'zod';
 import {
     MemoryDashboard,
@@ -40,6 +42,11 @@ import {
 
 const SOURCE_KINDS = ['code', 'code-graph', 'local-docs', 'project-memory', 'repository-memory', 'task-memory', 'skill', 'agent-event', 'feedback-record'] as const;
 const sourceKindSchema = z.enum(SOURCE_KINDS);
+const GRAPH_FIRST_SOURCE_KINDS: MemorySourceKind[] = ['code-graph', 'project-memory', 'repository-memory', 'task-memory', 'local-docs', 'skill', 'agent-event', 'feedback-record'];
+const GRAPH_FIRST_DEFAULT_LIMIT = 12;
+const GRAPH_FIRST_DEFAULT_TOKEN_BUDGET = 1200;
+const GRAPH_FIRST_MAX_SNIPPET_CHARS = 900;
+const execFileAsync = promisify(execFile);
 const MEMORY_SCOPES = ['global', 'workspace', 'repository', 'session', 'task'] as const;
 const memoryScopeSchema = z.enum(MEMORY_SCOPES);
 const MEMORY_TYPES = [
@@ -93,6 +100,7 @@ export const MEMORY_MCP_TOOLS = [
     'cybervinci.context.explainRanking',
     'cybervinci.context.markAccepted',
     'cybervinci.context.markRejected',
+    'cybervinci.search.graphFirst',
     'cybervinci.graph.findCallers',
     'cybervinci.graph.findCallees',
     'cybervinci.graph.findTests',
@@ -338,6 +346,15 @@ export class MemoryMcpContribution implements MCPBackendContribution {
             description: nls.localize('theia/memory/mcp/contextMarkRejected/description', 'Record explicit local rejection feedback for a Memory context suggestion or retrieval result.'),
             inputSchema: this.contextFeedbackSchema('rejected')
         }, async args => this.result(await this.markContextFeedback(args, 'rejected')));
+
+        mcpServer.registerTool('cybervinci.search.graphFirst', {
+            title: nls.localize('theia/memory/mcp/searchGraphFirst/title', 'Search Memory graph first'),
+            description: nls.localize(
+                'theia/memory/mcp/searchGraphFirst/description',
+                'Search the local Memory code graph and learned memory before falling back to ast-grep or rg. Returns compact graph-first evidence and a recommended next step.'
+            ),
+            inputSchema: this.graphFirstSearchSchema()
+        }, async args => this.result(await this.graphFirstSearch(args)));
 
         mcpServer.registerTool('cybervinci.graph.findCallers', {
             title: nls.localize('theia/memory/mcp/graphFindCallers/title', 'Find callers'),
@@ -1060,6 +1077,31 @@ export class MemoryMcpContribution implements MCPBackendContribution {
         };
     }
 
+    protected graphFirstSearchSchema(): object {
+        return {
+            workspacePath: z.string(),
+            query: z.string(),
+            limit: z.number().optional(),
+            tokenBudget: z.number().optional(),
+            sourceKinds: z.array(sourceKindSchema).optional(),
+            includeIndexedCode: z.boolean().optional(),
+            nodeKinds: z.array(z.string()).optional(),
+            relationTypes: z.array(z.string()).optional(),
+            depth: z.number().optional(),
+            changedFilePaths: z.array(z.string()).optional(),
+            detectGitChanges: z.boolean().optional(),
+            includeUntracked: z.boolean().optional(),
+            baseRef: z.string().optional(),
+            compareRef: z.string().optional(),
+            since: z.string().optional(),
+            maxDepth: z.number().optional(),
+            astGrepPattern: z.string().optional(),
+            astGrepLanguage: z.string().optional(),
+            astGrepLimit: z.number().optional(),
+            runAstGrep: z.boolean().optional()
+        };
+    }
+
     protected graphGodNodesSchema(): object {
         return {
             workspacePath: z.string(),
@@ -1180,6 +1222,250 @@ export class MemoryMcpContribution implements MCPBackendContribution {
                 filters: { nodeKinds: [...nodeKinds], relationTypes: [...relationTypes], startId, depth: this.numberArg(args.depth) }
             }
         };
+    }
+
+    protected async graphFirstSearch(args: Record<string, unknown>): Promise<unknown> {
+        const workspacePath = this.requiredStringArg(args.workspacePath, 'workspacePath');
+        const query = this.requiredStringArg(args.query, 'query');
+        const limit = Math.max(1, Math.min(50, this.numberArg(args.limit) ?? GRAPH_FIRST_DEFAULT_LIMIT));
+        const tokenBudget = Math.max(80, Math.min(8000, this.numberArg(args.tokenBudget) ?? GRAPH_FIRST_DEFAULT_TOKEN_BUDGET));
+        const dashboard = await this.memoryService.getDashboard(workspacePath);
+        const graph = await this.graphSearch({
+            workspacePath,
+            query,
+            nodeKinds: args.nodeKinds,
+            relationTypes: args.relationTypes,
+            depth: args.depth,
+            limit
+        }) as { count?: number; nodes?: unknown[]; edges?: unknown[] };
+        const sourceKinds = this.graphFirstSourceKinds(args.sourceKinds, this.booleanArg(args.includeIndexedCode));
+        const retrievalResults = await this.memoryService.search({
+            workspacePath,
+            text: query,
+            limit,
+            sourceKinds
+        });
+        const compactResults = this.compactGraphFirstRetrievalResults(retrievalResults, tokenBudget);
+        const graphReady = dashboard.files.length > 0 || dashboard.symbols.length > 0 || dashboard.relations.length > 0;
+        const graphHitCount = graph.count ?? graph.nodes?.length ?? 0;
+        const retrievalHitCount = retrievalResults.length;
+        const changedFilePaths = this.stringArrayArg(args.changedFilePaths);
+        const changeImpact = changedFilePaths?.length
+            ? await this.memoryService.analyzeBlastRadius({
+                changedFilePaths,
+                files: dashboard.files,
+                symbols: dashboard.symbols,
+                relations: dashboard.relations,
+                events: dashboard.events,
+                memories: dashboard.memories,
+                maxDepth: this.numberArg(args.maxDepth)
+            })
+            : this.booleanArg(args.detectGitChanges) === true
+                ? await this.memoryService.detectChangeImpactFromGitDiff({
+                    workspacePath,
+                    baseRef: this.stringArg(args.baseRef),
+                    compareRef: this.stringArg(args.compareRef),
+                    includeUntracked: this.booleanArg(args.includeUntracked),
+                    since: this.stringArg(args.since),
+                    maxDepth: this.numberArg(args.maxDepth)
+                })
+                : undefined;
+        const hasMemoryEvidence = graphReady && (graphHitCount > 0 || retrievalHitCount > 0);
+        const astGrepPattern = this.stringArg(args.astGrepPattern);
+        const astGrep = astGrepPattern
+            ? await this.astGrepFallback({
+                workspacePath,
+                pattern: astGrepPattern,
+                language: this.stringArg(args.astGrepLanguage),
+                limit: Math.max(1, Math.min(100, this.numberArg(args.astGrepLimit) ?? limit)),
+                run: !hasMemoryEvidence && this.booleanArg(args.runAstGrep) !== false
+            })
+            : undefined;
+        return {
+            workspacePath,
+            query,
+            strategy: 'graph-first',
+            graphReady,
+            graphStats: {
+                files: dashboard.files.length,
+                symbols: dashboard.symbols.length,
+                relations: dashboard.relations.length,
+                memories: dashboard.memories.length,
+                changeImpacts: dashboard.changeImpacts.length
+            },
+            sourceKinds,
+            graph,
+            retrieval: {
+                count: retrievalResults.length,
+                estimatedTokens: compactResults.estimatedTokens,
+                omittedCount: compactResults.omittedCount,
+                results: compactResults.results
+            },
+            changeImpact,
+            astGrep,
+            recommendedNextStep: this.graphFirstRecommendation({
+                graphReady,
+                graphHitCount,
+                retrievalHitCount,
+                astGrepPattern,
+                astGrep
+            }),
+            notes: [
+                'Use this Memory result before rg/grep when graphReady is true and evidence exists.',
+                astGrepPattern ? 'ast-grep is only used as a structural fallback when Memory graph/search did not return evidence.' : 'Provide astGrepPattern to try ast-grep before rg when Memory has no evidence.',
+                'Run rg/grep only when Memory and optional ast-grep are insufficient or stale.'
+            ]
+        };
+    }
+
+    protected graphFirstSourceKinds(value: unknown, includeIndexedCode?: boolean): MemorySourceKind[] {
+        const requested = this.sourceKindsArg(value);
+        if (requested?.length) {
+            return requested;
+        }
+        return includeIndexedCode === true ? [...GRAPH_FIRST_SOURCE_KINDS, 'code'] : [...GRAPH_FIRST_SOURCE_KINDS];
+    }
+
+    protected compactGraphFirstRetrievalResults(results: RetrievalResult[], tokenBudget: number): {
+        results: Array<Pick<RetrievalResult, 'id' | 'sourceKind' | 'title' | 'uri' | 'evidence' | 'score' | 'estimatedTokens'> & { snippet: string }>;
+        estimatedTokens: number;
+        omittedCount: number;
+    } {
+        let estimatedTokens = 0;
+        const compact: Array<Pick<RetrievalResult, 'id' | 'sourceKind' | 'title' | 'uri' | 'evidence' | 'score' | 'estimatedTokens'> & { snippet: string }> = [];
+        for (const result of results) {
+            const snippet = this.truncateText(this.redactSearchText(result.snippet), GRAPH_FIRST_MAX_SNIPPET_CHARS);
+            const resultTokens = result.estimatedTokens ?? this.tokenBudgetService.estimateTokens(snippet);
+            if (compact.length > 0 && estimatedTokens + resultTokens > tokenBudget) {
+                continue;
+            }
+            compact.push({
+                id: result.id,
+                sourceKind: result.sourceKind,
+                title: this.redactSearchText(result.title),
+                uri: result.uri ? this.redactSearchText(result.uri) : undefined,
+                evidence: result.evidence ? this.redactSearchText(result.evidence) : undefined,
+                score: result.score,
+                estimatedTokens: resultTokens,
+                snippet
+            });
+            estimatedTokens += resultTokens;
+        }
+        return {
+            results: compact,
+            estimatedTokens,
+            omittedCount: Math.max(0, results.length - compact.length)
+        };
+    }
+
+    protected graphFirstRecommendation(request: {
+        graphReady: boolean;
+        graphHitCount: number;
+        retrievalHitCount: number;
+        astGrepPattern?: string;
+        astGrep?: unknown;
+    }): string {
+        if (!request.graphReady) {
+            return 'index-memory';
+        }
+        if (request.graphHitCount > 0 || request.retrievalHitCount > 0) {
+            return 'use-memory-results';
+        }
+        const astGrep = this.objectValue(request.astGrep);
+        if (astGrep?.status === 'ok' && this.numberArg(astGrep.count) && this.numberArg(astGrep.count)! > 0) {
+            return 'use-ast-grep-results';
+        }
+        if (request.astGrepPattern && astGrep?.status !== 'error') {
+            return 'run-ast-grep';
+        }
+        return 'run-rg';
+    }
+
+    protected async astGrepFallback(request: {
+        workspacePath: string;
+        pattern: string;
+        language?: string;
+        limit: number;
+        run: boolean;
+    }): Promise<unknown> {
+        if (!request.run) {
+            return {
+                status: 'skipped',
+                reason: 'Memory graph/search already returned evidence or runAstGrep was false.'
+            };
+        }
+        const args = ['run', '--pattern', request.pattern];
+        if (request.language) {
+            args.push('--lang', request.language);
+        }
+        const attemptedCommands: string[] = [];
+        for (const command of ['ast-grep', 'sg']) {
+            attemptedCommands.push(command);
+            try {
+                const { stdout, stderr } = await execFileAsync(command, args, {
+                    cwd: request.workspacePath,
+                    windowsHide: true,
+                    timeout: 8000,
+                    maxBuffer: 512 * 1024
+                });
+                const matches = this.compactAstGrepLines(stdout, request.limit);
+                return {
+                    status: 'ok',
+                    command,
+                    language: request.language,
+                    count: matches.length,
+                    truncated: stdout.split(/\r?\n/).filter(line => line.trim()).length > matches.length,
+                    matches,
+                    stderr: stderr ? this.truncateText(this.redactSearchText(stderr), 1200) : undefined
+                };
+            } catch (error) {
+                const failure = error as { code?: string | number; message?: string; stdout?: string; stderr?: string };
+                if (failure.code === 'ENOENT') {
+                    continue;
+                }
+                const matches = failure.stdout ? this.compactAstGrepLines(failure.stdout, request.limit) : [];
+                if (matches.length) {
+                    return {
+                        status: 'ok',
+                        command,
+                        language: request.language,
+                        count: matches.length,
+                        partial: true,
+                        matches,
+                        stderr: failure.stderr ? this.truncateText(this.redactSearchText(failure.stderr), 1200) : undefined
+                    };
+                }
+                return {
+                    status: 'error',
+                    command,
+                    language: request.language,
+                    message: this.truncateText(this.redactSearchText(failure.message ?? 'ast-grep failed'), 800),
+                    stderr: failure.stderr ? this.truncateText(this.redactSearchText(failure.stderr), 1200) : undefined
+                };
+            }
+        }
+        return {
+            status: 'unavailable',
+            attemptedCommands,
+            reason: 'No ast-grep CLI binary was found. Install ast-grep or sg to enable the structural fallback.'
+        };
+    }
+
+    protected compactAstGrepLines(stdout: string, limit: number): string[] {
+        return stdout
+            .split(/\r?\n/)
+            .map(line => line.trimEnd())
+            .filter(line => line.trim().length > 0)
+            .slice(0, limit)
+            .map(line => this.truncateText(this.redactSearchText(line), 500));
+    }
+
+    protected redactSearchText(value: string): string {
+        return this.secretScanner.scan({ content: value, maxFindings: 25 }).redactedContent;
+    }
+
+    protected truncateText(value: string, maxLength: number): string {
+        return value.length > maxLength ? `${value.slice(0, Math.max(0, maxLength - 3))}...` : value;
     }
 
     protected async graphGodNodes(args: Record<string, unknown>): Promise<unknown> {

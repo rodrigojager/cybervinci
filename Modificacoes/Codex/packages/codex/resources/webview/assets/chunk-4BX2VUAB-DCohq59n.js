@@ -1,0 +1,2 @@
+import{h as e}from"./src-DZ93zel4.js";function t(e,t){e.accDescr&&t.setAccDescription?.(e.accDescr),e.accTitle&&t.setAccTitle?.(e.accTitle),e.title&&t.setDiagramTitle?.(e.title)}e(t,`populateCommonDb`);export{t};
+//# sourceMappingURL=chunk-4BX2VUAB-DCohq59n.js.map

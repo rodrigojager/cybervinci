@@ -1,0 +1,4 @@
+chrome-native-host-install
+chrome-native-host-uninstall
+ipc-request
+set-vs-context

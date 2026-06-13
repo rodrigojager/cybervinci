@@ -1,0 +1,171 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - menubar [ref=e7]:
+      - menuitem "CyberVinci" [ref=e8]:
+        - generic [ref=e9]: CyberVinci
+      - menuitem "File" [ref=e10]:
+        - generic [ref=e11]: File
+      - menuitem "Edit" [ref=e12]:
+        - generic [ref=e13]: Edit
+      - menuitem "Selection" [ref=e14]:
+        - generic [ref=e15]: Selection
+      - menuitem "View" [ref=e16]:
+        - generic [ref=e17]: View
+      - menuitem "Go" [ref=e18]:
+        - generic [ref=e19]: Go
+      - menuitem "Run" [ref=e20]:
+        - generic [ref=e21]: Run
+      - menuitem "Terminal" [ref=e22]:
+        - generic [ref=e23]: Terminal
+      - menuitem "Help" [ref=e24]:
+        - generic [ref=e25]: Help
+    - text:      
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - generic [ref=e28]:
+          - tablist [ref=e32] [cursor=pointer]:
+            - listitem [ref=e33]:
+              - generic [ref=e35]: 
+            - listitem [ref=e36]:
+              - generic [ref=e38]: 
+            - listitem [ref=e39]:
+              - generic [ref=e41]: 
+            - listitem [ref=e42]:
+              - generic [ref=e44]: 
+            - listitem [ref=e45]:
+              - generic [ref=e47]: 
+            - listitem [ref=e48]:
+              - generic [ref=e50]: 
+          - generic [ref=e53] [cursor=pointer]: 
+        - generic:                                                               
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - tablist [ref=e59] [cursor=pointer]:
+                - listitem [ref=e60]:
+                  - generic [ref=e62]: Welcome
+                  - generic "Close" [ref=e63]
+                - listitem [ref=e204]:
+                  - generic [ref=e205]:
+                    - generic [ref=e206]: 
+                    - generic [ref=e207]: sample.cshtml
+                  - generic "Close" [ref=e208]: 
+              - text:  
+            - list [ref=e216]:
+              - listitem "sample.cshtml" [ref=e217]:
+                - generic [ref=e218]: 
+                - generic [ref=e219]: sample.cshtml
+          - text:     
+          - tabpanel [ref=e220]:
+            - code [ref=e221]:
+              - generic [ref=e222]:
+                - textbox "Editor content" [active]
+                - textbox [ref=e223]
+                - generic [ref=e226]:
+                  - generic [ref=e229]: "1"
+                  - generic [ref=e231]: "2"
+                  - generic [ref=e232]:
+                    - generic [ref=e233] [cursor=pointer]: 
+                    - generic [ref=e234]: "3"
+                  - generic [ref=e236]: "4"
+                  - generic [ref=e238]: "5"
+                  - generic [ref=e240]: "6"
+                  - generic [ref=e241]:
+                    - generic [ref=e242] [cursor=pointer]: 
+                    - generic [ref=e243]: "7"
+                  - generic [ref=e245]: "8"
+                  - generic [ref=e247]: "9"
+                  - generic [ref=e248]:
+                    - generic [ref=e249] [cursor=pointer]: 
+                    - generic [ref=e250]: "10"
+                  - generic [ref=e252]: "11"
+                  - generic [ref=e253]:
+                    - generic [ref=e254] [cursor=pointer]: 
+                    - generic [ref=e255]: "12"
+                  - generic [ref=e257]: "13"
+                  - generic [ref=e259]: "14"
+                  - generic [ref=e261]: "15"
+                  - generic [ref=e263]: "16"
+                  - generic [ref=e265]: "17"
+                  - generic [ref=e267]: "18"
+                  - generic [ref=e269]: "19"
+                  - generic [ref=e271]: "20"
+                - generic [ref=e305]:
+                  - generic [ref=e307]: "@model Demo.ViewModels.HomeViewModel"
+                  - generic [ref=e309]: "@using Demo.Helpers"
+                  - generic [ref=e311]: "@{"
+                  - generic [ref=e313]: Layout = "~/Views/Shared/_Layout.cshtml";
+                  - generic [ref=e315]: "}"
+                  - generic [ref=e317]: <link href="~/Content/site.css" rel="stylesheet" />
+                  - generic [ref=e319]: <section class="container">
+                  - generic [ref=e321]: <h1>@Model.Title</h1>
+                  - generic [ref=e323]: <p>contato@empresa.com</p>
+                  - generic [ref=e325]: "@if (Model.Active) {"
+                  - generic [ref=e327]: "<div class=\"alert alert-success\">Ativo: @Html.DisplayFor(m => m.Name)</div>"
+                  - generic [ref=e329]: "} else {"
+                  - generic [ref=e331]: <div class="alert alert-warning">Inativo</div>
+                  - generic [ref=e333]: "}"
+                  - generic [ref=e335]: <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Voltar</a>
+                  - generic [ref=e337]: </section>
+                  - generic [ref=e339]: <style>
+                  - generic [ref=e341]: "@media (max-width: 768px) { .container { padding: 12px; } }"
+                  - generic [ref=e343]: </style>
+          - generic [ref=e370]:
+            - generic [ref=e371]:
+              - tablist [ref=e373] [cursor=pointer]:
+                - listitem [ref=e374]:
+                  - generic [ref=e375]:
+                    - generic [ref=e376]: 
+                    - generic [ref=e377]: sample.cshtml
+                  - generic "Close" [ref=e378]: 
+              - button "Edit visually with CyberVinci" [ref=e381] [cursor=pointer]: 
+            - list [ref=e384]:
+              - listitem "sample.cshtml" [ref=e385]:
+                - generic [ref=e386]: 
+                - generic [ref=e387]: sample.cshtml
+          - tabpanel [ref=e388]
+        - text:           
+      - generic [ref=e65]:
+        - tablist [ref=e70] [cursor=pointer]:
+          - listitem [ref=e71]:
+            - generic [ref=e73]: 
+          - listitem [ref=e74]:
+            - generic [ref=e76]: 
+          - listitem [ref=e77]
+        - generic:      +   
+    - generic [ref=e80]:
+      - generic [ref=e81]:
+        - generic "$(codicon-error) 0 $(codicon-warning) 0, No Problems" [ref=e82]:
+          - generic [ref=e83]: 
+          - generic [ref=e84]: "0"
+          - generic [ref=e85]: 
+          - generic [ref=e86]: "0"
+        - generic "$(codicon-live-share) Collaborate, Start or join collaboration session" [ref=e87]:
+          - generic [ref=e88]: 
+          - generic [ref=e89]: Collaborate
+      - generic [ref=e90]:
+        - generic "$(github) Sign in to GitHub Copilot, Not signed in to GitHub Copilot. Click to sign in." [ref=e91]:
+          - generic [ref=e92]: 
+          - generic [ref=e93]: Sign in to GitHub Copilot
+        - generic "Ln 1, Col 1, Go to Line/Column" [ref=e351]:
+          - generic [ref=e352]: Ln 1, Col 1
+        - generic "LF, Select End of Line Sequence" [ref=e353]:
+          - generic [ref=e354]: LF
+        - generic "UTF-8, Select Encoding" [ref=e355]:
+          - generic [ref=e356]: UTF-8
+        - 'generic "Spaces: 4, Select Indentation" [ref=e357]':
+          - generic [ref=e358]: "Spaces: 4"
+        - generic "$(bracket), [object HTMLDivElement]" [ref=e359]:
+          - generic [ref=e360]: 
+        - generic "Plain Text, Select Language Mode" [ref=e361]:
+          - generic [ref=e362]: Plain Text
+        - generic "No Notifications" [ref=e94]:
+          - generic [ref=e95]: 
+        - button "Toggle Bottom Panel" [ref=e96]:
+          - generic [ref=e97]: 
+  - generic:
+    - generic:  
+  - generic [ref=e98]:
+    - alert
+    - alert

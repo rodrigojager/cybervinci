@@ -1,0 +1,2 @@
+function e(e,t,n){let r={...e};return t.top+e.y<=n.top?r.y=n.top-t.top:t.bottom+e.y>=n.top+n.height&&(r.y=n.top+n.height-t.bottom),t.left+e.x<=n.left?r.x=n.left-t.left:t.right+e.x>=n.left+n.width&&(r.x=n.left+n.width-t.right),r}var t=t=>{let{draggingNodeRect:n,transform:r,scrollableAncestorRects:i}=t,a=i[0];return!n||!a?r:e(r,n,a)},n=e=>{let{transform:t}=e;return{...t,x:0}};export{n,t};
+//# sourceMappingURL=modifiers.esm-Vydg67ZU.js.map

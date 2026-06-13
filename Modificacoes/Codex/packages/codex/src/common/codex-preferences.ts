@@ -25,40 +25,45 @@ export const CodexExtensionPreferencesSchema: PreferenceSchema = {
         [CodexExtensionPreferences.COMMENT_CODE_LENS_ENABLED]: {
             type: 'boolean',
             default: true,
-            description: 'Show "Implement with Codex" CodeLens on TODO comments.'
+            description: 'Enable CodeLens above TODO comments to implement with Codex.'
         },
         [CodexExtensionPreferences.CLI_EXECUTABLE]: {
-            type: 'string',
-            description: 'Path to the Codex Provider executable.'
+            type: ['string', 'null'],
+            default: null,
+            description: 'DEVELOPMENT ONLY: Path to the Codex CLI executable. You do NOT need to set this unless you are actively developing the Codex CLI. If set this manually, parts of the extension may not work as expected.'
         },
         [CodexExtensionPreferences.OPEN_ON_STARTUP]: {
             type: 'boolean',
             default: false,
-            description: 'Open Codex sidebar on startup.'
+            description: 'Focus the Codex sidebar when the extension finishes starting up.'
         },
         [CodexExtensionPreferences.FOLLOW_UP_QUEUE_MODE]: {
             type: 'string',
-            enum: ['queue', 'steer'],
-            default: 'queue'
+            enum: ['queue', 'steer', 'interrupt'],
+            default: 'queue',
+            description: 'Control whether follow-up messages are queued or steer the current run. Press Cmd/Ctrl+Shift+Enter to do the opposite for a single in-progress follow-up.'
         },
         [CodexExtensionPreferences.COMPOSER_ENTER_BEHAVIOR]: {
             type: 'string',
-            enum: ['send', 'newline'],
-            default: 'send'
+            enum: ['enter', 'cmdIfMultiline'],
+            default: 'enter',
+            description: 'Enter behavior for the Codex composer.'
         },
         [CodexExtensionPreferences.REVIEW_DELIVERY]: {
             type: 'string',
             enum: ['inline', 'detached'],
-            default: 'inline'
+            default: 'inline',
+            description: 'Start /review inline in the current thread when possible or launch a separate review thread'
         },
         [CodexExtensionPreferences.LOCALE_OVERRIDE]: {
-            type: 'string',
-            description: 'Override locale for Codex UI.'
+            type: ['string', 'null'],
+            default: null,
+            description: 'Preferred language for the Codex UI. Leave empty to auto detect.'
         },
         [CodexExtensionPreferences.RUN_IN_WSL]: {
             type: 'boolean',
             default: false,
-            description: 'Run Codex Provider inside WSL on Windows.'
+            description: 'Windows only: when Windows Subsystem for Linux (WSL) is installed, automatically run Codex inside WSL. Recommended for improved sandbox security and better performance - Agent mode on Windows currently requires WSL. Changing this setting reloads Theia to take effect.'
         },
         [CodexExtensionPreferences.USE_OFFICIAL_WEBVIEW]: {
             type: 'boolean',

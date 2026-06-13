@@ -1,0 +1,59 @@
+[    2473ms] [INFO] sending initial connect on qZgHVfl1UqSPJOtiAAAV @ http://localhost:3000/bundle.js:67846
+[    2487ms] [INFO] initial connect received on qZgHVfl1UqSPJOtiAAAV @ http://localhost:3000/bundle.js:67841
+[    2600ms] [WARNING] Could not find translation key for default value: "White" @ http://localhost:3000/bundle.js:56469
+[    2638ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:3000/bundle.js:235627
+[    2656ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://localhost:3000/bundle.js:56469
+[    2666ms] [WARNING] Could not find translation key for default value: "White" @ http://localhost:3000/bundle.js:56469
+[    2810ms] [WARNING] Could not find translation key for default value: "Low" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "Medium" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "High" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "Low" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "Medium" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "High" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "Low" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "Medium" @ http://localhost:3000/bundle.js:56469
+[    2811ms] [WARNING] Could not find translation key for default value: "High" @ http://localhost:3000/bundle.js:56469
+[    3166ms] [WARNING] Could not find translation key for default value: "Author" @ http://localhost:3000/bundle.js:56469
+[    3245ms] [WARNING] 2026-05-30T12:05:49.144Z root WARN Could not find translation key for default value: "Author" @ http://localhost:3000/bundle.js:192090
+[    3281ms] [WARNING] 2026-05-30T12:05:49.180Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://localhost:3000/bundle.js:192090
+[    3284ms] [INFO] 2026-05-30T12:05:49.183Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://localhost:3000/bundle.js:192090
+[    3529ms] [WARNING] 2026-05-30T12:05:49.429Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 354.0 ms [3.523 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    4012ms] [WARNING] 2026-05-30T12:05:49.912Z root WARN Frontend CommonFrontendContribution.configure took longer than the expected maximum 100 milliseconds: 481.0 ms [4.005 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    4079ms] [INFO] 2026-05-30T12:05:49.978Z root INFO Detected keyboard layout from browser API: US (PC) @ http://localhost:3000/bundle.js:192090
+[    4473ms] [WARNING] 2026-05-30T12:05:50.373Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://localhost:3000/bundle.js:192090
+[    4474ms] [WARNING] 2026-05-30T12:05:50.373Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://localhost:3000/bundle.js:192090
+[    5717ms] [INFO] 2026-05-30T12:05:51.617Z root INFO [d176b7bf-c8d0-44ed-a100-d5a683a9e6c0] Waiting for backend deployment: 1591.0 ms [5.710 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    5973ms] [WARNING] 2026-05-30T12:05:51.873Z root WARN Frontend ClaudeCodeSlashCommandsContribution.onStart took longer than the expected maximum 100 milliseconds: 1846.6 ms [5.966 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    6000ms] [INFO] 2026-05-30T12:05:51.900Z root INFO Start frontend contributions: 2860.7 ms [5.977 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    6001ms] [INFO] 2026-05-30T12:05:51.900Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://localhost:3000/bundle.js:192090
+[    6003ms] [INFO] 2026-05-30T12:05:51.903Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://localhost:3000/bundle.js:192090
+[    6003ms] [INFO] 2026-05-30T12:05:51.903Z root INFO >>> Restoring the layout state... @ http://localhost:3000/bundle.js:192090
+[    6334ms] [WARNING] 2026-05-30T12:05:52.234Z terminal WARN Failed attaching to terminal id 1057592228, the terminal is most likely gone. Starting up a new terminal instead. @ http://localhost:3000/bundle.js:192090
+[    6437ms] [INFO] 2026-05-30T12:05:52.336Z root INFO <<< The layout has been successfully restored. @ http://localhost:3000/bundle.js:192090
+[    6443ms] [INFO] 2026-05-30T12:05:52.342Z root INFO Initialize the workbench layout: 435.4 ms [6.430 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    6446ms] [INFO] 2026-05-30T12:05:52.345Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://localhost:3000/bundle.js:192090
+[    6707ms] [INFO] 2026-05-30T12:05:52.606Z root INFO [d176b7bf-c8d0-44ed-a100-d5a683a9e6c0] Loading plugin contributions @ http://localhost:3000/bundle.js:192090
+[    7504ms] [INFO] 2026-05-30T12:05:53.403Z root INFO Replace loading indicator with ready workbench UI (animation): 1054.9 ms [7.495 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    7505ms] [INFO] 2026-05-30T12:05:53.405Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://localhost:3000/bundle.js:192090
+[    7505ms] [INFO] 2026-05-30T12:05:53.405Z root INFO All frontend contributions settled: 4380.0 ms [7.496 s since frontend page start] @ http://localhost:3000/bundle.js:192090
+[    8882ms] [WARNING] 2026-05-30T12:05:54.781Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://localhost:3000/bundle.js:192090
+[   10080ms] [WARNING] 2026-05-30T12:05:55.979Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://localhost:3000/bundle.js:192090
+[   21659ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-500.woff2:0
+[   21663ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-400.woff2:0
+[   28780ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-600.woff2:0
+[   28780ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-700.woff2:0
+[   28780ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-400.woff2:0
+[   52953ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-500.woff2:0
+[   52954ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-600.woff2:0
+[   55555ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-400.woff2:0
+[   55560ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-700.woff2:0
+[   55560ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-latin-400.woff2:0
+[   55560ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/noto-sans-sc-latin-700.woff2:0
+[   55563ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/fonts/inter-ext-700.woff2:0
+[   55564ms] [WARNING] 2026-05-30T12:06:41.464Z root WARN [FontManager] "Inter" is now a system font fallback after failed load. @ http://localhost:3000/bundle.js:192090
+[  310991ms] [WARNING] 2026-05-30T12:10:56.891Z root WARN Widget was activated, but did not accept focus after 2000ms: flow.widget @ http://localhost:3000/bundle.js:192090
+[  513025ms] [INFO] 2026-05-30T12:14:18.924Z root INFO Changed application state from 'ready' to 'closing_window'. @ http://localhost:3000/bundle.js:192090
+[  513025ms] [INFO] 2026-05-30T12:14:18.924Z root INFO >>> Storing the layout... @ http://localhost:3000/bundle.js:192090
+[  513025ms] [INFO] 2026-05-30T12:14:18.924Z root INFO <<< The layout has been successfully stored. @ http://localhost:3000/bundle.js:192090
+[  513025ms] [INFO] 2026-05-30T12:14:18.924Z root INFO >>> Stopping frontend contributions... @ http://localhost:3000/bundle.js:192090
+[  513025ms] [INFO] 2026-05-30T12:14:18.924Z root INFO <<< All frontend contributions have been stopped. @ http://localhost:3000/bundle.js:192090

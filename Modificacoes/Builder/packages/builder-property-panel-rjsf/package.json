@@ -1,6 +1,6 @@
 {
   "name": "@cybervinci/builder-property-panel-rjsf",
-  "version": "1.71.0",
+  "version": "1.72.0",
   "description": "RJSF property panel adapter for CyberVinci UI Schema",
   "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
   "main": "lib/common",
@@ -10,9 +10,9 @@
     "src"
   ],
   "dependencies": {
-    "@cybervinci/builder-registry": "1.71.0",
-    "@cybervinci/builder-schema": "1.71.0",
-    "@theia/core": "1.71.0",
+    "@cybervinci/builder-registry": "1.72.0",
+    "@cybervinci/builder-schema": "1.72.0",
+    "@theia/core": "1.72.0",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
@@ -20,7 +20,7 @@
     "@rjsf/validator-ajv8": "^5.24.12"
   },
   "devDependencies": {
-    "@theia/ext-scripts": "1.71.0"
+    "@theia/ext-scripts": "1.72.0"
   },
   "scripts": {
     "build": "theiaext build",

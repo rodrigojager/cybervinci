@@ -1,0 +1,2 @@
+import{t as e}from"./compiler-runtime-b9_ems4H.js";import{d as t,o as n,u as r}from"./statsig-ZsHpMBGA.js";import{t as i}from"./use-auth-BzTuY7Bc.js";var a=e(),o=`2478676115`,s=`3503973010`;function c(){let e=(0,a.c)(3),{authMethod:r,isLoading:s}=i();t(),n(o);let c;return e[0]!==!1||e[1]!==!1?(c={isProfileVisibilityLoading:!1,isProfileVisible:!1},e[0]=!1,e[1]=!1,e[2]=c):c=e[2],c}function l(){(0,a.c)(3);let{authMethod:e}=i();return n(o),r(s),!1}export{c as n,l as t};
+//# sourceMappingURL=profile-visibility-1kLy0vUZ.js.map

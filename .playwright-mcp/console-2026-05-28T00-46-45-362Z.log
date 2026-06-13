@@ -1,0 +1,55 @@
+[    1339ms] [INFO] sending initial connect on Og_m5agim0euoGDfAAAV @ http://127.0.0.1:3000/bundle.js:67846
+[    1343ms] [INFO] initial connect received on Og_m5agim0euoGDfAAAV @ http://127.0.0.1:3000/bundle.js:67841
+[    1427ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[    1450ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/bundle.js:235627
+[    1464ms] [WARNING] Could not find translation key for default value: "CyberVinci Icon" @ http://127.0.0.1:3000/bundle.js:56469
+[    1474ms] [WARNING] Could not find translation key for default value: "White" @ http://127.0.0.1:3000/bundle.js:56469
+[    1614ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "Low" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "Medium" @ http://127.0.0.1:3000/bundle.js:56469
+[    1615ms] [WARNING] Could not find translation key for default value: "High" @ http://127.0.0.1:3000/bundle.js:56469
+[    1931ms] [WARNING] Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:56469
+[    1980ms] [WARNING] 2026-05-28T00:46:47.342Z root WARN Could not find translation key for default value: "Author" @ http://127.0.0.1:3000/bundle.js:192090
+[    2831ms] [WARNING] 2026-05-28T00:46:48.192Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 890.3 ms [2.827 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    2919ms] [WARNING] 2026-05-28T00:46:48.281Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist @ http://127.0.0.1:3000/bundle.js:192090
+[    2945ms] [INFO] 2026-05-28T00:46:48.306Z root INFO Detected keyboard layout from browser API: US (PC) @ http://127.0.0.1:3000/bundle.js:192090
+[    2993ms] [INFO] 2026-05-28T00:46:48.354Z SkillService INFO Watching parent directory 'C:\Users\Rodrigo\.theia' for skills folder creation @ http://127.0.0.1:3000/bundle.js:192090
+[    3007ms] [INFO] 2026-05-28T00:46:48.369Z root INFO [96182770-5a6f-49f4-83f7-8cd95a379088] Waiting for backend deployment: 7.7 ms [3.003 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3016ms] [INFO] 2026-05-28T00:46:48.377Z root INFO Start frontend contributions: 1118.9 ms [3.007 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3016ms] [INFO] 2026-05-28T00:46:48.377Z root INFO Changed application state from 'init' to 'started_contributions'. @ http://127.0.0.1:3000/bundle.js:192090
+[    3018ms] [INFO] 2026-05-28T00:46:48.380Z root INFO Changed application state from 'started_contributions' to 'attached_shell'. @ http://127.0.0.1:3000/bundle.js:192090
+[    3018ms] [INFO] 2026-05-28T00:46:48.380Z root INFO >>> Restoring the layout state... @ http://127.0.0.1:3000/bundle.js:192090
+[    3019ms] [INFO] 2026-05-28T00:46:48.381Z root INFO <<< Nothing to restore. @ http://127.0.0.1:3000/bundle.js:192090
+[    3243ms] [WARNING] 2026-05-28T00:46:48.605Z root WARN Linked preference "workbench.colorCustomizations" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[    3244ms] [WARNING] 2026-05-28T00:46:48.605Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found. @ http://127.0.0.1:3000/bundle.js:192090
+[    3251ms] [INFO] 2026-05-28T00:46:48.612Z root INFO [96182770-5a6f-49f4-83f7-8cd95a379088] Loading plugin contributions @ http://127.0.0.1:3000/bundle.js:192090
+[    3816ms] [WARNING] 2026-05-28T00:46:49.177Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 772.0 ms [3.812 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3858ms] [INFO] 2026-05-28T00:46:49.219Z root INFO Initialize the workbench layout: 836.3 ms [3.851 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    3859ms] [INFO] 2026-05-28T00:46:49.220Z root INFO Changed application state from 'attached_shell' to 'initialized_layout'. @ http://127.0.0.1:3000/bundle.js:192090
+[    4688ms] [INFO] 2026-05-28T00:46:50.050Z root INFO Replace loading indicator with ready workbench UI (animation): 819.9 ms [4.683 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    4688ms] [INFO] 2026-05-28T00:46:50.050Z root INFO Changed application state from 'initialized_layout' to 'ready'. @ http://127.0.0.1:3000/bundle.js:192090
+[    4688ms] [INFO] 2026-05-28T00:46:50.050Z root INFO All frontend contributions settled: 2795.4 ms [4.684 s since frontend page start] @ http://127.0.0.1:3000/bundle.js:192090
+[    6695ms] [WARNING] 2026-05-28T00:46:52.057Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget @ http://127.0.0.1:3000/bundle.js:192090
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-400.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-500.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-600.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-700.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-ext-400.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-ext-500.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-ext-600.woff2:0
+[   43190ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/inter-ext-700.woff2:0
+[   43191ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/noto-sans-sc-400.woff2:0
+[   43191ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/noto-sans-sc-700.woff2:0
+[   43191ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/noto-sans-sc-latin-400.woff2:0
+[   43191ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/fonts/noto-sans-sc-latin-700.woff2:0
+[   43203ms] [WARNING] 2026-05-28T00:47:28.564Z root WARN [FontManager] Native font access failed: User activation is required. @ http://127.0.0.1:3000/bundle.js:192090
+[   46664ms] [INFO] 2026-05-28T00:47:32.025Z root INFO [FontManager] Native font access granted — 221 families found. @ http://127.0.0.1:3000/bundle.js:192090
+[   46676ms] [INFO] 2026-05-28T00:47:32.037Z root INFO [FontManager] Loaded "Inter" from native fonts (3/3 variants). @ http://127.0.0.1:3000/bundle.js:192090
+[  124000ms] [WARNING] 2026-05-28T00:48:49.362Z root WARN Widget was activated, but did not accept focus after 2000ms: flow.widget @ http://127.0.0.1:3000/bundle.js:192090
+[  290936ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=s2bjuokz:0
+[  295702ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling&t=s2f8e5n2:0

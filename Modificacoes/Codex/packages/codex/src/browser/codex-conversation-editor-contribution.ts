@@ -29,9 +29,14 @@ export class CodexConversationEditorContribution extends NavigatableWidgetOpenHa
         const slug = encodeURIComponent(path.replace(/^\//, '') || 'conversation');
         const uri = new URI(`${OPENAI_CODEX_SCHEME}:/${slug}`);
         const widget = await this.open(uri, { mode: 'activate', route: path } as CodexConversationEditorOptions);
-        widget.setRoute(path, state);
         widget.setResourceUri(uri);
+        widget.setRoute(path, state);
         return widget;
+    }
+
+    async openSettingsTab(path = '/settings', state?: unknown): Promise<CodexConversationEditorWidget> {
+        const route = path === '/settings' || path.startsWith('/settings/') ? path : '/settings';
+        return this.openConversationTab(route, state);
     }
 
     protected override createWidgetOptions(uri: URI, options?: CodexConversationEditorOptions): NavigatableWidgetOptions {

@@ -23,14 +23,14 @@ import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import { FileChangesEvent, FileChangeType } from '@theia/filesystem/lib/common/files';
 import { WorkspaceService } from '@theia/workspace/lib/browser';
 import { AICorePreferences, PREFERENCE_NAME_DISABLED_SKILLS, PREFERENCE_NAME_SKILL_DIRECTORIES } from '../common/ai-core-preferences';
-import { Skill, SkillDescription, SKILL_FILE_NAME, validateSkillDescription, parseSkillFile } from '../common/skill';
+import { Skill, SkillDescription, SkillDiscoveryMode, SKILL_FILE_NAME, validateSkillDescription, parseSkillFile } from '../common/skill';
 
 /** Debounce delay for coalescing rapid file system events */
 const UPDATE_DEBOUNCE_MS = 50;
 
 export const SkillService = Symbol('SkillService');
 export interface SkillService {
-    /** Get all enabled discovered skills */
+    /** Get enabled skills that may be surfaced automatically */
     getSkills(): Skill[];
 
     /** Get an enabled skill by name */
@@ -165,7 +165,7 @@ export class DefaultSkillService implements SkillService {
     }
 
     getSkills(): Skill[] {
-        return Array.from(this.skills.values()).filter(skill => this.isEnabled(skill.name));
+        return Array.from(this.skills.values()).filter(skill => this.isAutoDiscoverable(skill));
     }
 
     getSkill(name: string): Skill | undefined {
@@ -400,6 +400,7 @@ export class DefaultSkillService implements SkillService {
 
             const skill: Skill = {
                 ...parsed.metadata,
+                discovery: this.resolveDiscoveryMode(parsed.metadata, skillFileUri.path.fsPath()),
                 location: skillFileUri.path.fsPath()
             };
 
@@ -412,5 +413,24 @@ export class DefaultSkillService implements SkillService {
     protected setupDirectoryWatcher(dirURI: URI, disposables: DisposableCollection, watchedDirectories: Set<string>): void {
         disposables.push(this.fileService.watch(dirURI, { recursive: true, excludes: [] }));
         watchedDirectories.add(dirURI.toString());
+    }
+
+    protected isAutoDiscoverable(skill: Skill): boolean {
+        return this.isEnabled(skill.name) && skill.discovery !== 'manual';
+    }
+
+    protected resolveDiscoveryMode(description: SkillDescription, skillFilePath: string): SkillDiscoveryMode {
+        const explicitDiscovery = description.discovery ?? description.metadata?.discovery;
+        if (explicitDiscovery === 'auto' || explicitDiscovery === 'manual' || explicitDiscovery === 'system') {
+            return explicitDiscovery;
+        }
+        const normalizedPath = skillFilePath.replace(/\\/g, '/');
+        if (/(^|\/)Manual(\/|$)/i.test(normalizedPath)) {
+            return 'manual';
+        }
+        if (/(^|\/)System(\/|$)/i.test(normalizedPath)) {
+            return 'system';
+        }
+        return 'auto';
     }
 }

@@ -1,0 +1,51 @@
+(node:81184) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+2026-06-03T07:05:35.078Z root WARN Backend DefaultMessagingService.initialize took longer than the expected maximum 50 milliseconds: 50.4 ms [0.726 s since backend process start]
+2026-06-03T07:05:35.089Z root WARN Backend PluginLocalizationServer.initialize took longer than the expected maximum 50 milliseconds: 58.9 ms [0.736 s since backend process start]
+2026-06-03T07:05:35.111Z root WARN The local plugin referenced by local-dir:/c%3A/Users/Rodrigo/.theia/plugins does not exist.
+2026-06-03T07:05:35.113Z root WARN The local plugin referenced by local-dir:../../plugins does not exist.
+2026-06-03T07:05:35.113Z root WARN The local plugin referenced by local-dir:/c%3A/Users/Rodrigo/.theia/deployedPlugins does not exist.
+(node:81184) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-06-03T07:05:37.466Z root WARN Could not find translation key for default value: "Author"
+2026-06-03T07:05:37.503Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-03T07:05:37.508Z root WARN Failed to register frontend resources from delegate 758744f9-3f91-4c54-bcee-eb4538a08115: Error: Resource sample-workspace://info is already registered
+2026-06-03T07:05:37.508Z root WARN Failed to register frontend MCP contributions from delegate 758744f9-3f91-4c54-bcee-eb4538a08115: Error: Resource sample-workspace://info is already registered
+2026-06-03T07:05:37.513Z root WARN Could not find translation key for default value: "Author"
+2026-06-03T07:05:37.540Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-03T07:05:37.662Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 242.6 ms [2.528 s since frontend page start]
+2026-06-03T07:05:37.700Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 233.9 ms [2.526 s since frontend page start]
+2026-06-03T07:05:38.138Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-03T07:05:38.138Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-03T07:05:38.158Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-03T07:05:38.158Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-03T07:05:38.544Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 548.8 ms [3.276 s since frontend page start]
+2026-06-03T07:05:38.546Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 480.2 ms [3.227 s since frontend page start]
+2026-06-03T07:05:41.277Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-03T07:05:41.286Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-03T07:05:46.432Z root WARN Failed to register frontend resources from delegate 6909a26b-19ce-4e47-9284-65725b13ac15: Error: Resource sample-workspace://info is already registered
+2026-06-03T07:05:46.432Z root WARN Failed to register frontend MCP contributions from delegate 6909a26b-19ce-4e47-9284-65725b13ac15: Error: Resource sample-workspace://info is already registered
+2026-06-03T07:05:46.436Z root WARN Could not find translation key for default value: "Author"
+2026-06-03T07:05:46.845Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 399.5 ms [2.511 s since frontend page start]
+2026-06-03T07:05:47.064Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-03T07:05:47.222Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-03T07:05:47.222Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-03T07:05:47.233Z root WARN Frontend SkillPromptCoordinator.onStart took longer than the expected maximum 100 milliseconds: 282.6 ms [2.939 s since frontend page start]
+2026-06-03T07:05:47.845Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 233.6 ms [3.213 s since frontend page start]
+2026-06-03T07:05:50.365Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-03T07:05:56.451Z root WARN Failed to register frontend resources from delegate 6cf4e95b-16c0-4c31-a191-497a4f7a3ed6: Error: Resource sample-workspace://info is already registered
+2026-06-03T07:05:56.451Z root WARN Failed to register frontend MCP contributions from delegate 6cf4e95b-16c0-4c31-a191-497a4f7a3ed6: Error: Resource sample-workspace://info is already registered
+2026-06-03T07:05:56.453Z root WARN Could not find translation key for default value: "Author"
+2026-06-03T07:05:57.170Z SkillService WARN Cannot watch skills directory 'C:\Users\Rodrigo\AppData\Local\Temp\cloud-ws-5fflzy\.prompts\skills': parent directory does not exist
+2026-06-03T07:05:57.247Z root WARN Frontend CodexProviderLanguageModel.initialize took longer than the expected maximum 100 milliseconds: 815.7 ms [1.392 s since frontend page start]
+2026-06-03T07:05:57.450Z root WARN Linked preference "workbench.colorCustomizations" not found.
+2026-06-03T07:05:57.450Z root WARN Linked preference "editor.experimental.preferTreeSitter" not found.
+2026-06-03T07:05:57.892Z root WARN Frontend TerminalFrontendContribution.initializeLayout took longer than the expected maximum 100 milliseconds: 323.7 ms [1.798 s since frontend page start]
+2026-06-03T07:06:00.508Z root WARN Widget was activated, but did not accept focus after 2000ms: getting.started.widget
+2026-06-03T07:06:15.491Z root WARN Widget was activated, but did not accept focus after 2000ms: flow.widget
+npm error Lifecycle script `start` failed with error:
+npm error code 4294967295
+npm error path C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\browser
+npm error workspace @theia/example-browser@1.71.0
+npm error location C:\Users\Rodrigo\Desktop\CyberVinci\Workload\theia\examples\browser
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c theia start --plugins=local-dir:../../plugins --ovsx-router-config=../ovsx-router-config.json --port 3001

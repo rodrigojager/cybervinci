@@ -8,6 +8,8 @@ import { CodexHostMessage } from '../common/codex-host-protocol';
 
 export interface CodexWebviewSurface {
     readonly webviewId: string;
+    getRoute?(): string | undefined;
+    setRoute?(path: string, state?: unknown): void;
     postMessage(message: CodexHostMessage): void;
     dispose(): void;
 }

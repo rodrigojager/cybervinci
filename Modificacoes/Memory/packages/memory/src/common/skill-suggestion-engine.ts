@@ -29,6 +29,9 @@ export class SkillSuggestionEngine {
         const suggestions: SkillSuggestion[] = [];
 
         for (const skill of request.availableSkills) {
+            if (skill.discovery === 'manual') {
+                continue;
+            }
             if (seen.has(skill.id)) {
                 continue;
             }
