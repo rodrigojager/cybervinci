@@ -1750,6 +1750,88 @@ describe('OpenPencilDesignCommandService', () => {
         expect(title?.width).to.equal(308);
     });
 
+    it('fails AI layout quality when a page-level result has no visible content', () => {
+        const document = service.createDesign('No visible AI result quality test');
+        document.pages![0].children = [];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(quality.valid).to.equal(false);
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('no visible renderable canvas content');
+    });
+
+    it('reports AI layout quality errors for foreground overlap and escaped children', () => {
+        const document = service.createDesign('AI layout quality overlap and overflow test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 620;
+        page.children = [
+            {
+                id: 'quality-section',
+                type: 'frame',
+                name: 'Quality section',
+                x: 0,
+                y: 0,
+                width: 360,
+                height: 160,
+                children: [
+                    {
+                        id: 'quality-title',
+                        type: 'text',
+                        name: 'Quality title',
+                        content: 'Mercado Privado',
+                        x: 16,
+                        y: 20,
+                        width: 180,
+                        height: 40
+                    },
+                    {
+                        id: 'quality-subtitle',
+                        type: 'text',
+                        name: 'Quality subtitle',
+                        content: 'Assine com beneficios exclusivos',
+                        x: 16,
+                        y: 28,
+                        width: 220,
+                        height: 40
+                    },
+                    {
+                        id: 'quality-image',
+                        type: 'image',
+                        name: 'Imagem smartphone oferta',
+                        x: 330,
+                        y: 70,
+                        width: 120,
+                        height: 70
+                    }
+                ]
+            }
+        ];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(quality.valid).to.equal(false);
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('overlap');
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('escapes its parent width');
+    });
+
+    it('allows intentional card surfaces behind foreground text in AI layout quality', () => {
+        const document = service.createDesign('AI layout quality surface allowance test');
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true
+        });
+
+        expect(quality.valid).to.equal(true);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',

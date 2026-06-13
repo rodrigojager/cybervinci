@@ -1106,6 +1106,12 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         if (await this.executeStreamingAiPromptWithFeedback(widget, document, selection, prompt, requestMode, executionChoice)) {
             return;
         }
+        if (this.shouldContinueFullPageStreaming(prompt, selection, requestMode)) {
+            this.reportAiStatus(widget, undefined, this.createAiStatus('error', 'No stream', 'Canvas AI did not produce a visible streamed change quickly enough.'));
+            this.messages.warn('Canvas AI streaming did not produce visible changes quickly enough, so the full-page request was stopped before running a non-stream fallback that would leave the canvas blank. Try another provider/model or retry the request.');
+            widget.clearAiStatusSoon(5200);
+            return;
+        }
         const stages = this.createAiIncrementalStages(prompt, selection, requestMode);
         const rollbackSnapshot = widget.createAiRollbackSnapshot();
         let progress: OpenPencilProgressHandle | undefined = await this.progressService.showProgress({
@@ -1175,8 +1181,10 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
 
             const finalDocument = widget.getDocument();
             const validation = finalDocument ? this.commandService.validateDocument(finalDocument) : undefined;
-            if (!validation?.valid) {
-                const detail = validation?.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ') ?? 'unknown validation error';
+            const layoutQuality = finalDocument ? this.commandService.validateAiLayoutQuality(finalDocument, this.createAiApplyOptions(prompt, requestMode)) : undefined;
+            if (!validation?.valid || !layoutQuality?.valid) {
+                const issues = validation?.valid === false ? validation.issues : layoutQuality?.issues;
+                const detail = issues?.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ') ?? 'unknown validation error';
                 this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Needs review', 'Canvas AI generated an incremental design with validation issues.'));
                 const action = await this.messages.warn(
                     `Canvas AI applied ${appliedTotal} incremental change${appliedTotal === 1 ? '' : 's'}, but final validation reported issues: ${detail}`,
@@ -1324,8 +1332,10 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
 
             const finalDocument = widget.getDocument();
             const validation = finalDocument ? this.commandService.validateDocument(finalDocument) : undefined;
-            if (!validation?.valid) {
-                const detail = validation?.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ') ?? 'unknown validation error';
+            const layoutQuality = finalDocument ? this.commandService.validateAiLayoutQuality(finalDocument, this.createAiApplyOptions(prompt, requestMode)) : undefined;
+            if (!validation?.valid || !layoutQuality?.valid) {
+                const issues = validation?.valid === false ? validation.issues : layoutQuality?.issues;
+                const detail = issues?.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ') ?? 'unknown validation error';
                 this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Needs review', 'Canvas AI streamed changes with validation issues.'));
                 const action = await this.messages.warn(
                     `Canvas AI streamed ${appliedTotal} change${appliedTotal === 1 ? '' : 's'}, but final validation reported issues: ${detail}`,
@@ -1620,14 +1630,20 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
         this.reportAiStatus(widget, progress, this.createAiStatus('validating', 'Validating', 'Canvas AI is validating the active design...'));
         const applyPreview = this.commandService.applyOperationsToDocument(this.documents.cloneDocument(latestDocument), baseSelection, operations, applyOptions);
         const applyValidation = this.commandService.validateDocument(applyPreview.document);
-        if (!applyPreview.changed || !applyValidation.valid) {
+        const layoutQuality = this.commandService.validateAiLayoutQuality(applyPreview.document, {
+            ...applyOptions,
+            requireVisibleContent: !baseSelection.length
+        });
+        if (!applyPreview.changed || !applyValidation.valid || !layoutQuality.valid) {
+            const issues = !applyValidation.valid ? applyValidation.issues : layoutQuality.issues;
             canvasAiFrontendDebug('apply-rejected', {
-                reason: applyPreview.changed ? 'active-preview-invalid' : 'active-preview-unchanged',
+                reason: !applyPreview.changed ? 'active-preview-unchanged' : !applyValidation.valid ? 'active-preview-invalid' : 'active-layout-quality-invalid',
                 operationsCount: operations.length,
-                diagnosticsCount: applyValidation.issues.length
+                diagnosticsCount: issues.length
             });
             this.reportAiStatus(widget, progress, this.createAiStatus('error', 'Error', 'Canvas AI could not validate the active design.'));
-            this.messages.warn(`Canvas AI edit was not applied because the active design no longer validates the preview${applyPreview.message ? `: ${applyPreview.message}` : '.'}`);
+            const detail = issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ');
+            this.messages.warn(`Canvas AI edit was not applied because the active design no longer validates the preview${applyPreview.message ? `: ${applyPreview.message}` : detail ? `: ${detail}` : '.'}`);
             return undefined;
         }
         this.reportAiStatus(widget, progress, this.createAiApplyingStatus(0, operations.length));

@@ -246,7 +246,9 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(source).to.contain('createAiApplyOptions(prompt, requestMode)');
         expect(source).to.contain('normalizeVisibleBounds: true');
         expect(source).to.contain('preservePageWidth');
+        expect(source).to.contain('this.commandService.validateAiLayoutQuality(applyPreview.document');
         expect(source).to.contain('OPENPENCIL_AI_STREAMING_FULL_PAGE_CONTINUATION_PASSES');
+        expect(source).to.contain('stopped before running a non-stream fallback that would leave the canvas blank');
         expect(source).to.contain('this.createAiApplyingStatus(applyProgress.applied, applyProgress.total)');
         expect(source).to.contain("this.createAiStatus('complete', 'Done'");
         expect(source).to.contain("this.createAiStatus('error', 'Error'");
