@@ -12,6 +12,8 @@ import {
 } from './flow-types';
 
 export const FLOW_AI_AUTHORING_SPEC_VERSION = 'flow.ai-authoring/v1';
+export const FLOW_DYNAMIC_AUTHORING_AGENT_ID = 'cybervinci-flow-dynamic-authoring';
+export const FLOW_DYNAMIC_AUTHORING_PURPOSE = 'dynamic_workflow_authoring';
 
 export type FlowAiAuthoringAction =
     | 'run_saved_workflow'
@@ -41,7 +43,7 @@ export interface FlowUiControlSpec {
 
 export interface FlowAiAuthoringSpec {
     version: typeof FLOW_AI_AUTHORING_SPEC_VERSION;
-    purpose: 'dynamic_workflow_authoring';
+    purpose: typeof FLOW_DYNAMIC_AUTHORING_PURPOSE;
     internalFormats: Exclude<FlowWorkflowFileFormat, 'unknown'>[];
     humanEditableFormats: ['markdown'];
     actions: FlowAiAuthoringAction[];
