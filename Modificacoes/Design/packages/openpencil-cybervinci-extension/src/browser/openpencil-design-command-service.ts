@@ -2833,6 +2833,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 return changed;
             }
         }
+        if (preservePageWidth && width !== undefined && this.shouldGridFeatureCardChildren(node, width)) {
+            changed = this.gridFeatureCardChildrenWithinWidth(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
         if (preservePageWidth && width !== undefined && this.shouldWrapOverflowingHorizontalLayoutChildren(node, bounds, width)) {
             changed = this.wrapHorizontalLayoutChildrenWithinWidth(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
@@ -2847,8 +2854,8 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 return changed;
             }
         }
-        if (preservePageWidth && width !== undefined && this.shouldClampManualChildrenWithinWidth(node, bounds, width)) {
-            changed = this.clampManualChildrenWithinWidth(node, width) || changed;
+        if (preservePageWidth && width !== undefined && this.shouldClampChildrenWithinBounds(node, bounds, width, height)) {
+            changed = this.clampChildrenWithinBounds(node, width, height) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
             if (!bounds) {
                 return changed;
@@ -3005,6 +3012,29 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return { columns, cardWidth, gap, left, top, rightLimit, availableWidth };
     }
 
+    protected shouldGridFeatureCardChildren(node: OpenPencilNode, width: number): boolean {
+        if (width < 720 || node.layout === 'horizontal' || node.layout === 'vertical') {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const featureChildren = children.filter(child => this.isFeatureCardLikeChild(child));
+        if (featureChildren.length < 2) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        const hasBrokenFeatureWidth = featureChildren.some(child => {
+            const childWidth = this.visibleNodeWidth(child);
+            return childWidth < width * 0.22 || child.width === 'fill_container' || childWidth > width * 0.75;
+        });
+        return hasBrokenFeatureWidth || /\b(benefits?|beneficios?|benefícios?|features?|vantagens?|canais|ajuda|pagamento|envio|prote[cç][aã]o)\b/.test(label);
+    }
+
+    protected isFeatureCardLikeChild(node: OpenPencilNode): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return node.role === 'feature-card'
+            || /\b(feature-card|benefit|beneficio|benefício|beneficios|benefícios|pagamento|parcelamento|envio|prote[cç][aã]o|compra protegida)\b/.test(label);
+    }
+
     protected isNavigationLikeNode(node: OpenPencilNode): boolean {
         const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
         return /\b(header|navbar|nav|menu|search|busca|barra|cabecalho|cabeçalho|topbar)\b/.test(label);
@@ -3020,6 +3050,12 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return node.role === 'card'
             || node.role === 'product'
             || /\b(card|product|products|produto|produtos|offer|offers|oferta|ofertas|item|sku|tile|banner)\b/.test(label);
+    }
+
+    protected isMediaLikeHomepageChild(node: OpenPencilNode): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return node.type === 'image'
+            || /\b(image|imagem|foto|photo|picture|media|visual|thumbnail|thumb|mockup|notebook|fone|headphone|cadeira|laptop|produto)\b/.test(label);
     }
 
     protected shouldStackHomepageFlowChildren(node: OpenPencilNode, width: number): boolean {
@@ -3131,13 +3167,58 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 child.y = this.roundScaledValue(targetY);
                 changed = true;
             }
-            changed = this.clampManualChildrenWithinWidth(child, grid.cardWidth) || changed;
+            changed = this.clampChildrenWithinBounds(child, grid.cardWidth, this.numericDimensionValue(child.height)) || changed;
             bottom = Math.max(bottom, targetY + this.visibleNodeHeight(child));
         }
 
         const requiredHeight = this.ceilVisibleBound(bottom + Math.max(0, this.normalizedPadding(node.padding).bottom));
         if (this.numericDimensionValue(node.height) !== requiredHeight) {
             node.height = requiredHeight;
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected gridFeatureCardChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const featureChildren = children.filter(child => this.isFeatureCardLikeChild(child));
+        if (featureChildren.length < 2 || maxWidth < 360) {
+            return false;
+        }
+        const gap = Math.max(14, Math.min(24, this.numberValue(node.gap, 16)));
+        const columns = Math.max(1, Math.min(3, featureChildren.length, Math.floor((maxWidth + gap) / (260 + gap))));
+        const cardWidth = Math.max(180, Math.floor((maxWidth - gap * (columns - 1)) / columns));
+        let changed = false;
+        let bottom = 0;
+
+        for (const [index, child] of featureChildren.entries()) {
+            const column = index % columns;
+            const row = Math.floor(index / columns);
+            const targetX = column * (cardWidth + gap);
+            const targetY = row * 152;
+            const targetHeight = Math.max(132, Math.min(this.visibleNodeHeight(child), 180));
+            if (this.numberValue(child.x, 0) !== targetX) {
+                child.x = this.roundScaledValue(targetX);
+                changed = true;
+            }
+            if (this.numberValue(child.y, 0) !== targetY) {
+                child.y = this.roundScaledValue(targetY);
+                changed = true;
+            }
+            if (this.numericDimensionValue(child.width) !== cardWidth) {
+                child.width = cardWidth;
+                changed = true;
+            }
+            if (this.numericDimensionValue(child.height) !== targetHeight) {
+                child.height = targetHeight;
+                changed = true;
+            }
+            changed = this.clampChildrenWithinBounds(child, cardWidth, targetHeight) || changed;
+            bottom = Math.max(bottom, targetY + targetHeight);
+        }
+
+        if (this.numericDimensionValue(node.height) !== bottom) {
+            node.height = this.ceilVisibleBound(bottom);
             changed = true;
         }
         return changed;
@@ -3199,38 +3280,140 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return changed;
     }
 
-    protected shouldClampManualChildrenWithinWidth(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
-        if (node.layout === 'horizontal' || node.layout === 'vertical' || width < 1) {
+    protected shouldClampChildrenWithinBounds(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number, height?: number): boolean {
+        if (width < 1) {
             return false;
         }
-        return bounds.left < 0 || bounds.right > width;
+        return bounds.left < 0 || bounds.right > width || bounds.top < 0 || (height !== undefined && bounds.bottom > height);
     }
 
-    protected clampManualChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
-        if (node.layout === 'horizontal' || node.layout === 'vertical' || maxWidth < 1) {
+    protected clampChildrenWithinBounds(node: OpenPencilNode, maxWidth: number, maxHeight?: number): boolean {
+        if (maxWidth < 1) {
             return false;
         }
         let changed = false;
-        for (const child of this.visibleChildren(node.children ?? []).filter(candidate => candidate.role !== 'overlay')) {
-            let childWidth = this.visibleNodeWidth(child);
-            if (childWidth > maxWidth && this.canResizeNodeForVisibleClamp(child)) {
-                child.width = maxWidth;
-                childWidth = maxWidth;
-                changed = true;
-            }
-            let targetX = this.numberValue(child.x, 0);
-            if (targetX < 0) {
-                targetX = 0;
-            }
-            if (targetX + childWidth > maxWidth) {
-                targetX = Math.max(0, maxWidth - childWidth);
-            }
-            if (this.numberValue(child.x, 0) !== targetX) {
-                child.x = this.roundScaledValue(targetX);
-                changed = true;
+        if (node.layout === 'vertical' && this.isCardLikeHomepageChild(node)) {
+            for (const child of this.visibleChildren(node.children ?? [])) {
+                if (child.role === 'overlay' && this.isMediaLikeHomepageChild(child)) {
+                    delete child.role;
+                    if (this.numberValue(child.x, 0) !== 0) {
+                        child.x = 0;
+                    }
+                    if (this.numberValue(child.y, 0) < 0) {
+                        child.y = 0;
+                    }
+                    changed = true;
+                }
             }
         }
+
+        const padding = this.normalizedPadding(node.padding);
+        const flowMaxWidth = node.layout === 'horizontal' || node.layout === 'vertical'
+            ? Math.max(1, maxWidth - Math.max(0, padding.left) - Math.max(0, padding.right))
+            : maxWidth;
+        const visible = this.visibleChildren(node.children ?? []);
+        const flowChildren = node.layout === 'horizontal' || node.layout === 'vertical'
+            ? visible.filter(child => child.role !== 'overlay')
+            : visible;
+        const manualChildren = node.layout === 'horizontal' || node.layout === 'vertical'
+            ? visible.filter(child => child.role === 'overlay')
+            : visible;
+
+        for (const child of flowChildren) {
+            changed = this.normalizeFlowChildWidth(child, flowMaxWidth) || changed;
+            const childWidth = this.visibleNodeWidth(child);
+            changed = this.clampChildrenWithinBounds(child, childWidth, this.numericDimensionValue(child.height)) || changed;
+        }
+
+        for (const child of manualChildren) {
+            changed = this.clampManualChildWithinBounds(child, maxWidth, maxHeight) || changed;
+        }
         return changed;
+    }
+
+    protected normalizeFlowChildWidth(child: OpenPencilNode, maxWidth: number): boolean {
+        if (maxWidth < 1) {
+            return false;
+        }
+        let changed = false;
+        let childWidth = this.visibleNodeWidth(child);
+        if (this.canResizeNodeForVisibleClamp(child) && (childWidth > maxWidth || this.shouldExpandTextNodeForFlow(child, childWidth, maxWidth))) {
+            child.width = maxWidth;
+            childWidth = maxWidth;
+            changed = true;
+        }
+        if (this.normalizeTextNodeHeightForWidth(child, childWidth)) {
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected clampManualChildWithinBounds(child: OpenPencilNode, maxWidth: number, maxHeight?: number): boolean {
+        let changed = false;
+        let childWidth = this.visibleNodeWidth(child);
+        let childHeight = this.visibleNodeHeight(child);
+        if (childWidth > maxWidth && this.canResizeNodeForVisibleClamp(child)) {
+            child.width = maxWidth;
+            childWidth = maxWidth;
+            changed = true;
+        }
+        if (maxHeight !== undefined && childHeight > maxHeight && this.canResizeNodeForVisibleClamp(child)) {
+            child.height = maxHeight;
+            childHeight = maxHeight;
+            changed = true;
+        }
+        let targetX = this.numberValue(child.x, 0);
+        let targetY = this.numberValue(child.y, 0);
+        if (targetX < 0) {
+            targetX = 0;
+        }
+        if (targetX + childWidth > maxWidth) {
+            targetX = Math.max(0, maxWidth - childWidth);
+        }
+        if (maxHeight !== undefined) {
+            if (targetY < 0) {
+                targetY = 0;
+            }
+            if (targetY + childHeight > maxHeight) {
+                targetY = Math.max(0, maxHeight - childHeight);
+            }
+        } else if (targetY < 0) {
+            targetY = 0;
+        }
+        if (this.numberValue(child.x, 0) !== targetX) {
+            child.x = this.roundScaledValue(targetX);
+            changed = true;
+        }
+        if (this.numberValue(child.y, 0) !== targetY) {
+            child.y = this.roundScaledValue(targetY);
+            changed = true;
+        }
+        changed = this.clampChildrenWithinBounds(child, childWidth, this.numericDimensionValue(child.height)) || changed;
+        return changed;
+    }
+
+    protected shouldExpandTextNodeForFlow(node: OpenPencilNode, currentWidth: number, maxWidth: number): boolean {
+        return this.isTextLikeNode(node)
+            && typeof node.content === 'string'
+            && node.content.length > 12
+            && currentWidth > 0
+            && currentWidth < maxWidth * 0.55;
+    }
+
+    protected normalizeTextNodeHeightForWidth(node: OpenPencilNode, width: number): boolean {
+        if (!this.isTextLikeNode(node) || typeof node.content !== 'string' || width < 40) {
+            return false;
+        }
+        const fontSize = Math.max(8, this.numberValue(node.fontSize as number | string | undefined, 14));
+        const lineHeight = Math.max(fontSize, this.numberValue(node.lineHeight as number | string | undefined, fontSize * 1.25));
+        const estimatedLines = Math.max(1, Math.ceil((node.content.length * fontSize * 0.52) / Math.max(1, width)));
+        const estimatedHeight = this.ceilVisibleBound(estimatedLines * lineHeight);
+        const currentHeight = this.visibleNodeHeight(node);
+        if (currentHeight > estimatedHeight * 1.8 || currentHeight < estimatedHeight * 0.65) {
+            node.height = estimatedHeight;
+            return true;
+        }
+        return false;
     }
 
     protected canResizeNodeForVisibleClamp(node: OpenPencilNode): boolean {
