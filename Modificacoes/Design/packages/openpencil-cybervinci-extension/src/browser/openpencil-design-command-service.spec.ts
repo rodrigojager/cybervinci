@@ -1276,6 +1276,282 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Number(installmentDesc?.height)).to.be.lessThan(80);
     });
 
+    it('removes internal editor placeholders from AI-normalized designs', () => {
+        const document = service.createDesign('Homepage placeholder removal test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'embedded-editor-placeholder',
+                type: 'text',
+                name: 'Hero copy',
+                x: 410,
+                y: 232,
+                width: 380,
+                height: 48,
+                content: 'Edit this embedded .op design inside Theia.'
+            },
+            createHomepageSection('marketplace-homepage-root', 'Marketplace homepage root', 0, 304, 1120, 620)
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const pageNodes = result.document.pages![0].children;
+
+        expect(result.changed).to.equal(true);
+        expect(pageNodes.map(node => node.id)).to.deep.equal(['marketplace-homepage-root']);
+        expect(JSON.stringify(result.document)).not.to.contain('Edit this embedded .op design inside Theia.');
+    });
+
+    it('normalizes overflowing marketplace header rows without overlapping search and navigation text', () => {
+        const document = service.createDesign('Homepage header row normalize test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-header-root',
+                type: 'frame',
+                name: 'Marketplace header',
+                role: 'navbar',
+                x: 0,
+                y: 0,
+                width: 1120,
+                height: 204,
+                layout: 'vertical',
+                children: [
+                    {
+                        id: 'marketplace-header-search-row',
+                        type: 'frame',
+                        name: 'Header search row',
+                        role: 'row',
+                        x: 72,
+                        y: 12,
+                        width: 976,
+                        height: 48,
+                        layout: 'horizontal',
+                        gap: 12,
+                        children: [
+                            {
+                                id: 'marketplace-logo',
+                                type: 'text',
+                                name: 'Marketplace logo',
+                                role: 'heading',
+                                x: 0,
+                                y: 8,
+                                width: 976,
+                                height: 32,
+                                content: 'Mercado Privado',
+                                fontSize: 28
+                            },
+                            {
+                                id: 'marketplace-search',
+                                type: 'frame',
+                                name: 'Search bar',
+                                role: 'search-bar',
+                                x: 208,
+                                y: 4,
+                                width: 560,
+                                height: 40,
+                                children: []
+                            },
+                            {
+                                id: 'marketplace-offer-link',
+                                type: 'text',
+                                name: 'Subscription offer',
+                                role: 'label',
+                                x: 0,
+                                y: 15,
+                                width: 976,
+                                height: 14,
+                                content: 'Assine o Meli+ com beneficios exclusivos',
+                                fontSize: 14
+                            }
+                        ]
+                    },
+                    {
+                        id: 'marketplace-header-nav-row',
+                        type: 'frame',
+                        name: 'Header navigation row',
+                        role: 'row',
+                        x: 72,
+                        y: 70,
+                        width: 976,
+                        height: 120,
+                        layout: 'horizontal',
+                        gap: 18,
+                        children: [
+                            createHomepageSection('marketplace-location', 'Location selector', 0, 47, 210, 26),
+                            createHomepageSection('marketplace-primary-links', 'Primary links', 84, 51, 738, 18),
+                            createHomepageSection('marketplace-account-links', 'Account links', 696, 50, 280, 21)
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const header = result.document.pages![0].children.find(node => node.id === 'marketplace-header-root');
+        const searchRow = header?.children?.find(node => node.id === 'marketplace-header-search-row');
+        const navRow = header?.children?.find(node => node.id === 'marketplace-header-nav-row');
+
+        expect(result.changed).to.equal(true);
+        expect(searchRow?.layout).to.equal('none');
+        expect(navRow?.layout).to.equal('none');
+        expect(maxRight(searchRow?.children ?? [])).to.be.at.most(Number(searchRow?.width));
+        expect(maxRight(navRow?.children ?? [])).to.be.at.most(Number(navRow?.width));
+        expect(childrenOverlap(searchRow?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(navRow?.children ?? [])).to.equal(false);
+    });
+
+    it('grids collapsed fill-container marketplace cards and clamps oversized card images', () => {
+        const document = service.createDesign('Homepage collapsed shelf grid test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-offers-shelf',
+                type: 'frame',
+                name: 'Ofertas do dia shelf',
+                role: 'section',
+                x: 0,
+                y: 80,
+                width: 976,
+                height: 292,
+                layout: 'none',
+                children: Array.from({ length: 5 }, (_, index) => ({
+                    id: `marketplace-offer-card-${index + 1}`,
+                    type: 'frame',
+                    name: `Offer card ${index + 1}`,
+                    role: 'card',
+                    x: index * 16,
+                    y: 0,
+                    width: 'fill_container',
+                    height: 292,
+                    layout: 'vertical',
+                    children: [
+                        {
+                            id: `marketplace-offer-image-${index + 1}`,
+                            type: 'image',
+                            name: `Offer image ${index + 1}`,
+                            x: 0,
+                            y: 0,
+                            width: 1200,
+                            height: 150
+                        },
+                        {
+                            id: `marketplace-offer-info-${index + 1}`,
+                            type: 'frame',
+                            name: `Offer info ${index + 1}`,
+                            x: 0,
+                            y: 152,
+                            width: 1200,
+                            height: 120,
+                            layout: 'vertical',
+                            children: []
+                        }
+                    ]
+                }))
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const shelf = result.document.pages![0].children.find(node => node.id === 'marketplace-offers-shelf');
+        const cards = shelf?.children ?? [];
+        const firstImage = cards[0].children?.find(node => node.id === 'marketplace-offer-image-1');
+        const firstInfo = cards[0].children?.find(node => node.id === 'marketplace-offer-info-1');
+
+        expect(result.changed).to.equal(true);
+        expect(cards.map(node => node.width)).to.deep.equal([315, 315, 315, 315, 315]);
+        expect(cards.map(node => node.x)).to.deep.equal([0, 327, 654, 0, 327]);
+        expect(Number(cards[3].y)).to.be.greaterThan(Number(cards[0].y));
+        expect(firstImage?.width).to.equal(315);
+        expect(firstInfo?.width).to.equal(315);
+        expect(maxRight(cards)).to.be.at.most(Number(shelf?.width));
+    });
+
+    it('keeps banner row media and actions inside their card bounds', () => {
+        const document = service.createDesign('Homepage banner row containment test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-banner-card',
+                type: 'frame',
+                name: 'Fashion promo banner card',
+                role: 'card',
+                x: 72,
+                y: 80,
+                width: 976,
+                height: 228,
+                layout: 'horizontal',
+                gap: 12,
+                children: [
+                    {
+                        id: 'marketplace-banner-copy',
+                        type: 'frame',
+                        name: 'Fashion banner copy',
+                        role: 'column',
+                        x: 32,
+                        y: 57,
+                        width: 912,
+                        height: 114,
+                        layout: 'vertical',
+                        children: [
+                            {
+                                id: 'marketplace-banner-title',
+                                type: 'text',
+                                name: 'Banner title',
+                                content: 'Looks novos com ate 45% OFF',
+                                width: 912,
+                                height: 35
+                            }
+                        ]
+                    },
+                    {
+                        id: 'marketplace-banner-image',
+                        type: 'image',
+                        name: 'Fashion sale image',
+                        x: 968,
+                        y: 28,
+                        width: 330,
+                        height: 168
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'marketplace-banner-card');
+        const copy = card?.children?.find(node => node.id === 'marketplace-banner-copy');
+        const image = card?.children?.find(node => node.id === 'marketplace-banner-image');
+        const title = copy?.children?.find(node => node.id === 'marketplace-banner-title');
+
+        expect(result.changed).to.equal(true);
+        expect(card?.layout).to.equal('none');
+        expect(Number(copy?.x) + Number(copy?.width)).to.be.lessThan(Number(image?.x));
+        expect(Number(image?.x) + Number(image?.width)).to.be.at.most(Number(card?.width));
+        expect(title?.width).to.equal(copy?.width);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',
@@ -2955,6 +3231,34 @@ function createFeatureCard(id: string, name: string, x: number, y: number, width
             }
         ]
     };
+}
+
+function maxRight(nodes: OpenPencilNode[]): number {
+    return Math.max(...nodes.map(node => Number(node.x ?? 0) + Number(node.width ?? 0)));
+}
+
+function childrenOverlap(nodes: OpenPencilNode[]): boolean {
+    for (let index = 0; index < nodes.length; index++) {
+        for (let other = index + 1; other < nodes.length; other++) {
+            const left = nodes[index];
+            const right = nodes[other];
+            const leftX = Number(left.x ?? 0);
+            const leftY = Number(left.y ?? 0);
+            const leftWidth = Number(left.width ?? 0);
+            const leftHeight = Number(left.height ?? 0);
+            const rightX = Number(right.x ?? 0);
+            const rightY = Number(right.y ?? 0);
+            const rightWidth = Number(right.width ?? 0);
+            const rightHeight = Number(right.height ?? 0);
+            if (leftX < rightX + rightWidth
+                && leftX + leftWidth > rightX
+                && leftY < rightY + rightHeight
+                && leftY + leftHeight > rightY) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 class FastStreamTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {

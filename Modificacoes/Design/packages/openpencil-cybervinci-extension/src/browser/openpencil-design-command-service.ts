@@ -516,6 +516,8 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'For homepage-style output, use real section frames with padding/gap/layout to create spacing. Do not create spacer-only nodes named Spacer, Espaço, Space, Gap, or "before/after" blocks.',
             'For marketplace/product shelves, create a shelf section that wraps cards inside the page width. A shelf should not be a single horizontal layout that extends beyond the page.',
             'For desktop marketplace shelves, prefer 3-4 visible product cards per row when card details are large. Keep every text box, icon, image, and shape inside its card or section bounds.',
+            'Never include editor-shell placeholder copy in the design, including text such as "Edit this embedded .op design inside Theia."',
+            'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions. Do not give multiple header texts the full row width.',
             'If the user asks to copy or recreate a full homepage, include the complete page structure: top navigation, hero/promo area, category shortcuts, several product/offer shelves, promotional banners, recommendations, benefits, and footer-like closing content when present.',
             'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header with search/navigation, large promo hero, category shortcut cards, product shelves with 5-6 cards per row, horizontal promo banners between shelves, gray page background, and footer/help blocks near the bottom.',
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
@@ -2796,6 +2798,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             page.width = preservedPageWidth;
             changed = true;
         }
+        changed = this.removeInternalCanvasPlaceholderNodes(page.children) || changed;
         for (const node of page.children) {
             changed = this.normalizeNodeVisibleBounds(node, options.preservePageWidth === true, preservedPageWidth) || changed;
         }
@@ -2835,6 +2838,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         if (preservePageWidth && width !== undefined && this.shouldGridFeatureCardChildren(node, width)) {
             changed = this.gridFeatureCardChildrenWithinWidth(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+        if (preservePageWidth && width !== undefined && this.shouldNormalizeOverflowingHorizontalRow(node, bounds, width)) {
+            changed = this.normalizeOverflowingHorizontalRowWithinWidth(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
             if (!bounds) {
                 return changed;
@@ -2994,10 +3004,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             return false;
         }
         const oversizedCards = cardChildren.some(child => this.visibleNodeWidth(child) > grid.cardWidth * 1.12);
+        const collapsedCards = cardChildren.some(child => child.width === 'fill_container' || this.visibleNodeWidth(child) < Math.min(96, grid.cardWidth * 0.35));
         const similarX = cardChildren.every(child => Math.abs(this.numberValue(child.x, 0) - this.numberValue(cardChildren[0].x, 0)) <= 24);
         const spreadY = Math.max(...cardChildren.map(child => this.numberValue(child.y, 0)))
             - Math.min(...cardChildren.map(child => this.numberValue(child.y, 0)));
-        return bounds.right > width || oversizedCards || (similarX && spreadY > 24) || node.layout === 'horizontal';
+        return bounds.right > width || oversizedCards || collapsedCards || (similarX && spreadY > 24) || node.layout === 'horizontal';
     }
 
     protected homepageShelfGridMetrics(node: OpenPencilNode, maxWidth: number): { columns: number; cardWidth: number; gap: number; left: number; top: number; rightLimit: number; availableWidth: number } {
@@ -3278,6 +3289,196 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             changed = true;
         }
         return changed;
+    }
+
+    protected shouldNormalizeOverflowingHorizontalRow(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
+        if (node.layout !== 'horizontal' || width < 220) {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (children.length < 2) {
+            return false;
+        }
+        const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child));
+        if (cardChildren.length >= 3 && this.isShelfLikeNode(node)) {
+            return false;
+        }
+        const overflowsLayout = bounds.left < 0 || bounds.right > width;
+        const overflowsManual = children.some(child => {
+            const x = this.numberValue(child.x, 0);
+            const childWidth = this.visibleNodeWidth(child);
+            return x < 0 || x + childWidth > width;
+        });
+        const hasOversizedChild = children.some(child => this.canResizeNodeForVisibleClamp(child) && this.visibleNodeWidth(child) > width * 0.82);
+        return overflowsLayout || overflowsManual || hasOversizedChild || this.childrenHaveSignificantManualOverlap(children);
+    }
+
+    protected normalizeOverflowingHorizontalRowWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (children.length < 2 || maxWidth < 120) {
+            return false;
+        }
+        const padding = this.normalizedPadding(node.padding);
+        const gap = Math.max(8, Math.min(24, this.numberValue(node.gap, 12)));
+        const left = Math.max(0, padding.left);
+        const top = Math.max(0, padding.top);
+        const availableWidth = Math.max(1, maxWidth - Math.max(0, padding.left) - Math.max(0, padding.right));
+        const rightLimit = left + availableWidth;
+        const hasMediaChild = children.some(child => this.isMediaLikeHomepageChild(child));
+        const widths = new Map<OpenPencilNode, number>();
+        const minWidths = new Map<OpenPencilNode, number>();
+        let changed = false;
+
+        for (const child of children) {
+            const minWidth = Math.min(availableWidth, this.minimumHorizontalRowChildWidth(child, availableWidth));
+            const currentWidth = this.visibleNodeWidth(child);
+            const preferredWidth = this.preferredHorizontalRowChildWidth(child, availableWidth, children.length, hasMediaChild);
+            const targetWidth = Math.max(minWidth, Math.min(availableWidth, currentWidth > 0 ? Math.min(currentWidth, preferredWidth) : preferredWidth));
+            widths.set(child, this.roundScaledValue(targetWidth));
+            minWidths.set(child, this.roundScaledValue(minWidth));
+        }
+        this.shrinkHorizontalRowWidthsToFit(children, widths, minWidths, availableWidth, gap);
+
+        if (node.layout !== 'none') {
+            node.layout = 'none';
+            changed = true;
+        }
+
+        let cursorX = left;
+        let cursorY = top;
+        let lineHeight = 0;
+        let bottom = top;
+
+        for (const child of children) {
+            let childWidth = Math.min(availableWidth, widths.get(child) ?? this.visibleNodeWidth(child));
+            if (cursorX > left && cursorX + childWidth > rightLimit) {
+                cursorX = left;
+                cursorY += lineHeight + gap;
+                lineHeight = 0;
+            }
+            if (this.canResizeNodeForVisibleClamp(child) && this.numericDimensionValue(child.width) !== childWidth) {
+                child.width = childWidth;
+                changed = true;
+            }
+            if (this.numberValue(child.x, 0) !== cursorX) {
+                child.x = this.roundScaledValue(cursorX);
+                changed = true;
+            }
+            if (this.numberValue(child.y, 0) !== cursorY) {
+                child.y = this.roundScaledValue(cursorY);
+                changed = true;
+            }
+            if (this.normalizeTextNodeHeightForWidth(child, childWidth)) {
+                changed = true;
+            }
+            changed = this.clampChildrenWithinBounds(child, childWidth, this.numericDimensionValue(child.height)) || changed;
+            const childHeight = this.visibleNodeHeight(child);
+            lineHeight = Math.max(lineHeight, childHeight);
+            bottom = Math.max(bottom, cursorY + childHeight);
+            cursorX += childWidth + gap;
+        }
+
+        const requiredHeight = this.ceilVisibleBound(bottom + Math.max(0, padding.bottom));
+        const currentHeight = this.numericDimensionValue(node.height);
+        const targetHeight = currentHeight === undefined ? requiredHeight : Math.max(currentHeight, requiredHeight);
+        if (currentHeight !== targetHeight) {
+            node.height = targetHeight;
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected shrinkHorizontalRowWidthsToFit(children: OpenPencilNode[], widths: Map<OpenPencilNode, number>, minWidths: Map<OpenPencilNode, number>, availableWidth: number, gap: number): void {
+        const totalWidth = () => children.reduce((sum, child) => sum + (widths.get(child) ?? 0), 0) + gap * Math.max(0, children.length - 1);
+        let total = totalWidth();
+        let guard = 0;
+        while (total > availableWidth && guard++ < 32) {
+            const shrinkable = children
+                .map(child => ({
+                    child,
+                    capacity: (widths.get(child) ?? 0) - (minWidths.get(child) ?? 0)
+                }))
+                .filter(entry => entry.capacity > 0)
+                .sort((leftEntry, rightEntry) => rightEntry.capacity - leftEntry.capacity);
+            if (!shrinkable.length) {
+                break;
+            }
+            let excess = total - availableWidth;
+            for (const entry of shrinkable) {
+                const current = widths.get(entry.child) ?? 0;
+                const minWidth = minWidths.get(entry.child) ?? 0;
+                const reduction = Math.min(entry.capacity, Math.max(1, Math.ceil(excess / shrinkable.length)));
+                widths.set(entry.child, this.roundScaledValue(Math.max(minWidth, current - reduction)));
+                excess -= reduction;
+                if (excess <= 0) {
+                    break;
+                }
+            }
+            const nextTotal = totalWidth();
+            if (nextTotal >= total) {
+                break;
+            }
+            total = nextTotal;
+        }
+    }
+
+    protected preferredHorizontalRowChildWidth(node: OpenPencilNode, availableWidth: number, siblingCount: number, hasMediaSibling: boolean): number {
+        const currentWidth = this.visibleNodeWidth(node);
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        if (this.isTextLikeNode(node)) {
+            const estimate = this.estimatedSingleLineTextWidth(node);
+            const cap = /\b(logo|brand|marca)\b/.test(label)
+                ? availableWidth * 0.28
+                : availableWidth * (siblingCount > 2 ? 0.36 : 0.56);
+            return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || estimate, estimate, cap));
+        }
+        if (/\b(search|busca|pesquisa)\b/.test(label)) {
+            return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth * 0.55, availableWidth * (siblingCount > 2 ? 0.55 : 0.66)));
+        }
+        if (this.isMediaLikeHomepageChild(node)) {
+            return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth * 0.32, availableWidth * 0.34));
+        }
+        if (hasMediaSibling && (node.type === 'frame' || node.type === 'group')) {
+            return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth * 0.58, availableWidth * 0.62));
+        }
+        if (/\b(action|actions|button|cta|account|login|links?|nav|menu|location|localiza[cç][aã]o)\b/.test(label)) {
+            return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth * 0.32, availableWidth * 0.36));
+        }
+        return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth, availableWidth));
+    }
+
+    protected minimumHorizontalRowChildWidth(node: OpenPencilNode, availableWidth: number): number {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        if (this.isTextLikeNode(node)) {
+            return Math.max(48, Math.min(availableWidth, Math.min(this.estimatedSingleLineTextWidth(node), /\b(logo|brand|marca)\b/.test(label) ? 180 : 260)));
+        }
+        if (/\b(search|busca|pesquisa)\b/.test(label)) {
+            return Math.max(180, Math.min(availableWidth, 280));
+        }
+        if (this.isMediaLikeHomepageChild(node)) {
+            return Math.max(96, Math.min(availableWidth, 220));
+        }
+        if (/\b(button|cta|action|login|cart|location|localiza[cç][aã]o)\b/.test(label)) {
+            return Math.max(88, Math.min(availableWidth, 180));
+        }
+        return Math.max(120, Math.min(availableWidth, 260));
+    }
+
+    protected estimatedSingleLineTextWidth(node: OpenPencilNode): number {
+        const content = typeof node.content === 'string' ? node.content.trim() : '';
+        const fontSize = Math.max(8, this.numberValue(node.fontSize as number | string | undefined, 14));
+        return Math.max(48, Math.ceil(content.length * fontSize * 0.56 + 18));
+    }
+
+    protected childrenHaveSignificantManualOverlap(children: OpenPencilNode[]): boolean {
+        for (let index = 0; index < children.length; index++) {
+            for (let other = index + 1; other < children.length; other++) {
+                if (this.nodesOverlapSignificantly(children[index], children[other], 0.25)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     protected shouldClampChildrenWithinBounds(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number, height?: number): boolean {
@@ -3604,6 +3805,30 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return children.filter(child => child.visible !== false && child.enabled !== false && child.enabled !== 'false');
     }
 
+    protected removeInternalCanvasPlaceholderNodes(children: OpenPencilNode[]): boolean {
+        let changed = false;
+        for (let index = children.length - 1; index >= 0; index--) {
+            const child = children[index];
+            if (this.isInternalCanvasPlaceholderNode(child)) {
+                children.splice(index, 1);
+                changed = true;
+                continue;
+            }
+            if (child.children?.length) {
+                changed = this.removeInternalCanvasPlaceholderNodes(child.children) || changed;
+            }
+        }
+        return changed;
+    }
+
+    protected isInternalCanvasPlaceholderNode(node: OpenPencilNode): boolean {
+        if (!this.isTextLikeNode(node) || typeof node.content !== 'string') {
+            return false;
+        }
+        const content = node.content.trim().replace(/\s+/g, ' ').toLowerCase();
+        return content === 'edit this embedded .op design inside theia.';
+    }
+
     protected visibleNodeWidth(node: OpenPencilNode): number {
         const width = this.numericDimensionValue(node.width);
         if (width !== undefined) {
@@ -3677,6 +3902,22 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             && firstX + firstWidth + minGap > secondX
             && firstY < secondY + secondHeight + minGap
             && firstY + firstHeight + minGap > secondY;
+    }
+
+    protected nodesOverlapSignificantly(first: OpenPencilNode, second: OpenPencilNode, minRatio: number): boolean {
+        const firstX = this.numberValue(first.x, 0);
+        const firstY = this.numberValue(first.y, 0);
+        const firstWidth = this.visibleNodeWidth(first);
+        const firstHeight = this.visibleNodeHeight(first);
+        const secondX = this.numberValue(second.x, 0);
+        const secondY = this.numberValue(second.y, 0);
+        const secondWidth = this.visibleNodeWidth(second);
+        const secondHeight = this.visibleNodeHeight(second);
+        const overlapWidth = Math.max(0, Math.min(firstX + firstWidth, secondX + secondWidth) - Math.max(firstX, secondX));
+        const overlapHeight = Math.max(0, Math.min(firstY + firstHeight, secondY + secondHeight) - Math.max(firstY, secondY));
+        const overlapArea = overlapWidth * overlapHeight;
+        const smallerArea = Math.min(firstWidth * firstHeight, secondWidth * secondHeight);
+        return smallerArea > 0 && overlapArea / smallerArea >= minRatio;
     }
 
     protected nodeMatchesColorHint(node: OpenPencilNode, targetColor: string): boolean {
