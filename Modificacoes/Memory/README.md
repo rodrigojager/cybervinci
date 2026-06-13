@@ -13,7 +13,7 @@ Patch/override layer:
 
 Moved out/removed:
 
-- Duplicate `ai-chat-ui` overrides were removed from Memory. The chat input/style copies live in `Codex-Provider`; the unchanged `chat-capabilities-panel.tsx` copy was deleted.
+- Duplicate `ai-chat-ui` overrides were removed from Memory. The chat input/style copies live in `AI-Providers`; the unchanged `chat-capabilities-panel.tsx` copy was deleted.
 
 Purpose: project learning/memory, SQLite-backed repositories, code graph, vector-ish retrieval, context cart, event capture, skill suggestions, and optional Roslyn sidecar for C# semantic analysis.
 

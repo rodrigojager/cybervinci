@@ -33,7 +33,10 @@
       "path": "../../packages/ai-codex"
     },
     {
-      "path": "../../packages/codex-provider"
+      "path": "../../packages/ai-providers"
+    },
+    {
+      "path": "../../packages/ai-runtime"
     },
     {
       "path": "../../packages/ai-copilot"

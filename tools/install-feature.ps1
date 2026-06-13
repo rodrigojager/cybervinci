@@ -27,10 +27,10 @@ $dependencies = @{
     'Branding' = @('Distribution')
     'Builder' = @('Distribution', 'Branding')
     'CSharp Kit' = @('Distribution', 'Branding', 'Memory', 'Razor Visual Editor')
-    'Codex' = @('Distribution', 'Branding', 'Codex-Provider')
-    'Codex-Provider' = @('Distribution', 'Branding')
+    'Codex' = @('Distribution', 'Branding', 'AI-Providers')
+    'AI-Providers' = @('Distribution', 'Branding', 'Memory')
     'Design' = @('Distribution', 'Branding')
-    'Flow' = @('Distribution', 'Branding', 'Codex-Provider', 'Library', 'Memory')
+    'Flow' = @('Distribution', 'Branding', 'AI-Providers', 'Library', 'Memory')
     'Library' = @('Distribution', 'Branding')
     'Memory' = @('Distribution', 'Branding', 'Library')
     'Razor Visual Editor' = @('Distribution')
@@ -50,7 +50,7 @@ $allFeatures = @(
     'CSharp Kit',
     'Library',
     'Design',
-    'Codex-Provider',
+    'AI-Providers',
     'Codex',
     'Memory',
     'Razor Visual Editor',
@@ -68,8 +68,11 @@ $aliases = @{
     'AI Docs Context' = 'Library'
     'Project-Intelligence' = 'Memory'
     'Project Intelligence' = 'Memory'
-    'Codex-Cli' = 'Codex-Provider'
-    'Codex CLI' = 'Codex-Provider'
+    'Codex-Cli' = 'AI-Providers'
+    'Codex CLI' = 'AI-Providers'
+    'Codex-Provider' = 'AI-Providers'
+    'AI Providers' = 'AI-Providers'
+    'AI-Providers' = 'AI-Providers'
     'Product-Shell' = 'Branding'
     'Product Shell' = 'Branding'
     'CVUI' = 'Builder'

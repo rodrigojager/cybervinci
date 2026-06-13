@@ -6,7 +6,7 @@ Native Codex integration for CyberVinci with **100% functional parity target** a
 
 - **UI:** Official Codex webview assets copied at build time from `CODEX_VSCODE_EXTENSION_WEBVIEW`, the latest installed `~/.vscode/extensions/openai.chatgpt-*/webview`, Cursor fallback, or the legacy `plugins.disabled/OpenAI.chatgpt` path.
 - **Host bridge:** TypeScript IPC router (`CodexWebviewHostService`) replicating `extension.js` message handling.
-- **Runtime:** `@cybervinci/codex-provider` for app-server, auth, approvals, and thread follower RPCs.
+- **Runtime:** `@cybervinci/ai-providers` for app-server, auth, approvals, and thread follower RPCs.
 - **Electron:** `electron-main` module for hotkey window, dictation, and `electronBridge` shared objects.
 
 ## Build

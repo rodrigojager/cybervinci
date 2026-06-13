@@ -10,7 +10,7 @@
   ],
   "references": [
     {
-      "path": "../codex-provider"
+      "path": "../ai-providers"
     },
     {
       "path": "../core"
