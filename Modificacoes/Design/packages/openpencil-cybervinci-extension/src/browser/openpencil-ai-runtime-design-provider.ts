@@ -73,6 +73,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'For desktop marketplace shelves, use 3-4 product cards per row when cards contain large price/detail text, and keep every child element inside its card bounds.',
                     'Never include editor-shell placeholder copy in the design, including text such as "Edit this embedded .op design inside Theia."',
                     'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions instead of giving multiple texts the full row width.',
+                    'For every row frame, each child must have a distinct non-overlapping x position; do not leave multiple row children at x:0.',
+                    'For cards with a visual/icon/image and text copy, keep the visual and copy in separate vertical or horizontal regions; never place image placeholders over text.',
                     'Do not include markdown, prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
                 ].join(' ')
             },
@@ -133,6 +135,8 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header/search/navigation, large promo hero, category shortcuts, product shelves with 5-6 cards per row, promo banners between shelves, gray page background, and footer/help blocks.',
                     'Never stream editor-shell placeholder copy into the design, including text such as "Edit this embedded .op design inside Theia."',
                     'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions instead of giving multiple texts the full row width.',
+                    'For every row frame, each child must have a distinct non-overlapping x position; do not leave multiple row children at x:0.',
+                    'For cards with a visual/icon/image and text copy, keep the visual and copy in separate vertical or horizontal regions; never place image placeholders over text.',
                     'Do not restate operations that were already emitted.',
                     'When finished, emit {"type":"complete"}.',
                     'Do not include prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'

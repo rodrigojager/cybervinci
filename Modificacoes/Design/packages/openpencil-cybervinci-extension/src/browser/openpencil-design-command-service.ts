@@ -518,6 +518,8 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'For desktop marketplace shelves, prefer 3-4 visible product cards per row when card details are large. Keep every text box, icon, image, and shape inside its card or section bounds.',
             'Never include editor-shell placeholder copy in the design, including text such as "Edit this embedded .op design inside Theia."',
             'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions. Do not give multiple header texts the full row width.',
+            'For every row frame, each child must have a distinct non-overlapping x position. Never leave multiple row children at x:0 unless they are intentionally stacked in different y rows.',
+            'For cards with a visual/icon/image and text copy, place the visual and copy in separate vertical or horizontal regions; never put an image placeholder over the text block.',
             'If the user asks to copy or recreate a full homepage, include the complete page structure: top navigation, hero/promo area, category shortcuts, several product/offer shelves, promotional banners, recommendations, benefits, and footer-like closing content when present.',
             'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header with search/navigation, large promo hero, category shortcut cards, product shelves with 5-6 cards per row, horizontal promo banners between shelves, gray page background, and footer/help blocks near the bottom.',
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
@@ -2858,6 +2860,20 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 return changed;
             }
         }
+        if (preservePageWidth && width !== undefined && this.shouldStackOverlappingCardChildren(node, width)) {
+            changed = this.stackOverlappingCardChildrenWithinBounds(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+        if (preservePageWidth && width !== undefined && this.shouldNormalizeManualRowChildren(node, bounds, width)) {
+            changed = this.normalizeOverflowingHorizontalRowWithinWidth(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
         if (preservePageWidth && width !== undefined && this.shouldNormalizeOverflowingHorizontalRow(node, bounds, width)) {
             changed = this.normalizeOverflowingHorizontalRowWithinWidth(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
@@ -3328,6 +3344,131 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return overflowsLayout || overflowsManual || hasOversizedChild || this.childrenHaveSignificantManualOverlap(children);
     }
 
+    protected shouldNormalizeManualRowChildren(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
+        if (node.layout !== 'none' || width < 220) {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (children.length < 2) {
+            return false;
+        }
+        const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child));
+        if (cardChildren.length >= 3 && this.isShelfLikeNode(node)) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        const rowLike = /\b(row|linha|header|navbar|nav|menu|footer|rodap[eé]|title|titulo|título|links?|a[cç][oõ]es|actions|categorias|categories|navigation|navega[cç][aã]o|busca|search)\b/.test(label);
+        if (!rowLike) {
+            return false;
+        }
+        const repeatedOrigin = children.filter(child => this.numberValue(child.x, 0) === 0 && this.numberValue(child.y, 0) === 0).length >= 2;
+        const hasFluidOrMissingWidth = children.some(child => child.width === 'fill_container' || this.numericDimensionValue(child.width) === undefined);
+        const overflowsManual = bounds.left < 0 || bounds.right > width || children.some(child => {
+            const x = this.numberValue(child.x, 0);
+            return x < 0 || x + this.visibleNodeWidth(child) > width;
+        });
+        return repeatedOrigin || hasFluidOrMissingWidth || overflowsManual || this.childrenHaveSignificantManualOverlap(children);
+    }
+
+    protected shouldStackOverlappingCardChildren(node: OpenPencilNode, width: number): boolean {
+        if (width < 120 || !this.isCardLikeHomepageChild(node) || node.layout === 'vertical') {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (children.length < 2 || children.length > 5) {
+            return false;
+        }
+        if (!this.childrenHaveSignificantManualOverlap(children)) {
+            return false;
+        }
+        const hasVisualChild = children.some(child => this.isVisualOrIconLikeCardChild(child));
+        const hasTextChild = children.some(child => this.isTextOrCopyLikeCardChild(child));
+        return hasVisualChild && hasTextChild;
+    }
+
+    protected stackOverlappingCardChildrenWithinBounds(node: OpenPencilNode, maxWidth: number): boolean {
+        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (children.length < 2 || maxWidth < 120) {
+            return false;
+        }
+        const padding = this.normalizedPadding(node.padding);
+        const left = Math.max(14, padding.left || 16);
+        const top = Math.max(14, padding.top || 16);
+        const bottomPadding = Math.max(14, padding.bottom || 16);
+        const gap = Math.max(10, Math.min(18, this.numberValue(node.gap, 12)));
+        const availableWidth = Math.max(1, maxWidth - left - Math.max(14, padding.right || 16));
+        const sorted = children.slice().sort((leftNode, rightNode) => {
+            const priorityDelta = this.cardChildStackPriority(leftNode) - this.cardChildStackPriority(rightNode);
+            if (priorityDelta) {
+                return priorityDelta;
+            }
+            const topDelta = this.numberValue(leftNode.y, 0) - this.numberValue(rightNode.y, 0);
+            return Math.abs(topDelta) > 8 ? topDelta : this.numberValue(leftNode.x, 0) - this.numberValue(rightNode.x, 0);
+        });
+        let cursorY = top;
+        let changed = false;
+
+        if (node.layout !== 'none') {
+            node.layout = 'none';
+            changed = true;
+        }
+
+        for (const child of sorted) {
+            let childWidth = this.visibleNodeWidth(child);
+            if (this.canResizeNodeForVisibleClamp(child) && (childWidth > availableWidth || this.shouldExpandTextNodeForFlow(child, childWidth, availableWidth))) {
+                child.width = availableWidth;
+                childWidth = availableWidth;
+                changed = true;
+            }
+            if (this.normalizeTextNodeHeightForWidth(child, childWidth)) {
+                changed = true;
+            }
+            if (this.numberValue(child.x, 0) !== left) {
+                child.x = this.roundScaledValue(left);
+                changed = true;
+            }
+            if (this.numberValue(child.y, 0) !== cursorY) {
+                child.y = this.roundScaledValue(cursorY);
+                changed = true;
+            }
+            changed = this.clampChildrenWithinBounds(child, childWidth, this.numericDimensionValue(child.height)) || changed;
+            cursorY += this.visibleNodeHeight(child) + gap;
+        }
+
+        const requiredHeight = this.ceilVisibleBound(cursorY - gap + bottomPadding);
+        const currentHeight = this.numericDimensionValue(node.height);
+        if (currentHeight !== undefined && currentHeight < requiredHeight) {
+            node.height = requiredHeight;
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected cardChildStackPriority(node: OpenPencilNode): number {
+        if (this.isVisualOrIconLikeCardChild(node)) {
+            return 0;
+        }
+        if (this.isTextOrCopyLikeCardChild(node)) {
+            return 1;
+        }
+        return 2;
+    }
+
+    protected isVisualOrIconLikeCardChild(node: OpenPencilNode): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return node.type === 'image'
+            || node.type === 'icon_font'
+            || this.isMediaLikeHomepageChild(node)
+            || /\b(icon|icone|ícone|visual|image|imagem|foto|photo|placeholder)\b/.test(label);
+    }
+
+    protected isTextOrCopyLikeCardChild(node: OpenPencilNode): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return this.isTextLikeNode(node)
+            || /\b(text|texto|copy|content|conte[uú]do|descri[cç][aã]o|description|label|titulo|título|title|column|coluna)\b/.test(label)
+            || (node.children ?? []).some(child => this.isTextLikeNode(child));
+    }
+
     protected normalizeOverflowingHorizontalRowWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
         const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
         if (children.length < 2 || maxWidth < 120) {
@@ -3459,6 +3600,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (/\b(action|actions|button|cta|account|login|links?|nav|menu|location|localiza[cç][aã]o)\b/.test(label)) {
             return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth * 0.32, availableWidth * 0.36));
         }
+        if (/\b(footer|rodap[eé]|comprar|ajuda|help|institucional|company|column|coluna)\b/.test(label)) {
+            return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth * 0.22, availableWidth * 0.28));
+        }
         return Math.max(this.minimumHorizontalRowChildWidth(node, availableWidth), Math.min(currentWidth || availableWidth, availableWidth));
     }
 
@@ -3475,6 +3619,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         if (/\b(button|cta|action|login|cart|location|localiza[cç][aã]o)\b/.test(label)) {
             return Math.max(88, Math.min(availableWidth, 180));
+        }
+        if (/\b(footer|rodap[eé]|comprar|ajuda|help|institucional|company|column|coluna)\b/.test(label)) {
+            return Math.max(120, Math.min(availableWidth, 220));
         }
         return Math.max(120, Math.min(availableWidth, 260));
     }

@@ -1582,6 +1582,174 @@ describe('OpenPencilDesignCommandService', () => {
         expect(title?.width).to.equal(copy?.width);
     });
 
+    it('normalizes manual row children that overlap at the same origin', () => {
+        const document = service.createDesign('Manual row overlap normalization test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-header-row',
+                type: 'frame',
+                name: 'Linha principal do cabeçalho',
+                role: 'row',
+                x: 40,
+                y: 40,
+                width: 1088,
+                height: 40,
+                layout: 'none',
+                children: [
+                    createHomepageSection('header-logo', 'Marca Mercado Privado', 0, 0, 260, 40),
+                    createHomepageSection('header-search', 'Busca', 276, 0, 520, 40),
+                    createHomepageSection('header-location', 'Localização', 0, 0, 170, 40),
+                    createHomepageSection('header-actions', 'Ações da conta', 0, 0, 200, 40)
+                ]
+            },
+            {
+                id: 'offers-title-row',
+                type: 'frame',
+                name: 'Título últimas ofertas',
+                role: 'row',
+                x: 40,
+                y: 120,
+                width: 1056,
+                height: 40,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'offers-heading',
+                        type: 'text',
+                        name: 'Título',
+                        role: 'heading',
+                        content: 'Últimas ofertas do dia',
+                        x: 0,
+                        y: 0,
+                        width: 1056,
+                        height: 27
+                    },
+                    {
+                        id: 'offers-link',
+                        type: 'text',
+                        name: 'Ver todas',
+                        role: 'label',
+                        content: 'Ver todas',
+                        x: 326,
+                        y: 0,
+                        width: 89,
+                        height: 18
+                    }
+                ]
+            },
+            {
+                id: 'footer-links-row',
+                type: 'frame',
+                name: 'Links do rodapé',
+                role: 'row',
+                x: 40,
+                y: 200,
+                width: 1048,
+                height: 120,
+                layout: 'none',
+                children: [
+                    createHomepageSection('footer-brand', 'Marca rodapé', 0, 0, 423, 77),
+                    createHomepageSection('footer-buy', 'Comprar', 447, 0, 601, 60),
+                    createHomepageSection('footer-help', 'Ajuda', 0, 0, 'fill_container', 60),
+                    createHomepageSection('footer-company', 'Institucional', 0, 0, 'fill_container', 60)
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const header = result.document.pages![0].children.find(node => node.id === 'marketplace-header-row');
+        const title = result.document.pages![0].children.find(node => node.id === 'offers-title-row');
+        const footer = result.document.pages![0].children.find(node => node.id === 'footer-links-row');
+
+        expect(result.changed).to.equal(true);
+        expect(childrenOverlap(header?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(title?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(footer?.children ?? [])).to.equal(false);
+        expect(maxRight(header?.children ?? [])).to.be.at.most(Number(header?.width));
+        expect(maxRight(title?.children ?? [])).to.be.at.most(Number(title?.width));
+        expect(maxRight(footer?.children ?? [])).to.be.at.most(Number(footer?.width));
+        expect(footer?.children?.every(child => typeof child.width === 'number')).to.equal(true);
+    });
+
+    it('stacks overlapping card visuals and copy blocks instead of covering text', () => {
+        const document = service.createDesign('Overlapping guide card normalization test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'guide-card',
+                type: 'frame',
+                name: 'Guia celular card',
+                role: 'card',
+                x: 80,
+                y: 80,
+                width: 340,
+                height: 170,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'guide-icon-strip',
+                        type: 'frame',
+                        name: 'Ícone celular',
+                        x: 18,
+                        y: 18,
+                        width: 260,
+                        height: 52,
+                        layout: 'horizontal',
+                        children: []
+                    },
+                    {
+                        id: 'guide-copy',
+                        type: 'frame',
+                        name: 'Texto guia celular',
+                        role: 'column',
+                        x: 0,
+                        y: 18,
+                        width: 340,
+                        height: 70,
+                        layout: 'vertical',
+                        children: [
+                            {
+                                id: 'guide-copy-title',
+                                type: 'text',
+                                name: 'Título guia',
+                                content: 'Compare celulares',
+                                x: 0,
+                                y: 0,
+                                width: 340,
+                                height: 24
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'guide-card');
+        const icon = card?.children?.find(node => node.id === 'guide-icon-strip');
+        const copy = card?.children?.find(node => node.id === 'guide-copy');
+        const title = copy?.children?.find(node => node.id === 'guide-copy-title');
+
+        expect(result.changed).to.equal(true);
+        expect(childrenOverlap(card?.children ?? [])).to.equal(false);
+        expect(Number(copy?.y)).to.be.greaterThan(Number(icon?.y) + Number(icon?.height));
+        expect(copy?.width).to.equal(308);
+        expect(title?.width).to.equal(308);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',
@@ -3199,7 +3367,7 @@ function createPaintOrderTextNode(id: string, content: string): OpenPencilNode {
     };
 }
 
-function createHomepageSection(id: string, name: string, x: number, y: number, width: number, height: number): OpenPencilNode {
+function createHomepageSection(id: string, name: string, x: number, y: number, width: OpenPencilNode['width'], height: number): OpenPencilNode {
     return {
         id,
         type: 'frame',
