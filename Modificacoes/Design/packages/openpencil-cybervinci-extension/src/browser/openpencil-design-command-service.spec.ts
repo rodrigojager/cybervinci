@@ -750,6 +750,100 @@ describe('OpenPencilDesignCommandService', () => {
         ]);
     });
 
+    it('inserts streamed provider siblings by z-order as each operation is applied', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'stream-z-order-provider',
+            label: 'Stream z order provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-stream-background-layer',
+                            type: 'rectangle',
+                            name: 'AI stream background layer',
+                            width: 280,
+                            height: 160
+                        }
+                    }
+                };
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-stream-title-layer',
+                            type: 'text',
+                            name: 'AI stream title label',
+                            content: 'Streamed title',
+                            width: 180,
+                            height: 24
+                        }
+                    }
+                };
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-stream-button-layer',
+                            type: 'rectangle',
+                            role: 'button',
+                            name: 'AI stream foreground button',
+                            width: 160,
+                            height: 44
+                        }
+                    }
+                };
+                yield { type: 'complete' };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI streamed z order test');
+        let currentDocument = document;
+        let currentSelection = ['hero-card'];
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Add streamed generated card layers',
+            document: currentDocument,
+            selection: currentSelection
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, { mode: 'maintenance' });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+        const card = currentDocument.pages![0].children.find(node => node.id === 'hero-card');
+        const generatedOrder = card?.children
+            ?.map(node => node.id)
+            .filter(id => id.startsWith('ai-stream-'));
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.node.id)).to.deep.equal([
+            'ai-stream-background-layer',
+            'ai-stream-title-layer',
+            'ai-stream-button-layer'
+        ]);
+        expect(generatedOrder).to.deep.equal([
+            'ai-stream-title-layer',
+            'ai-stream-button-layer',
+            'ai-stream-background-layer'
+        ]);
+    });
+
     it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'flat-child-z-order-provider',

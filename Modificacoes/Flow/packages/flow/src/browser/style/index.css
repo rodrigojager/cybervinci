@@ -268,7 +268,16 @@
 }
 
 .flow__agent-library-item time {
+    grid-column: 1 / -1;
     font-size: 11px;
+}
+
+.flow__agent-library-source {
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    padding: 2px 5px;
 }
 
 .flow__agent-library-item div {
@@ -4531,7 +4540,7 @@
 }
 
 .flow__menu-panel .flow__agent-library-item {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 4px;
     min-height: 30px;
     padding: 2px;
@@ -4547,6 +4556,12 @@
 
 .flow__menu-panel .flow__agent-library-item time {
     display: none;
+}
+
+.flow__menu-panel .flow__agent-library-source {
+    align-self: center;
+    font-size: 10px;
+    padding: 1px 4px;
 }
 
 .flow__menu-panel .flow__agent-library-item div {
@@ -4702,6 +4717,36 @@
 
 .flow__ai-panel p {
     color: var(--theia-descriptionForeground);
+}
+
+.flow__ai-mode-grid {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.flow__ai-mode {
+    align-items: center;
+    display: inline-flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.flow__ai-mode--active {
+    outline: 1px solid var(--theia-focusBorder);
+}
+
+.flow__ai-route-summary {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__ai-route-summary strong {
+    color: var(--theia-editor-foreground);
 }
 
 .flow__ai-panel .flow__prompt-field textarea {

@@ -10,6 +10,7 @@ export interface AgentMarkdownFile {
     relativePath: string;
     content: string;
     updatedAt: string;
+    source?: 'workspace' | 'catalog';
 }
 
 export interface AgentMarkdownSummary {
@@ -17,6 +18,7 @@ export interface AgentMarkdownSummary {
     uri: string;
     relativePath: string;
     updatedAt: string;
+    source?: 'workspace' | 'catalog';
 }
 
 export interface ReadAgentMarkdownOptions {
@@ -34,6 +36,8 @@ export interface DuplicateAgentMarkdownOptions {
 }
 
 const MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown']);
+const AGENCY_AGENT_CATALOG_PREFIX = 'agents/agency/';
+const AGENCY_AGENT_CATALOG_ROOT_SEGMENTS = ['Skills', 'Manual', 'Agency Agents'];
 
 @injectable()
 export class AgentMarkdownStore {
@@ -41,14 +45,29 @@ export class AgentMarkdownStore {
     async listAgents(workspaceRootUri?: string): Promise<AgentMarkdownSummary[]> {
         const root = await this.ensureAgentsDir(workspaceRootUri);
         const files = await this.collectMarkdownFiles(root);
-        const summaries = await Promise.all(files.map(async file => this.summary(root, file)));
-        return summaries.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
+        const workspaceSummaries = await Promise.all(files.map(async file => ({
+            ...await this.summary(root, file),
+            source: 'workspace' as const
+        })));
+        const catalogSummaries = await this.listCatalogAgents();
+        const workspacePaths = new Set(workspaceSummaries.map(summary => summary.relativePath));
+        return [
+            ...workspaceSummaries,
+            ...catalogSummaries.filter(summary => !workspacePaths.has(summary.relativePath))
+        ].sort((left, right) => sourceRank(left.source) - sourceRank(right.source) || left.relativePath.localeCompare(right.relativePath));
     }
 
     async readAgent(workspaceRootUri: string | undefined, relativePath: string, options: ReadAgentMarkdownOptions = {}): Promise<AgentMarkdownFile | undefined> {
         const root = await this.ensureAgentsDir(workspaceRootUri);
         const file = this.agentFile(root, relativePath);
         if (!await exists(file)) {
+            const catalogFile = await this.catalogAgentFile(relativePath);
+            if (catalogFile) {
+                return {
+                    ...await this.catalogSummary(catalogFile.root, catalogFile.file),
+                    content: await fs.readFile(catalogFile.file, 'utf8')
+                };
+            }
             if (!options.createIfMissing) {
                 return undefined;
             }
@@ -89,14 +108,22 @@ export class AgentMarkdownStore {
         const root = await this.ensureAgentsDir(workspaceRootUri);
         const sourceFile = this.agentFile(root, sourceRelativePath);
         const targetFile = this.agentFile(root, targetRelativePath);
-        if (!await exists(sourceFile)) {
-            throw new Error(`Agent markdown "${sourceRelativePath}" was not found.`);
-        }
         if (await exists(targetFile)) {
             throw new Error(`Agent markdown "${targetRelativePath}" already exists.`);
         }
+        let sourceContent: string | undefined;
+        if (await exists(sourceFile)) {
+            sourceContent = await fs.readFile(sourceFile, 'utf8');
+        } else {
+            const catalogFile = await this.catalogAgentFile(sourceRelativePath);
+            if (catalogFile) {
+                sourceContent = await fs.readFile(catalogFile.file, 'utf8');
+            }
+        }
+        if (sourceContent === undefined) {
+            throw new Error(`Agent markdown "${sourceRelativePath}" was not found.`);
+        }
         await fs.mkdir(path.dirname(targetFile), { recursive: true });
-        const sourceContent = await fs.readFile(sourceFile, 'utf8');
         await fs.writeFile(targetFile, normalizeMarkdown(options.title ? retitleMarkdown(sourceContent, options.title) : sourceContent), 'utf8');
         return {
             ...await this.summary(root, targetFile),
@@ -149,6 +176,16 @@ export class AgentMarkdownStore {
         return files;
     }
 
+    protected async listCatalogAgents(): Promise<AgentMarkdownSummary[]> {
+        const root = await this.resolveAgencyAgentCatalogRoot();
+        if (!root) {
+            return [];
+        }
+        const files = (await this.collectMarkdownFiles(root))
+            .filter(file => !this.isCatalogMetadataFile(root, file));
+        return Promise.all(files.map(async file => this.catalogSummary(root, file)));
+    }
+
     protected async summary(root: string, file: string): Promise<AgentMarkdownSummary> {
         const stat = await fs.stat(file);
         const relativePath = path.relative(root, file).split(path.sep).join('/');
@@ -156,8 +193,61 @@ export class AgentMarkdownStore {
             path: file,
             uri: FileUri.create(file).toString(),
             relativePath,
-            updatedAt: stat.mtime.toISOString()
+            updatedAt: stat.mtime.toISOString(),
+            source: 'workspace'
         };
+    }
+
+    protected async catalogSummary(root: string, file: string): Promise<AgentMarkdownSummary> {
+        const stat = await fs.stat(file);
+        const relativePath = `${AGENCY_AGENT_CATALOG_PREFIX}${path.relative(root, file).split(path.sep).join('/')}`;
+        return {
+            path: file,
+            uri: FileUri.create(file).toString(),
+            relativePath,
+            updatedAt: stat.mtime.toISOString(),
+            source: 'catalog'
+        };
+    }
+
+    protected async catalogAgentFile(relativePath: string): Promise<{ root: string; file: string } | undefined> {
+        if (!relativePath.startsWith(AGENCY_AGENT_CATALOG_PREFIX)) {
+            return undefined;
+        }
+        const root = await this.resolveAgencyAgentCatalogRoot();
+        if (!root) {
+            return undefined;
+        }
+        const catalogRelativePath = relativePath.slice(AGENCY_AGENT_CATALOG_PREFIX.length);
+        assertMarkdownPath(catalogRelativePath);
+        const file = path.resolve(root, catalogRelativePath);
+        assertInsideRoot(root, file);
+        if (await exists(file)) {
+            return { root, file };
+        }
+        return undefined;
+    }
+
+    protected async resolveAgencyAgentCatalogRoot(): Promise<string | undefined> {
+        const envPath = process.env.CYBERVINCI_AGENCY_AGENTS_DIR;
+        const candidates = [
+            envPath,
+            path.resolve(process.cwd(), ...AGENCY_AGENT_CATALOG_ROOT_SEGMENTS),
+            path.resolve(process.cwd(), '..', '..', 'Modificacoes', ...AGENCY_AGENT_CATALOG_ROOT_SEGMENTS),
+            path.resolve(__dirname, '..', '..', '..', '..', '..', ...AGENCY_AGENT_CATALOG_ROOT_SEGMENTS),
+            path.resolve(__dirname, '..', '..', '..', '..', '..', '..', 'Modificacoes', ...AGENCY_AGENT_CATALOG_ROOT_SEGMENTS)
+        ].filter((candidate): candidate is string => !!candidate);
+        for (const candidate of candidates) {
+            if (await isDirectory(candidate)) {
+                return candidate;
+            }
+        }
+        return undefined;
+    }
+
+    protected isCatalogMetadataFile(root: string, file: string): boolean {
+        const relativePath = path.relative(root, file).split(path.sep).join('/').toLowerCase();
+        return relativePath === 'readme.md' || relativePath === 'readme-cybervinci.md' || relativePath === 'license.md';
     }
 }
 
@@ -232,4 +322,16 @@ async function exists(file: string): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+async function isDirectory(file: string): Promise<boolean> {
+    try {
+        return (await fs.stat(file)).isDirectory();
+    } catch {
+        return false;
+    }
+}
+
+function sourceRank(source: AgentMarkdownSummary['source']): number {
+    return source === 'workspace' ? 0 : 1;
 }
