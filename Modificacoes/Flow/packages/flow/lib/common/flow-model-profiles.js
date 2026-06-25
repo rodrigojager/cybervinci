@@ -1,7 +1,29 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listFlowModelProfiles = listFlowModelProfiles;
 exports.getFlowModelProfile = getFlowModelProfile;
+exports.mergeFlowModelProfiles = mergeFlowModelProfiles;
+exports.normalizeFlowModelProfile = normalizeFlowModelProfile;
 var BUILT_IN_MODEL_PROFILES = [
     {
         id: 'inherit',
@@ -26,6 +48,7 @@ var BUILT_IN_MODEL_PROFILES = [
             reasoningPolicy: 'off',
             temperature: 0.1,
             maxTokens: 2048,
+            serviceTier: 'flex',
             virtualReasoning: { enabled: false, mode: 'off' }
         },
         tags: ['cost']
@@ -40,6 +63,7 @@ var BUILT_IN_MODEL_PROFILES = [
             reasoningPolicy: 'virtual',
             temperature: 0.2,
             maxTokens: 4096,
+            serviceTier: 'fast',
             virtualReasoning: { enabled: true, mode: 'fast', maxCostMultiplier: 3 }
         },
         tags: ['speed']
@@ -118,8 +142,9 @@ var BUILT_IN_MODEL_PROFILES = [
         tags: ['json']
     }
 ];
-function listFlowModelProfiles() {
-    return clone(BUILT_IN_MODEL_PROFILES);
+function listFlowModelProfiles(overrides) {
+    if (overrides === void 0) { overrides = []; }
+    return mergeFlowModelProfiles(BUILT_IN_MODEL_PROFILES, overrides);
 }
 function getFlowModelProfile(id) {
     if (!id) {
@@ -127,6 +152,48 @@ function getFlowModelProfile(id) {
     }
     var profile = BUILT_IN_MODEL_PROFILES.find(function (candidate) { return candidate.id === id; });
     return profile ? clone(profile) : undefined;
+}
+function mergeFlowModelProfiles(base, overrides) {
+    if (overrides === void 0) { overrides = []; }
+    var merged = new Map();
+    for (var _i = 0, base_1 = base; _i < base_1.length; _i++) {
+        var profile = base_1[_i];
+        merged.set(profile.id, clone(profile));
+    }
+    for (var _a = 0, overrides_1 = overrides; _a < overrides_1.length; _a++) {
+        var profile = overrides_1[_a];
+        var normalized = normalizeFlowModelProfile(profile);
+        merged.set(normalized.id, normalized);
+    }
+    return __spreadArray([], merged.values(), true).sort(function (left, right) {
+        var leftIndex = base.findIndex(function (profile) { return profile.id === left.id; });
+        var rightIndex = base.findIndex(function (profile) { return profile.id === right.id; });
+        if (leftIndex >= 0 && rightIndex >= 0) {
+            return leftIndex - rightIndex;
+        }
+        if (leftIndex >= 0) {
+            return -1;
+        }
+        if (rightIndex >= 0) {
+            return 1;
+        }
+        return left.name.localeCompare(right.name);
+    });
+}
+function normalizeFlowModelProfile(profile) {
+    var _a, _b, _c;
+    var id = profile.id.trim();
+    if (!id) {
+        throw new Error('Model profile id is required.');
+    }
+    return {
+        id: id,
+        name: ((_a = profile.name) === null || _a === void 0 ? void 0 : _a.trim()) || id,
+        description: ((_b = profile.description) === null || _b === void 0 ? void 0 : _b.trim()) || '',
+        provider: profile.provider,
+        execution: __assign(__assign({}, (profile.execution || {})), { profileId: id }),
+        tags: (_c = profile.tags) === null || _c === void 0 ? void 0 : _c.map(function (tag) { return tag.trim(); }).filter(Boolean)
+    };
 }
 function clone(value) {
     return JSON.parse(JSON.stringify(value));

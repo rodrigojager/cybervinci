@@ -64,6 +64,8 @@ function isCapabilityAvailable(capability, capabilities) {
             return hasRealImageGenerationCapability(capabilities);
         case 'llm.agent.execute':
             return hasRealLlmAgentExecutionCapability(capabilities);
+        case 'playbook.run':
+            return capabilities.playbookExecution === 'available';
         case 'llm.agent.execute.mock':
         case 'llm.agent.execute.e2e_mock':
             return capabilities.demoMode !== 'off' && capabilities.llmAgentExecution === 'mock' && capabilities.llmAgentProvider === 'mock';
@@ -113,6 +115,8 @@ function enablementActionForCapability(capability) {
             return 'configure an image provider and approval/audit flow before advertising image.generate';
         case 'command.execute':
             return 'configure command execution policy with allowlisted commands/env/cwd, timeout, output redaction, and approvals';
+        case 'playbook.run':
+            return 'bind a FlowPlaybookRunner host adapter before advertising playbook.run';
         case 'memory.context':
             return 'connect a local or external Memory adapter that can build scoped context packs';
         case 'memory.context.local':
@@ -171,6 +175,8 @@ function stateRequiresCapability(state, capability) {
     switch (capability) {
         case 'llm.agent.execute':
             return state.type === 'agent';
+        case 'playbook.run':
+            return state.type === 'playbook';
         case 'command.execute':
             return state.type === 'command' || stateHasEffect(state, 'command.');
         case 'filesystem.edit':

@@ -37,6 +37,21 @@ export const OpenPencilAiDesignProvider = Symbol('OpenPencilAiDesignProvider');
 
 const CYBERVINCI_CANVAS_AI_DEBUG_STORAGE_KEY = 'cybervinci.canvasAiDebug';
 
+type OpenPencilAiSkeletonProfile = 'web-page' | 'app-screen' | 'component' | 'poster' | 'banner' | 'social' | 'wireframe' | 'diagram' | 'reference-board';
+
+interface OpenPencilAiSkeletonProfileSettings {
+    name: string;
+    role: string;
+    width: number;
+    height: number;
+    cornerRadius: number;
+    fill: string;
+    stroke: string;
+    accent: string;
+    foreground: string;
+    muted: string;
+}
+
 interface OpenPencilVisibleBounds {
     left: number;
     top: number;
@@ -165,6 +180,15 @@ export interface OpenPencilApplyOperationsOptions {
     preservePageWidth?: boolean;
     targetPageWidth?: number;
     requireVisibleContent?: boolean;
+    removeAiPlaceholderSkeletons?: boolean;
+}
+
+export type OpenPencilAiImageMode = 'off' | 'search' | 'generate' | 'auto';
+
+export interface OpenPencilAiImagePolicy {
+    readonly mode: OpenPencilAiImageMode;
+    readonly maxAssets?: number;
+    readonly cacheImagesLocally?: boolean;
 }
 
 export interface OpenPencilAiDesignRequest {
@@ -175,6 +199,7 @@ export interface OpenPencilAiDesignRequest {
     readonly mode?: 'generation' | 'maintenance' | 'continuation';
     readonly workspacePath?: string;
     readonly execution?: CyberVinciAiExecutionSelection;
+    readonly imagePolicy?: OpenPencilAiImagePolicy;
 }
 
 export interface OpenPencilAiLayoutNodeSummary {
@@ -266,6 +291,20 @@ export interface OpenPencilAiDesignStreamApplyResult {
 }
 
 export type OpenPencilAiDesignStreamApply = (result: OpenPencilAiDesignResult) => Promise<OpenPencilAiDesignStreamApplyResult | undefined>;
+
+export interface OpenPencilStabilizedOperationsResult {
+    readonly operations: OpenPencilDesignOperation[];
+    readonly diagnostics: string[];
+    readonly skipped: number;
+    readonly reordered: boolean;
+    readonly skippedOperations: OpenPencilDesignOperation[];
+}
+
+interface OpenPencilProviderStreamTimeouts {
+    readonly firstOperationMs: number;
+    readonly idleMs: number;
+    readonly totalMs: number;
+}
 
 export interface OpenPencilAiDesignProvider {
     readonly id?: string;
@@ -489,7 +528,9 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'You are an OpenPencil JSON operation generator, not a coding assistant.',
             'Do not inspect files, use tools, ask follow-up questions, edit the filesystem, or return explanations.',
             'Your complete final answer must be exactly one JSON object with shape {"contract":"openpencil.design-operations.v1","operations":[...]}.',
-            'The operations array must be non-empty and contain only OpenPencilDesignOperation objects.'
+            'The operations array must be non-empty and contain only OpenPencilDesignOperation objects.',
+            'If time or model limits prevent a full design in one response, return the largest valid visible operation set you can, prioritizing a root frame with meaningful populated regions over a bare shell.',
+            'A minimal skeleton is only a no-empty-output emergency fallback, not a complete answer for page, clone, reference, or detailed design requests.'
         ].join(' ');
     }
 
@@ -504,25 +545,36 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'For page-level generation, create visible nodes. Do not return only updatePage/background changes.',
             'For selected-node maintenance, prefer updateNode/replaceNode plus setSelection for the selected IDs.',
             'For prompt-to-design generation, prefer createNode/addNode plus setSelection for the created root node.',
+            'For generation, updateNode/replaceNode/move/resize/setSelection may only reference IDs that already exist in Document context or IDs created earlier in the same operations array. If you need a new ID, create it first with createNode/addNode and then update it only if needed.',
+            'Do not guess existing IDs. New generated IDs are allowed, but every generated ID must be introduced by a createNode/addNode operation before any operation targets it.',
+            'If uncertain about details, still return a valid visible first pass with meaningful content for the requested artifact; never return only reasoning, notes, diagnostics, or a bare placeholder shell.',
+            'First infer the artifact type. Website/homepage rules apply only to web page, marketplace, landing page, e-commerce, or known-site page requests.',
+            'For Figma-style references, posters, banners, social creatives, app screens, wireframes, diagrams, and isolated components, create a bounded artboard/composition and fill that frame instead of adding homepage scaffolding.',
             ...(request.mode === 'continuation' ? [
                 'Continuation mode: preserve the current design, all existing nodes, and all existing node IDs.',
                 'Continuation mode: do not remove, replace, or recreate existing page content; only add missing sections, missing states, or supporting elements.',
-                'Continuation mode: place new top-level content below the current content bottom or inside visible empty space described by the active-page layout summary; avoid covering existing nodes.',
+                'Continuation mode: for vertical web pages place new top-level content below the current content bottom; for bounded artifacts refine inside visible empty space in the active artboard. Avoid covering existing nodes.',
+                'Continuation mode: if the current page is only a header, navigation row, hero, or sparse shell, emit at least one substantial visible body section/module before complete. Do not emit only root resize/updatePage/setSelection operations.',
                 'Continuation mode: finish with setSelection for the newly-created root node IDs so the user can inspect the continuation.'
             ] : []),
             'When a request asks for multiple independent views, such as desktop and mobile, create separate top-level frames and place them side by side inside the page with a clear gap; scale them uniformly if needed, never overlap or clip them.',
             'For editable page designs, top-level view frames should usually use layout:"none" or omit layout and rely on numeric x/y/width/height. Use layout:"vertical" or layout:"horizontal" only for internal stacks where children should remain auto-positioned.',
             'For a website, homepage, marketplace, e-commerce, or known-site copy, create one vertical page frame about 1200px wide and as tall as needed. Preserve that width and stack all major sections downward.',
-            'For product rows, offer strips, category shelves, and carousels, keep cards inside the 1200px page width. If more items are needed, create another row or another section below; never extend the homepage horizontally.',
+            'For full page or page-reference generation, a header/navigation/hero-only result is incomplete. Before finalizing, include multiple substantial body sections/modules implied by the requested artifact category, with repeated cards/items where relevant and closing/support content when appropriate.',
+            'Do not satisfy page completeness by only increasing the root/page frame height or background area. Add visible sections, cards, text, controls, and visuals inside the page frame.',
+            'When the requested web page includes product rows, offer strips, category shelves, or carousels, keep cards inside the 1200px page width. If more items are needed, create another row or another section below; never extend the page horizontally.',
+            'For nested nodes, x and y are relative to the parent. Do not use global canvas coordinates for children inside a frame; convert them into the parent coordinate space so children stay inside their parent.',
+            'For page-like artifacts, major sibling sections should share a bounded content width and stack downward. Do not place separate page sections side by side unless the user explicitly asks for multiple views.',
             'For homepage-style output, use real section frames with padding/gap/layout to create spacing. Do not create spacer-only nodes named Spacer, Espaço, Space, Gap, or "before/after" blocks.',
-            'For marketplace/product shelves, create a shelf section that wraps cards inside the page width. A shelf should not be a single horizontal layout that extends beyond the page.',
-            'For desktop marketplace shelves, prefer 3-4 visible product cards per row when card details are large. Keep every text box, icon, image, and shape inside its card or section bounds.',
+            'For explicitly requested marketplace/e-commerce/product shelves, create shelf sections that wrap cards inside the page width. A shelf should not be a single horizontal layout that extends beyond the page.',
+            'For explicitly requested desktop marketplace/e-commerce shelves, prefer 3-4 visible product cards per row when card details are large. Keep every text box, icon, image, and shape inside its card or section bounds.',
             'Never include editor-shell placeholder copy in the design, including text such as "Edit this embedded .op design inside Theia."',
-            'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions. Do not give multiple header texts the full row width.',
+            'When a page row contains header, search, or navigation content, allocate explicit widths for logo, search, links, location, and account actions. Do not give multiple header texts the full row width.',
             'For every row frame, each child must have a distinct non-overlapping x position. Never leave multiple row children at x:0 unless they are intentionally stacked in different y rows.',
             'For cards with a visual/icon/image and text copy, place the visual and copy in separate vertical or horizontal regions; never put an image placeholder over the text block.',
-            'If the user asks to copy or recreate a full homepage, include the complete page structure: top navigation, hero/promo area, category shortcuts, several product/offer shelves, promotional banners, recommendations, benefits, and footer-like closing content when present.',
-            'For Mercado Livre-style marketplace pages, use a centered vertical feed: yellow header with search/navigation, large promo hero, category shortcut cards, product shelves with 5-6 cards per row, horizontal promo banners between shelves, gray page background, and footer/help blocks near the bottom.',
+            'If the user asks to copy or recreate a full page, include the complete structure implied by that page category: top navigation or entry point, primary content, repeated modules when relevant, supporting/detail regions, and footer-like closing content when present. Do not hard-code any site-specific template; infer the structure from the request and current/reference context.',
+            'For marketplace/e-commerce pages only when requested, use a centered vertical feed with search/navigation, promo or hero area, category shortcuts, wrapped product shelves, promotional/support modules, recommendations, and closing/help blocks as appropriate.',
+            this.formatAiImagePolicyPrompt(request.imagePolicy),
             'Use role:"overlay" for a child that must be manually positioned inside a layout frame. Otherwise x/y on children of layout frames will be treated as auto-layout input and may be recalculated.',
             'Do not set clipContent:true on top-level views or general containers unless the user explicitly asks for masking/cropping. The canvas is unbounded; do not create invisible frames as canvas limits.',
             'Every frame, group, card, section, and top-level view must have bounds large enough to contain every visible child. Before adding a child with x/y/width/height, make sure parent width/height already contains the child.',
@@ -530,7 +582,7 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             'Use OpenPencil property names exactly: text nodes use content, shapes use fill:[{type:"solid",color:"#..."}], stroke uses {color,width,thickness}, rounded corners use cornerRadius, and sizes/positions use numeric x,y,width,height.',
             'Do not emit CSS property names such as backgroundColor, borderRadius, position, display, left, top, color, or font-weight; map them to OpenPencil node properties instead.',
             'Readability and contrast are mandatory: text must contrast with the nearest background; never place dark text on dark backgrounds or light text on light backgrounds. If a background is dark, use light text; if a background is light, use dark text.',
-            'If the prompt asks for a known product/site style, capture its visible structure and interaction patterns without copying trademarks or exact assets.',
+            'If the prompt asks for a known site, app, product, or design-reference style, capture its visible structure and interaction patterns without copying trademarks or exact assets.',
             `User request: ${request.prompt}`,
             `Target URI: ${request.uri ?? 'active OpenPencil editor'}`,
             `Phase: ${context.phase}`,
@@ -538,6 +590,21 @@ export class OpenPencilCyberVinciAiDesignProvider implements OpenPencilAiDesignP
             `Relevant design guidance: ${this.formatCompactAiSkillPrompt(context.skills)}`,
             `Valid operation examples: ${JSON.stringify(context.operationExamples)}`
         ].join('\n');
+    }
+
+    protected formatAiImagePolicyPrompt(policy: OpenPencilAiImagePolicy | undefined): string {
+        const maxAssets = policy?.maxAssets ?? 12;
+        switch (policy?.mode ?? 'off') {
+            case 'search':
+                return `Image mode: search real images. Create image nodes for product, banner, hero, avatar, and category visuals when useful. Use a real https src only when the provider can confidently identify a direct image URL; otherwise include imageSearchQuery. Keep at most ${maxAssets} image assets and keep every image inside its parent card, banner, or section.`;
+            case 'generate':
+                return `Image mode: generate images. Create image nodes with precise imagePrompt values for product, banner, hero, avatar, and category visuals. Do not invent image URLs; include src only if the selected provider actually returns an accessible generated image URL. Keep at most ${maxAssets} image assets and reserve exact bounds for every image.`;
+            case 'auto':
+                return `Image mode: auto. Prefer real searched images for recognizable products or categories; use generated-image prompts for abstract or missing visuals. Add imageSearchQuery and/or imagePrompt to image nodes, include src only for real accessible URLs, and keep at most ${maxAssets} image assets.`;
+            case 'off':
+            default:
+                return 'Image mode: off. Use well-sized image placeholders or icon/shape visuals only; do not invent image URLs.';
+        }
     }
 
     protected formatCompactAiSkillPrompt(skills: OpenPencilAiSkillDescriptor[]): string {
@@ -775,6 +842,7 @@ export interface OpenPencilDesignCommandService {
     createDesign(name?: string): OpenPencilDocument;
     applyToDocument(document: OpenPencilDocument, selection: string[], operation: OpenPencilDesignOperation): OpenPencilCommandResult;
     applyOperationsToDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: OpenPencilApplyOperationsOptions): OpenPencilCommandResult;
+    stabilizeAiOperationsForDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: OpenPencilApplyOperationsOptions): OpenPencilStabilizedOperationsResult;
     parseBatchDesignDsl(dsl: string): OpenPencilBatchDesignDslCommand[];
     applyBatchDesignDsl(document: OpenPencilDocument, selection: string[], dsl: string): OpenPencilCommandResult;
     getDocumentSummary(document: OpenPencilDocument): OpenPencilDocumentSummary;
@@ -791,10 +859,18 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected readonly documents = new OpenPencilDocumentService();
     protected readonly sessions = new Map<string, OpenPencilDesignSession>();
-    protected readonly providerGenerateTimeoutMs: number = 25000;
-    protected readonly providerStreamFirstOperationTimeoutMs: number = 20000;
-    protected readonly providerStreamIdleTimeoutMs: number = 30000;
-    protected readonly providerStreamTotalTimeoutMs: number = 120000;
+    protected readonly providerGenerateTimeoutMs: number = 300000;
+    protected readonly providerStreamFirstOperationTimeoutMs: number = 60000;
+    protected readonly providerStreamIdleTimeoutMs: number = 120000;
+    protected readonly providerStreamTotalTimeoutMs: number = 600000;
+    protected readonly providerRouterGenerateTimeoutMs: number = 90000;
+    protected readonly providerRouterStreamFirstOperationTimeoutMs: number = 90000;
+    protected readonly providerRouterStreamIdleTimeoutMs: number = 45000;
+    protected readonly providerRouterStreamTotalTimeoutMs: number = 360000;
+    protected readonly providerSlowRouterGenerateTimeoutMs: number = 240000;
+    protected readonly providerSlowRouterStreamFirstOperationTimeoutMs: number = 150000;
+    protected readonly providerSlowRouterStreamIdleTimeoutMs: number = 75000;
+    protected readonly providerSlowRouterStreamTotalTimeoutMs: number = 420000;
 
     @inject(ContributionProvider) @named(OpenPencilAiDesignProvider) @optional()
     protected readonly aiProviderContributions: ContributionProvider<OpenPencilAiDesignProvider> | undefined;
@@ -1287,7 +1363,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (options?.normalizeVisibleBounds && this.normalizeDocumentVisibleBounds(currentDocument, options)) {
             changed = true;
         }
-        if (options?.mode !== 'continuation' && this.arrangeCreatedRootViews(currentDocument, createdRootViewIds)) {
+        if (options?.mode !== 'continuation' && !options?.preservePageWidth && this.arrangeCreatedRootViews(currentDocument, createdRootViewIds)) {
             changed = true;
         }
 
@@ -1297,6 +1373,91 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             changed,
             message: messages.length ? messages.join('\n') : undefined
         };
+    }
+
+    stabilizeAiOperationsForDocument(document: OpenPencilDocument, selection: string[], operations: OpenPencilDesignOperation[], options?: OpenPencilApplyOperationsOptions): OpenPencilStabilizedOperationsResult {
+        type PendingOperation = {
+            readonly operation: OpenPencilDesignOperation;
+            readonly originalIndex: number;
+            readonly message?: string;
+        };
+        const accepted: PendingOperation[] = [];
+        let pending: PendingOperation[] = operations.map((operation, originalIndex) => ({ operation, originalIndex }));
+        let currentDocument = this.documents.cloneDocument(document);
+        let currentSelection = [...selection];
+        const diagnostics: string[] = [];
+        let skipped = 0;
+        let skippedOperations: OpenPencilDesignOperation[] = [];
+
+        while (pending.length) {
+            const nextPending: PendingOperation[] = [];
+            let progressed = false;
+
+            for (const candidate of pending) {
+                const result = this.applyOperationsToDocument(currentDocument, currentSelection, [candidate.operation], options);
+                if (!result.message) {
+                    accepted.push(candidate);
+                    currentDocument = result.document;
+                    currentSelection = result.selection;
+                    progressed = true;
+                    continue;
+                }
+                if (this.isRecoverableAiOperationMessage(result.message)) {
+                    nextPending.push({
+                        ...candidate,
+                        message: result.message
+                    });
+                    continue;
+                }
+                accepted.push(candidate);
+                diagnostics.push(`Kept operation ${candidate.originalIndex + 1}/${operations.length} with non-recoverable validation message: ${result.message}`);
+            }
+
+            if (!nextPending.length) {
+                pending = [];
+                break;
+            }
+            if (!progressed) {
+                skipped = nextPending.length;
+                skippedOperations = nextPending.map(candidate => candidate.operation);
+                for (const candidate of nextPending) {
+                    diagnostics.push(`Skipped operation ${candidate.originalIndex + 1}/${operations.length}: ${candidate.message ?? 'operation target was not available'}`);
+                }
+                pending = [];
+                break;
+            }
+            pending = nextPending;
+        }
+
+        return {
+            operations: accepted.map(candidate => candidate.operation),
+            diagnostics,
+            skipped,
+            reordered: accepted.some((candidate, index) => candidate.originalIndex !== index),
+            skippedOperations
+        };
+    }
+
+    protected isRecoverableAiOperationMessage(message: string): boolean {
+        return /^(?:Parent node|Node|Path|Page|Variable|Theme axis) '[^']+' was not found\.$/.test(message.trim());
+    }
+
+    /**
+     * True when the failure is the selected provider's CLI/runtime backend failing to start or
+     * stay available (e.g. Codex app-server exiting, sqlite/disk I/O errors, locked state DB,
+     * connection refused) rather than a design/generation problem. Retrying the same backend
+     * (streaming recovery, batch self-correction) only repeats the same failure, so callers
+     * should fail fast with an actionable message instead of grinding through retries.
+     */
+    protected isProviderBackendUnavailableError(message: string | undefined): boolean {
+        if (!message) {
+            return false;
+        }
+        return /app-server exited|failed to initialize|state runtime|disk i\/o error|database is locked|database disk image is malformed|sqlite|econnrefused|connection refused|spawn .*enoent|exited with code\s*\d|is not available|not authenticated|unauthorized|rate limit|quota/i.test(message);
+    }
+
+    protected providerBackendUnavailableMessage(providerName: string, errorMessage: string): string {
+        return `${providerName} backend did not start (this is a provider/runtime problem, not a design error): ${errorMessage} | Close other sessions using the same provider, ensure it is authenticated and has free disk space, clear its local state if it stays locked, then retry.`;
     }
 
     parseBatchDesignDsl(dsl: string): OpenPencilBatchDesignDslCommand[] {
@@ -1539,7 +1700,8 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             path: `pages.${page.id}.children`,
             width: pageWidth,
             height: pageHeight,
-            pageRoot: true
+            pageRoot: true,
+            verticalPageFlow: options.preservePageWidth === true
         }, issues);
 
         return {
@@ -1551,7 +1713,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     async generateAiOperations(request: OpenPencilAiDesignRequest): Promise<OpenPencilAiDesignResult> {
         const context = this.createAiSkillContext(request);
         const diagnostics: string[] = [];
-        const providers = this.resolveAiProviders();
+        const providers = this.resolveAiProviders(request);
         let providerReturnedOperations = false;
         for (const [providerIndex, provider] of providers.entries()) {
             const providerName = provider.label ?? provider.id ?? 'AI provider';
@@ -1567,10 +1729,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 selectionCount: request.selection.length
             });
             try {
+                const generateTimeoutMs = this.resolveProviderGenerateTimeoutMs(request);
                 const providerResponse = await this.withProviderGenerateTimeout(
                     Promise.resolve(provider.generateOperations(request, context)),
-                    this.providerGenerateTimeoutMs,
-                    `${providerName} generation did not return OpenPencil operations within ${Math.round(this.providerGenerateTimeoutMs / 1000)} seconds.`
+                    generateTimeoutMs,
+                    this.formatProviderGenerateTimeoutMessage(providerName, generateTimeoutMs)
                 );
                 const responseDiagnostics = this.providerDiagnostics(providerResponse, providerName);
                 diagnostics.push(...responseDiagnostics);
@@ -1584,24 +1747,35 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 providerReturnedOperations ||= !!providerOperations?.length;
                 if (providerOperations?.length && providerOperations.every(operation => this.isDesignOperationLike(operation))) {
                     const normalizedOperations = this.normalizeProviderAiOperations(providerOperations, request);
-                    const previewDiagnostic = this.validateAiOperationsPreview(normalizedOperations, request, providerName);
+                    const stabilized = this.stabilizeProviderAiOperationsForRequest(normalizedOperations, request, providerName);
+                    diagnostics.push(...stabilized.diagnostics);
+                    const previewDiagnostic = stabilized.diagnostic ?? this.validateAiOperationsPreview(stabilized.operations, request, providerName);
                     if (previewDiagnostic) {
                         diagnostics.push(previewDiagnostic);
                         canvasAiFrontendDebug('provider-rejected', {
                             ...providerDetails,
                             reason: 'preview-validation',
-                            operationsCount: normalizedOperations.length,
+                            operationsCount: stabilized.operations.length,
                             diagnosticsCount: diagnostics.length
                         });
+                        const selfCorrected = await this.tryProviderAiSelfCorrection(provider, providerName, request, previewDiagnostic, normalizedOperations, diagnostics);
+                        if (selfCorrected) {
+                            canvasAiFrontendDebug('provider-self-correction-accepted', {
+                                ...providerDetails,
+                                operationsCount: selfCorrected.operations.length,
+                                diagnosticsCount: diagnostics.length
+                            });
+                            return selfCorrected;
+                        }
                         continue;
                     }
                     canvasAiFrontendDebug('provider-accepted', {
                         ...providerDetails,
-                        operationsCount: normalizedOperations.length,
+                        operationsCount: stabilized.operations.length,
                         diagnosticsCount: diagnostics.length
                     });
                     return {
-                        operations: normalizedOperations,
+                        operations: stabilized.operations,
                         context,
                         source: 'provider',
                         providerId: provider.id,
@@ -1615,7 +1789,8 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                         ...providerDetails,
                         reason: 'invalid-operations',
                         operationsCount: providerOperations.length,
-                        diagnosticsCount: diagnostics.length
+                        diagnosticsCount: diagnostics.length,
+                        operationSample: this.summarizeAiRejectedOperation(providerOperations[0])
                     });
                 } else {
                     diagnostics.push(`${providerName} returned no OpenPencil operations.`);
@@ -1630,7 +1805,8 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                     ...providerDetails,
                     diagnosticsCount: diagnostics.length,
                     errorName: error instanceof Error ? error.name : typeof error,
-                    messageLength: error instanceof Error ? error.message.length : String(error).length
+                    messageLength: error instanceof Error ? error.message.length : String(error).length,
+                    message: error instanceof Error ? error.message : String(error)
                 });
             }
         }
@@ -1680,6 +1856,445 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         };
     }
 
+    protected stabilizeProviderAiOperationsForRequest(
+        operations: OpenPencilDesignOperation[],
+        request: OpenPencilAiDesignRequest,
+        providerName: string
+    ): { operations: OpenPencilDesignOperation[]; diagnostics: string[]; diagnostic?: string; skippedOperations?: OpenPencilDesignOperation[] } {
+        const continuationSafe = this.sanitizeContinuationAiOperationsForRequest(operations, request, providerName);
+        const stabilized = this.stabilizeAiOperationsForDocument(this.documents.cloneDocument(request.document), request.selection, continuationSafe.operations, {
+            mode: request.mode,
+            normalizeVisibleBounds: true,
+            preservePageWidth: this.shouldPreservePageWidthForAiPrompt(request.prompt),
+            targetPageWidth: this.aiPromptTargetPageWidth(request.prompt)
+        });
+        const diagnostics = [
+            ...continuationSafe.diagnostics,
+            ...stabilized.diagnostics.map(diagnostic => `${providerName} operation stabilization: ${diagnostic}`)
+        ];
+        if (stabilized.skipped > 0) {
+            return {
+                operations: stabilized.operations,
+                diagnostics,
+                diagnostic: `${providerName} operations were rejected because ${stabilized.skipped} operation${stabilized.skipped === 1 ? '' : 's'} still referenced unavailable nodes or parents after local ID repair. ${diagnostics.slice(0, 2).join(' ')}`,
+                skippedOperations: stabilized.skippedOperations
+            };
+        }
+        if (stabilized.reordered) {
+            diagnostics.push(`${providerName} operation stabilization reordered dependent operations so created IDs exist before later updates.`);
+        }
+        return {
+            operations: stabilized.operations,
+            diagnostics
+        };
+    }
+
+    protected sanitizeContinuationAiOperationsForRequest(
+        operations: OpenPencilDesignOperation[],
+        request: OpenPencilAiDesignRequest,
+        providerName: string
+    ): { operations: OpenPencilDesignOperation[]; diagnostics: string[] } {
+        if (request.mode !== 'continuation' || !operations.length) {
+            return { operations, diagnostics: [] };
+        }
+        const existingNodes = new Map(this.documents.flattenNodes(request.document).map(node => [node.id, node] as const));
+        const createdNodeIds = new Set<string>();
+        const sanitized: OpenPencilDesignOperation[] = [];
+        const diagnostics: string[] = [];
+
+        for (const [index, operation] of operations.entries()) {
+            if (this.isProviderAiCreateOperation(operation)) {
+                if (typeof operation.node.id === 'string' && operation.node.id) {
+                    createdNodeIds.add(operation.node.id);
+                }
+                sanitized.push(operation);
+                continue;
+            }
+            if (operation.operation === 'setSelection') {
+                sanitized.push(operation);
+                continue;
+            }
+            if (operation.operation === 'updateNode') {
+                if (createdNodeIds.has(operation.nodeId) || !existingNodes.has(operation.nodeId)) {
+                    sanitized.push(operation);
+                    continue;
+                }
+                const safeChanges = this.safeContinuationExistingNodeUpdateChanges(operation, existingNodes.get(operation.nodeId));
+                if (safeChanges) {
+                    sanitized.push({
+                        ...operation,
+                        changes: safeChanges
+                    });
+                    const originalKeys = Object.keys(operation.changes as Record<string, unknown>);
+                    const safeKeys = Object.keys(safeChanges as Record<string, unknown>);
+                    if (safeKeys.length < originalKeys.length) {
+                        diagnostics.push(`${providerName} continuation stabilization kept safe expansion keys for updateNode '${operation.nodeId}' and ignored unsafe keys: ${originalKeys.filter(key => !safeKeys.includes(key)).join(', ') || 'none'}.`);
+                    }
+                } else {
+                    diagnostics.push(`${providerName} continuation stabilization skipped unsafe updateNode '${operation.nodeId}' at operation ${index + 1}/${operations.length}.`);
+                }
+                continue;
+            }
+            if (this.isContinuationDestructiveOperation(operation, existingNodes, createdNodeIds)) {
+                diagnostics.push(`${providerName} continuation stabilization skipped destructive '${operation.operation}' at operation ${index + 1}/${operations.length}.`);
+                continue;
+            }
+            sanitized.push(operation);
+        }
+
+        return { operations: sanitized, diagnostics };
+    }
+
+    protected safeContinuationExistingNodeUpdateChanges(
+        operation: Extract<OpenPencilDesignOperation, { operation: 'updateNode' }>,
+        existing: OpenPencilNode | undefined
+    ): OpenPencilNodeChanges | undefined {
+        if (!existing) {
+            return undefined;
+        }
+        const changes = operation.changes as Record<string, unknown>;
+        const safeChanges: Record<string, unknown> = {};
+        if ('height' in changes) {
+            const nextHeight = this.numberValue(changes.height as number | string | undefined, NaN);
+            const currentHeight = this.numericDimensionValue(existing.height);
+            if (Number.isFinite(nextHeight) && currentHeight !== undefined && nextHeight >= currentHeight) {
+                safeChanges.height = changes.height;
+            }
+        }
+        if ('width' in changes) {
+            const nextWidth = this.numberValue(changes.width as number | string | undefined, NaN);
+            const currentWidth = this.numericDimensionValue(existing.width);
+            if (Number.isFinite(nextWidth) && currentWidth !== undefined && nextWidth >= currentWidth) {
+                safeChanges.width = changes.width;
+            }
+        }
+        if ('clipContent' in changes && changes.clipContent === false) {
+            safeChanges.clipContent = false;
+        }
+        return Object.keys(safeChanges).length ? safeChanges as OpenPencilNodeChanges : undefined;
+    }
+
+    protected async tryProviderAiSelfCorrection(
+        provider: OpenPencilAiDesignProvider,
+        providerName: string,
+        request: OpenPencilAiDesignRequest,
+        validationDiagnostic: string,
+        rejectedOperations: OpenPencilDesignOperation[],
+        diagnostics: string[]
+    ): Promise<OpenPencilAiDesignResult | undefined> {
+        if (!this.shouldRetryProviderAiSelfCorrection(request, validationDiagnostic)) {
+            return undefined;
+        }
+        const retryRequest = this.createProviderAiSelfCorrectionRequest(request, validationDiagnostic, rejectedOperations);
+        const retryContext = this.createAiSkillContext(retryRequest);
+        diagnostics.push(`${providerName}: retrying once with Canvas ID repair diagnostics and the current document ID inventory.`);
+        try {
+            const generateTimeoutMs = this.resolveProviderGenerateTimeoutMs(retryRequest);
+            const providerResponse = await this.withProviderGenerateTimeout(
+                Promise.resolve(provider.generateOperations(retryRequest, retryContext)),
+                generateTimeoutMs,
+                this.formatProviderGenerateTimeoutMessage(`${providerName} self-correction`, generateTimeoutMs)
+            );
+            diagnostics.push(...this.providerDiagnostics(providerResponse, `${providerName} self-correction`));
+            const providerOperations = this.providerOperations(providerResponse);
+            if (!providerOperations?.length) {
+                diagnostics.push(`${providerName} self-correction returned no OpenPencil operations.`);
+                return undefined;
+            }
+            if (!providerOperations.every(operation => this.isDesignOperationLike(operation))) {
+                diagnostics.push(`${providerName} self-correction returned operations that do not match the OpenPencil structured operation contract.`);
+                canvasAiFrontendDebug('provider-self-correction-rejected', {
+                    providerId: provider.id,
+                    providerLabel: provider.label,
+                    reason: 'invalid-operations',
+                    operationsCount: providerOperations.length,
+                    operationSample: this.summarizeAiRejectedOperation(providerOperations[0])
+                });
+                return undefined;
+            }
+            const normalizedOperations = this.normalizeProviderAiOperations(providerOperations, retryRequest);
+            const stabilized = this.stabilizeProviderAiOperationsForRequest(normalizedOperations, retryRequest, `${providerName} self-correction`);
+            diagnostics.push(...stabilized.diagnostics);
+            const previewDiagnostic = stabilized.diagnostic ?? this.validateAiOperationsPreview(stabilized.operations, retryRequest, `${providerName} self-correction`);
+            if (previewDiagnostic) {
+                diagnostics.push(previewDiagnostic);
+                canvasAiFrontendDebug('provider-self-correction-rejected', {
+                    providerId: provider.id,
+                    providerLabel: provider.label,
+                    reason: 'preview-validation',
+                    operationsCount: stabilized.operations.length,
+                    diagnosticsCount: diagnostics.length
+                });
+                return undefined;
+            }
+            return {
+                operations: stabilized.operations,
+                context: retryContext,
+                source: 'provider',
+                providerId: provider.id,
+                providerLabel: provider.label ?? provider.id,
+                diagnostics
+            };
+        } catch (error) {
+            diagnostics.push(`${providerName} self-correction failed: ${error instanceof Error ? error.message : String(error)}`);
+            return undefined;
+        }
+    }
+
+    protected shouldRetryProviderAiSelfCorrection(request: OpenPencilAiDesignRequest, diagnostic: string): boolean {
+        if (request.selection.length || !this.isPageLevelAiPrompt(request.prompt) || /Canvas self-correction retry/i.test(request.prompt)) {
+            return false;
+        }
+        return /\b(not found|missing-parent|unavailable nodes|did not change|preview validation|layout quality)\b/i.test(diagnostic);
+    }
+
+    protected createProviderAiSelfCorrectionRequest(
+        request: OpenPencilAiDesignRequest,
+        validationDiagnostic: string,
+        rejectedOperations: OpenPencilDesignOperation[]
+    ): OpenPencilAiDesignRequest {
+        const existingIds = this.documents.flattenNodes(request.document).map(node => node.id).slice(0, 160);
+        const createdIds = [...this.collectProviderAiCreatedNodeIds(rejectedOperations)].slice(0, 160);
+        const missingIds = this.extractMissingNodeIdsFromDiagnostic(validationDiagnostic).slice(0, 40);
+        const retryPrompt = [
+            request.prompt,
+            '',
+            'Canvas self-correction retry:',
+            `The previous OpenPencil operations failed preview validation: ${validationDiagnostic}`,
+            existingIds.length ? `Existing node IDs in the current document: ${existingIds.join(', ')}` : 'The current document has no existing canvas node IDs.',
+            createdIds.length ? `IDs created by your previous operations: ${createdIds.join(', ')}` : 'Your previous operations did not create reusable IDs before referencing them.',
+            missingIds.length ? `IDs that were referenced before they existed: ${missingIds.join(', ')}` : undefined,
+            'Return a corrected complete operations array for the same user request.',
+            'For every new generated ID, emit createNode/addNode before any updateNode, replaceNode, moveNode, resizeNode, moveToParent, reorder, or setSelection references that ID.',
+            'If you used new IDs, create those exact IDs first with proper type, bounds, parentId, and children/positioning. Do not target guessed IDs as if they already existed.',
+            'Keep the intended visual quality, layout, z-order, and artifact type. Do not replace the design with a generic fallback.'
+        ].filter((line): line is string => !!line).join('\n');
+        return {
+            ...request,
+            prompt: retryPrompt
+        };
+    }
+
+    protected async tryProviderAiStreamingRecovery(
+        provider: OpenPencilAiDesignProvider,
+        providerName: string,
+        request: OpenPencilAiDesignRequest,
+        diagnostics: string[],
+        reason: string | undefined,
+        rejectedOperations: OpenPencilDesignOperation[] = []
+    ): Promise<OpenPencilAiDesignResult | undefined> {
+        if (/Canvas streaming recovery retry/i.test(request.prompt)) {
+            return undefined;
+        }
+        if (this.isProviderBackendUnavailableError(reason)) {
+            diagnostics.push(`${providerName}: skipping batch recovery because the provider backend is unavailable; retrying it would repeat the same failure.`);
+            return undefined;
+        }
+        const recoveryRequest = this.createProviderAiStreamingRecoveryRequest(request, reason, rejectedOperations);
+        const recoveryContext = this.createAiSkillContext(recoveryRequest);
+        diagnostics.push(`${providerName}: retrying once with batch structured-output recovery because streaming did not produce usable OpenPencil operations.`);
+        try {
+            const generateTimeoutMs = this.resolveProviderGenerateTimeoutMs(recoveryRequest);
+            const providerResponse = await this.withProviderGenerateTimeout(
+                Promise.resolve(provider.generateOperations(recoveryRequest, recoveryContext)),
+                generateTimeoutMs,
+                this.formatProviderGenerateTimeoutMessage(`${providerName} streaming recovery`, generateTimeoutMs)
+            );
+            diagnostics.push(...this.providerDiagnostics(providerResponse, `${providerName} streaming recovery`));
+            const providerOperations = this.providerOperations(providerResponse);
+            if (!providerOperations?.length) {
+                diagnostics.push(`${providerName} streaming recovery returned no OpenPencil operations.`);
+                return undefined;
+            }
+            if (!providerOperations.every(operation => this.isDesignOperationLike(operation))) {
+                diagnostics.push(`${providerName} streaming recovery returned operations that do not match the OpenPencil structured operation contract.`);
+                canvasAiFrontendDebug('provider-streaming-recovery-rejected', {
+                    providerId: provider.id,
+                    providerLabel: provider.label,
+                    reason: 'invalid-operations',
+                    operationsCount: providerOperations.length,
+                    operationSample: this.summarizeAiRejectedOperation(providerOperations[0])
+                });
+                return undefined;
+            }
+            const normalizedOperations = this.normalizeProviderAiOperations(providerOperations, recoveryRequest);
+            const stabilized = this.stabilizeProviderAiOperationsForRequest(normalizedOperations, recoveryRequest, `${providerName} streaming recovery`);
+            diagnostics.push(...stabilized.diagnostics);
+            const previewDiagnostic = stabilized.diagnostic ?? this.validateAiOperationsPreview(stabilized.operations, recoveryRequest, `${providerName} streaming recovery`);
+            if (previewDiagnostic) {
+                diagnostics.push(previewDiagnostic);
+                canvasAiFrontendDebug('provider-streaming-recovery-rejected', {
+                    providerId: provider.id,
+                    providerLabel: provider.label,
+                    reason: 'preview-validation',
+                    operationsCount: stabilized.operations.length,
+                    diagnosticsCount: diagnostics.length,
+                    diagnostic: previewDiagnostic.slice(0, 500)
+                });
+                return undefined;
+            }
+            return {
+                operations: stabilized.operations,
+                context: recoveryContext,
+                source: 'provider',
+                providerId: provider.id,
+                providerLabel: provider.label ?? provider.id,
+                diagnostics
+            };
+        } catch (error) {
+            diagnostics.push(`${providerName} streaming recovery failed: ${error instanceof Error ? error.message : String(error)}`);
+            return undefined;
+        }
+    }
+
+    protected createProviderAiStreamingRecoveryRequest(
+        request: OpenPencilAiDesignRequest,
+        reason: string | undefined,
+        rejectedOperations: OpenPencilDesignOperation[]
+    ): OpenPencilAiDesignRequest {
+        const existingIds = this.documents.flattenNodes(request.document).map(node => node.id).slice(0, 180);
+        const createdIds = [...this.collectProviderAiCreatedNodeIds(rejectedOperations)].slice(0, 180);
+        const retryPrompt = [
+            request.prompt,
+            '',
+            'Canvas streaming recovery retry:',
+            reason ? `The previous streaming attempt could not be applied: ${reason}` : 'The previous streaming attempt ended without usable newline-delimited OpenPencil operations.',
+            existingIds.length ? `Existing node IDs in the current document: ${existingIds.join(', ')}` : 'The current document has no existing canvas node IDs.',
+            createdIds.length ? `IDs created or attempted by the previous streaming operations: ${createdIds.join(', ')}` : 'The previous streaming attempt did not create reusable IDs before completion.',
+            'Return exactly one JSON object with contract "openpencil.design-operations.v1" and a non-empty operations array.',
+            'Do not return prose, explanations, Markdown, HTML, CSS, plans, diagnostics-only output, or local fallback placeholder content.',
+            'Do not reduce quality or replace the request with a generic fallback. Continue the same requested artifact.',
+            'Every new ID must be introduced by createNode/addNode before it is referenced by updateNode, replaceNode, moveNode, resizeNode, moveToParent, reorder, or setSelection.',
+            'Do not target guessed IDs as if they already existed. Use existing IDs only from the inventory above, or create new IDs before referencing them.',
+            'Create parents before children. Nested x/y coordinates are parent-relative, not global page coordinates.',
+            'For page-like artifacts, use one bounded vertical page frame and stack major sections downward inside that shared width. Only grids, rows, cards, and controls inside a section may be horizontal.',
+            'For bounded non-page artifacts, keep all elements inside the artboard/composition bounds instead of appending homepage sections.',
+            'Keep z-order readable: foreground text/icons/controls before cards/media and cards/media before backgrounds/containers in OpenPencil front-to-back child order.',
+            'The corrected operations must pass preview validation with visible content, no missing IDs, no off-page children, and no overlapping text.'
+        ].join('\n');
+        return {
+            ...request,
+            prompt: retryPrompt
+        };
+    }
+
+    protected extractMissingNodeIdsFromDiagnostic(diagnostic: string): string[] {
+        const ids: string[] = [];
+        const pattern = /(?:Node|Parent node|Page|Path|Variable|Theme axis) '([^']+)' was not found/g;
+        let match: RegExpExecArray | null;
+        while ((match = pattern.exec(diagnostic))) {
+            ids.push(match[1]);
+        }
+        return [...new Set(ids)];
+    }
+
+    protected resolveProviderGenerateTimeoutMs(request: OpenPencilAiDesignRequest): number {
+        if (this.isIncrementalAiStageRequest(request)) {
+            return this.isSlowRouterExecution(request) ? 150000 : this.isRouterExecution(request) ? 60000 : this.providerGenerateTimeoutMs;
+        }
+        if (this.isSlowRouterExecution(request)) {
+            return this.providerSlowRouterGenerateTimeoutMs;
+        }
+        if (this.isRouterExecution(request)) {
+            return this.providerRouterGenerateTimeoutMs;
+        }
+        return this.providerGenerateTimeoutMs;
+    }
+
+    protected resolveProviderStreamTimeouts(request: OpenPencilAiDesignRequest): OpenPencilProviderStreamTimeouts {
+        if (this.isIncrementalAiStageRequest(request)) {
+            if (this.isSlowRouterExecution(request)) {
+                return {
+                    firstOperationMs: 150000,
+                    idleMs: 60000,
+                    totalMs: 300000
+                };
+            }
+            if (this.isRouterExecution(request)) {
+                return {
+                    firstOperationMs: 35000,
+                    idleMs: 25000,
+                    totalMs: 80000
+                };
+            }
+        }
+        if (this.isSlowRouterExecution(request)) {
+            return {
+                firstOperationMs: this.providerSlowRouterStreamFirstOperationTimeoutMs,
+                idleMs: this.providerSlowRouterStreamIdleTimeoutMs,
+                totalMs: this.providerSlowRouterStreamTotalTimeoutMs
+            };
+        }
+        if (this.isRouterExecution(request)) {
+            return {
+                firstOperationMs: this.providerRouterStreamFirstOperationTimeoutMs,
+                idleMs: this.providerRouterStreamIdleTimeoutMs,
+                totalMs: this.providerRouterStreamTotalTimeoutMs
+            };
+        }
+        return {
+            firstOperationMs: this.providerStreamFirstOperationTimeoutMs,
+            idleMs: this.providerStreamIdleTimeoutMs,
+            totalMs: this.providerStreamTotalTimeoutMs
+        };
+    }
+
+    protected isIncrementalAiStageRequest(request: OpenPencilAiDesignRequest): boolean {
+        return /\bIncremental stage\s+\d+\/\d+\b/i.test(request.prompt);
+    }
+
+    protected isSlowRouterExecution(request: OpenPencilAiDesignRequest): boolean {
+        const execution = request.execution;
+        const provider = this.executionProviderKey(request);
+        const model = (execution?.model ?? '').toLowerCase();
+        return provider === 'opencode'
+            || provider === 'opencode-go'
+            || model.includes('deepseek')
+            || model.includes(':free')
+            || model.includes('-free')
+            || model.includes('free/')
+            || model.includes('big-pickle')
+            || model.includes('minimax')
+            || model.includes('qwen')
+            || model.includes('nemotron')
+            || model.includes('north-');
+    }
+
+    protected isRouterExecution(request: OpenPencilAiDesignRequest): boolean {
+        const execution = request.execution;
+        const provider = this.executionProviderKey(request);
+        return execution?.runtime === 'direct-http'
+            || (execution?.providerId ?? '').toLowerCase().startsWith('direct-http:')
+            || provider === 'openrouter'
+            || provider === 'opencode'
+            || provider === 'opencode-go';
+    }
+
+    protected executionProviderKey(request: OpenPencilAiDesignRequest): string {
+        const execution = request.execution;
+        const providerId = (execution?.providerId ?? '').toLowerCase();
+        const separator = providerId.indexOf(':');
+        return (execution?.modelProvider ?? (separator >= 0 ? providerId.slice(separator + 1) : providerId)).toLowerCase();
+    }
+
+    protected formatProviderGenerateTimeoutMessage(providerName: string, timeoutMs: number): string {
+        return `${providerName} did not return usable OpenPencil operations within ${Math.round(timeoutMs / 1000)} seconds. ` +
+            'The provider may have produced text or reasoning, but Canvas needs structured OpenPencil operations before it can apply changes.';
+    }
+
+    protected formatProviderStreamFirstOperationTimeoutMessage(providerName: string, timeoutMs: number): string {
+        return `${providerName} streaming did not produce a usable OpenPencil operation within ${Math.round(timeoutMs / 1000)} seconds. ` +
+            'The provider may have produced text or reasoning, but Canvas needs a complete structured operation before it can update the design.';
+    }
+
+    protected formatProviderStreamIdleTimeoutMessage(providerName: string, timeoutMs: number): string {
+        return `${providerName} streaming stopped producing usable OpenPencil operations for ${Math.round(timeoutMs / 1000)} seconds.`;
+    }
+
+    protected formatProviderStreamTotalTimeoutMessage(providerName: string, timeoutMs: number): string {
+        return `${providerName} streaming did not finish within ${Math.round(timeoutMs / 1000)} seconds.`;
+    }
+
     protected withProviderGenerateTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             const timeout = globalThis.setTimeout(() => reject(new Error(message)), timeoutMs);
@@ -1699,7 +2314,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     async streamAiOperations(request: OpenPencilAiDesignRequest, apply: OpenPencilAiDesignStreamApply): Promise<OpenPencilAiDesignResult> {
         const context = this.createAiSkillContext(request);
         const diagnostics: string[] = [];
-        const providers = this.resolveAiProviders();
+        const providers = this.resolveAiProviders(request);
         let providerReturnedOperations = false;
 
         for (const [providerIndex, provider] of providers.entries()) {
@@ -1716,31 +2331,91 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             };
             let currentRequest: OpenPencilAiDesignRequest = request;
             const acceptedOperations: OpenPencilDesignOperation[] = [];
+            let pendingStreamOperations: OpenPencilDesignOperation[] = [];
+            let lastDeferredPreviewDiagnostic: string | undefined;
+            let providerOperationSeenAt: number | undefined;
             let completedOperations: OpenPencilDesignOperation[] | undefined;
 
-            const acceptOperations = async (operations: OpenPencilDesignOperation[]): Promise<void> => {
-                if (!operations.length) {
+            const acceptOperations = async (operations: OpenPencilDesignOperation[], force = false, allowTemporaryLayoutQualityIssues = true): Promise<void> => {
+                if (operations.length) {
+                    providerReturnedOperations = true;
+                    providerOperationSeenAt = Date.now();
+                    if (!operations.every(operation => this.isDesignOperationLike(operation))) {
+                        diagnostics.push(`${providerName} streamed operations that do not match the OpenPencil structured operation contract.`);
+                        canvasAiFrontendDebug('provider-stream-rejected', {
+                            ...providerDetails,
+                            reason: 'invalid-operations',
+                            operationsCount: operations.length,
+                            diagnosticsCount: diagnostics.length,
+                            operationSample: this.summarizeAiRejectedOperation(operations[0])
+                        });
+                        return;
+                    }
+                    pendingStreamOperations.push(...operations);
+                }
+                if (!pendingStreamOperations.length) {
                     return;
                 }
-                providerReturnedOperations = true;
-                if (!operations.every(operation => this.isDesignOperationLike(operation))) {
-                    diagnostics.push(`${providerName} streamed operations that do not match the OpenPencil structured operation contract.`);
-                    return;
+                const normalizedOperations = this.normalizeProviderAiStreamingOperations(pendingStreamOperations, currentRequest);
+                const stabilized = this.stabilizeProviderAiOperationsForRequest(normalizedOperations, currentRequest, providerName);
+                diagnostics.push(...stabilized.diagnostics);
+                // Streaming resilience: a model can stream a child or reference before the createNode
+                // that introduces its parent/target (forward reference). Instead of deferring the whole
+                // pending batch until the stream stalls, apply the operations that already resolve and
+                // keep only the unresolved ones pending so they apply once their dependency streams in.
+                if (!force && stabilized.diagnostic && stabilized.operations.length && stabilized.skippedOperations?.length) {
+                    const subsetDiagnostic = this.validateAiOperationsPreview(stabilized.operations, currentRequest, providerName, {
+                        allowTemporaryLayoutQualityIssues
+                    });
+                    if (!subsetDiagnostic) {
+                        const partialApply = await apply({
+                            operations: stabilized.operations,
+                            context,
+                            source: 'provider',
+                            providerId: provider.id,
+                            providerLabel: provider.label ?? provider.id,
+                            diagnostics
+                        });
+                        if (partialApply?.applied) {
+                            acceptedOperations.push(...stabilized.operations);
+                            pendingStreamOperations = stabilized.skippedOperations;
+                            lastDeferredPreviewDiagnostic = undefined;
+                            currentRequest = {
+                                ...currentRequest,
+                                document: partialApply.document,
+                                selection: partialApply.selection,
+                                mode: currentRequest.mode === 'continuation' ? 'continuation' : 'maintenance'
+                            };
+                            canvasAiFrontendDebug('provider-stream-partial-apply', {
+                                ...providerDetails,
+                                appliedCount: stabilized.operations.length,
+                                retainedPendingCount: pendingStreamOperations.length,
+                                diagnosticsCount: diagnostics.length
+                            });
+                            return;
+                        }
+                    }
                 }
-                const normalizedOperations = this.normalizeProviderAiStreamingOperations(operations, currentRequest);
-                const previewDiagnostic = this.validateAiOperationsPreview(normalizedOperations, currentRequest, providerName);
+                const previewDiagnostic = stabilized.diagnostic ?? this.validateAiOperationsPreview(stabilized.operations, currentRequest, providerName, {
+                    allowTemporaryLayoutQualityIssues
+                });
                 if (previewDiagnostic) {
-                    diagnostics.push(previewDiagnostic);
-                    canvasAiFrontendDebug('provider-stream-rejected', {
+                    if (force || previewDiagnostic !== lastDeferredPreviewDiagnostic) {
+                        diagnostics.push(previewDiagnostic);
+                    }
+                    lastDeferredPreviewDiagnostic = previewDiagnostic;
+                    canvasAiFrontendDebug('provider-stream-deferred', {
                         ...providerDetails,
                         reason: 'preview-validation',
-                        operationsCount: normalizedOperations.length,
-                        diagnosticsCount: diagnostics.length
+                        operationsCount: stabilized.operations.length,
+                        pendingOperationsCount: pendingStreamOperations.length,
+                        diagnosticsCount: diagnostics.length,
+                        diagnostic: previewDiagnostic.slice(0, 500)
                     });
                     return;
                 }
                 const applyResult = await apply({
-                    operations: normalizedOperations,
+                    operations: stabilized.operations,
                     context,
                     source: 'provider',
                     providerId: provider.id,
@@ -1751,7 +2426,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                     diagnostics.push(`${providerName} streamed operations were valid but were not applied by the Canvas editor.`);
                     return;
                 }
-                acceptedOperations.push(...normalizedOperations);
+                acceptedOperations.push(...stabilized.operations);
+                pendingStreamOperations = [];
+                lastDeferredPreviewDiagnostic = undefined;
                 currentRequest = {
                     ...currentRequest,
                     document: applyResult.document,
@@ -1762,29 +2439,34 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
             canvasAiFrontendDebug('provider-stream-start', {
                 ...providerDetails,
-                selectionCount: request.selection.length
+                selectionCount: request.selection.length,
+                timeouts: this.resolveProviderStreamTimeouts(request)
             });
 
             try {
+                const streamTimeouts = this.resolveProviderStreamTimeouts(request);
                 const streamStartedAt = Date.now();
-                const firstOperationDeadline = streamStartedAt + this.providerStreamFirstOperationTimeoutMs;
+                const firstOperationDeadline = streamStartedAt + streamTimeouts.firstOperationMs;
                 let lastAcceptedOperationAt = streamStartedAt;
                 const streamIterator = provider.streamOperations(currentRequest, context)[Symbol.asyncIterator]();
                 try {
                     while (true) {
                         const now = Date.now();
                         const elapsed = now - streamStartedAt;
-                        const remainingTotal = this.providerStreamTotalTimeoutMs - elapsed;
+                        const remainingTotal = streamTimeouts.totalMs - elapsed;
                         if (remainingTotal <= 0) {
-                            throw new Error(`${providerName} streaming did not finish within ${Math.round(this.providerStreamTotalTimeoutMs / 1000)} seconds.`);
+                            throw new Error(this.formatProviderStreamTotalTimeoutMessage(providerName, streamTimeouts.totalMs));
                         }
-                        const remainingOperationTime = acceptedOperations.length
-                            ? this.providerStreamIdleTimeoutMs - (now - lastAcceptedOperationAt)
+                        const operationProgressSeenAt = acceptedOperations.length
+                            ? lastAcceptedOperationAt
+                            : providerOperationSeenAt;
+                        const remainingOperationTime = operationProgressSeenAt !== undefined
+                            ? streamTimeouts.idleMs - (now - operationProgressSeenAt)
                             : firstOperationDeadline - now;
                         if (remainingOperationTime <= 0) {
-                            throw new Error(acceptedOperations.length
-                                ? `${providerName} streaming stopped producing OpenPencil operations for ${Math.round(this.providerStreamIdleTimeoutMs / 1000)} seconds.`
-                                : `${providerName} streaming did not produce an OpenPencil operation within ${Math.round(this.providerStreamFirstOperationTimeoutMs / 1000)} seconds.`);
+                            throw new Error(operationProgressSeenAt !== undefined
+                                ? this.formatProviderStreamIdleTimeoutMessage(providerName, streamTimeouts.idleMs)
+                                : this.formatProviderStreamFirstOperationTimeoutMessage(providerName, streamTimeouts.firstOperationMs));
                         }
                         const nextTimeout = Math.min(
                             remainingTotal,
@@ -1793,9 +2475,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                         const next = await this.withProviderStreamTimeout(
                             Promise.resolve(streamIterator.next()),
                             nextTimeout,
-                            acceptedOperations.length
-                                ? `${providerName} streaming stopped producing OpenPencil operations for ${Math.round(nextTimeout / 1000)} seconds.`
-                                : `${providerName} streaming did not produce an OpenPencil operation within ${Math.round(nextTimeout / 1000)} seconds.`
+                            operationProgressSeenAt !== undefined
+                                ? this.formatProviderStreamIdleTimeoutMessage(providerName, nextTimeout)
+                                : this.formatProviderStreamFirstOperationTimeoutMessage(providerName, nextTimeout)
                         );
                         if (next.done) {
                             break;
@@ -1816,6 +2498,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                         if (event.type === 'complete') {
                             diagnostics.push(...(event.diagnostics ?? []).map(diagnostic => `${providerName}: ${diagnostic}`));
                             if (event.operations?.length) {
+                                providerOperationSeenAt = Date.now();
                                 completedOperations = event.operations;
                             }
                         }
@@ -1825,7 +2508,37 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                     throw error;
                 }
                 if (!acceptedOperations.length && completedOperations?.length) {
-                    await acceptOperations(completedOperations);
+                    await acceptOperations(completedOperations, true, false);
+                }
+                if (pendingStreamOperations.length) {
+                    await acceptOperations([], true, false);
+                    if (!acceptedOperations.length && lastDeferredPreviewDiagnostic) {
+                        const selfCorrected = await this.tryProviderAiSelfCorrection(provider, providerName, currentRequest, lastDeferredPreviewDiagnostic, pendingStreamOperations, diagnostics);
+                        if (selfCorrected?.operations.length) {
+                            pendingStreamOperations = [];
+                            lastDeferredPreviewDiagnostic = undefined;
+                            await acceptOperations(selfCorrected.operations, true, false);
+                        }
+                    }
+                }
+                if (!acceptedOperations.length) {
+                    const reason = lastDeferredPreviewDiagnostic
+                        ?? (completedOperations?.length
+                            ? 'The stream returned operations only at completion, but the complete batch was not usable.'
+                            : 'The stream ended without a usable operation event.');
+                    const recovered = await this.tryProviderAiStreamingRecovery(
+                        provider,
+                        providerName,
+                        currentRequest,
+                        diagnostics,
+                        reason,
+                        pendingStreamOperations.length ? pendingStreamOperations : completedOperations ?? []
+                    );
+                    if (recovered?.operations.length) {
+                        pendingStreamOperations = [];
+                        lastDeferredPreviewDiagnostic = undefined;
+                        await acceptOperations(recovered.operations, true, false);
+                    }
                 }
                 if (acceptedOperations.length) {
                     canvasAiFrontendDebug('provider-stream-accepted', {
@@ -1844,13 +2557,26 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 }
                 diagnostics.push(`${providerName} streaming completed without usable OpenPencil operations.`);
             } catch (error) {
-                diagnostics.push(`${providerName} streaming failed: ${error instanceof Error ? error.message : String(error)}`);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                diagnostics.push(`${providerName} streaming failed: ${errorMessage}`);
                 canvasAiFrontendDebug('provider-stream-error', {
                     ...providerDetails,
                     diagnosticsCount: diagnostics.length,
                     errorName: error instanceof Error ? error.name : typeof error,
-                    messageLength: error instanceof Error ? error.message.length : String(error).length
+                    messageLength: errorMessage.length,
+                    message: errorMessage.slice(0, 400)
                 });
+                if (!acceptedOperations.length && this.isProviderBackendUnavailableError(errorMessage)) {
+                    diagnostics.push(this.providerBackendUnavailableMessage(providerName, errorMessage));
+                    canvasAiFrontendDebug('provider-backend-unavailable', { ...providerDetails, stage: 'stream' });
+                } else if (!acceptedOperations.length) {
+                    const recovered = await this.tryProviderAiStreamingRecovery(provider, providerName, currentRequest, diagnostics, errorMessage, pendingStreamOperations);
+                    if (recovered?.operations.length) {
+                        pendingStreamOperations = [];
+                        lastDeferredPreviewDiagnostic = undefined;
+                        await acceptOperations(recovered.operations, true, false);
+                    }
+                }
                 if (acceptedOperations.length) {
                     return {
                         operations: acceptedOperations,
@@ -1922,14 +2648,19 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
     }
 
-    protected resolveAiProviders(): OpenPencilAiDesignProvider[] {
+    protected resolveAiProviders(request?: OpenPencilAiDesignRequest): OpenPencilAiDesignProvider[] {
         const providers = [
             ...(this.aiProviderContributions?.getContributions() ?? []),
             ...(this.aiProvider ? [this.aiProvider] : [])
         ];
-        return providers
+        const sorted = providers
             .filter((provider, index) => providers.indexOf(provider) === index)
             .sort((left, right) => (right.priority ?? 0) - (left.priority ?? 0));
+        if (request?.execution?.providerId || request?.execution?.runtime || request?.execution?.modelProvider || request?.execution?.model) {
+            const runtimeProvider = sorted.find(provider => provider.id === 'openpencil.cybervinci-ai-runtime');
+            return runtimeProvider ? [runtimeProvider] : sorted;
+        }
+        return sorted;
     }
 
     protected createPageLevelAiFailureMessage(providers: OpenPencilAiDesignProvider[], diagnostics: string[], providerReturnedOperations: boolean): string {
@@ -1977,33 +2708,34 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return operations;
     }
 
-    protected shouldUseDeterministicSkeletonFallback(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): boolean {
-        if (context.phase !== 'generation' || request.selection.length || request.mode === 'continuation' || request.mode === 'maintenance') {
-            return false;
-        }
-        return /Incremental stage\s+1\/3/i.test(request.prompt)
-            && /\b(root view frame|major visible section|container skeleton|skeleton)\b/i.test(request.prompt);
+    protected shouldUseDeterministicSkeletonFallback(_request: OpenPencilAiDesignRequest, _context: OpenPencilAiSkillContext): boolean {
+        return false;
     }
 
     protected generateDeterministicSkeletonFallbackOperations(request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] {
         const page = this.documents.getActivePage(request.document);
-        const root = this.isMarketplaceHomepagePrompt(request.prompt)
-            ? this.createMarketplaceSkeletonPageNode(request)
-            : this.createGenericSkeletonPageNode(request);
+        const root = this.resolveAiSkeletonProfile(request.prompt) === 'web-page'
+            ? this.createGenericSkeletonPageNode(request)
+            : this.createBoundedCompositionSkeletonNode(request);
         const pageHeight = Math.max(
             this.numberValue(page.height, 620),
             this.numberValue(root.y, 0) + this.numberValue(root.height, 720) + 40
         );
+        const pageWidth = Math.max(this.numberValue(page.width, 900), this.numberValue(root.width, 1200));
         return [
             {
                 operation: 'updatePage',
                 pageId: page.id,
                 changes: {
-                    width: Math.max(this.numberValue(page.width, 900), this.numberValue(root.width, 1200)),
+                    width: pageWidth,
                     height: pageHeight,
-                    background: '#eeeeee',
-                    children: [root]
+                    background: '#eeeeee'
                 }
+            },
+            {
+                operation: 'createNode',
+                parentId: null,
+                node: root
             },
             { operation: 'setSelection', nodeIds: [root.id] }
         ];
@@ -2023,11 +2755,42 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return response.diagnostics.map(diagnostic => `${providerName}: ${diagnostic}`);
     }
 
+    protected summarizeAiRejectedOperation(value: unknown): Record<string, unknown> {
+        if (Array.isArray(value)) {
+            return {
+                kind: 'array',
+                length: value.length,
+                first: value.length ? this.summarizeAiRejectedOperation(value[0]) : undefined
+            };
+        }
+        if (!this.isRecord(value)) {
+            return { kind: typeof value };
+        }
+        const nestedOperation = this.isRecord(value.operation) ? value.operation : undefined;
+        const node = this.isRecord(value.node) ? value.node : undefined;
+        const changes = this.isRecord(value.changes) ? value.changes : undefined;
+        const payload = this.isRecord(value.payload) ? value.payload : this.isRecord(value.data) ? value.data : undefined;
+        return {
+            kind: 'object',
+            keys: Object.keys(value).slice(0, 16),
+            operationType: typeof value.operation,
+            operationValue: typeof value.operation === 'string' ? value.operation : undefined,
+            typeValue: typeof value.type === 'string' ? value.type : undefined,
+            opValue: typeof value.op === 'string' ? value.op : undefined,
+            actionValue: typeof value.action === 'string' ? value.action : undefined,
+            nodeKeys: node ? Object.keys(node).slice(0, 16) : undefined,
+            changesKeys: changes ? Object.keys(changes).slice(0, 16) : undefined,
+            payloadKeys: payload ? Object.keys(payload).slice(0, 16) : undefined,
+            nestedOperationKeys: nestedOperation ? Object.keys(nestedOperation).slice(0, 16) : undefined,
+            nestedOperationValue: nestedOperation && typeof nestedOperation.operation === 'string' ? nestedOperation.operation : undefined
+        };
+    }
+
     protected normalizeProviderAiOperations(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] {
         const page = this.documents.getActivePage(request.document);
-        const normalizedOperations = this.normalizeProviderAiFlatSiblingZOrder(this.normalizeProviderAiCreateIndexes(operations
+        const normalizedOperations = this.repairProviderAiMissingReferences(this.normalizeProviderAiFlatSiblingZOrder(this.normalizeProviderAiCreateIndexes(operations
             .map(operation => this.normalizeOperationParentReferences(operation, page))
-            .map(operation => this.normalizeProviderAiOperationZOrder(operation))));
+            .map(operation => this.normalizeProviderAiOperationZOrder(operation)))), request, page);
         if (request.mode === 'continuation' || request.selection.length || !this.isPageLevelAiPrompt(request.prompt)) {
             return normalizedOperations;
         }
@@ -2042,6 +2805,401 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             .filter(node => !createdIds.has(node.id))
             .map(node => ({ operation: 'removeNode', nodeId: node.id }));
         return removals.length ? [...removals, ...normalizedOperations] : normalizedOperations;
+    }
+
+    protected repairProviderAiMissingReferences(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest, page: OpenPencilPage): OpenPencilDesignOperation[] {
+        if (!this.shouldRepairProviderAiMissingReferences(request) || !operations.length) {
+            return operations;
+        }
+        const existingIds = new Set(this.documents.flattenNodes(request.document).map(node => node.id));
+        const plannedCreateIds = this.collectProviderAiCreatedNodeIds(operations);
+        const missingCreateIds = new Set<string>();
+        for (const operation of operations) {
+            if ((operation.operation === 'updateNode' || operation.operation === 'replaceNode')
+                && !existingIds.has(operation.nodeId)
+                && !plannedCreateIds.has(operation.nodeId)) {
+                missingCreateIds.add(operation.nodeId);
+            }
+            if ((operation.operation === 'createNode' || operation.operation === 'addNode') && typeof operation.parentId === 'string') {
+                const parentId = this.normalizePageParentId(operation.parentId, page);
+                if (parentId && !existingIds.has(parentId) && !plannedCreateIds.has(parentId)) {
+                    missingCreateIds.add(parentId);
+                }
+            }
+        }
+        if (!missingCreateIds.size) {
+            return operations;
+        }
+
+        const knownIds = new Set([...existingIds, ...plannedCreateIds, ...missingCreateIds]);
+        const emittedRepairIds = new Set<string>();
+        const repaired: OpenPencilDesignOperation[] = [];
+        let repairedCount = 0;
+
+        const ensureMissingParent = (parentId: string | null | undefined, sourceId: string): void => {
+            if (!parentId || existingIds.has(parentId) || plannedCreateIds.has(parentId) || emittedRepairIds.has(parentId)) {
+                return;
+            }
+            const parentCreate = this.createProviderAiMissingParentCreate(parentId, sourceId, page, knownIds, missingCreateIds, repaired.length);
+            repaired.push(parentCreate);
+            emittedRepairIds.add(parentId);
+            knownIds.add(parentId);
+            repairedCount++;
+        };
+
+        for (const operation of operations) {
+            if (operation.operation === 'updateNode'
+                && !existingIds.has(operation.nodeId)
+                && !plannedCreateIds.has(operation.nodeId)
+                && !emittedRepairIds.has(operation.nodeId)) {
+                const create = this.createProviderAiCreateForMissingUpdate(operation, page, knownIds, missingCreateIds, repaired.length);
+                if (create) {
+                    ensureMissingParent(create.parentId, operation.nodeId);
+                    repaired.push(create);
+                    emittedRepairIds.add(operation.nodeId);
+                    knownIds.add(operation.nodeId);
+                    this.collectProviderAiNodeIds(create.node, knownIds);
+                    repairedCount++;
+                    continue;
+                }
+            }
+            if (operation.operation === 'replaceNode'
+                && !existingIds.has(operation.nodeId)
+                && !plannedCreateIds.has(operation.nodeId)
+                && !emittedRepairIds.has(operation.nodeId)) {
+                const create = this.createProviderAiCreateForMissingReplace(operation, page, knownIds, missingCreateIds, repaired.length);
+                ensureMissingParent(create.parentId, operation.nodeId);
+                repaired.push(create);
+                emittedRepairIds.add(operation.nodeId);
+                knownIds.add(operation.nodeId);
+                this.collectProviderAiNodeIds(create.node, knownIds);
+                repairedCount++;
+                continue;
+            }
+            if (operation.operation === 'createNode' || operation.operation === 'addNode') {
+                const parentId = this.normalizePageParentId(operation.parentId, page);
+                ensureMissingParent(parentId, typeof operation.node.id === 'string' ? operation.node.id : 'generated-node');
+                repaired.push(parentId === operation.parentId ? operation : { ...operation, parentId });
+                this.collectProviderAiNodeIds(operation.node, knownIds);
+                continue;
+            }
+            if (operation.operation === 'setSelection') {
+                const nodeIds = operation.nodeIds.filter(id => knownIds.has(id) || emittedRepairIds.has(id));
+                if (nodeIds.length) {
+                    repaired.push({ ...operation, nodeIds: [...new Set(nodeIds)] });
+                    continue;
+                }
+                const fallbackSelection = this.lastProviderAiCreatedNodeId(repaired);
+                if (fallbackSelection) {
+                    repaired.push({ operation: 'setSelection', nodeIds: [fallbackSelection] });
+                    repairedCount++;
+                    continue;
+                }
+            }
+            repaired.push(operation);
+        }
+
+        if (repairedCount) {
+            canvasAiFrontendDebug('provider-reference-repaired', {
+                missingIds: [...missingCreateIds],
+                repairedCount,
+                operationsBefore: operations.length,
+                operationsAfter: repaired.length
+            });
+        }
+        return repaired;
+    }
+
+    protected shouldRepairProviderAiMissingReferences(request: OpenPencilAiDesignRequest): boolean {
+        return !request.selection.length && this.isPageLevelAiPrompt(request.prompt);
+    }
+
+    protected collectProviderAiCreatedNodeIds(operations: OpenPencilDesignOperation[]): Set<string> {
+        const ids = new Set<string>();
+        for (const operation of operations) {
+            if (operation.operation === 'createNode' || operation.operation === 'addNode') {
+                this.collectProviderAiNodeIds(operation.node, ids);
+            }
+        }
+        return ids;
+    }
+
+    protected collectProviderAiNodeIds(node: Partial<OpenPencilNode>, ids: Set<string>): void {
+        if (typeof node.id === 'string' && node.id) {
+            ids.add(node.id);
+        }
+        if (!Array.isArray(node.children)) {
+            return;
+        }
+        for (const child of node.children) {
+            if (this.isRecord(child)) {
+                this.collectProviderAiNodeIds(child as Partial<OpenPencilNode>, ids);
+            }
+        }
+    }
+
+    protected createProviderAiCreateForMissingUpdate(
+        operation: Extract<OpenPencilDesignOperation, { operation: 'updateNode' }>,
+        page: OpenPencilPage,
+        knownIds: Set<string>,
+        missingCreateIds: Set<string>,
+        sequence: number
+    ): Extract<OpenPencilDesignOperation, { operation: 'createNode' }> | undefined {
+        if (!this.shouldCreateProviderAiNodeFromChanges(operation.nodeId, operation.changes)) {
+            return undefined;
+        }
+        const parentId = this.providerAiMissingNodeParentId(operation.nodeId, knownIds, missingCreateIds);
+        return {
+            operation: 'createNode',
+            parentId,
+            node: this.createProviderAiNodeFromMissingReference(operation.nodeId, operation.changes, page, parentId, sequence)
+        };
+    }
+
+    protected createProviderAiCreateForMissingReplace(
+        operation: Extract<OpenPencilDesignOperation, { operation: 'replaceNode' }>,
+        page: OpenPencilPage,
+        knownIds: Set<string>,
+        missingCreateIds: Set<string>,
+        sequence: number
+    ): Extract<OpenPencilDesignOperation, { operation: 'createNode' }> {
+        const parentId = this.providerAiMissingNodeParentId(operation.nodeId, knownIds, missingCreateIds);
+        return {
+            operation: 'createNode',
+            parentId,
+            node: this.createProviderAiNodeFromMissingReference(operation.nodeId, operation.node, page, parentId, sequence)
+        };
+    }
+
+    protected createProviderAiMissingParentCreate(
+        parentId: string,
+        sourceId: string,
+        page: OpenPencilPage,
+        knownIds: Set<string>,
+        missingCreateIds: Set<string>,
+        sequence: number
+    ): Extract<OpenPencilDesignOperation, { operation: 'createNode' }> {
+        const grandParentId = this.providerAiMissingNodeParentId(parentId, knownIds, missingCreateIds);
+        return {
+            operation: 'createNode',
+            parentId: grandParentId,
+            node: this.createProviderAiNodeFromMissingReference(parentId, {
+                type: 'frame',
+                name: this.providerAiReadableName(parentId),
+                role: 'section',
+                explain: `Created by Canvas AI reference repair before inserting ${sourceId}.`
+            }, page, grandParentId, sequence)
+        };
+    }
+
+    protected shouldCreateProviderAiNodeFromChanges(nodeId: string, changes: OpenPencilNodeChanges): boolean {
+        const record = changes as Record<string, unknown>;
+        return this.providerAiIsContainerLikeMissingId(nodeId)
+            || this.providerAiIsTextLikeMissingId(nodeId)
+            || /(?:image|img|photo|visual|thumb|banner|media|logo|icon|button|cta|input|search|nav|menu|price|badge|chip)/i.test(nodeId)
+            || typeof record.content === 'string'
+            || Array.isArray(record.content)
+            || typeof record.width === 'number'
+            || typeof record.height === 'number'
+            || Array.isArray(record.children)
+            || Array.isArray(record.fill)
+            || typeof record.background === 'string'
+            || typeof record.backgroundColor === 'string';
+    }
+
+    protected createProviderAiNodeFromMissingReference(
+        nodeId: string,
+        source: Partial<OpenPencilNode> | OpenPencilNodeChanges,
+        page: OpenPencilPage,
+        parentId: string | null | undefined,
+        sequence: number
+    ): Partial<OpenPencilNode> & { type?: OpenPencilNodeType } {
+        const record = source as Record<string, unknown>;
+        const type = this.providerAiInferMissingNodeType(nodeId, record);
+        const defaults = this.providerAiMissingNodeDefaults(nodeId, type, page, parentId, sequence);
+        const node = {
+            ...source,
+            id: nodeId,
+            type,
+            name: typeof record.name === 'string' && record.name.trim() ? record.name : this.providerAiReadableName(nodeId),
+            x: record.x === undefined ? defaults.x : source.x,
+            y: record.y === undefined ? defaults.y : source.y,
+            width: record.width === undefined ? defaults.width : source.width,
+            height: record.height === undefined ? defaults.height : source.height,
+            ...(record.role === undefined && defaults.role ? { role: defaults.role } : {}),
+            ...(record.fill === undefined && defaults.fill ? { fill: defaults.fill } : {}),
+            ...(record.cornerRadius === undefined && defaults.cornerRadius !== undefined ? { cornerRadius: defaults.cornerRadius } : {}),
+            ...(record.fontSize === undefined && defaults.fontSize !== undefined ? { fontSize: defaults.fontSize } : {}),
+            ...(record.fontWeight === undefined && defaults.fontWeight !== undefined ? { fontWeight: defaults.fontWeight } : {}),
+            ...(record.content === undefined && defaults.content !== undefined ? { content: defaults.content } : {})
+        } as Partial<OpenPencilNode> & { type?: OpenPencilNodeType };
+        if (type !== 'text' && node.content !== undefined && !Array.isArray(node.children)) {
+            delete (node as Record<string, unknown>).content;
+        }
+        return node;
+    }
+
+    protected providerAiInferMissingNodeType(nodeId: string, record: Record<string, unknown>): OpenPencilNodeType {
+        if (typeof record.type === 'string') {
+            return this.normalizeStructuredNodeType(record.type);
+        }
+        if (this.providerAiIsContainerLikeMissingId(nodeId) && !this.providerAiIsTextLikeMissingId(nodeId)) {
+            return 'frame';
+        }
+        if (this.providerAiIsTextLikeMissingId(nodeId) || typeof record.content === 'string' || Array.isArray(record.content)) {
+            return 'text';
+        }
+        if (/(?:image|img|photo|visual|thumb|media|banner)/i.test(nodeId) || typeof record.src === 'string' || typeof record.imagePrompt === 'string') {
+            return 'image';
+        }
+        if (/(?:icon|logo)/i.test(nodeId) || typeof record.iconId === 'string') {
+            return 'icon_font';
+        }
+        if (/(?:circle|dot|avatar|bubble)/i.test(nodeId)) {
+            return 'ellipse';
+        }
+        if (/(?:line|divider|rule)/i.test(nodeId)) {
+            return 'line';
+        }
+        return 'rectangle';
+    }
+
+    protected providerAiMissingNodeParentId(nodeId: string, knownIds: Set<string>, missingCreateIds: Set<string>): string | null {
+        if (this.providerAiIsContainerLikeMissingId(nodeId)) {
+            for (const candidate of this.providerAiCandidateParentIds(nodeId, true)) {
+                if (candidate !== nodeId && (knownIds.has(candidate) || missingCreateIds.has(candidate))) {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+        for (const candidate of this.providerAiCandidateParentIds(nodeId, false)) {
+            if (candidate !== nodeId && (knownIds.has(candidate) || missingCreateIds.has(candidate))) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    protected providerAiCandidateParentIds(nodeId: string, containerOnly: boolean): string[] {
+        const lower = nodeId.toLowerCase();
+        const base = lower
+            .replace(/-(?:title|heading|headline|subtitle|copy|body|text|label|description|desc|price|tag|badge|button|btn|cta|input|field|placeholder|image|img|visual|media|icon|logo|link|nav|menu)(?:-\d+)?$/i, '')
+            .replace(/-(?:card|panel|tile|item)(?:-\d+)?$/i, '');
+        const candidates = [
+            `${base}-card`,
+            `${base}-panel`,
+            `${base}-tile`,
+            `${base}-item`,
+            `${base}-content`,
+            `${base}-section`,
+            `${base}-container`,
+            `${base}-frame`,
+            `${base}-root`,
+            `${base}-page`,
+            'main-content',
+            'page-content',
+            'page-root',
+            'root',
+            'artboard'
+        ];
+        if (containerOnly) {
+            candidates.unshift(`${base}-root`, `${base}-page`);
+        }
+        return [...new Set(candidates.filter(candidate => candidate && candidate !== lower))];
+    }
+
+    protected providerAiIsContainerLikeMissingId(nodeId: string): boolean {
+        return /(?:root|page|frame|container|section|hero|header|footer|nav|grid|row|column|col|card|panel|tile|item|shelf|list|content|wrapper|artboard|canvas)/i.test(nodeId);
+    }
+
+    protected providerAiIsTextLikeMissingId(nodeId: string): boolean {
+        return /(?:title|heading|headline|subtitle|copy|body|text|label|description|desc|price|caption|kicker|eyebrow|link|placeholder)/i.test(nodeId);
+    }
+
+    protected providerAiMissingNodeDefaults(
+        nodeId: string,
+        type: OpenPencilNodeType,
+        page: OpenPencilPage,
+        parentId: string | null | undefined,
+        sequence: number
+    ): Partial<OpenPencilNode> {
+        const inParent = !!parentId;
+        const pageWidth = Math.max(320, this.numberValue(page.width, 1200));
+        const topLevelX = Math.min(96, Math.max(32, Math.round(pageWidth * 0.06)));
+        const topLevelY = 80 + sequence * 32;
+        if (type === 'text') {
+            const title = /(?:title|heading|headline)/i.test(nodeId);
+            const copy = /(?:copy|body|description|desc|subtitle)/i.test(nodeId);
+            const price = /price/i.test(nodeId);
+            return {
+                role: title ? 'heading' : 'text',
+                x: inParent ? 32 : topLevelX,
+                y: inParent ? title ? 40 : copy ? 104 : price ? 168 : 72 : topLevelY,
+                width: title ? 640 : 520,
+                height: title ? 56 : 36,
+                fontSize: title ? 36 : price ? 24 : 16,
+                fontWeight: title || price ? 700 : 400,
+                content: title ? this.providerAiReadableName(nodeId) : 'Texto'
+            };
+        }
+        if (type === 'image') {
+            return {
+                role: 'media',
+                x: inParent ? 32 : topLevelX,
+                y: inParent ? 32 : topLevelY,
+                width: inParent ? 320 : Math.min(520, pageWidth - topLevelX * 2),
+                height: inParent ? 180 : 260,
+                fill: [{ type: 'solid', color: '#eef2f7' }],
+                cornerRadius: 12
+            };
+        }
+        if (type === 'icon_font' || type === 'ellipse') {
+            return {
+                role: 'icon',
+                x: inParent ? 32 : topLevelX,
+                y: inParent ? 32 : topLevelY,
+                width: 40,
+                height: 40,
+                fill: [{ type: 'solid', color: '#eaf2ff' }]
+            };
+        }
+        if (type === 'line') {
+            return {
+                x: inParent ? 32 : topLevelX,
+                y: inParent ? 96 : topLevelY,
+                width: inParent ? 480 : Math.min(960, pageWidth - topLevelX * 2),
+                height: 1
+            };
+        }
+        const hero = /hero/i.test(nodeId);
+        const header = /header|nav/i.test(nodeId);
+        const card = /card|panel|tile|item/i.test(nodeId);
+        return {
+            role: hero ? 'section' : card ? 'card' : header ? 'navigation' : 'section',
+            x: inParent ? 24 : topLevelX,
+            y: inParent ? 24 : topLevelY,
+            width: header ? Math.min(1120, pageWidth - topLevelX * 2) : hero ? Math.min(1040, pageWidth - topLevelX * 2) : card ? 320 : Math.min(920, pageWidth - topLevelX * 2),
+            height: header ? 88 : hero ? 320 : card ? 220 : 180,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            cornerRadius: header ? 0 : 16
+        };
+    }
+
+    protected providerAiReadableName(nodeId: string): string {
+        return nodeId
+            .replace(/[-_]+/g, ' ')
+            .replace(/\b\w/g, character => character.toUpperCase());
+    }
+
+    protected lastProviderAiCreatedNodeId(operations: OpenPencilDesignOperation[]): string | undefined {
+        for (let index = operations.length - 1; index >= 0; index--) {
+            const operation = operations[index];
+            if ((operation.operation === 'createNode' || operation.operation === 'addNode') && typeof operation.node.id === 'string') {
+                return operation.node.id;
+            }
+        }
+        return undefined;
     }
 
     protected normalizeProviderAiStreamingOperations(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] {
@@ -2216,9 +3374,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             .filter((part): part is string => typeof part === 'string')
             .join(' ')
             .toLowerCase();
-        if (/\b(text|copy|headline|heading|title|subtitle|label|caption|icon|button|badge|avatar|header|nav|navigation|foreground|control|cta|tab|menu|overlay)\b/.test(descriptor)) {
-                    return 80;
-                }
+        if (/\b(text|copy|headline|heading|title|subtitle|label|caption|icon|button|badge|avatar|header|nav|navigation|foreground|control|cta|tab|menu)\b/.test(descriptor)) {
+            return 80;
+        }
         if (/\b(image|photo|picture|illustration|shape|card|input|field|form|panel|modal|dialog|chart|graph|media|thumbnail)\b/.test(descriptor)) {
             return 50;
         }
@@ -2299,7 +3457,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected isPageLevelAiPrompt(prompt: string): boolean {
-        return /\b(landing|page|screen|dashboard|site|app|hero|interface|tela|pagina|página)\b/i.test(prompt);
+        const lower = prompt.toLowerCase();
+        return this.isWebPageAiPrompt(lower)
+            || /\b(screen|dashboard|app|hero|interface|tela|poster|cartaz|flyer|banner|social|thumbnail|capa|cover|component|componente|card|modal|widget|wireframe|diagrama|diagram|figma|mockup|refer[eê]ncia visual|design de refer[eê]ncia)\b/i.test(lower);
     }
 
     protected shouldPreservePageWidthForAiPrompt(prompt: string): boolean {
@@ -2307,7 +3467,25 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (/\b(side[- ]by[- ]side|lado a lado|desktop e mobile|mobile e desktop|multiple views|múltiplas telas|multiplas telas)\b/i.test(lower)) {
             return false;
         }
-        return /\b(homepage|home page|página inicial|pagina inicial|landing|site|website|web|e-?commerce|loja|marketplace|mercado livre|mercadolivre|copy|copia|cópia|clone|clonar)\b/i.test(lower);
+        return this.isWebPageAiPrompt(lower);
+    }
+
+    protected isWebPageAiPrompt(lowerPrompt: string): boolean {
+        const explicitNonPageArtifact = /\b(figma|moodboard|mood board|style frame|poster|cartaz|flyer|banner|social|thumbnail|capa|cover|component|componente|card|modal|widget|wireframe|diagrama|diagram|fluxograma|app screen|tela de app|mobile screen|design de refer[eê]ncia)\b/i.test(lowerPrompt);
+        const explicitPage = /\b(homepage|home page|home\b|p[aá]gina inicial|landing|landing page|site|website|webpage|web page|e-?commerce|loja virtual|marketplace|feed de produtos|p[aá]gina web|full page|p[aá]gina completa)\b/i.test(lowerPrompt);
+        const cloneIntent = /\b(copy|copia|cópia|copie|copiar|clone|clonar|recrie|recreate|mimic|imite|igual|parecido|similar|refer[eê]ncia|reference)\b/i.test(lowerPrompt);
+        const pageSurfaceIntent = /\b(homepage|home page|home\b|p[aá]gina|site|website|web|loja|marketplace|e-?commerce|feed|landing)\b/i.test(lowerPrompt);
+        return explicitPage || (cloneIntent && (pageSurfaceIntent || this.isKnownWebSurfaceReference(lowerPrompt)) && !explicitNonPageArtifact);
+    }
+
+    protected isKnownWebSurfaceReference(lowerPrompt: string): boolean {
+        if (/\b(?:https?:\/\/|www\.|[a-z0-9-]+\.(?:com|com\.br|io|app|dev|ai|net|org)\b)/i.test(lowerPrompt)) {
+            return true;
+        }
+        const cloneIntent = /\b(copy|copia|c[oó]pia|copie|copiar|clone|clonar|recrie|recreate|mimic|imite|igual|parecido|similar|refer[eê]ncia|reference)\b/i.test(lowerPrompt);
+        const surfaceHint = /\b(p[aá]gina\s+inicial|homepage|home\s+page|site|website|web|app|aplicativo|loja|store|marketplace|e-?commerce|landing|screen|tela)\b/i.test(lowerPrompt);
+        const namedSurface = /\b(?:p[aá]gina\s+inicial|homepage|home\s+page|site|website|app|aplicativo|loja|store)\s+(?:do|da|de|of|for)\s+[a-z0-9à-öø-ÿ]/i.test(lowerPrompt);
+        return namedSurface || (cloneIntent && surfaceHint);
     }
 
     protected aiPromptTargetPageWidth(prompt: string): number | undefined {
@@ -2325,7 +3503,12 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return width >= pageWidth * 0.55 || height >= pageHeight * 0.55 || operation.node.type === 'frame';
     }
 
-    protected validateAiOperationsPreview(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest, providerName: string): string | undefined {
+    protected validateAiOperationsPreview(
+        operations: OpenPencilDesignOperation[],
+        request: OpenPencilAiDesignRequest,
+        providerName: string,
+        options: { allowTemporaryLayoutQualityIssues?: boolean } = {}
+    ): string | undefined {
         const continuationDiagnostic = this.validateContinuationAiOperations(operations, request, providerName);
         if (continuationDiagnostic) {
             return continuationDiagnostic;
@@ -2354,6 +3537,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             requireVisibleContent: this.isPageLevelAiPrompt(request.prompt)
         });
         if (!layoutQuality.valid) {
+            if (options.allowTemporaryLayoutQualityIssues && this.hasVisibleAiPageContent(preview.document)) {
+                return undefined;
+            }
             const details = layoutQuality.issues.slice(0, 3).map(issue => `${issue.path}: ${issue.message}`).join('; ');
             return `${providerName} operations were rejected because preview layout quality failed${details ? `: ${details}` : '.'}`;
         }
@@ -2364,9 +3550,15 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (request.mode !== 'continuation') {
             return undefined;
         }
-        const existingNodeIds = new Set(this.documents.flattenNodes(request.document).map(node => node.id));
+        const existingNodes = new Map(this.documents.flattenNodes(request.document).map(node => [node.id, node] as const));
+        const createdNodeIds = new Set<string>();
         for (const operation of operations) {
-            if (this.isContinuationDestructiveOperation(operation, existingNodeIds)) {
+            if (this.isProviderAiCreateOperation(operation)) {
+                if (typeof operation.node.id === 'string' && operation.node.id) {
+                    createdNodeIds.add(operation.node.id);
+                }
+            }
+            if (this.isContinuationDestructiveOperation(operation, existingNodes, createdNodeIds)) {
                 return `${providerName} operations were rejected because continuation mode must preserve existing nodes and layout; received '${operation.operation}'.`;
             }
         }
@@ -2377,7 +3569,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return !!message && /\b(missing-parent|not found)\b/i.test(message);
     }
 
-    protected isContinuationDestructiveOperation(operation: OpenPencilDesignOperation, existingNodeIds: Set<string>): boolean {
+    protected isContinuationDestructiveOperation(operation: OpenPencilDesignOperation, existingNodes: Map<string, OpenPencilNode>, createdNodeIds: Set<string>): boolean {
         switch (operation.operation) {
             case 'addNode':
             case 'createNode':
@@ -2386,6 +3578,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             case 'updatePage':
                 return Array.isArray(operation.changes.children);
             case 'updateNode':
+                if (createdNodeIds.has(operation.nodeId)) {
+                    return false;
+                }
+                return existingNodes.has(operation.nodeId)
+                    && !this.isSafeContinuationExistingNodeUpdate(operation, existingNodes.get(operation.nodeId));
             case 'replaceNode':
             case 'removeNode':
             case 'deleteNode':
@@ -2408,14 +3605,14 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             case 'setNodeLayout':
             case 'autoLayoutNode':
             case 'updatePathAnchors':
-                return existingNodeIds.has(operation.nodeId);
+                return existingNodes.has(operation.nodeId);
             case 'nudgeNodes':
             case 'alignNodes':
             case 'distributeNodes':
             case 'groupNodes':
             case 'booleanNodes':
             case 'convertToPath':
-                return operation.nodeIds.some(nodeId => existingNodeIds.has(nodeId));
+                return operation.nodeIds.some(nodeId => existingNodes.has(nodeId));
             case 'addPage':
             case 'setActivePage':
             case 'setVariable':
@@ -2428,6 +3625,42 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             case 'removePage':
                 return true;
         }
+    }
+
+    protected isSafeContinuationExistingNodeUpdate(
+        operation: Extract<OpenPencilDesignOperation, { operation: 'updateNode' }>,
+        existing: OpenPencilNode | undefined
+    ): boolean {
+        if (!existing) {
+            return false;
+        }
+        const changes = operation.changes as Record<string, unknown>;
+        const keys = Object.keys(changes);
+        if (!keys.length) {
+            return false;
+        }
+        const allowedKeys = new Set(['height', 'width', 'clipContent']);
+        if (keys.some(key => !allowedKeys.has(key))) {
+            return false;
+        }
+        if ('clipContent' in changes && changes.clipContent !== false) {
+            return false;
+        }
+        if ('height' in changes) {
+            const nextHeight = this.numberValue(changes.height as number | string | undefined, NaN);
+            const currentHeight = this.numericDimensionValue(existing.height);
+            if (!Number.isFinite(nextHeight) || currentHeight === undefined || nextHeight < currentHeight) {
+                return false;
+            }
+        }
+        if ('width' in changes) {
+            const nextWidth = this.numberValue(changes.width as number | string | undefined, NaN);
+            const currentWidth = this.numericDimensionValue(existing.width);
+            if (!Number.isFinite(nextWidth) || currentWidth === undefined || nextWidth < currentWidth) {
+                return false;
+            }
+        }
+        return true;
     }
 
     protected createAiSkillContext(request: OpenPencilAiDesignRequest): OpenPencilAiSkillContext {
@@ -2812,59 +4045,40 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return this.generateDeterministicGenerationOperations(request);
     }
 
-    protected isMarketplaceHomepagePrompt(prompt: string): boolean {
-        return /\b(mercado\s+livre|mercadolivre|marketplace|e-?commerce|loja|store|retail|ofertas?|offers?|produtos?|products?|homepage|p[aá]gina inicial|pagina inicial)\b/i.test(prompt);
+    protected promptBrandNameFromPrompt(prompt: string): string | undefined {
+        const patterns = [
+            /\b(?:com\s+o\s+nome|com\s+a\s+marca|nome|marca|chamado|chamada|called|named|with\s+the\s+name)\s+["']?([A-Za-z0-9À-ÖØ-öø-ÿ&+.' -]{2,48})/i,
+            /\b(?:p[aá]gina\s+inicial|homepage|home\s+page|site|website)\s+(?:do|da|de|of|for)\s+["']?([A-Za-z0-9À-ÖØ-öø-ÿ&+.' -]{2,48})/i,
+            /\b(?:copy|clone|c[oó]pia|recria[cç][aã]o|refer[eê]ncia)\s+(?:do|da|de|of|for)?\s*["']?([A-Za-z0-9À-ÖØ-öø-ÿ&+.' -]{2,48})/i
+        ];
+        for (const pattern of patterns) {
+            const cleaned = this.cleanPromptBrandName(pattern.exec(prompt)?.[1]);
+            if (cleaned) {
+                return cleaned;
+            }
+        }
+        return undefined;
     }
 
-    protected createMarketplaceSkeletonPageNode(request: OpenPencilAiDesignRequest): OpenPencilNode {
-        const baseId = this.stableAiIdBase(request.prompt);
-        const brand = this.marketplaceBrandNameFromPrompt(request.prompt) ?? 'Mercado Controlado';
-        const pageWidth = 1200;
-        const contentX = 82;
-        const contentWidth = 1036;
-        return {
-            id: this.uniqueAiId(request.document, `${baseId}-marketplace-homepage`),
-            type: 'frame',
-            name: 'Marketplace homepage skeleton',
-            role: 'page',
-            x: 0,
-            y: 0,
-            width: pageWidth,
-            height: 1480,
-            fill: [{ type: 'solid', color: '#eeeeee' }],
-            children: [
-                this.createMarketplaceHeaderNode(request, `${baseId}-header`, brand, pageWidth),
-                this.createMarketplaceHeroNode(request, `${baseId}-hero`, brand, pageWidth),
-                this.createMarketplaceBenefitsNode(request, `${baseId}-benefits`, contentX, 330, contentWidth),
-                this.createMarketplaceCategoryNode(request, `${baseId}-categories`, contentX, 450, contentWidth),
-                this.createMarketplaceShelfNode(request, `${baseId}-offers`, 'Ofertas do dia', 550, [
-                    ['Notebook leve', 'R$ 1.899', '18% OFF'],
-                    ['Smartphone Pro', 'R$ 3.249', '12x sem juros'],
-                    ['Cadeira ergonomica', 'R$ 329', '26% OFF'],
-                    ['Headphone sem fio', 'R$ 799', 'Frete gratis']
-                ], contentX, contentWidth),
-                this.createMarketplacePromoBannerNode(request, `${baseId}-plus-banner`, contentX, 850, contentWidth, 'Mercado Controlado+', 'Frete gratis, filmes e beneficios em uma assinatura.'),
-                this.createMarketplaceShelfNode(request, `${baseId}-history`, 'Inspirado no seu historico', 990, [
-                    ['Tecnologia para casa', 'R$ 949', 'Ver recomendacoes'],
-                    ['Casa pronta para tudo', 'R$ 219', 'Explorar ofertas'],
-                    ['Games e acessorios', 'R$ 399', 'Comprar agora'],
-                    ['Moda em destaque', 'R$ 159', 'Novidades']
-                ], contentX, contentWidth),
-                this.createMarketplaceClosingNode(request, `${baseId}-closing`, contentX, 1290, contentWidth)
-            ]
-        };
-    }
-
-    protected marketplaceBrandNameFromPrompt(prompt: string): string | undefined {
-        const match = /\b(?:com\s+o\s+nome|chamado|nome|name(?:d)?)\s+["']?([A-Za-z0-9][A-Za-z0-9 ]{1,38}?)(?:["']?[\n.,;:]|$)/i.exec(prompt);
-        if (!match?.[1]) {
+    protected cleanPromptBrandName(value: string | undefined): string | undefined {
+        if (!value) {
             return undefined;
         }
-        return match[1].trim().replace(/\s+/g, ' ');
+        const cleaned = value
+            .replace(/[.,;:!?].*$/, '')
+            .replace(/\s+(?:com|with|como|as|que|that|para|for|e|and)\b.*$/i, '')
+            .replace(/^["'“”]+|["'“”]+$/g, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+        if (!cleaned || cleaned.length < 2 || /^(um|uma|a|the|pagina|página|site|homepage|marketplace|loja)$/i.test(cleaned)) {
+            return undefined;
+        }
+        return cleaned.slice(0, 48).trim();
     }
 
     protected createGenericSkeletonPageNode(request: OpenPencilAiDesignRequest): OpenPencilNode {
         const baseId = this.stableAiIdBase(request.prompt);
+        const brand = this.promptBrandNameFromPrompt(request.prompt) ?? 'Project';
         return {
             id: this.uniqueAiId(request.document, `${baseId}-page-skeleton`),
             type: 'frame',
@@ -2874,10 +4088,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             y: 0,
             width: 1200,
             height: 820,
+            layout: 'none',
             fill: [{ type: 'solid', color: '#f1f5f9' }],
             children: [
                 this.createSkeletonFrameNode(request, `${baseId}-generic-nav`, 'Page navigation skeleton', 'navigation', 0, 0, 1200, 96, '#ffffff', 0),
-                this.createTextNode(request, `${baseId}-generic-logo`, 'CyberVinci', 82, 32, 180, 28, 20, 800, '#0f172a', 'Skeleton brand'),
+                this.createTextNode(request, `${baseId}-generic-logo`, brand, 82, 32, 220, 28, 20, 800, '#0f172a', 'Skeleton brand'),
                 this.createSkeletonFrameNode(request, `${baseId}-generic-hero`, 'Hero section skeleton', 'hero', 82, 138, 1036, 240, '#ffffff', 18, [
                     this.createTextNode(request, `${baseId}-generic-hero-title`, this.promptGeneratedHeadline(request.prompt), 40, 42, 540, 52, 34, 800, '#0f172a', 'Skeleton hero title'),
                     this.createTextNode(request, `${baseId}-generic-hero-copy`, this.promptGeneratedBodyCopy(request.prompt), 40, 112, 500, 48, 16, 500, '#475569', 'Skeleton hero copy'),
@@ -2891,139 +4106,160 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         };
     }
 
-    protected createMarketplaceHeaderNode(request: OpenPencilAiDesignRequest, idBase: string, brand: string, width: number): OpenPencilNode {
-        return this.createSkeletonFrameNode(request, idBase, 'Marketplace header', 'navigation', 0, 0, width, 118, '#fff159', 0, [
-            this.createTextNode(request, `${idBase}-brand`, brand, 84, 26, 210, 28, 22, 800, '#333333', 'Marketplace brand'),
-            this.createSkeletonFrameNode(request, `${idBase}-search`, 'Search field', 'search', 300, 20, 610, 44, '#ffffff', 6, [
-                this.createTextNode(request, `${idBase}-search-placeholder`, 'Buscar produtos, marcas e muito mais...', 20, 12, 430, 20, 14, 400, '#777777', 'Search placeholder')
-            ]),
-            this.createTextNode(request, `${idBase}-account`, 'Crie sua conta', 944, 31, 150, 22, 15, 600, '#333333', 'Account action'),
-            this.createTextNode(request, `${idBase}-location`, 'Enviar para Rodrigo', 84, 78, 170, 20, 14, 500, '#333333', 'Delivery location'),
-            this.createTextNode(request, `${idBase}-categories`, 'Categorias', 300, 78, 90, 20, 14, 500, '#333333', 'Categories link'),
-            this.createTextNode(request, `${idBase}-offers`, 'Ofertas', 420, 78, 70, 20, 14, 500, '#333333', 'Offers link'),
-            this.createTextNode(request, `${idBase}-history`, 'Historico', 518, 78, 90, 20, 14, 500, '#333333', 'History link'),
-            this.createTextNode(request, `${idBase}-market`, 'Supermercado', 640, 78, 130, 20, 14, 500, '#333333', 'Market link')
-        ]);
+    protected resolveAiSkeletonProfile(prompt: string): OpenPencilAiSkeletonProfile {
+        const lower = prompt.toLowerCase();
+        if (this.isWebPageAiPrompt(lower)) {
+            return 'web-page';
+        }
+        if (/\b(wireframe|low[- ]?fi|lo[- ]?fi|baixa fidelidade|estrutura|esqueleto|graybox|greybox)\b/i.test(lower)) {
+            return 'wireframe';
+        }
+        if (/\b(diagrama|diagram|flowchart|fluxograma|jornada|journey map|sitemap|mapa mental|mind map|arquitetura|organograma)\b/i.test(lower)) {
+            return 'diagram';
+        }
+        if (/\b(poster|cartaz|flyer|panfleto|one[- ]?pager|key visual|visual principal|an[uú]ncio impresso|print ad)\b/i.test(lower)) {
+            return 'poster';
+        }
+        if (/\b(banner|outdoor|billboard|leaderboard|display ad|hero graphic|header graphic|capa horizontal)\b/i.test(lower)) {
+            return 'banner';
+        }
+        if (/\b(instagram|story|stories|post social|social media|rede social|thumbnail|youtube thumb|linkedin post|facebook post|tiktok|feed post)\b/i.test(lower)) {
+            return 'social';
+        }
+        if (/\b(figma|moodboard|mood board|style frame|reference board|board|mockup|refer[eê]ncia visual|design de refer[eê]ncia)\b/i.test(lower)) {
+            return 'reference-board';
+        }
+        if (/\b(screen|tela|dashboard|app|mobile|desktop|form|formul[aá]rio|editor|ide|crm|admin|sistema|interface)\b/i.test(lower)) {
+            return 'app-screen';
+        }
+        return 'component';
     }
 
-    protected createMarketplaceHeroNode(request: OpenPencilAiDesignRequest, idBase: string, brand: string, width: number): OpenPencilNode {
-        return this.createSkeletonFrameNode(request, idBase, 'Marketplace hero promo', 'hero', 0, 118, width, 180, '#ffe600', 0, [
-            this.createTextNode(request, `${idBase}-eyebrow`, 'OFERTAS IMPERDIVEIS', 84, 36, 260, 24, 14, 800, '#263238', 'Hero eyebrow'),
-            this.createTextNode(request, `${idBase}-title`, `${brand} com precos claros`, 84, 66, 520, 46, 34, 800, '#1f2937', 'Hero title'),
-            this.createTextNode(request, `${idBase}-copy`, 'Produtos verificados, entrega rapida e pagamento seguro em um so lugar.', 84, 120, 560, 28, 16, 500, '#374151', 'Hero copy'),
-            this.createSkeletonFrameNode(request, `${idBase}-deal-one`, 'Hero deal card', 'card', 720, 32, 160, 116, '#ffffff', 10),
-            this.createSkeletonFrameNode(request, `${idBase}-deal-two`, 'Hero product card', 'card', 904, 32, 160, 116, '#ffffff', 10)
-        ]);
+    protected createBoundedCompositionSkeletonNode(request: OpenPencilAiDesignRequest): OpenPencilNode {
+        const profile = this.resolveAiSkeletonProfile(request.prompt);
+        const baseId = this.stableAiIdBase(request.prompt);
+        const settings = this.aiSkeletonProfileSettings(profile);
+        return {
+            id: this.uniqueAiId(request.document, `${baseId}-${profile}-skeleton`),
+            type: 'frame',
+            name: settings.name,
+            role: settings.role,
+            x: 0,
+            y: 0,
+            width: settings.width,
+            height: settings.height,
+            cornerRadius: settings.cornerRadius,
+            layout: 'none',
+            clipContent: false,
+            fill: [{ type: 'solid', color: settings.fill }],
+            stroke: { color: settings.stroke, width: 1 },
+            effects: [{ type: 'shadow', offsetX: 0, offsetY: 18, blur: 40, spread: 0, color: 'rgba(15, 23, 42, 0.14)' }],
+            children: this.createBoundedCompositionSkeletonChildren(request, profile, baseId, settings)
+        };
     }
 
-    protected createMarketplaceBenefitsNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number): OpenPencilNode {
-        const cardWidth = Math.floor((width - 2) / 3);
-        return this.createSkeletonFrameNode(request, idBase, 'Marketplace benefits strip', 'section', x, y, width, 88, '#ffffff', 8, [
-            this.createBenefitItemNode(request, `${idBase}-payment`, 'Pague com cartao', 'Ver promocoes bancarias', 0, 0, cardWidth),
-            this.createBenefitItemNode(request, `${idBase}-pix`, 'Pix com desconto', 'Aprovacao imediata', cardWidth, 0, cardWidth),
-            this.createBenefitItemNode(request, `${idBase}-shipping`, 'Beneficios Plus', 'Frete gratis e descontos', cardWidth * 2, 0, cardWidth)
-        ]);
+    protected aiSkeletonProfileSettings(profile: OpenPencilAiSkeletonProfile): OpenPencilAiSkeletonProfileSettings {
+        switch (profile) {
+            case 'app-screen':
+                return { name: 'AI app screen skeleton', role: 'screen', width: 390, height: 844, cornerRadius: 36, fill: '#0f172a', stroke: '#1e293b', accent: '#38bdf8', foreground: '#ffffff', muted: '#cbd5e1' };
+            case 'poster':
+                return { name: 'AI poster skeleton', role: 'poster', width: 720, height: 960, cornerRadius: 18, fill: '#111827', stroke: '#334155', accent: '#facc15', foreground: '#ffffff', muted: '#d1d5db' };
+            case 'banner':
+                return { name: 'AI banner skeleton', role: 'banner', width: 1200, height: 420, cornerRadius: 20, fill: '#0f172a', stroke: '#334155', accent: '#60a5fa', foreground: '#ffffff', muted: '#cbd5e1' };
+            case 'social':
+                return { name: 'AI social creative skeleton', role: 'social-creative', width: 1080, height: 1080, cornerRadius: 32, fill: '#f8fafc', stroke: '#dbeafe', accent: '#ec4899', foreground: '#111827', muted: '#475569' };
+            case 'wireframe':
+                return { name: 'AI wireframe skeleton', role: 'wireframe', width: 960, height: 640, cornerRadius: 12, fill: '#f8fafc', stroke: '#cbd5e1', accent: '#94a3b8', foreground: '#111827', muted: '#64748b' };
+            case 'diagram':
+                return { name: 'AI diagram skeleton', role: 'diagram', width: 1000, height: 680, cornerRadius: 18, fill: '#f8fafc', stroke: '#cbd5e1', accent: '#2563eb', foreground: '#111827', muted: '#475569' };
+            case 'reference-board':
+                return { name: 'AI reference board skeleton', role: 'reference-board', width: 1120, height: 720, cornerRadius: 18, fill: '#f1f5f9', stroke: '#cbd5e1', accent: '#7c3aed', foreground: '#111827', muted: '#475569' };
+            case 'component':
+            default:
+                return { name: 'AI component skeleton', role: 'component', width: 680, height: 420, cornerRadius: 18, fill: '#ffffff', stroke: '#cbd5e1', accent: '#2563eb', foreground: '#111827', muted: '#475569' };
+        }
     }
 
-    protected createMarketplaceCategoryNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number): OpenPencilNode {
-        const cardWidth = Math.floor((width - 30) / 4);
-        return this.createSkeletonFrameNode(request, idBase, 'Marketplace categories', 'section', x, y, width, 74, '#eeeeee', 0, [
-            this.createCategoryItemNode(request, `${idBase}-tech`, 'Tecnologia', 0, 0, cardWidth),
-            this.createCategoryItemNode(request, `${idBase}-home`, 'Casa', cardWidth + 10, 0, cardWidth),
-            this.createCategoryItemNode(request, `${idBase}-fashion`, 'Moda', (cardWidth + 10) * 2, 0, cardWidth),
-            this.createCategoryItemNode(request, `${idBase}-market`, 'Mercado', (cardWidth + 10) * 3, 0, cardWidth)
-        ]);
-    }
-
-    protected createMarketplaceShelfNode(
+    protected createBoundedCompositionSkeletonChildren(
         request: OpenPencilAiDesignRequest,
-        idBase: string,
-        title: string,
-        y: number,
-        products: [string, string, string][],
-        x: number,
-        width: number
-    ): OpenPencilNode {
-        const cardWidth = Math.floor((width - 42) / 4);
-        return this.createSkeletonFrameNode(request, idBase, title, 'section', x, y, width, 290, '#ffffff', 8, [
-            this.createTextNode(request, `${idBase}-title`, title, 0, 20, 360, 30, 22, 700, '#333333', `${title} title`),
-            this.createTextNode(request, `${idBase}-all`, 'Ver todas', width - 94, 24, 88, 20, 13, 600, '#3483fa', `${title} link`),
-            ...products.map(([name, price, badge], index) => this.createProductCardNode(
-                request,
-                `${idBase}-product-${index + 1}`,
-                name,
-                price,
-                badge,
-                index * (cardWidth + 14),
-                74,
-                cardWidth
-            ))
-        ]);
-    }
-
-    protected createMarketplacePromoBannerNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number, title: string, copy: string): OpenPencilNode {
-        return this.createSkeletonFrameNode(request, idBase, 'Marketplace promo banner', 'banner', x, y, width, 104, '#263238', 8, [
-            this.createTextNode(request, `${idBase}-label`, title, 28, 24, 300, 24, 16, 800, '#ffffff', 'Promo label'),
-            this.createTextNode(request, `${idBase}-copy`, copy, 28, 56, 520, 24, 14, 500, '#e5e7eb', 'Promo copy'),
-            this.createSkeletonFrameNode(request, `${idBase}-button`, 'Promo CTA', 'button', width - 184, 31, 140, 42, '#ffffff', 6, [
-                this.createTextNode(request, `${idBase}-button-label`, 'Conhecer Plus', 24, 12, 92, 18, 12, 700, '#2563eb', 'Promo CTA label')
-            ])
-        ]);
-    }
-
-    protected createMarketplaceClosingNode(request: OpenPencilAiDesignRequest, idBase: string, x: number, y: number, width: number): OpenPencilNode {
-        const cardWidth = Math.floor((width - 24) / 3);
-        return this.createSkeletonFrameNode(request, idBase, 'Marketplace closing services', 'footer', x, y, width, 136, '#ffffff', 8, [
-            this.createBenefitItemNode(request, `${idBase}-safe`, 'Compra protegida', 'Receba ou tenha seu dinheiro de volta.', 0, 0, cardWidth),
-            this.createBenefitItemNode(request, `${idBase}-credit`, 'Credito e parcelas', 'Facilite o pagamento com seguranca.', cardWidth + 12, 0, cardWidth),
-            this.createBenefitItemNode(request, `${idBase}-seller`, 'Venda no marketplace', 'Anuncie para milhares de compradores.', (cardWidth + 12) * 2, 0, cardWidth)
-        ]);
-    }
-
-    protected createBenefitItemNode(request: OpenPencilAiDesignRequest, idBase: string, title: string, copy: string, x: number, y: number, width: number): OpenPencilNode {
-        return this.createSkeletonFrameNode(request, idBase, title, 'card', x, y, width, 88, '#ffffff', 0, [
-            {
-                id: this.uniqueAiId(request.document, `${idBase}-icon`),
-                type: 'ellipse',
-                name: `${title} icon`,
-                role: 'icon',
-                x: 24,
-                y: 27,
-                width: 32,
-                height: 32,
-                fill: [{ type: 'solid', color: '#e0f2fe' }],
-                stroke: { color: '#3483fa', width: 2 }
-            },
-            this.createTextNode(request, `${idBase}-title`, title, 76, 22, width - 98, 22, 16, 700, '#333333', `${title} title`),
-            this.createTextNode(request, `${idBase}-copy`, copy, 76, 50, width - 98, 20, 12, 500, '#64748b', `${title} copy`)
-        ]);
-    }
-
-    protected createCategoryItemNode(request: OpenPencilAiDesignRequest, idBase: string, label: string, x: number, y: number, width: number): OpenPencilNode {
-        return this.createSkeletonFrameNode(request, idBase, `${label} category`, 'category', x, y, width, 74, '#ffffff', 6, [
-            {
-                id: this.uniqueAiId(request.document, `${idBase}-icon`),
-                type: 'ellipse',
-                name: `${label} category icon`,
-                role: 'icon',
-                x: Math.round(width / 2) - 14,
-                y: 14,
-                width: 28,
-                height: 28,
-                fill: [{ type: 'solid', color: '#eff6ff' }],
-                stroke: { color: '#3483fa', width: 2 }
-            },
-            this.createTextNode(request, `${idBase}-label`, label, 24, 48, width - 48, 18, 12, 600, '#334155', `${label} category label`)
-        ]);
-    }
-
-    protected createProductCardNode(request: OpenPencilAiDesignRequest, idBase: string, name: string, price: string, badge: string, x: number, y: number, width: number): OpenPencilNode {
-        return this.createSkeletonFrameNode(request, idBase, `${name} card`, 'product-card', x, y, width, 196, '#ffffff', 8, [
-            this.createSkeletonFrameNode(request, `${idBase}-image`, `${name} image placeholder`, 'image', 14, 14, width - 28, 76, '#e2e8f0', 4),
-            this.createTextNode(request, `${idBase}-price`, price, 16, 104, width - 32, 24, 18, 600, '#333333', `${name} price`),
-            this.createTextNode(request, `${idBase}-badge`, badge, 16, 132, width - 32, 20, 13, 700, '#00a650', `${name} badge`),
-            this.createTextNode(request, `${idBase}-name`, name, 16, 156, width - 32, 32, 13, 500, '#475569', `${name} description`)
-        ]);
+        profile: OpenPencilAiSkeletonProfile,
+        baseId: string,
+        settings: OpenPencilAiSkeletonProfileSettings
+    ): OpenPencilNode[] {
+        const headline = this.promptGeneratedHeadline(request.prompt);
+        const body = this.promptGeneratedBodyCopy(request.prompt);
+        switch (profile) {
+            case 'app-screen':
+                return [
+                    this.createTextNode(request, `${baseId}-app-brand`, 'CyberVinci', 28, 42, 180, 24, 16, 800, settings.muted, 'App brand label'),
+                    this.createTextNode(request, `${baseId}-app-title`, headline, 28, 96, 334, 96, 32, 800, settings.foreground, 'App screen title'),
+                    this.createTextNode(request, `${baseId}-app-copy`, body, 28, 204, 334, 54, 15, 500, settings.muted, 'App screen copy'),
+                    this.createSkeletonFrameNode(request, `${baseId}-app-panel`, 'Primary app panel', 'card', 28, 300, 334, 250, '#ffffff', 24, [
+                        this.createSkeletonFrameNode(request, `${baseId}-app-field-one`, 'Input row one', 'input', 24, 28, 286, 54, '#f1f5f9', 14),
+                        this.createSkeletonFrameNode(request, `${baseId}-app-field-two`, 'Input row two', 'input', 24, 100, 286, 54, '#f1f5f9', 14),
+                        this.createSkeletonFrameNode(request, `${baseId}-app-button`, 'Primary action', 'button', 24, 178, 286, 52, settings.accent, 16)
+                    ]),
+                    this.createSkeletonFrameNode(request, `${baseId}-app-list`, 'Secondary content list', 'section', 28, 584, 334, 128, '#1e293b', 20),
+                    this.createSkeletonFrameNode(request, `${baseId}-app-nav`, 'Bottom navigation', 'navigation', 44, 760, 302, 54, '#111827', 20)
+                ];
+            case 'poster':
+                return [
+                    this.createTextNode(request, `${baseId}-poster-label`, 'VISUAL CONCEPT', 52, 54, 260, 26, 15, 800, settings.accent, 'Poster label'),
+                    this.createTextNode(request, `${baseId}-poster-title`, headline, 52, 116, 600, 130, 54, 800, settings.foreground, 'Poster title'),
+                    this.createTextNode(request, `${baseId}-poster-copy`, body, 52, 266, 560, 58, 18, 500, settings.muted, 'Poster copy'),
+                    this.createSkeletonFrameNode(request, `${baseId}-poster-visual`, 'Poster hero visual', 'image', 52, 360, 616, 380, '#273449', 28),
+                    this.createSkeletonFrameNode(request, `${baseId}-poster-footer`, 'Poster footer band', 'section', 52, 802, 616, 72, settings.accent, 16)
+                ];
+            case 'banner':
+                return [
+                    this.createTextNode(request, `${baseId}-banner-title`, headline, 64, 70, 560, 92, 42, 800, settings.foreground, 'Banner title'),
+                    this.createTextNode(request, `${baseId}-banner-copy`, body, 64, 176, 520, 56, 17, 500, settings.muted, 'Banner copy'),
+                    this.createSkeletonFrameNode(request, `${baseId}-banner-button`, 'Banner CTA', 'button', 64, 270, 180, 54, settings.accent, 14),
+                    this.createSkeletonFrameNode(request, `${baseId}-banner-visual`, 'Banner visual', 'image', 700, 54, 420, 300, '#1e293b', 28)
+                ];
+            case 'social':
+                return [
+                    this.createSkeletonFrameNode(request, `${baseId}-social-visual`, 'Social visual area', 'image', 96, 96, 888, 520, '#e2e8f0', 34),
+                    this.createTextNode(request, `${baseId}-social-title`, headline, 96, 680, 780, 116, 54, 800, settings.foreground, 'Social title'),
+                    this.createTextNode(request, `${baseId}-social-copy`, body, 96, 814, 760, 62, 24, 500, settings.muted, 'Social copy'),
+                    this.createSkeletonFrameNode(request, `${baseId}-social-badge`, 'Social accent badge', 'badge', 96, 918, 260, 64, settings.accent, 32)
+                ];
+            case 'wireframe':
+                return [
+                    this.createSkeletonFrameNode(request, `${baseId}-wire-nav`, 'Wireframe navigation', 'navigation', 40, 36, 880, 62, '#e2e8f0', 10),
+                    this.createSkeletonFrameNode(request, `${baseId}-wire-hero`, 'Wireframe hero', 'hero', 40, 126, 880, 180, '#ffffff', 12),
+                    this.createSkeletonFrameNode(request, `${baseId}-wire-card-one`, 'Wireframe card one', 'card', 40, 340, 270, 190, '#ffffff', 12),
+                    this.createSkeletonFrameNode(request, `${baseId}-wire-card-two`, 'Wireframe card two', 'card', 345, 340, 270, 190, '#ffffff', 12),
+                    this.createSkeletonFrameNode(request, `${baseId}-wire-card-three`, 'Wireframe card three', 'card', 650, 340, 270, 190, '#ffffff', 12)
+                ];
+            case 'diagram':
+                return [
+                    this.createTextNode(request, `${baseId}-diagram-title`, headline, 56, 42, 760, 46, 30, 800, settings.foreground, 'Diagram title'),
+                    this.createSkeletonFrameNode(request, `${baseId}-diagram-node-one`, 'Diagram node one', 'node', 70, 160, 220, 110, '#dbeafe', 18),
+                    this.createSkeletonFrameNode(request, `${baseId}-diagram-line-one`, 'Diagram connector one', 'connector', 300, 208, 180, 14, settings.accent, 7),
+                    this.createSkeletonFrameNode(request, `${baseId}-diagram-node-two`, 'Diagram node two', 'node', 490, 160, 220, 110, '#e0f2fe', 18),
+                    this.createSkeletonFrameNode(request, `${baseId}-diagram-line-two`, 'Diagram connector two', 'connector', 595, 286, 14, 105, settings.accent, 7),
+                    this.createSkeletonFrameNode(request, `${baseId}-diagram-node-three`, 'Diagram node three', 'node', 390, 410, 220, 110, '#dcfce7', 18),
+                    this.createSkeletonFrameNode(request, `${baseId}-diagram-node-four`, 'Diagram node four', 'node', 720, 410, 220, 110, '#fef3c7', 18)
+                ];
+            case 'reference-board':
+                return [
+                    this.createTextNode(request, `${baseId}-board-title`, headline, 56, 38, 720, 46, 30, 800, settings.foreground, 'Reference board title'),
+                    this.createSkeletonFrameNode(request, `${baseId}-board-tile-one`, 'Reference tile one', 'image', 56, 120, 310, 420, '#ffffff', 18),
+                    this.createSkeletonFrameNode(request, `${baseId}-board-tile-two`, 'Reference tile two', 'image', 405, 120, 310, 420, '#ffffff', 18),
+                    this.createSkeletonFrameNode(request, `${baseId}-board-tile-three`, 'Reference tile three', 'image', 754, 120, 310, 420, '#ffffff', 18),
+                    this.createSkeletonFrameNode(request, `${baseId}-board-notes`, 'Reference notes', 'section', 56, 580, 1008, 82, '#ffffff', 16)
+                ];
+            case 'component':
+            default:
+                return [
+                    this.createTextNode(request, `${baseId}-component-title`, headline, 40, 36, 480, 42, 30, 800, settings.foreground, 'Component title'),
+                    this.createTextNode(request, `${baseId}-component-copy`, body, 40, 90, 500, 44, 16, 500, settings.muted, 'Component copy'),
+                    this.createSkeletonFrameNode(request, `${baseId}-component-preview`, 'Component preview panel', 'component', 40, 166, 600, 150, '#f8fafc', 16),
+                    this.createSkeletonFrameNode(request, `${baseId}-component-control-one`, 'Component action one', 'button', 40, 344, 160, 44, settings.accent, 12),
+                    this.createSkeletonFrameNode(request, `${baseId}-component-control-two`, 'Component action two', 'button', 218, 344, 140, 44, '#e2e8f0', 12)
+                ];
+        }
     }
 
     protected createSkeletonFrameNode(
@@ -3049,6 +4285,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             width,
             height,
             cornerRadius,
+            layout: 'none',
             fill: [{ type: 'solid', color }],
             stroke: role === 'image' ? { color: '#94a3b8', width: 1 } : undefined,
             effects: role === 'card' || role === 'product-card'
@@ -3208,11 +4445,156 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             page.width = preservedPageWidth;
             changed = true;
         }
-        changed = this.removeInternalCanvasPlaceholderNodes(page.children) || changed;
-        for (const node of page.children) {
-            changed = this.normalizeNodeVisibleBounds(node, options.preservePageWidth === true, preservedPageWidth) || changed;
+
+        for (let pass = 0; pass < 12; pass++) {
+            let passChanged = false;
+            passChanged = this.removeInternalCanvasPlaceholderNodes(page.children) || passChanged;
+            for (const node of page.children) {
+                passChanged = this.normalizeNodeVisibleBounds(node, options.preservePageWidth === true, preservedPageWidth) || passChanged;
+            }
+            passChanged = this.normalizePageVisibleBounds(page, preservedPageWidth) || passChanged;
+            changed = passChanged || changed;
+            if (!passChanged) {
+                break;
+            }
         }
-        return this.normalizePageVisibleBounds(page, preservedPageWidth) || changed;
+        if (options.removeAiPlaceholderSkeletons) {
+            changed = this.removeFinalAiPlaceholderSkeletonNodes(page.children) || changed;
+        }
+        for (let pass = 0; pass < 6; pass++) {
+            let repairChanged = false;
+            for (const node of page.children) {
+                repairChanged = this.repairRemainingAiLayoutQualityIssues(node, preservedPageWidth) || repairChanged;
+            }
+            repairChanged = this.normalizePageVisibleBounds(page, preservedPageWidth) || repairChanged;
+            changed = repairChanged || changed;
+            if (!repairChanged) {
+                break;
+            }
+        }
+        return changed;
+    }
+
+    protected removeFinalAiPlaceholderSkeletonNodes(children: OpenPencilNode[], depth = 0): boolean {
+        let changed = false;
+        for (let index = children.length - 1; index >= 0; index--) {
+            const child = children[index];
+            if (child.children?.length) {
+                changed = this.removeFinalAiPlaceholderSkeletonNodes(child.children, depth + 1) || changed;
+            }
+            if (this.isFinalAiPlaceholderSkeletonNode(child, depth + 1)) {
+                children.splice(index, 1);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    protected isFinalAiPlaceholderSkeletonNode(node: OpenPencilNode, depth: number): boolean {
+        if (depth <= 0 || node.visible === false || node.enabled === false || node.enabled === 'false') {
+            return false;
+        }
+        if (this.isTextLikeNode(node)) {
+            const content = this.nodeTextContent(node).trim().replace(/\s+/g, ' ').toLowerCase();
+            return content === 'openpencil design'
+                || content === 'edit this embedded .op design inside theia.'
+                || /\b(generated skeleton|skeleton brand|placeholder text|texto curto para completar a narrativa visual)\b/i.test(content);
+        }
+        if (node.children?.length) {
+            return false;
+        }
+        if (node.type !== 'frame' && node.type !== 'group' && node.type !== 'rectangle') {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return /\bgeneric-(?:nav|navigation|card|footer|section|block|panel|hero)\b/.test(label)
+            || /\b(page navigation skeleton|closing section skeleton|feature card (?:one|two|three)|blank (?:card|frame|section|panel)|empty (?:card|frame|section|panel))\b/.test(label)
+            || (/\b(skeleton|placeholder)\b/.test(label) && /\b(generic|navigation|footer|section|card|blank|empty)\b/.test(label));
+    }
+
+    protected repairRemainingAiLayoutQualityIssues(node: OpenPencilNode, maxWidth?: number): boolean {
+        let changed = false;
+        const nodeWidth = this.numericDimensionValue(node.width) ?? maxWidth;
+        for (const child of node.children ?? []) {
+            changed = this.repairRemainingAiLayoutQualityIssues(child, nodeWidth) || changed;
+        }
+        if (nodeWidth === undefined || nodeWidth < 120) {
+            return changed;
+        }
+        const nodeHeight = this.numericDimensionValue(node.height);
+        const candidates = this.visibleChildren(node.children ?? [])
+            .filter(child => this.shouldIncludeFinalAiLayoutRepairChild(child));
+        if (candidates.length < 2 || !this.childrenNeedFinalAiLayoutRepair(candidates, nodeWidth, nodeHeight)) {
+            return this.expandNodeToVisibleChildren(node) || changed;
+        }
+
+        if (this.shouldRepairFinalAiLayoutAsHorizontalRow(node, candidates, nodeWidth)) {
+            changed = this.normalizeOverflowingHorizontalRowWithinWidth(node, nodeWidth) || changed;
+        } else {
+            changed = this.stackRemainingChildrenVerticallyWithinWidth(node, nodeWidth, candidates) || changed;
+        }
+        changed = this.expandNodeToVisibleChildren(node) || changed;
+        return changed;
+    }
+
+    protected shouldIncludeFinalAiLayoutRepairChild(node: OpenPencilNode): boolean {
+        if (this.isAiLayoutIgnoredOverlay(node)) {
+            return false;
+        }
+        return this.isAiLayoutForegroundNode(node)
+            || this.isTextLikeNode(node)
+            || this.isAiLayoutMediaOrControlNode(node)
+            || this.isCardLikeHomepageChild(node)
+            || this.isFeatureCardLikeChild(node);
+    }
+
+    protected childrenNeedFinalAiLayoutRepair(children: OpenPencilNode[], width: number, height?: number): boolean {
+        const tolerance = 2;
+        if (children.some(child => {
+            const x = this.numberValue(child.x, 0);
+            const y = this.numberValue(child.y, 0);
+            const childWidth = this.visibleNodeWidth(child);
+            const childHeight = this.visibleNodeHeight(child);
+            return x < -tolerance
+                || x + childWidth > width + tolerance
+                || y < -tolerance
+                || (height !== undefined && y + childHeight > height + tolerance);
+        })) {
+            return true;
+        }
+        return this.childrenHaveReportableAiLayoutOverlap(children);
+    }
+
+    protected shouldRepairFinalAiLayoutAsHorizontalRow(node: OpenPencilNode, children: OpenPencilNode[], width: number): boolean {
+        if (this.shouldProtectCardInternalLayout(node, width)) {
+            return false;
+        }
+        return this.isNavigationLikeNode(node)
+            || this.isRowLikeManualContainer(node)
+            || this.shouldArrangeOverlappingCardChildrenAsRow(node, children, width);
+    }
+
+    protected expandNodeToVisibleChildren(node: OpenPencilNode): boolean {
+        const bounds = this.createNodeChildrenVisibleBounds(node);
+        if (!bounds) {
+            return false;
+        }
+        let changed = false;
+        const width = this.numericDimensionValue(node.width);
+        const height = this.numericDimensionValue(node.height);
+        if (node.clipContent && (bounds.left < 0 || bounds.top < 0 || (width !== undefined && bounds.right > width) || (height !== undefined && bounds.bottom > height))) {
+            node.clipContent = false;
+            changed = true;
+        }
+        if (width !== undefined && bounds.right > width) {
+            node.width = this.ceilVisibleBound(bounds.right);
+            changed = true;
+        }
+        if (height !== undefined && bounds.bottom > height) {
+            node.height = this.ceilVisibleBound(bounds.bottom);
+            changed = true;
+        }
+        return changed;
     }
 
     protected normalizeNodeVisibleBounds(node: OpenPencilNode, preservePageWidth = false, maxWidth?: number): boolean {
@@ -3232,7 +4614,20 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             width = maxWidth;
             changed = true;
         }
+        if (preservePageWidth && width !== undefined && maxWidth !== undefined && this.shouldExpandPageLikeContainerToWidth(node, width, maxWidth)) {
+            node.width = maxWidth;
+            width = maxWidth;
+            changed = true;
+        }
+        if (preservePageWidth && width !== undefined && maxWidth !== undefined && this.shouldAlignExpandedPageLikeContainer(node, width, maxWidth)) {
+            node.x = 0;
+            changed = true;
+        }
         if (preservePageWidth && width !== undefined && this.shouldStackHomepageFlowChildren(node, width)) {
+            if (node.layout !== 'none') {
+                node.layout = 'none';
+                changed = true;
+            }
             changed = this.stackManualChildrenVerticallyWithinWidth(node.children ?? [], width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
             if (!bounds) {
@@ -3255,6 +4650,20 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         if (preservePageWidth && width !== undefined && this.shouldStackOverlappingCardChildren(node, width)) {
             changed = this.stackOverlappingCardChildrenWithinBounds(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+        if (preservePageWidth && width !== undefined && this.shouldStackColumnLikeManualChildren(node, width)) {
+            changed = this.stackOverlappingCardChildrenWithinBounds(node, width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+        if (preservePageWidth && width !== undefined && this.shouldRepairOverlappingManualChildren(node, width)) {
+            changed = this.repairOverlappingManualChildrenWithinBounds(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
             if (!bounds) {
                 return changed;
@@ -3283,6 +4692,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         if (preservePageWidth && width !== undefined && this.shouldReflowOverflowingChildren(node, bounds, width)) {
             changed = this.reflowManualChildrenWithinWidth(node.children ?? [], width) || changed;
+            bounds = this.createNodeChildrenVisibleBounds(node);
+            if (!bounds) {
+                return changed;
+            }
+        }
+        if (width !== undefined && this.shouldStrictRepairRemainingSiblingLayout(node, bounds, width)) {
+            changed = this.strictRepairRemainingSiblingLayoutWithinWidth(node, width) || changed;
             bounds = this.createNodeChildrenVisibleBounds(node);
             if (!bounds) {
                 return changed;
@@ -3381,6 +4797,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if ((node.layout === 'horizontal' || node.layout === 'vertical') || bounds.right <= width || width < 560) {
             return false;
         }
+        if (this.shouldProtectCardInternalLayout(node, width)) {
+            return false;
+        }
         const children = this.visibleChildren(node.children ?? []);
         if (children.length < 3) {
             return false;
@@ -3399,11 +4818,48 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             && /\b(page|homepage|home|screen|view|website|site|marketplace|e-?commerce|catalog|landing|pagina|página|tela)\b/.test(label);
     }
 
+    protected shouldExpandPageLikeContainerToWidth(node: OpenPencilNode, width: number, maxWidth: number): boolean {
+        if (width >= maxWidth * 0.92 || maxWidth < 560 || node.type !== 'frame') {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        if (width >= 1120 && /\b(page|homepage|home|screen|view|website|site|main|root|pagina|página|tela)\b/.test(label)) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth);
+        if (!children.length) {
+            return false;
+        }
+        const pageLike = /\b(page|homepage|home|screen|view|website|site|marketplace|e-?commerce|catalog|landing|content|main|pagina|página|tela)\b/.test(label);
+        const structuralSection = node.role === 'section'
+            || node.role === 'main'
+            || node.role === 'navigation'
+            || node.role === 'header'
+            || node.role === 'footer';
+        const sectionLikeChildren = children.filter(child => this.isHomepageSectionLikeNode(child, maxWidth)).length;
+        return pageLike || structuralSection || sectionLikeChildren >= Math.min(2, children.length);
+    }
+
+    protected shouldAlignExpandedPageLikeContainer(node: OpenPencilNode, width: number, maxWidth: number): boolean {
+        if (node.type !== 'frame' || width < maxWidth * 0.96) {
+            return false;
+        }
+        const x = this.numberValue(node.x, 0);
+        if (x <= 0 || x + width <= maxWidth + 2) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return /\b(page|homepage|home|screen|view|website|site|main|root|pagina|página|tela)\b/.test(label);
+    }
+
     protected shouldWrapOverflowingHorizontalLayoutChildren(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
         if (node.layout !== 'horizontal' || bounds.right <= width || width < 360) {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (this.shouldProtectCardInternalLayout(node, width)) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         if (children.length < 3) {
             return false;
         }
@@ -3418,7 +4874,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (width < 720 || this.isNavigationLikeNode(node)) {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child));
         if (cardChildren.length < 3 || !this.isShelfLikeNode(node)) {
             return false;
@@ -3451,7 +4907,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (width < 720 || node.layout === 'horizontal' || node.layout === 'vertical') {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         const featureChildren = children.filter(child => this.isFeatureCardLikeChild(child));
         if (featureChildren.length < 2) {
             return false;
@@ -3466,8 +4922,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected isFeatureCardLikeChild(node: OpenPencilNode): boolean {
         const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        if (this.isTextLikeNode(node) || node.type === 'image' || node.type === 'icon_font') {
+            return false;
+        }
         return node.role === 'feature-card'
-            || /\b(feature-card|benefit|beneficio|benefício|beneficios|benefícios|pagamento|parcelamento|envio|prote[cç][aã]o|compra protegida)\b/.test(label);
+            || node.role === 'card' && /\b(feature-card|benefit|beneficio|benefício|beneficios|benefícios|pagamento|parcelamento|envio|prote[cç][aã]o|compra protegida)\b/.test(label);
     }
 
     protected isNavigationLikeNode(node: OpenPencilNode): boolean {
@@ -3487,6 +4946,45 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             || /\b(card|product|products|produto|produtos|offer|offers|oferta|ofertas|item|sku|tile|banner)\b/.test(label);
     }
 
+    protected shouldProtectCardInternalLayout(node: OpenPencilNode, width: number): boolean {
+        if (!this.isCardLikeHomepageChild(node) && !this.isFeatureCardLikeChild(node)) {
+            return false;
+        }
+        if (this.isRepairableStructuralContainer(node, width)) {
+            return false;
+        }
+        return true;
+    }
+
+    protected isRepairableStructuralContainer(node: OpenPencilNode, width: number): boolean {
+        if (width < 360 || (node.type !== 'frame' && node.type !== 'group')) {
+            return false;
+        }
+        const children = this.visibleChildren(node.children ?? []);
+        if (children.length < 2) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        const structuralRole = node.role === 'section'
+            || node.role === 'main'
+            || node.role === 'header'
+            || node.role === 'footer'
+            || node.role === 'navigation'
+            || node.role === 'row'
+            || node.role === 'grid'
+            || node.role === 'column';
+        const broadStructuralLabel = /\b(page|homepage|home|screen|view|website|site|app|artboard|canvas|composition|landing|content|main|root|document|section|region|container|wrapper|wrap|shell|header|footer|rodap[eé]|navbar|nav|navigation|navega[cç][aã]o|row|linha|grid|grade|shelf|prateleira|list|catalog|catalogo|catálogo|category|categoria|categorias|benefits?|beneficios?|benefícios?|services?|servi[cç]os|payment|payments|pagamento|pagamentos)\b/.test(label);
+        const wideHeroOrPromo = width >= 720
+            && /\b(hero|banner|promo|campaign|campanha|deal|deals|destaque|feature|features|spotlight)\b/.test(label);
+        const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child) || this.isFeatureCardLikeChild(child)).length;
+        const sectionChildren = children.filter(child => this.isHomepageSectionLikeNode(child, width)).length;
+        const hasBrokenWideChildren = this.childrenOverflowParentWidth(children, width) || this.childrenHaveSignificantManualOverlap(children);
+        return structuralRole
+            || broadStructuralLabel
+            || wideHeroOrPromo
+            || (width >= 560 && children.length >= 3 && (cardChildren >= 2 || sectionChildren >= 2) && hasBrokenWideChildren);
+    }
+
     protected isMediaLikeHomepageChild(node: OpenPencilNode): boolean {
         const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
         return node.type === 'image'
@@ -3494,10 +4992,10 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected shouldStackHomepageFlowChildren(node: OpenPencilNode, width: number): boolean {
-        if (width < 560 || node.layout === 'horizontal' || node.layout === 'vertical') {
+        if (width < 560) {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         if (children.length < 2) {
             return false;
         }
@@ -3505,9 +5003,41 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (/\b(grid|grade|row|linha|shelf|shelves|cards?|products?|produtos?|offers?|ofertas?|carousel|carrossel)\b/.test(label)) {
             return false;
         }
-        const pageLike = /\b(page|homepage|home|screen|view|website|site|marketplace|e-?commerce|landing|content|main|mercado|pagina|página|tela)\b/.test(label);
+        const pageLike = this.isPageLikeFlowContainer(node, children, width);
         const sectionLikeChildren = children.filter(child => this.isHomepageSectionLikeNode(child, width)).length;
-        return pageLike || sectionLikeChildren >= Math.min(2, children.length);
+        const sideBySideMajorSections = this.childrenContainSideBySideMajorFlowSections(node, children, width);
+        if (node.layout === 'horizontal') {
+            return pageLike || sectionLikeChildren >= Math.min(2, children.length) || sideBySideMajorSections;
+        }
+        if (node.layout === 'vertical') {
+            return (pageLike || sectionLikeChildren >= Math.min(2, children.length) || sideBySideMajorSections)
+                && (sideBySideMajorSections || this.childrenHaveSignificantManualOverlap(children) || this.childrenOverflowParentWidth(children, width));
+        }
+        return pageLike || sectionLikeChildren >= Math.min(2, children.length) || sideBySideMajorSections;
+    }
+
+    protected childrenContainSideBySideMajorFlowSections(parent: OpenPencilNode, children: OpenPencilNode[], width: number): boolean {
+        return this.findSideBySideMajorFlowSectionPair({
+            label: this.aiLayoutNodeLabel(parent),
+            pageRoot: false,
+            verticalPageFlow: true,
+            width
+        }, children) !== undefined;
+    }
+
+    protected isPageLikeFlowContainer(node: OpenPencilNode, children: OpenPencilNode[], width: number): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        const pageLikeLabel = /\b(page|homepage|home|screen|view|website|site|app|artboard|canvas|composition|composi[cç][aã]o|landing|content|main|root|document|pagina|página|tela)\b/.test(label);
+        const sectionLikeChildren = children.filter(child => this.isHomepageSectionLikeNode(child, width)).length;
+        const wideChildren = children.filter(child => this.visibleNodeWidth(child) >= width * 0.35).length;
+        return pageLikeLabel || sectionLikeChildren >= 2 || (children.length >= 3 && wideChildren >= 2);
+    }
+
+    protected childrenOverflowParentWidth(children: OpenPencilNode[], width: number): boolean {
+        return children.some(child => {
+            const x = this.numberValue(child.x, 0);
+            return x < 0 || x + this.visibleNodeWidth(child) > width;
+        });
     }
 
     protected isHomepageSectionLikeNode(node: OpenPencilNode, pageWidth: number): boolean {
@@ -3519,10 +5049,21 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             && (width >= pageWidth * 0.35 || /\b(header|nav|hero|section|content|footer|rodap[eé]|banner|promo|category|categoria|shelf|ofertas?|produtos?|benefits?|canais|ajuda|venda|app)\b/.test(label));
     }
 
+    protected visibleFlowChildren(children: OpenPencilNode[], maxWidth: number): OpenPencilNode[] {
+        return this.visibleChildren(children).filter(child => child.role !== 'overlay' || this.shouldTreatOverlayAsRepairableFlowChild(child, maxWidth));
+    }
+
+    protected shouldTreatOverlayAsRepairableFlowChild(node: OpenPencilNode, maxWidth: number): boolean {
+        return this.isHomepageSectionLikeNode(node, maxWidth)
+            || this.isCardLikeHomepageChild(node)
+            || this.isFeatureCardLikeChild(node)
+            || this.isTextLikeNode(node)
+            || this.isAiLayoutMediaOrControlNode(node);
+    }
+
     protected stackManualChildrenVerticallyWithinWidth(children: OpenPencilNode[], maxWidth: number): boolean {
-        const visible = this.visibleChildren(children)
-            .filter(child => child.role !== 'overlay')
-            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0);
+        const visible = this.visibleFlowChildren(children, maxWidth)
+            .filter(child => this.shouldIncludeStackedFlowChild(child, maxWidth));
         if (visible.length < 2 || maxWidth < 120) {
             return false;
         }
@@ -3538,6 +5079,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
         for (const node of sorted) {
             let width = this.visibleNodeWidth(node);
+            if (this.shouldMaterializeStackedFlowChildWidth(node, width, maxWidth)) {
+                node.width = maxWidth;
+                width = maxWidth;
+                changed = true;
+            }
             if (node.type === 'frame' && width > maxWidth) {
                 node.width = maxWidth;
                 width = maxWidth;
@@ -3560,9 +5106,31 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return changed;
     }
 
+    protected shouldIncludeStackedFlowChild(node: OpenPencilNode, maxWidth: number): boolean {
+        const height = this.visibleNodeHeight(node);
+        if (height <= 0 && !this.visibleChildren(node.children ?? []).length) {
+            return false;
+        }
+        const width = this.visibleNodeWidth(node);
+        if (width > 0) {
+            return true;
+        }
+        return this.shouldMaterializeStackedFlowChildWidth(node, width, maxWidth);
+    }
+
+    protected shouldMaterializeStackedFlowChildWidth(node: OpenPencilNode, width: number, maxWidth: number): boolean {
+        if (node.type !== 'frame' || maxWidth < 120 || width > 0) {
+            return false;
+        }
+        return node.width === 'fill_container'
+            || this.numericDimensionValue(node.width) === undefined
+            || this.isHomepageSectionLikeNode(node, maxWidth)
+            || this.visibleChildren(node.children ?? []).length > 0;
+    }
+
     protected gridHomepageShelfChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
-        const allChildren = this.visibleChildren(node.children ?? []);
-        const cardChildren = allChildren.filter(child => child.role !== 'overlay' && this.isCardLikeHomepageChild(child));
+        const allChildren = this.visibleFlowChildren(node.children ?? [], maxWidth);
+        const cardChildren = allChildren.filter(child => this.isCardLikeHomepageChild(child));
         if (cardChildren.length < 3) {
             return false;
         }
@@ -3571,12 +5139,14 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             return false;
         }
         const nonCardBounds = this.createManualChildrenVisibleBounds(
-            allChildren.filter(child => child.role !== 'overlay' && !this.isCardLikeHomepageChild(child))
+            allChildren.filter(child => !this.isCardLikeHomepageChild(child))
         );
         const startY = nonCardBounds
             ? Math.max(grid.top, this.ceilVisibleBound(nonCardBounds.bottom + grid.gap))
             : grid.top;
-        const rowHeight = Math.max(...cardChildren.map(child => this.visibleNodeHeight(child)));
+        const rowHeight = Math.max(...cardChildren.map(child =>
+            Math.max(this.visibleNodeHeight(child), this.minimumVisibleChildrenHeight(child) ?? 0)
+        ));
         let changed = false;
         let bottom = startY;
 
@@ -3602,7 +5172,8 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 child.y = this.roundScaledValue(targetY);
                 changed = true;
             }
-            changed = this.clampChildrenWithinBounds(child, grid.cardWidth, this.numericDimensionValue(child.height)) || changed;
+            const childMaxHeight = Math.max(this.numericDimensionValue(child.height) ?? rowHeight, this.minimumVisibleChildrenHeight(child) ?? 0);
+            changed = this.clampChildrenWithinBounds(child, grid.cardWidth, childMaxHeight) || changed;
             bottom = Math.max(bottom, targetY + this.visibleNodeHeight(child));
         }
 
@@ -3615,7 +5186,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected gridFeatureCardChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth);
         const featureChildren = children.filter(child => this.isFeatureCardLikeChild(child));
         if (featureChildren.length < 2 || maxWidth < 360) {
             return false;
@@ -3623,6 +5194,19 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         const gap = Math.max(14, Math.min(24, this.numberValue(node.gap, 16)));
         const columns = Math.max(1, Math.min(3, featureChildren.length, Math.floor((maxWidth + gap) / (260 + gap))));
         const cardWidth = Math.max(180, Math.floor((maxWidth - gap * (columns - 1)) / columns));
+        const targetHeights = featureChildren.map(child =>
+            Math.max(
+                132,
+                Math.min(this.visibleNodeHeight(child), 230),
+                this.minimumVisibleChildrenHeight(child) ?? 0
+            )
+        );
+        const rowHeights = targetHeights.reduce<number[]>((rows, height, index) => {
+            const row = Math.floor(index / columns);
+            rows[row] = Math.max(rows[row] ?? 0, height);
+            return rows;
+        }, []);
+        const rowTop = (row: number): number => rowHeights.slice(0, row).reduce((sum, height) => sum + height + gap, 0);
         let changed = false;
         let bottom = 0;
 
@@ -3630,8 +5214,8 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             const column = index % columns;
             const row = Math.floor(index / columns);
             const targetX = column * (cardWidth + gap);
-            const targetY = row * 152;
-            const targetHeight = Math.max(132, Math.min(this.visibleNodeHeight(child), 180));
+            const targetY = rowTop(row);
+            const targetHeight = targetHeights[index];
             if (this.numberValue(child.x, 0) !== targetX) {
                 child.x = this.roundScaledValue(targetX);
                 changed = true;
@@ -3660,7 +5244,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected wrapHorizontalLayoutChildrenWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth);
         if (children.length < 2 || maxWidth < 120) {
             return false;
         }
@@ -3719,7 +5303,10 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (node.layout !== 'horizontal' || width < 220) {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (this.shouldProtectCardInternalLayout(node, width)) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         if (children.length < 2) {
             return false;
         }
@@ -3741,7 +5328,10 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (node.layout !== 'none' || width < 220) {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        if (this.shouldProtectCardInternalLayout(node, width)) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         if (children.length < 2) {
             return false;
         }
@@ -3749,9 +5339,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         if (cardChildren.length >= 3 && this.isShelfLikeNode(node)) {
             return false;
         }
-        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
-        const rowLike = /\b(row|linha|header|navbar|nav|menu|footer|rodap[eé]|title|titulo|título|links?|a[cç][oõ]es|actions|categorias|categories|navigation|navega[cç][aã]o|busca|search)\b/.test(label);
-        if (!rowLike) {
+        if (!this.isRowLikeManualContainer(node)) {
             return false;
         }
         const repeatedOrigin = children.filter(child => this.numberValue(child.x, 0) === 0 && this.numberValue(child.y, 0) === 0).length >= 2;
@@ -3763,11 +5351,16 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return repeatedOrigin || hasFluidOrMissingWidth || overflowsManual || this.childrenHaveSignificantManualOverlap(children);
     }
 
+    protected isRowLikeManualContainer(node: OpenPencilNode): boolean {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return /\b(row|linha|header|cabecalho|cabeçalho|navbar|nav|menu|title|titulo|título|links?|a[cç][oõ]es|actions|categorias|categories|navigation|navega[cç][aã]o|busca|search|toolbar|topbar)\b/.test(label);
+    }
+
     protected shouldStackOverlappingCardChildren(node: OpenPencilNode, width: number): boolean {
-        if (width < 120 || !this.isCardLikeHomepageChild(node) || node.layout === 'vertical') {
+        if (width < 120 || !this.shouldProtectCardInternalLayout(node, width) || node.layout === 'vertical') {
             return false;
         }
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], width);
         if (children.length < 2 || children.length > 5) {
             return false;
         }
@@ -3779,8 +5372,225 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         return hasVisualChild && hasTextChild;
     }
 
+    protected shouldStackColumnLikeManualChildren(node: OpenPencilNode, width: number): boolean {
+        if (node.layout !== 'none' || width < 120) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], width)
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0 && !this.isAiLayoutIgnoredOverlay(child));
+        if (children.length < 2 || !this.childrenHaveReportableAiLayoutOverlap(children)) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        if (this.isNavigationLikeNode(node)
+            || /\b(row|linha|header|cabecalho|cabeçalho|navbar|nav|menu|title|titulo|título|links?|a[cç][oõ]es|actions|categorias|categories|navigation|navega[cç][aã]o|busca|search)\b/.test(label)) {
+            return false;
+        }
+        const columnLike = node.role === 'column'
+            || /\b(column|coluna|copy|content|conte[uú]do|details?|detalhes?|info|text|texto|body|corpo|description|descri[cç][aã]o|footer|rodap[eé]|support|suporte)\b/.test(label);
+        const directTextChildren = children.filter(child => this.isTextLikeNode(child)).length;
+        return columnLike || directTextChildren >= Math.max(2, children.length - 1);
+    }
+
+    protected shouldRepairOverlappingManualChildren(node: OpenPencilNode, width: number): boolean {
+        if (width < 120) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], width)
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0 && !this.isAiLayoutIgnoredOverlay(child));
+        if (children.length < 2 || !this.childrenHaveReportableAiLayoutOverlap(children)) {
+            return false;
+        }
+        if (this.isNavigationLikeNode(node) || this.isCardLikeHomepageChild(node) || this.isFeatureCardLikeChild(node)) {
+            return true;
+        }
+        if (width <= 560 || children.length <= 6) {
+            return true;
+        }
+        return this.isPageLikeFlowContainer(node, children, width)
+            || this.isHomepageSectionLikeNode(node, width)
+            || this.isShelfLikeNode(node)
+            || children.filter(child => this.isCardLikeHomepageChild(child)).length >= 2;
+    }
+
+    protected shouldStrictRepairRemainingSiblingLayout(node: OpenPencilNode, bounds: OpenPencilVisibleBounds, width: number): boolean {
+        if (width < 120) {
+            return false;
+        }
+        const children = this.visibleFlowChildren(node.children ?? [], width)
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0 && !this.isAiLayoutIgnoredOverlay(child));
+        if (children.length < 2) {
+            return false;
+        }
+        return bounds.left < 0
+            || bounds.right > width
+            || this.childrenOverflowParentWidth(children, width)
+            || this.childrenHaveReportableAiLayoutOverlap(children);
+    }
+
+    protected strictRepairRemainingSiblingLayoutWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth)
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0 && !this.isAiLayoutIgnoredOverlay(child));
+        if (children.length < 2 || maxWidth < 120) {
+            return false;
+        }
+        if (this.isNavigationLikeNode(node) || this.isRowLikeManualContainer(node) || this.shouldArrangeOverlappingCardChildrenAsRow(node, children, maxWidth)) {
+            return this.normalizeOverflowingHorizontalRowWithinWidth(node, maxWidth);
+        }
+        if (this.shouldProtectCardInternalLayout(node, maxWidth) || this.shouldStackColumnLikeManualChildren(node, maxWidth) || children.length > 8) {
+            return this.stackRemainingChildrenVerticallyWithinWidth(node, maxWidth, children);
+        }
+        return this.reflowManualChildrenWithinWidth(node.children ?? [], maxWidth);
+    }
+
+    protected stackRemainingChildrenVerticallyWithinWidth(node: OpenPencilNode, maxWidth: number, children: OpenPencilNode[]): boolean {
+        const padding = this.normalizedPadding(node.padding);
+        const left = Math.max(0, Math.min(24, padding.left || 16));
+        const right = Math.max(0, Math.min(24, padding.right || 16));
+        const top = Math.max(0, Math.min(24, padding.top || 16));
+        const bottomPadding = Math.max(12, Math.min(24, padding.bottom || 16));
+        const gap = Math.max(8, Math.min(18, this.numberValue(node.gap, 12)));
+        const availableWidth = Math.max(1, maxWidth - left - right);
+        const sorted = children.slice().sort((leftNode, rightNode) => {
+            const priorityDelta = this.cardChildStackPriority(leftNode) - this.cardChildStackPriority(rightNode);
+            if (this.shouldProtectCardInternalLayout(node, maxWidth) && priorityDelta) {
+                return priorityDelta;
+            }
+            const topDelta = this.numberValue(leftNode.y, 0) - this.numberValue(rightNode.y, 0);
+            return Math.abs(topDelta) > 8 ? topDelta : this.numberValue(leftNode.x, 0) - this.numberValue(rightNode.x, 0);
+        });
+        let cursorY = top;
+        let changed = false;
+        if (node.layout !== 'none') {
+            node.layout = 'none';
+            changed = true;
+        }
+        for (const child of sorted) {
+            let childWidth = this.visibleNodeWidth(child);
+            if (this.canResizeNodeForVisibleClamp(child) && (childWidth > availableWidth || this.shouldExpandTextNodeForFlow(child, childWidth, availableWidth))) {
+                child.width = availableWidth;
+                childWidth = availableWidth;
+                changed = true;
+            }
+            if (this.normalizeTextNodeHeightForWidth(child, childWidth)) {
+                changed = true;
+            }
+            const targetX = childWidth >= availableWidth * 0.92
+                ? left
+                : Math.max(left, Math.min(left + Math.round((availableWidth - childWidth) / 2), maxWidth - childWidth - right));
+            if (this.numberValue(child.x, 0) !== targetX) {
+                child.x = this.roundScaledValue(targetX);
+                changed = true;
+            }
+            if (this.numberValue(child.y, 0) !== cursorY) {
+                child.y = this.roundScaledValue(cursorY);
+                changed = true;
+            }
+            changed = this.clampChildrenWithinBounds(child, childWidth, this.numericDimensionValue(child.height)) || changed;
+            cursorY += this.visibleNodeHeight(child) + gap;
+        }
+        const requiredHeight = this.ceilVisibleBound(cursorY - gap + bottomPadding);
+        const currentHeight = this.numericDimensionValue(node.height);
+        if (currentHeight !== undefined && currentHeight < requiredHeight) {
+            node.height = requiredHeight;
+            changed = true;
+        }
+        return changed;
+    }
+
+    protected childrenHaveReportableAiLayoutOverlap(children: OpenPencilNode[]): boolean {
+        for (let index = 0; index < children.length; index++) {
+            for (let other = index + 1; other < children.length; other++) {
+                if (this.shouldReportAiLayoutOverlap(children[index], children[other])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    protected repairOverlappingManualChildrenWithinBounds(node: OpenPencilNode, maxWidth: number): boolean {
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth)
+            .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0);
+        if (children.length < 2 || maxWidth < 120) {
+            return false;
+        }
+        let changed = false;
+        if (node.layout !== 'none') {
+            node.layout = 'none';
+            changed = true;
+        }
+
+        const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child));
+        if (cardChildren.length >= 3 && this.isShelfLikeNode(node) && !this.hasLooseShelfItemParts(node, children, cardChildren)) {
+            changed = this.gridHomepageShelfChildrenWithinWidth(node, maxWidth) || changed;
+        } else if (this.isNavigationLikeNode(node)) {
+            changed = this.normalizeOverflowingHorizontalRowWithinWidth(node, maxWidth) || changed;
+        } else if (this.shouldArrangeOverlappingCardChildrenAsRow(node, children, maxWidth)) {
+            changed = this.normalizeOverflowingHorizontalRowWithinWidth(node, maxWidth) || changed;
+        } else if (this.shouldStackReportableOverlapChildren(node, children, maxWidth)) {
+            changed = this.stackOverlappingCardChildrenWithinBounds(node, maxWidth) || changed;
+        } else {
+            changed = this.reflowManualChildrenWithinWidth(node.children ?? [], maxWidth) || changed;
+        }
+
+        const bounds = this.createNodeChildrenVisibleBounds(node);
+        if (bounds) {
+            changed = this.clampChildrenWithinBounds(node, maxWidth, this.numericDimensionValue(node.height)) || changed;
+            const updatedBounds = this.createNodeChildrenVisibleBounds(node) ?? bounds;
+            const nodeHeight = this.numericDimensionValue(node.height);
+            if (nodeHeight !== undefined && updatedBounds.bottom > nodeHeight) {
+                node.height = this.ceilVisibleBound(updatedBounds.bottom);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    protected hasLooseShelfItemParts(node: OpenPencilNode, children: OpenPencilNode[], cardChildren: OpenPencilNode[]): boolean {
+        if (!this.isShelfLikeNode(node) || cardChildren.length < 2) {
+            return false;
+        }
+        const looseContent = children.filter(child => {
+            if (this.isAiLayoutIgnoredOverlay(child) || cardChildren.includes(child)) {
+                return false;
+            }
+            const label = `${child.id} ${child.name ?? ''} ${child.role ?? ''}`.toLowerCase();
+            return this.isTextLikeNode(child)
+                || this.isMediaLikeHomepageChild(child)
+                || /\b(price|pre[cç]o|meta|name|nome|title|titulo|título|image|imagem|icon|icone|ícone|item|product|produto|offer|oferta)\b/.test(label);
+        });
+        return looseContent.length > cardChildren.length + 2;
+    }
+
+    protected shouldArrangeOverlappingCardChildrenAsRow(node: OpenPencilNode, children: OpenPencilNode[], maxWidth: number): boolean {
+        if (maxWidth < 560 || children.length < 2 || children.length > 8) {
+            return false;
+        }
+        const cardChildren = children.filter(child => this.isCardLikeHomepageChild(child) || this.isFeatureCardLikeChild(child));
+        if (cardChildren.length < 2 || cardChildren.length < children.length - 1) {
+            return false;
+        }
+        const widestChild = Math.max(...cardChildren.map(child => this.visibleNodeWidth(child)));
+        if (widestChild > maxWidth * 0.82) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return cardChildren.length >= 3
+            || /\b(row|linha|grid|grade|cards?|columns?|colunas?|duo|pair|pares?|banner|promo|benefits?|beneficios?|benefícios?|services?|servi[cç]os|support|suporte|links?|categories|categorias|offers?|ofertas?|products?|produtos?)\b/.test(label);
+    }
+
+    protected shouldStackReportableOverlapChildren(node: OpenPencilNode, children: OpenPencilNode[], width: number): boolean {
+        if (this.shouldProtectCardInternalLayout(node, width) || width < 560 || children.length <= 6) {
+            return true;
+        }
+        const textLikeChildren = children.filter(child => this.isTextOrCopyLikeCardChild(child)).length;
+        return textLikeChildren >= Math.max(2, children.length - 1);
+    }
+
     protected stackOverlappingCardChildrenWithinBounds(node: OpenPencilNode, maxWidth: number): boolean {
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth)
+            .filter(child => !this.isAiLayoutIgnoredOverlay(child));
         if (children.length < 2 || maxWidth < 120) {
             return false;
         }
@@ -3863,7 +5673,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected normalizeOverflowingHorizontalRowWithinWidth(node: OpenPencilNode, maxWidth: number): boolean {
-        const children = this.visibleChildren(node.children ?? []).filter(child => child.role !== 'overlay');
+        const children = this.visibleFlowChildren(node.children ?? [], maxWidth);
         if (children.length < 2 || maxWidth < 120) {
             return false;
         }
@@ -4114,9 +5924,15 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             changed = true;
         }
         if (maxHeight !== undefined && childHeight > maxHeight && this.canResizeNodeForVisibleClamp(child)) {
-            child.height = maxHeight;
-            childHeight = maxHeight;
-            changed = true;
+            const minimumContentHeight = this.minimumVisibleChildrenHeight(child);
+            const targetHeight = minimumContentHeight === undefined
+                ? maxHeight
+                : Math.max(maxHeight, minimumContentHeight);
+            if (childHeight > targetHeight) {
+                child.height = targetHeight;
+                childHeight = targetHeight;
+                changed = true;
+            }
         }
         let targetX = this.numberValue(child.x, 0);
         let targetY = this.numberValue(child.y, 0);
@@ -4161,7 +5977,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             return false;
         }
         const fontSize = Math.max(8, this.numberValue(node.fontSize as number | string | undefined, 14));
-        const lineHeight = Math.max(fontSize, this.numberValue(node.lineHeight as number | string | undefined, fontSize * 1.25));
+        const lineHeight = this.resolvedTextLineHeightPx(node, fontSize);
         const estimatedLines = Math.max(1, Math.ceil((node.content.length * fontSize * 0.52) / Math.max(1, width)));
         const estimatedHeight = this.ceilVisibleBound(estimatedLines * lineHeight);
         const currentHeight = this.visibleNodeHeight(node);
@@ -4170,6 +5986,14 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             return true;
         }
         return false;
+    }
+
+    protected resolvedTextLineHeightPx(node: OpenPencilNode, fontSize: number): number {
+        const raw = this.numberValue(node.lineHeight as number | string | undefined, fontSize * 1.25);
+        if (raw > 0 && raw <= 4) {
+            return Math.max(fontSize, raw * fontSize);
+        }
+        return Math.max(fontSize, raw);
     }
 
     protected canResizeNodeForVisibleClamp(node: OpenPencilNode): boolean {
@@ -4182,8 +6006,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected reflowManualChildrenWithinWidth(children: OpenPencilNode[], maxWidth: number): boolean {
-        const visible = this.visibleChildren(children)
-            .filter(child => child.role !== 'overlay')
+        const visible = this.visibleFlowChildren(children, maxWidth)
             .filter(child => this.visibleNodeWidth(child) > 0 && this.visibleNodeHeight(child) > 0);
         if (visible.length < 2 || maxWidth < 120) {
             return false;
@@ -4377,11 +6200,19 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
     }
 
     protected isInternalCanvasPlaceholderNode(node: OpenPencilNode): boolean {
-        if (!this.isTextLikeNode(node) || typeof node.content !== 'string') {
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.trim().toLowerCase();
+        if (!this.isTextLikeNode(node)) {
+            return !node.children?.length
+                && (node.id === 'hero-card' || label === 'hero-card hero card')
+                && (node.type === 'rectangle' || node.type === 'frame')
+                && !node.role;
+        }
+        if (typeof node.content !== 'string') {
             return false;
         }
         const content = node.content.trim().replace(/\s+/g, ' ').toLowerCase();
-        return content === 'edit this embedded .op design inside theia.';
+        return content === 'edit this embedded .op design inside theia.'
+            || (content === 'openpencil design' && /\b(hero-title|placeholder|openpencil)\b/.test(label));
     }
 
     protected visibleNodeWidth(node: OpenPencilNode): number {
@@ -4398,6 +6229,14 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             return Math.max(0, height);
         }
         return this.isTextLikeNode(node) ? 40 : 120;
+    }
+
+    protected minimumVisibleChildrenHeight(node: OpenPencilNode): number | undefined {
+        const bounds = this.createNodeChildrenVisibleBounds(node);
+        if (!bounds) {
+            return undefined;
+        }
+        return this.ceilVisibleBound(Math.max(0, bounds.bottom));
     }
 
     protected normalizedPadding(padding: OpenPencilNode['padding']): { top: number; right: number; bottom: number; left: number } {
@@ -4477,7 +6316,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected collectAiLayoutQualityIssues(
         children: OpenPencilNode[],
-        parent: { path: string; width?: number; height?: number; pageRoot?: boolean; layout?: OpenPencilNode['layout'] },
+        parent: { path: string; width?: number; height?: number; pageRoot?: boolean; verticalPageFlow?: boolean; layout?: OpenPencilNode['layout']; label?: string },
         issues: OpenPencilValidationResult['issues']
     ): void {
         if (issues.length >= 24) {
@@ -4485,6 +6324,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
         const visible = this.visibleChildren(children).filter(child => !this.isAiLayoutIgnoredOverlay(child));
         const parentUsesAutoLayout = parent.layout === 'horizontal' || parent.layout === 'vertical';
+        const validateAsManual = !parentUsesAutoLayout || this.shouldValidateAutoLayoutParentAsManual(parent, visible);
         const tolerance = 2;
         for (const child of visible) {
             const childPath = `${parent.path}.${child.id}`;
@@ -4492,7 +6332,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             const y = this.numberValue(child.y, 0);
             const width = this.visibleNodeWidth(child);
             const height = this.visibleNodeHeight(child);
-            if (!parentUsesAutoLayout && !this.isAiLayoutAllowedOutOfBounds(child)) {
+            if (validateAsManual && !this.isAiLayoutAllowedOutOfBounds(child)) {
                 if (parent.width !== undefined && (x < -tolerance || x + width > parent.width + tolerance)) {
                     issues.push({
                         severity: 'error',
@@ -4515,12 +6355,26 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 path: `${childPath}.children`,
                 width: this.numericDimensionValue(child.width),
                 height: this.numericDimensionValue(child.height),
-                layout: child.layout
+                layout: child.layout,
+                label: this.aiLayoutNodeLabel(child),
+                verticalPageFlow: parent.verticalPageFlow
             }, issues);
         }
 
-        if (parentUsesAutoLayout) {
+        if (!validateAsManual) {
             return;
+        }
+        const sideBySideMajorSections = this.findSideBySideMajorFlowSectionPair(parent, visible);
+        if (sideBySideMajorSections) {
+            const [left, right] = sideBySideMajorSections;
+            issues.push({
+                severity: 'error',
+                path: `${parent.path}.${left.id}`,
+                message: `Major page sections '${left.name ?? left.id}' and '${right.name ?? right.id}' are side-by-side in a vertical page flow.`
+            });
+            if (issues.length >= 24) {
+                return;
+            }
         }
         const foreground = visible.filter(child => this.isAiLayoutForegroundNode(child));
         for (let leftIndex = 0; leftIndex < foreground.length; leftIndex++) {
@@ -4542,6 +6396,111 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         }
     }
 
+    protected shouldValidateAutoLayoutParentAsManual(
+        parent: { path: string; width?: number; height?: number; pageRoot?: boolean; verticalPageFlow?: boolean; layout?: OpenPencilNode['layout']; label?: string },
+        visible: OpenPencilNode[]
+    ): boolean {
+        if (visible.length < 2 || parent.width === undefined || parent.width < 560) {
+            return false;
+        }
+        const label = `${parent.label ?? ''} ${parent.path}`.toLowerCase();
+        const pageLike = /\b(page|homepage|home|screen|view|website|site|app|artboard|canvas|composition|composi[cç][aã]o|landing|content|main|root|document|pagina|página|tela)\b/.test(label);
+        const sectionLikeChildren = visible.filter(child => this.isHomepageSectionLikeNode(child, parent.width ?? 1200)).length;
+        const horizontalSpread = this.childrenOverflowParentWidth(visible, parent.width);
+        const significantOverlap = this.childrenHaveSignificantManualOverlap(visible);
+        if (parent.layout === 'horizontal') {
+            return pageLike || sectionLikeChildren >= 2 || horizontalSpread || significantOverlap;
+        }
+        return (pageLike || sectionLikeChildren >= 2) && (horizontalSpread || significantOverlap);
+    }
+
+    protected findSideBySideMajorFlowSectionPair(
+        parent: { width?: number; pageRoot?: boolean; verticalPageFlow?: boolean; label?: string },
+        visible: OpenPencilNode[]
+    ): [OpenPencilNode, OpenPencilNode] | undefined {
+        const width = parent.width;
+        if (!parent.verticalPageFlow || width === undefined || width < 560 || visible.length < 2) {
+            return undefined;
+        }
+        const label = `${parent.label ?? ''}`.toLowerCase();
+        if (this.isHorizontalFlowContainerLabel(label)) {
+            return undefined;
+        }
+        const major = visible.filter(child => this.isMajorVerticalFlowSection(child, width));
+        if (major.length < 2) {
+            return undefined;
+        }
+        const pageLike = !!parent.pageRoot || /\b(page|homepage|home|screen|view|website|site|app|artboard|canvas|composition|composi[cç][aã]o|landing|content|main|root|document|pagina|página|tela)\b/.test(label);
+        const broadMajorSet = major.length >= 3 && major.filter(child => this.visibleNodeWidth(child) >= width * 0.32).length >= 2;
+        if (!pageLike && !broadMajorSet) {
+            return undefined;
+        }
+        for (let leftIndex = 0; leftIndex < major.length; leftIndex++) {
+            for (let rightIndex = leftIndex + 1; rightIndex < major.length; rightIndex++) {
+                const left = major[leftIndex];
+                const right = major[rightIndex];
+                if (this.areMajorFlowSectionsSideBySide(left, right, width)) {
+                    return [left, right];
+                }
+            }
+        }
+        return undefined;
+    }
+
+    protected isHorizontalFlowContainerLabel(label: string): boolean {
+        return /\b(header|cabecalho|cabeçalho|navbar|nav|menu|topbar|toolbar|search|busca|tabs?|tabbar|footer|rodap[eé]|hero|banner|promo|campaign|campanha|spotlight|card|tile|button|input|form|row|linha|grid|grade|shelf|shelves|prateleira|cards?|products?|produtos?|offers?|ofertas?|carousel|carrossel|categories|categorias)\b/.test(label);
+    }
+
+    protected isMajorVerticalFlowSection(node: OpenPencilNode, parentWidth: number): boolean {
+        if (node.visible === false || node.enabled === false || node.enabled === 'false') {
+            return false;
+        }
+        if (this.isTextLikeNode(node) || this.isAiLayoutMediaOrControlNode(node)) {
+            return false;
+        }
+        const label = this.aiLayoutNodeLabel(node);
+        if (/\b(card|tile|button|input|field|form|product-card|offer-card|produto-card|oferta-card|item|sku)\b/.test(label)) {
+            return false;
+        }
+        const width = this.visibleNodeWidth(node);
+        const height = this.visibleNodeHeight(node);
+        const childCount = this.visibleChildren(node.children ?? []).length;
+        const structuralRole = node.role === 'section'
+            || node.role === 'main'
+            || node.role === 'article'
+            || node.role === 'region'
+            || node.role === 'header'
+            || node.role === 'footer'
+            || node.role === 'navigation';
+        return (node.type === 'frame' || node.type === 'group' || node.type === 'rectangle')
+            && height >= 64
+            && (structuralRole || width >= parentWidth * 0.32 || childCount >= 3);
+    }
+
+    protected areMajorFlowSectionsSideBySide(first: OpenPencilNode, second: OpenPencilNode, parentWidth: number): boolean {
+        const firstX = this.numberValue(first.x, 0);
+        const firstY = this.numberValue(first.y, 0);
+        const firstWidth = this.visibleNodeWidth(first);
+        const firstHeight = this.visibleNodeHeight(first);
+        const secondX = this.numberValue(second.x, 0);
+        const secondY = this.numberValue(second.y, 0);
+        const secondWidth = this.visibleNodeWidth(second);
+        const secondHeight = this.visibleNodeHeight(second);
+        const verticalOverlap = Math.max(0, Math.min(firstY + firstHeight, secondY + secondHeight) - Math.max(firstY, secondY));
+        const verticalOverlapRatio = verticalOverlap / Math.max(1, Math.min(firstHeight, secondHeight));
+        if (verticalOverlapRatio < 0.35) {
+            return false;
+        }
+        const firstLeftOfSecond = firstX + firstWidth <= secondX + 12;
+        const secondLeftOfFirst = secondX + secondWidth <= firstX + 12;
+        if (!firstLeftOfSecond && !secondLeftOfFirst) {
+            return false;
+        }
+        const combinedWidth = Math.max(firstX + firstWidth, secondX + secondWidth) - Math.min(firstX, secondX);
+        const bothSubstantial = firstWidth >= parentWidth * 0.24 && secondWidth >= parentWidth * 0.24;
+        return bothSubstantial || combinedWidth >= parentWidth * 0.72;
+    }
+
     protected shouldReportAiLayoutOverlap(first: OpenPencilNode, second: OpenPencilNode): boolean {
         if (this.isAiLayoutIntentionalSurfaceUnderlay(first, second) || this.isAiLayoutIntentionalSurfaceUnderlay(second, first)) {
             return false;
@@ -4559,10 +6518,10 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected isAiLayoutIgnoredOverlay(node: OpenPencilNode): boolean {
         const label = this.aiLayoutNodeLabel(node);
-        return node.role === 'overlay'
-            || node.role === 'background'
+        return node.role === 'background'
             || node.role === 'decoration'
-            || /\b(overlay|background|backdrop|decorative|decoration|ornament|shadow|glow|fundo|sombra)\b/.test(label);
+            || /\b(background|backdrop|decorative|decoration|ornament|shadow|glow|fundo|sombra|underlay)\b/.test(label)
+            || /\bbg\b|(?:panel|shape|container|section|base)-bg\b/.test(label);
     }
 
     protected isAiLayoutAllowedOutOfBounds(node: OpenPencilNode): boolean {
@@ -4961,6 +6920,7 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             y,
             width,
             height,
+            layout: 'none',
             content,
             fontSize,
             fontWeight,
@@ -5743,7 +7703,11 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         const fallbackHeight = this.isTextLikeNode(node) ? 40 : 120;
         const originalWidth = this.numberValue(node.width, fallbackWidth);
         const originalHeight = this.numberValue(node.height, fallbackHeight);
-        const scale = Math.min(1, maxWidth / Math.max(originalWidth, 1), maxHeight / Math.max(originalHeight, 1));
+        const preserveLongPageHeight = this.isLongPageRootNode(node, pageWidth, pageHeight);
+        const maxRootWidth = preserveLongPageHeight ? pageWidth : maxWidth;
+        const scale = preserveLongPageHeight
+            ? Math.min(1, maxRootWidth / Math.max(originalWidth, 1))
+            : Math.min(1, maxRootWidth / Math.max(originalWidth, 1), maxHeight / Math.max(originalHeight, 1));
         if (scale < 1) {
             this.scaleStructuredNode(node, scale);
         }
@@ -5751,6 +7715,19 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
         const height = this.numberValue(node.height, fallbackHeight);
         node.x = Math.max(0, Math.min(this.numberValue(node.x, margin), pageWidth - width));
         node.y = Math.max(0, Math.min(this.numberValue(node.y, margin), pageHeight - height));
+    }
+
+    protected isLongPageRootNode(node: OpenPencilNode, pageWidth: number, pageHeight: number): boolean {
+        if (node.type !== 'frame') {
+            return false;
+        }
+        const width = this.numberValue(node.width, 0);
+        const height = this.numberValue(node.height, 0);
+        if (width < pageWidth * 0.45 || height < pageHeight * 1.05) {
+            return false;
+        }
+        const label = `${node.id} ${node.name ?? ''} ${node.role ?? ''}`.toLowerCase();
+        return /\b(page|homepage|home|website|site|marketplace|e-?commerce|catalog|landing|content|main|pagina|página)\b/.test(label);
     }
 
     protected scaleStructuredNode(node: OpenPencilNode, scale: number): void {
@@ -5907,14 +7884,20 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected hasVisibleAiPageContent(document: OpenPencilDocument): boolean {
         const page = this.documents.getActivePage(document);
-        return page.children.some(node => this.isVisibleRenderableAiNode(node));
+        return page.children.some(node => this.isVisibleRenderableAiNode(node, 1));
     }
 
-    protected isVisibleRenderableAiNode(node: OpenPencilNode): boolean {
+    protected isVisibleRenderableAiNode(node: OpenPencilNode, depth = 0): boolean {
         if (node.visible === false || node.enabled === false || node.opacity === 0) {
             return false;
         }
-        if (node.children?.some(child => this.isVisibleRenderableAiNode(child))) {
+        if (this.isInternalCanvasPlaceholderRenderableNode(node)) {
+            return false;
+        }
+        if (this.isFinalAiPlaceholderSkeletonNode(node, depth)) {
+            return false;
+        }
+        if (node.children?.some(child => this.isVisibleRenderableAiNode(child, depth + 1))) {
             return true;
         }
         if (node.type === 'text') {
@@ -5939,6 +7922,22 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             || node.type === 'rectangle'
             || node.type === 'frame'
         );
+    }
+
+    protected isInternalCanvasPlaceholderRenderableNode(node: OpenPencilNode): boolean {
+        if (node.id === 'hero-card'
+            && node.type === 'rectangle'
+            && node.name === 'Hero card'
+            && this.numberValue(node.width, 0) === 520
+            && this.numberValue(node.height, 0) === 260) {
+            return true;
+        }
+        if (node.type !== 'text') {
+            return false;
+        }
+        const normalized = this.nodeTextContent(node).trim().replace(/\s+/g, ' ').toLowerCase();
+        return (node.id === 'hero-title' && normalized === 'openpencil design')
+            || (node.id === 'hero-copy' && normalized === 'edit this embedded .op design inside theia.');
     }
 
     protected scaleNumberish(value: unknown, scale: number): unknown {

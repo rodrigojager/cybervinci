@@ -4300,6 +4300,10 @@
     width: min(390px, calc(100vw - 36px));
 }
 
+.flow__menu-panel--models {
+    width: min(520px, calc(100vw - 36px));
+}
+
 .flow__menu-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -4497,6 +4501,81 @@
     padding: 0;
     border: 0;
     background: transparent;
+}
+
+.flow__menu-panel .flow__model-profile-library {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.flow__model-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 6px;
+    padding: 0 4px;
+}
+
+.flow__token-limit-control {
+    display: grid;
+    grid-template-columns: minmax(112px, 0.8fr) minmax(126px, 1fr);
+    gap: 6px;
+    min-width: 0;
+}
+
+.flow__token-limit-control label {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.flow__model-profile-grid label,
+.flow__model-profile-field {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.flow__model-profile-field {
+    padding: 0 4px;
+}
+
+.flow__model-profile-grid span,
+.flow__token-limit-control span,
+.flow__model-profile-field span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__model-profile-grid input,
+.flow__model-profile-grid select,
+.flow__token-limit-control input,
+.flow__token-limit-control select,
+.flow__model-profile-field textarea {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border-radius: 3px;
+}
+
+.flow__model-profile-field textarea {
+    resize: vertical;
+}
+
+.flow__model-profile-picker {
+    min-width: 0;
+    padding: 0 4px;
+    overflow: visible;
+}
+
+.flow__model-profile-picker .cybervinci-ai-execution-picker,
+.flow__model-profile-picker .cybervinci-ai-execution-picker > div,
+.flow__model-profile-picker .cv-ai-runtime-execution-picker {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .flow__menu-panel .flow__agent-library-header {
@@ -4781,4 +4860,723 @@
         right: 6px;
         width: calc(100% - 12px);
     }
+}
+
+/* Keep the Flow runtime status as a compact footer, independent of optional panels above it. */
+.flow {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.flow__header,
+.flow__main,
+.flow__ops,
+.flow__statusbar {
+    flex: 0 0 auto;
+}
+
+.flow__main {
+    flex: 1 1 auto;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+}
+
+.flow__canvas-pane,
+.flow__inspector,
+.flow__flow,
+.flow__flow-stage,
+.flow__flow-viewport {
+    min-height: 0;
+}
+
+.flow__statusbar {
+    position: relative;
+    bottom: auto;
+    z-index: 3;
+    display: block;
+    min-height: 22px;
+    max-height: 28px;
+    overflow: hidden;
+}
+
+.flow__statusbar .flow__runtime-status {
+    min-height: 22px;
+    max-height: 28px;
+    overflow: hidden;
+}
+
+.flow__menu-panel--prompt {
+    width: min(520px, calc(100vw - 36px));
+}
+
+.flow__menu-panel--kanban {
+    right: 0;
+    width: min(980px, calc(100vw - 56px));
+}
+
+.flow__menu-panel--kanban .flow__kanban {
+    max-height: min(58vh, 520px);
+    min-width: 760px;
+}
+
+.flow__run-popover-grid {
+    display: grid;
+    gap: 8px;
+    max-height: min(68vh, 640px);
+    overflow: auto;
+}
+
+.flow__run-popover-grid .flow__kanban,
+.flow__run-popover-grid .flow__run-observability,
+.flow__run-popover-grid .flow__events {
+    max-height: none;
+}
+
+.flow__prompt-field--menu textarea {
+    min-height: 118px;
+}
+
+.flow__menu-note,
+.flow__field-help {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.flow__menu-note code,
+.flow__field-help code {
+    color: var(--theia-editor-foreground);
+}
+
+.flow__state-popover {
+    position: absolute;
+    z-index: 35;
+    top: max(64px, 7vh);
+    left: 50%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: min(920px, calc(100% - 42px));
+    max-height: min(78vh, 780px);
+    transform: translateX(-50%);
+    border: 1px solid var(--theia-focusBorder, var(--theia-panel-border));
+    border-radius: 8px;
+    background: var(--theia-editorWidget-background, var(--theia-editor-background));
+    color: var(--theia-editor-foreground);
+    overflow: hidden;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34) !important;
+}
+
+.flow__state-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 42px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: var(--theia-editorWidget-background, var(--theia-editor-background));
+}
+
+.flow__state-popover-header h3,
+.flow__state-popover-header span {
+    margin: 0;
+}
+
+.flow__state-popover-header h3 {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__state-popover-header span {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__state-popover-header button {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    width: 26px;
+    min-height: 26px;
+    padding: 0;
+}
+
+.flow__state-popover-body {
+    min-height: 0;
+    overflow: auto;
+    padding: 10px;
+}
+
+.flow__state-popover-body .flow__panel {
+    border: 0;
+    background: transparent;
+}
+
+.flow__section-heading--actions {
+    flex-wrap: wrap;
+}
+
+.flow__section-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.flow__form-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.flow__form-section-title button,
+.flow__section-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 28px;
+}
+
+.flow__agent-path {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.flow__agent-path code {
+    color: var(--theia-editor-foreground);
+}
+
+.flow__state-popover-body .flow__state-editor select,
+.flow__state-popover-body .flow__state-editor input:not([type='checkbox']),
+.flow__state-popover-body .flow__transition-editor select,
+.flow__state-popover-body .flow__transition-editor input:not([type='checkbox']),
+.flow__state-popover-body .flow__model-execution select,
+.flow__state-popover-body .flow__model-execution input:not([type='checkbox']) {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    min-height: 28px;
+    box-sizing: border-box;
+    line-height: 18px;
+}
+
+.flow__state-popover-body .flow__state-editor textarea,
+.flow__state-popover-body .flow__transition-editor textarea {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.flow__model-execution .flow__editor-grid--two {
+    grid-template-columns: minmax(150px, 1fr) minmax(140px, 0.7fr);
+    align-items: end;
+}
+
+.flow__model-execution-picker {
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow: visible;
+}
+
+.flow__model-execution-picker .cybervinci-ai-execution-picker {
+    width: 100%;
+    max-width: 100%;
+}
+
+.flow__model-execution-picker .cybervinci-ai-execution-picker,
+.flow__model-execution-picker .cybervinci-ai-execution-picker > div {
+    min-width: 0;
+}
+
+.flow__deliverables-editor {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding-top: 4px;
+}
+
+.flow__deliverable-row {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(210px, 1.35fr) minmax(92px, 0.55fr) 72px 30px;
+    gap: 6px;
+    align-items: end;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--flow-border) 65%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--flow-panel) 82%, transparent);
+}
+
+.flow__deliverable-row label {
+    min-width: 0;
+}
+
+.flow__deliverable-required {
+    justify-items: start;
+}
+
+.flow__deliverable-required input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    margin: 5px 0;
+}
+
+.flow__icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+}
+
+.flow__gate-config-editor,
+.flow__loop-editor,
+.flow__outcomes-editor {
+    min-width: 0;
+}
+
+.flow__decision-editor-list {
+    display: grid;
+    gap: 8px;
+}
+
+.flow__decision-editor-row,
+.flow__outcome-row {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.8fr) minmax(128px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(112px, 0.8fr) auto auto 30px;
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--flow-border) 65%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--flow-panel) 84%, transparent);
+}
+
+.flow__outcome-row {
+    grid-template-columns: minmax(120px, 0.9fr) minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(120px, 1fr) 30px;
+}
+
+.flow__outcome-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flow__decision-editor-row input,
+.flow__decision-editor-row select,
+.flow__outcome-row input,
+.flow__outcome-row select {
+    min-width: 0;
+    width: 100%;
+}
+
+.flow__inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: max-content;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__inline-check input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+.flow__gate-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+}
+
+.flow__gate-header > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.flow__gate-decision-list {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.flow__gate-decision {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--flow-border) 60%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--flow-panel) 88%, transparent);
+}
+
+.flow__gate-decision > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__gate-decision textarea {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 980px) {
+    .flow__decision-editor-row,
+    .flow__outcome-row,
+    .flow__gate-decision {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 980px) {
+    .flow__deliverable-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) 72px 30px;
+    }
+
+    .flow__deliverable-description {
+        grid-column: 1 / -1;
+    }
+}
+
+.flow__prompt-menu-card {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+}
+
+.flow__prompt-menu-card > header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.flow__prompt-menu-card h3,
+.flow__prompt-menu-card span {
+    margin: 0;
+}
+
+.flow__prompt-menu-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__prompt-menu-card span,
+.flow__prompt-menu-card code {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.flow__prompt-menu-card textarea {
+    width: 100%;
+    min-height: 126px;
+    box-sizing: border-box;
+    border: 1px solid var(--theia-input-border);
+    border-radius: 4px;
+    padding: 8px 9px;
+    resize: vertical;
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    line-height: 1.45;
+}
+
+.flow__prompt-menu-card textarea:focus {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: -1px;
+}
+
+.flow__state-popover-header > div:first-child {
+    min-width: 0;
+}
+
+.flow__state-popover-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.flow__state-popover-actions button,
+.flow__state-popover-header .flow__state-popover-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: auto;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+}
+
+.flow__state-readonly {
+    display: grid;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.flow__summary-card {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    border: 1px solid color-mix(in srgb, var(--flow-border, var(--theia-panel-border)) 75%, transparent);
+    border-radius: 6px;
+    padding: 10px;
+    background: color-mix(in srgb, var(--flow-panel, var(--theia-sideBar-background)) 86%, transparent);
+}
+
+.flow__summary-card h4,
+.flow__summary-card p {
+    margin: 0;
+}
+
+.flow__summary-card h4 {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flow__summary-card p {
+    color: var(--theia-descriptionForeground);
+    line-height: 1.45;
+}
+
+.flow__summary-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.flow__summary-card-heading button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 28px;
+    white-space: nowrap;
+}
+
+.flow__summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 8px;
+    margin: 0;
+}
+
+.flow__summary-grid div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flow__summary-grid dt {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.flow__summary-grid dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.flow__readonly-text {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.flow__readonly-text > span,
+.flow__readonly-deliverables > span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.flow__readonly-text p {
+    display: -webkit-box;
+    max-height: 4.4em;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow-wrap: anywhere;
+}
+
+.flow__readonly-deliverables {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.flow__readonly-deliverables code {
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 999px;
+    padding: 2px 6px;
+    background: var(--theia-editor-background);
+}
+
+.flow__agent-picker {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    min-width: min(260px, 100%);
+}
+
+.flow__agent-picker-button {
+    display: inline-grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    width: 100% !important;
+    max-width: 100%;
+    min-width: min(260px, 100%);
+    min-height: 30px;
+    border: 1px solid var(--theia-dropdown-border, var(--theia-input-border)) !important;
+    border-radius: 4px !important;
+    padding: 0 8px !important;
+    background: var(--theia-dropdown-background, var(--theia-input-background)) !important;
+    color: var(--theia-dropdown-foreground, var(--theia-input-foreground)) !important;
+    text-align: left;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.flow__agent-picker-button span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__agent-picker-menu {
+    position: absolute;
+    z-index: 10050;
+    left: 0;
+    display: grid;
+    gap: 2px;
+    width: min(420px, calc(100vw - 64px));
+    max-height: min(48vh, 420px);
+    overflow: auto;
+    border: 1px solid var(--theia-menu-border, var(--theia-panel-border));
+    border-radius: 5px;
+    padding: 4px;
+    background: var(--theia-menu-background, var(--theia-editorWidget-background));
+    color: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    font-size: 12px;
+    line-height: 16px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+}
+
+.flow__agent-picker-menu--below {
+    top: calc(100% + 4px);
+}
+
+.flow__agent-picker-menu--above {
+    top: auto;
+    bottom: calc(100% + 4px);
+}
+
+.flow__agent-picker-group {
+    display: grid;
+    gap: 1px;
+}
+
+.flow__agent-picker-group-header,
+.flow__agent-picker-option {
+    display: grid !important;
+    align-items: center;
+    width: 100% !important;
+    min-height: 26px;
+    border: 0 !important;
+    border-radius: 4px !important;
+    background: transparent !important;
+    color: inherit !important;
+    text-align: left;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.flow__agent-picker-group-header {
+    grid-template-columns: 16px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 0 7px !important;
+    color: var(--theia-descriptionForeground) !important;
+}
+
+.flow__agent-picker-group-header small {
+    color: var(--theia-descriptionForeground);
+}
+
+.flow__agent-picker-options {
+    display: grid;
+    gap: 1px;
+}
+
+.flow__agent-picker-option {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 4px 8px 4px 28px !important;
+}
+
+.flow__agent-picker-option > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flow__agent-picker-option:first-child {
+    padding-left: 8px !important;
+}
+
+.flow__agent-picker-group-header:hover:not(:disabled),
+.flow__agent-picker-option:hover:not(:disabled),
+.flow__agent-picker-option--selected {
+    background: var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground)) !important;
+    color: var(--theia-menu-selectionForeground, var(--theia-editor-foreground)) !important;
+}
+
+.flow__model-execution-picker .cv-ai-runtime-execution-picker {
+    width: 100%;
+}
+
+.flow__model-execution-picker .cv-ai-runtime-picker-button {
+    max-width: min(260px, 100%);
+}
+
+.flow__model-execution-picker .cv-ai-runtime-picker-button:not(.compact) {
+    min-width: min(220px, 100%);
+}
+
+.flow__model-execution-picker .cv-ai-runtime-model-input {
+    min-width: min(220px, 100%);
+}
+
+.flow__state-popover-body .flow__state-editor select,
+.flow__state-popover-body .flow__state-editor input:not([type='checkbox']),
+.flow__state-popover-body .flow__transition-editor select,
+.flow__state-popover-body .flow__transition-editor input:not([type='checkbox']),
+.flow__state-popover-body .flow__model-execution select,
+.flow__state-popover-body .flow__model-execution input:not([type='checkbox']) {
+    font-size: 12px;
 }

@@ -636,12 +636,18 @@ const TEMPLATES: FlowWorkflowTemplate[] = [
 ];
 
 export function listFlowWorkflowTemplates(): FlowWorkflowTemplate[] {
-    return clone(TEMPLATES);
+    return clone(TEMPLATES).map(template => ({
+        ...template,
+        workflow: applyConservativeOutcomeRoutes(template.workflow)
+    }));
 }
 
 export function getFlowWorkflowTemplate(id: FlowWorkflowTemplateId | string): FlowWorkflowTemplate | undefined {
     const template = TEMPLATES.find(candidate => candidate.id === id);
-    return template ? clone(template) : undefined;
+    return template ? {
+        ...clone(template),
+        workflow: applyConservativeOutcomeRoutes(clone(template.workflow))
+    } : undefined;
 }
 
 export function instantiateFlowWorkflowTemplate(
@@ -662,4 +668,35 @@ export function instantiateFlowWorkflowTemplate(
 
 function clone<T>(value: T): T {
     return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function applyConservativeOutcomeRoutes(workflow: FlowWorkflow): FlowWorkflow {
+    const states = { ...workflow.states };
+    const transitionsBySource = new Map<string, FlowWorkflow['transitions']>();
+    for (const transition of workflow.transitions || []) {
+        transitionsBySource.set(transition.from, [...(transitionsBySource.get(transition.from) || []), transition]);
+    }
+    for (const [stateId, stateTransitions] of transitionsBySource) {
+        const state = states[stateId];
+        if (!state || stateTransitions.length !== 1) {
+            continue;
+        }
+        const [transition] = stateTransitions;
+        const canRoute = !transition.guard
+            || transition.on === 'run.started'
+            || transition.on === 'gate.approved'
+            || transition.on === 'state.completed';
+        if (!canRoute || state.outcomes?.success || state.outcomes?.approved) {
+            continue;
+        }
+        const outcome = transition.on === 'gate.approved' ? 'approved' : 'success';
+        states[stateId] = {
+            ...state,
+            outcomes: {
+                ...(state.outcomes || {}),
+                [outcome]: transition.to
+            }
+        };
+    }
+    return { ...workflow, states };
 }

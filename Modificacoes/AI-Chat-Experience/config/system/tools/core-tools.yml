@@ -1,0 +1,372 @@
+version: cybervinci.catalog/v1
+tools:
+  - version: cybervinci.tool/v1
+    id: core.agent.invoke
+    name: Invoke Agent
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Agent
+    description: Legacy host action reserved for explicit compatibility playbooks. Standard @ agents use autonomous playbooks instead.
+  - version: cybervinci.tool/v1
+    id: core.agent.describe
+    name: Describe Agent Runtime
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Agent
+    description: Host tool that resolves the selected chat agent, native source id, playbooks, and declared capabilities before an autonomous Playbook continues.
+  - version: cybervinci.tool/v1
+    id: core.agent.preflight
+    name: Agent Preflight
+    kind: guard
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Agent
+    description: Host guard that checks whether the selected agent/playbook/provider/tool bridge has enough runtime context to continue without hiding missing setup.
+  - version: cybervinci.tool/v1
+    id: system.agent.nativeMcpRequirements
+    name: Native Agent MCP Requirements
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Agent
+    description: Host guard that reports MCP server requirements inferred from native agent prompts and known native agent setup rules.
+  - version: cybervinci.tool/v1
+    id: system.agent.nativeReadiness
+    name: Native Agent Readiness
+    kind: guard
+    source: system
+    implementation: composite
+    exposeToModel: false
+    protected: true
+    category: Agent
+    description: Composite guard that describes the selected native agent, runs provider/tool preflight, and captures native MCP requirements as one reusable system tool.
+    steps:
+      - id: describe-agent
+        tool: core.agent.describe
+        saveAs: agentProfile
+      - id: preflight
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+      - id: native-mcp-requirements
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+  - version: cybervinci.tool/v1
+    id: core.chat.respond
+    name: Respond In Chat
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Chat
+    description: Host action reserved for writing the final response to the active chat turn.
+  - version: cybervinci.tool/v1
+    id: core.chat.stop
+    name: Stop Chat Turn
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Chat
+    description: Host action reserved for cancelling or ending the active chat turn.
+  - version: cybervinci.tool/v1
+    id: core.playbook.list
+    name: List Playbooks
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Playbooks
+    description: Host tool reserved for listing CyberVinci Playbooks as reusable workloads.
+  - version: cybervinci.tool/v1
+    id: core.playbook.run
+    name: Run Playbook
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Playbooks
+    description: Host action reserved for running a CyberVinci Playbook as a workload from another playbook, Flow, or host tool bridge.
+  - version: cybervinci.tool/v1
+    id: core.playbook.resume
+    name: Resume Playbook Run
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Playbooks
+    description: Host action that resumes a paused or failed CyberVinci Playbook run from its latest deterministic checkpoint.
+  - version: cybervinci.tool/v1
+    id: core.playbook.compileToFlowDraft
+    name: Compile Playbook To Flow Draft
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Playbooks
+    description: Host tool that compiles a CyberVinci Playbook into a flow.ai-authoring/v1 create_workflow draft.
+  - version: cybervinci.tool/v1
+    id: core.playbook.createFlowFromPlaybook
+    name: Create Flow From Playbook
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Playbooks
+    description: Host action that materializes a Flow workflow from a CyberVinci Playbook compile draft.
+  - version: cybervinci.tool/v1
+    id: core.flow.listWorkflows
+    name: List Flow Workflows
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host tool reserved for listing saved CyberVinci Flow workflows.
+  - version: cybervinci.tool/v1
+    id: core.flow.startRun
+    name: Start Saved Flow
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host action reserved for starting a saved CyberVinci Flow run.
+  - version: cybervinci.tool/v1
+    id: core.flow.listPendingGates
+    name: List Pending Flow Gates
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host tool reserved for listing pending human gate decisions in a CyberVinci Flow run.
+  - version: cybervinci.tool/v1
+    id: core.flow.approveGate
+    name: Decide Flow Gate
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host action reserved for approving, rejecting, or routing a CyberVinci Flow human gate.
+  - version: cybervinci.tool/v1
+    id: core.flow.runDynamicWorkflow
+    name: Run Dynamic Workflow
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host action reserved for asking AI Runtime and Flow to choose, author, and run a workflow for the prompt.
+  - version: cybervinci.tool/v1
+    id: core.flow.runAiAuthoredDynamicWorkflow
+    name: Run AI-Authored Dynamic Workflow
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host action that asks the shared AI Runtime for a flow.ai-authoring/v1 draft, then materializes and runs it through Flow.
+  - version: cybervinci.tool/v1
+    id: core.flow.getAiAuthoringSpec
+    name: Get Flow AI Authoring Spec
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host tool reserved for reading flow.ai-authoring/v1 before an AI authoring draft is produced.
+  - version: cybervinci.tool/v1
+    id: core.flow.runAiAuthoringDraft
+    name: Run AI Authored Flow
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host action reserved for executing a Flow run from a flow.ai-authoring/v1 draft.
+  - version: cybervinci.tool/v1
+    id: core.flow.createWorkflowFromAiAuthoringDraft
+    name: Create Flow From AI Authoring Draft
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host action reserved for materializing a Flow workflow from a flow.ai-authoring/v1 draft without starting it.
+  - version: cybervinci.tool/v1
+    id: core.memory.searchContext
+    name: Search Memory Context
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: Host tool that searches CyberVinci Memory and optionally builds a context pack for a Playbook state.
+  - version: cybervinci.tool/v1
+    id: core.memory.proposeCandidate
+    name: Propose Memory Candidate
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: Host action that extracts Memory candidate records without persisting unapproved writes.
+  - version: cybervinci.tool/v1
+    id: core.memory.requestWriteApproval
+    name: Request Memory Write Approval
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: Host action that asks the user before writing an approved Memory entry.
+  - version: cybervinci.tool/v1
+    id: core.memory.writeApproved
+    name: Write Approved Memory
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: Host action that writes Memory only when approved=true is supplied by a prior deterministic approval step.
+  - version: cybervinci.tool/v1
+    id: system.memory.searchContext
+    name: Search Memory Context
+    kind: tool
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: System tool wrapper for searching CyberVinci Memory from Playbooks.
+  - version: cybervinci.tool/v1
+    id: system.memory.proposeCandidate
+    name: Propose Memory Candidate
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: System tool wrapper for proposing Memory candidates without writing them.
+  - version: cybervinci.tool/v1
+    id: system.memory.requestWriteApproval
+    name: Request Memory Write Approval
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: System tool wrapper for explicit Memory write approval.
+  - version: cybervinci.tool/v1
+    id: system.memory.writeApproved
+    name: Write Approved Memory
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Memory
+    description: System tool wrapper that writes only explicitly approved Memory content.
+  - version: cybervinci.tool/v1
+    id: core.provider.status
+    name: Provider Status
+    kind: guard
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Providers
+    description: Host guard reserved for checking provider/model configuration before a playbook continues.
+  - version: cybervinci.tool/v1
+    id: core.theiaTool.list
+    name: List Theia Tools
+    kind: tool
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Tools
+    description: Host tool for listing tools registered in Theia's ToolInvocationRegistry.
+  - version: cybervinci.tool/v1
+    id: core.theiaTool.invoke
+    name: Invoke Theia Tool
+    kind: action
+    source: core
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Tools
+    description: Host action for invoking an existing Theia tool by ID from a playbook.
+  - version: cybervinci.tool/v1
+    id: system.mcp.hasServer
+    name: Check MCP Server Configured
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: MCP
+    description: Host guard that checks whether an MCP server is configured.
+  - version: cybervinci.tool/v1
+    id: system.mcp.isServerStarted
+    name: Check MCP Server Running
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: MCP
+    description: Host guard that checks whether an MCP server is currently running.
+  - version: cybervinci.tool/v1
+    id: system.mcp.configureServer
+    name: Configure MCP Server
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: MCP
+    description: Host action that adds or updates one or more MCP server definitions in user preferences.
+  - version: cybervinci.tool/v1
+    id: system.mcp.ensureServersStarted
+    name: Ensure MCP Servers Started
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: MCP
+    description: Host action that configures missing MCP servers and starts stopped servers.

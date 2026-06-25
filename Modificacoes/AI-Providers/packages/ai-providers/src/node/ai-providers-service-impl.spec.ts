@@ -110,6 +110,29 @@ class TestCodexProviderServiceImpl extends CodexProviderServiceImpl {
         return tokens;
     }
 
+    cliEventSequence(runtime: CodexProviderRuntime, events: Record<string, unknown>[]): Array<CodexProviderStreamMessage | undefined> {
+        const adapter = this.resolveCliAdapter(runtime);
+        if (!adapter) {
+            throw new Error(`No adapter for ${runtime}`);
+        }
+        const tokens: Array<CodexProviderStreamMessage | undefined> = [];
+        const client: CodexProviderClient = {
+            sendToken: (_streamId, token) => tokens.push(token),
+            sendError: () => undefined
+        };
+        this.activeStreams.set('stream-1', {
+            streamId: 'stream-1',
+            runtime,
+            client,
+            complete: () => undefined
+        });
+        for (const event of events) {
+            this.handleGenericCliRunEvent(adapter, 'stream-1', event, client);
+        }
+        this.activeStreams.delete('stream-1');
+        return tokens;
+    }
+
     directRequest(modelProvider: string, request: CodexProviderBackendRequest): { model: string, protocol: string, url: string, headers: Record<string, string>, body: Record<string, unknown> } {
         const provider = this.resolveDirectHttpProviderConfig({
             runtime: 'direct-http',
@@ -126,6 +149,46 @@ class TestCodexProviderServiceImpl extends CodexProviderServiceImpl {
             protocol,
             ...this.buildDirectHttpRequest(provider, protocol, request, 'C:\\workspace', model, 'secret')
         };
+    }
+
+    directModelMetadata(modelProvider: string, value: unknown): { id: string; label?: string; cost?: string } | undefined {
+        const provider = this.resolveDirectHttpProviderConfig({
+            runtime: 'direct-http',
+            modelProvider
+        });
+        if (!provider) {
+            throw new Error(`No direct provider for ${modelProvider}`);
+        }
+        const metadata = this.toDirectHttpModelMetadata(provider, value);
+        return metadata ? {
+            id: metadata.id,
+            label: metadata.label,
+            cost: metadata.cost
+        } : undefined;
+    }
+
+    directUnavailableModel(
+        modelProvider: string,
+        model: string,
+        detail: string,
+        status = 401
+    ): { id: string; unavailable?: boolean; unavailableReason?: string } | undefined {
+        const provider = this.resolveDirectHttpProviderConfig({
+            runtime: 'direct-http',
+            modelProvider
+        });
+        if (!provider) {
+            throw new Error(`No direct provider for ${modelProvider}`);
+        }
+        this.markDirectHttpModelUnavailableFromError(provider, model, status, detail);
+        const metadata = this.applyDirectHttpUnavailableModels(provider, [{
+            id: this.withDirectProviderPrefix(provider, model)
+        }])?.[0];
+        return metadata ? {
+            id: metadata.id,
+            unavailable: metadata.unavailable,
+            unavailableReason: metadata.unavailableReason
+        } : undefined;
     }
 
     directEvent(protocol: 'openai-chat' | 'openai-responses' | 'anthropic-messages' | 'google-generate', block: string): Array<CodexProviderStreamMessage | undefined> {
@@ -428,6 +491,64 @@ describe('CodexProviderServiceImpl', () => {
         expect(built.body.model).equals('gpt-5-codex');
     });
 
+    it('marks OpenRouter free variants from model metadata', () => {
+        expect(service.directModelMetadata('openrouter', {
+            id: 'nvidia/nemotron-3-ultra:free',
+            name: 'Nemotron Free',
+            pricing: { prompt: '0', completion: '0' }
+        })).deep.equals({
+            id: 'openrouter/nvidia/nemotron-3-ultra:free',
+            label: 'Nemotron Free',
+            cost: 'free'
+        });
+    });
+
+    it('marks OpenCode Zen free models as limited free', () => {
+        expect(service.directModelMetadata('opencode', {
+            id: 'deepseek-v4-flash-free',
+            pricing: { prompt: 'Free', completion: 'Free' }
+        })).deep.equals({
+            id: 'opencode/deepseek-v4-flash-free',
+            label: 'deepseek-v4-flash-free',
+            cost: 'free-limited'
+        });
+    });
+
+    it('marks known OpenCode Zen free models without a free suffix as limited free', () => {
+        expect(service.directModelMetadata('opencode', {
+            id: 'big-pickle'
+        })).deep.equals({
+            id: 'opencode/big-pickle',
+            label: 'big-pickle',
+            cost: 'free-limited'
+        });
+    });
+
+    it('marks expired OpenCode Zen promotional models as unavailable after provider rejection', () => {
+        expect(service.directUnavailableModel('opencode', 'qwen3.6-plus-free', JSON.stringify({
+            type: 'error',
+            error: {
+                type: 'ModelError',
+                message: 'Free promotion has ended for Qwen3.6 Plus Free. You can continue using the model by subscribing to OpenCode Go - https://opencode.ai/go'
+            }
+        }))).deep.equals({
+            id: 'opencode/qwen3.6-plus-free',
+            unavailable: true,
+            unavailableReason: 'Free promotion has ended for Qwen3.6 Plus Free. You can continue using the model by subscribing to OpenCode Go - https://opencode.ai/go'
+        });
+    });
+
+    it('marks OpenCode Go models as subscription included by default', () => {
+        expect(service.directModelMetadata('opencode-go', {
+            id: 'kimi-k2.7',
+            pricing: { prompt: '0.95', completion: '4.00' }
+        })).deep.equals({
+            id: 'opencode-go/kimi-k2.7',
+            label: 'kimi-k2.7',
+            cost: 'included'
+        });
+    });
+
     it('maps OpenCode JSON events to Theia-compatible stream notifications', () => {
         const text = service.openCodeEvent({
             type: 'text',
@@ -539,6 +660,29 @@ describe('CodexProviderServiceImpl', () => {
                 delta: 'cursor text',
                 runtime: 'cursor-cli'
             }
+        });
+    });
+
+    it('does not suppress a final generic CLI response after reasoning-only deltas', () => {
+        const tokens = service.cliEventSequence('gemini-cli', [{
+            type: 'reasoning',
+            reasoning: 'planning privately'
+        }, {
+            type: 'result',
+            result: '{"type":"operation","operation":{"operation":"updatePage","changes":{"background":"#ffffff"}}}'
+        }]);
+
+        expect(tokens.map(token => (token as { method?: string } | undefined)?.method)).to.deep.equal([
+            'item/reasoning/textDelta',
+            'item/agentMessage/delta'
+        ]);
+        expect(tokens[1]).deep.includes({
+            type: 'notification',
+            method: 'item/agentMessage/delta'
+        });
+        expect((tokens[1] as { params?: unknown }).params).deep.includes({
+            delta: '{"type":"operation","operation":{"operation":"updatePage","changes":{"background":"#ffffff"}}}',
+            runtime: 'gemini-cli'
         });
     });
 

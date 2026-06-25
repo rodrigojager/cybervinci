@@ -136,6 +136,7 @@ export interface CodexProviderBackendStatus {
     authStatus?: string;
     accountLabel?: string;
     models?: string[];
+    modelMetadata?: CodexProviderModelMetadata[];
     capabilities?: CodexProviderCapabilityStatus;
     configurationRequired?: string[];
     detectedProviders?: CodexProviderDetectedProvider[];
@@ -160,6 +161,7 @@ export interface CodexProviderStatus {
     authStatus?: string;
     accountLabel?: string;
     models?: string[];
+    modelMetadata?: CodexProviderModelMetadata[];
     capabilities?: CodexProviderCapabilityStatus;
     configurationRequired?: string[];
     detectedProviders?: CodexProviderDetectedProvider[];
@@ -192,6 +194,53 @@ export interface CodexProviderDetectedProvider {
     version?: string;
     message?: string;
     defaultModel?: string;
+    models?: string[];
+    modelMetadata?: CodexProviderModelMetadata[];
+}
+
+export type CodexProviderModelCost = 'free' | 'free-limited' | 'included' | 'paid' | 'unknown';
+
+export interface CodexProviderModelPricing {
+    prompt?: string;
+    completion?: string;
+    request?: string;
+    image?: string;
+    inputCacheRead?: string;
+    inputCacheWrite?: string;
+    cachedRead?: string;
+    cachedWrite?: string;
+    raw?: unknown;
+}
+
+export interface CodexProviderModelMetadata {
+    id: string;
+    label?: string;
+    provider?: string;
+    cost?: CodexProviderModelCost;
+    pricing?: CodexProviderModelPricing;
+    contextLength?: number;
+    inputModalities?: string[];
+    outputModalities?: string[];
+    supportedParameters?: string[];
+    attachment?: boolean;
+    reasoning?: boolean;
+    toolCalling?: boolean;
+    structuredOutput?: boolean;
+    temperature?: boolean;
+    variants?: Record<string, CodexProviderModelVariant>;
+    unavailable?: boolean;
+    unavailableReason?: string;
+    unavailableAt?: number;
+    description?: string;
+    raw?: unknown;
+}
+
+export interface CodexProviderModelVariant {
+    id?: string;
+    label?: string;
+    description?: string;
+    options?: Record<string, unknown>;
+    disabled?: boolean;
 }
 
 export interface CodexProviderCapabilityStatus {
@@ -222,6 +271,8 @@ export interface CodexProviderOptions {
     approvalPolicy?: 'untrusted' | 'on-failure' | 'on-request' | 'never';
     sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access';
     reasoningEffort?: 'low' | 'medium' | 'high' | 'xhigh';
+    reasoningVariant?: string;
+    reasoningVariantOptions?: Record<string, unknown>;
     verbosity?: 'low' | 'medium' | 'high';
     serviceTier?: 'fast' | 'flex';
     webSearch?: 'disabled' | 'cached' | 'live';

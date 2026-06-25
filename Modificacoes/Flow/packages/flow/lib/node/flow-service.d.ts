@@ -1,6 +1,6 @@
 import { LanguageModelRegistry } from '@theia/ai-core';
-import { CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
-import { FlowCreateWorkflowFromTemplateRequest, FlowCreateWorkflowFromPresetRequest, FlowCreateWorkflowFromPatternRequest, FlowCreateWorkflowFromAiAuthoringDraftRequest, FlowRunWorkflowPatternRequest, FlowPlanDynamicWorkflowRequest, FlowRunDynamicWorkflowRequest, FlowCreateAgentMarkdownRequest, FlowAgentMarkdownFile, FlowAgentMarkdownRequest, FlowAgentMarkdownSummary, FlowDuplicateAgentMarkdownRequest, FlowExportRunRequest, FlowExportWorkflowRequest, FlowEffect, FlowEffectDecisionRequest, FlowRunExportResult, FlowWorkflowExportResult, FlowWorkflowVersion, FlowWorkflowVersionRequest, FlowGateDecisionRequest, FlowImportRunRequest, FlowImportWorkflowRequest, FlowMemoryWriteRequest, FlowPipelinePreset, FlowRun, FlowKernelRunMetadata, FlowRunLifecycleRequest, FlowRunRequest, FlowRunStreamRequest, FlowListPipelinePresetsRequest, FlowSaveWorkflowRequest, FlowSavePipelinePresetRequest, FlowRenameAgentMarkdownRequest, FlowSecondRunApprovalRequest, FlowSecondRunDecisionRequest, FlowStartRunRequest, FlowClient, FlowCapabilities, FlowService, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowFileRequest, FlowWorkflowRequest, FlowWorkflowTemplate, FlowWorkspaceRequest } from '../common';
+import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
+import { FlowCreateWorkflowFromTemplateRequest, FlowCreateWorkflowFromPresetRequest, FlowCreateWorkflowFromPatternRequest, FlowCreateWorkflowFromAiAuthoringDraftRequest, FlowRunWorkflowPatternRequest, FlowPlanDynamicWorkflowRequest, FlowRunDynamicWorkflowRequest, FlowCreateAgentMarkdownRequest, FlowAgentMarkdownFile, FlowAgentMarkdownRequest, FlowAgentMarkdownSummary, FlowCleanupRunsRequest, FlowCleanupRunsResult, FlowDuplicateAgentMarkdownRequest, FlowExportRunRequest, FlowExportWorkflowRequest, FlowEffect, FlowEffectDecisionRequest, FlowRunExportResult, FlowWorkflowExportResult, FlowWorkflowVersion, FlowWorkflowVersionRequest, FlowGateDecisionRequest, FlowImportRunRequest, FlowImportWorkflowRequest, FlowMemoryWriteRequest, FlowPipelinePreset, FlowRun, FlowKernelRunMetadata, FlowRunLifecycleRequest, FlowRunRequest, FlowRunStreamRequest, FlowRunWorkspaceOptions, FlowRunWorkspaceState, FlowListPipelinePresetsRequest, FlowSaveModelProfileRequest, FlowSaveWorkflowRequest, FlowSavePipelinePresetRequest, FlowRenameAgentMarkdownRequest, FlowSecondRunApprovalRequest, FlowSecondRunDecisionRequest, FlowStartRunRequest, FlowClient, FlowCapabilities, FlowContextPack, FlowService, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowFileRequest, FlowWorkflowRequest, FlowWorkflowTemplate, FlowWorkspaceRequest, FlowDynamicWorkflowPlan } from '../common';
 import { FlowKernelBridge } from './flow-kernel-bridge';
 import { AgentMarkdownStore } from './agent-markdown-store';
 import { FlowStore } from './flow-store';
@@ -8,6 +8,7 @@ import { MarkdownWorkloadStore } from './markdown-workload-store';
 import { MemoryAdapter } from './memory-adapter';
 import { FileEffectHostAdapter } from './file-effect-host-adapter';
 import { ImageEffectHostAdapter } from './image-effect-host-adapter';
+import { FlowPlaybookRunner } from './flow-playbook-runner';
 interface CodexProviderRuntimeReport {
     available: boolean;
     imageGeneration: boolean;
@@ -23,6 +24,7 @@ export declare class FlowServiceImpl implements FlowService {
     protected readonly memory: MemoryAdapter;
     protected readonly fileEffectHostAdapter?: FileEffectHostAdapter;
     protected readonly imageEffectHostAdapter?: ImageEffectHostAdapter;
+    protected readonly playbookRunner?: FlowPlaybookRunner;
     protected readonly languageModelRegistry?: LanguageModelRegistry;
     protected readonly codexProviderService?: CodexProviderService;
     setClient(client: FlowClient | undefined): void;
@@ -34,7 +36,8 @@ export declare class FlowServiceImpl implements FlowService {
     listRuns(request: FlowWorkspaceRequest): Promise<FlowRun[]>;
     listWorkflowTemplates(): Promise<FlowWorkflowTemplate[]>;
     listWorkflowPatterns(): Promise<import("../common").FlowWorkflowPattern[]>;
-    listModelProfiles(): Promise<import("../common").FlowModelProfile[]>;
+    listModelProfiles(request?: FlowWorkspaceRequest): Promise<import("../common").FlowModelProfile[]>;
+    saveModelProfile(request: FlowSaveModelProfileRequest): Promise<import("../common").FlowModelProfile>;
     listPipelinePresets(request: FlowListPipelinePresetsRequest): Promise<FlowPipelinePreset[]>;
     listAgentMarkdownFiles(request: FlowWorkspaceRequest): Promise<FlowAgentMarkdownSummary[]>;
     getAgentMarkdownFile(request: FlowAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
@@ -46,9 +49,10 @@ export declare class FlowServiceImpl implements FlowService {
     createWorkflowFromPattern(request: FlowCreateWorkflowFromPatternRequest): Promise<FlowWorkflow>;
     createWorkflowFromAiAuthoringDraft(request: FlowCreateWorkflowFromAiAuthoringDraftRequest): Promise<FlowWorkflow>;
     runWorkflowPattern(request: FlowRunWorkflowPatternRequest): Promise<FlowRun>;
-    planDynamicWorkflow(request: FlowPlanDynamicWorkflowRequest): Promise<any>;
+    planDynamicWorkflow(request: FlowPlanDynamicWorkflowRequest): Promise<FlowDynamicWorkflowPlan>;
     runDynamicWorkflow(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun>;
     protected runAiAuthoringDraft(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun>;
+    protected recordDynamicWorkflowDecision(workspaceRootUri: string | undefined, run: FlowRun, plan: FlowDynamicWorkflowPlan, authoringAction?: string): Promise<FlowRun>;
     protected materializeAiAuthoringDraft(workspaceRootUri: string | undefined, draft: NonNullable<FlowRunDynamicWorkflowRequest['authoringDraft']>): Promise<FlowWorkflow>;
     savePipelinePreset(request: FlowSavePipelinePresetRequest): Promise<FlowPipelinePreset>;
     getWorkflow(request: FlowWorkflowRequest): Promise<FlowWorkflow>;
@@ -66,6 +70,11 @@ export declare class FlowServiceImpl implements FlowService {
     protected getPipelinePreset(workspaceRootUri: string | undefined, presetId: string): Promise<FlowPipelinePreset>;
     protected materializePresetAgents(workspaceRootUri: string | undefined, preset: FlowPipelinePreset): Promise<void>;
     protected materializeWorkflowAgents(workspaceRootUri: string | undefined, workflow: FlowWorkflow): Promise<void>;
+    protected prepareRunWorkspace(workspaceRootUri: string | undefined, workflow: FlowWorkflow, options: FlowRunWorkspaceOptions | undefined): Promise<{
+        workspaceRootUri?: string;
+        workspace?: FlowRunWorkspaceState;
+    }>;
+    protected buildRunContextPack(workspaceRootUri: string | undefined, workflow: FlowWorkflow): Promise<FlowContextPack>;
     startRun(request: FlowStartRunRequest): Promise<FlowRun>;
     getRun(request: FlowRunRequest): Promise<FlowRun>;
     tickRun(request: FlowRunRequest): Promise<FlowRun>;
@@ -74,6 +83,7 @@ export declare class FlowServiceImpl implements FlowService {
     cancelRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
     finalizeRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
     approveGate(request: FlowGateDecisionRequest): Promise<FlowRun>;
+    cleanupRuns(request: FlowCleanupRunsRequest): Promise<FlowCleanupRunsResult>;
     decideEffect(request: FlowEffectDecisionRequest): Promise<FlowRun>;
     approveMemoryCandidate(request: FlowMemoryWriteRequest): Promise<FlowRun>;
     approveSecondRunSuggestion(request: FlowSecondRunApprovalRequest): Promise<FlowRun>;
@@ -85,6 +95,7 @@ export declare class FlowServiceImpl implements FlowService {
     protected ensureWorkflows(workspaceRootUri?: string): Promise<FlowWorkflow[]>;
     protected getRuntimeCapabilities(): Promise<FlowCapabilities>;
     protected resolveRunEventStreamCapability(): Promise<boolean>;
+    protected resolvePlaybookExecutionCapability(): Promise<FlowCapabilities['playbookExecution']>;
     protected resolveLlmAgentProvider(codexProvider?: CodexProviderRuntimeReport): Promise<Pick<FlowCapabilities, 'llmAgentExecution' | 'llmAgentProvider' | 'demoMode'>>;
     protected resolveCodexProviderRuntimeReport(): Promise<CodexProviderRuntimeReport>;
     protected hasConfiguredAgentCommandProvider(): boolean;

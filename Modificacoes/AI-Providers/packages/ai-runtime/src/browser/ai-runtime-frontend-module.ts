@@ -15,15 +15,16 @@ import {
     CyberVinciAiRuntimeClient,
     CyberVinciAiRuntimeService
 } from '../common';
-import { CyberVinciAiRuntimeFrontendService } from './ai-runtime-frontend-service';
+import { CyberVinciAiRuntimeBackendService, CyberVinciAiRuntimeFrontendService } from './ai-runtime-frontend-service';
 import '../../src/browser/style/cybervinci-ai-runtime.css';
 
 export default new ContainerModule(bind => {
     bind(CyberVinciAiRuntimeClient).toConstantValue({});
-    bind(CyberVinciAiRuntimeFrontendService).toSelf().inSingletonScope();
-    bind(CyberVinciAiRuntimeService).toDynamicValue(ctx => {
+    bind(CyberVinciAiRuntimeBackendService).toDynamicValue(ctx => {
         const connection = ctx.container.get<ServiceConnectionProvider>(RemoteConnectionProvider);
         const client = ctx.container.get<CyberVinciAiRuntimeClient>(CyberVinciAiRuntimeClient);
         return connection.createProxy<CyberVinciAiRuntimeService>(CYBERVINCI_AI_RUNTIME_SERVICE_PATH, client);
     }).inSingletonScope();
+    bind(CyberVinciAiRuntimeFrontendService).toSelf().inSingletonScope();
+    bind(CyberVinciAiRuntimeService).toService(CyberVinciAiRuntimeFrontendService);
 });

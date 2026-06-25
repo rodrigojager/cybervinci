@@ -33,6 +33,72 @@ class TestFlowService extends FlowServiceImpl {
     }
 }
 
+class StartableTestFlowService extends FlowServiceImpl {
+    readonly savedRuns: FlowRun[] = [];
+
+    constructor(
+        private readonly workflow: FlowWorkflow,
+        private readonly capabilities: FlowCapabilities = FLOW_CAPABILITIES,
+        private readonly memoryError: Error = new Error('Memory provider is not available and local fallback is not explicitly enabled.')
+    ) {
+        super();
+        Object.defineProperty(this, 'memory', {
+            value: {
+                buildContextPack: async () => {
+                    throw this.memoryError;
+                },
+                collectMemoryCandidates: async () => []
+            }
+        });
+        Object.defineProperty(this, 'kernelBridge', {
+            value: {
+                startRun: async (workflow: FlowWorkflow, prompt: string) => ({
+                    id: 'run-with-human-gate',
+                    workflowId: workflow.id,
+                    prompt,
+                    status: 'waiting_gate',
+                    createdAt: '2026-06-18T10:00:00.000Z',
+                    updatedAt: '2026-06-18T10:00:00.000Z',
+                    currentStateIds: ['approval_gate'],
+                    stateStatuses: { input: 'done', approval_gate: 'waiting' },
+                    workloads: [],
+                    events: [],
+                    artifacts: [],
+                    effects: [],
+                    signals: [],
+                    gates: [{ id: 'approval', title: 'Approve', stateId: 'approval_gate', status: 'pending' }],
+                    tick: 0
+                } satisfies FlowRun)
+            }
+        });
+        Object.defineProperty(this, 'store', {
+            value: {
+                saveRun: async (_workspaceRootUri: string | undefined, run: FlowRun) => {
+                    this.savedRuns.push(run);
+                },
+                getRun: async () => this.savedRuns[this.savedRuns.length - 1]
+            }
+        });
+        Object.defineProperty(this, 'workloadStore', {
+            value: {
+                materializeRun: async (_workspaceRootUri: string | undefined, _workflow: FlowWorkflow, run: FlowRun) => run
+            }
+        });
+    }
+
+    override getWorkflow(): Promise<FlowWorkflow> {
+        return Promise.resolve(this.workflow);
+    }
+
+    protected override getRuntimeCapabilities(): Promise<FlowCapabilities> {
+        return Promise.resolve(this.capabilities);
+    }
+
+    protected override ensureRunStream(): void {
+        // Unit tests assert the startRun contract without opening a live kernel stream.
+    }
+}
+
 class RuntimeCapabilitiesFlowService extends FlowServiceImpl {
     readCapabilities(): Promise<FlowCapabilities> {
         return this.getRuntimeCapabilities();
@@ -251,6 +317,73 @@ describe('FlowServiceImpl capability gates', () => {
                 + 'execution mode: kernel_simulated; demo=off; deterministicFallback=on; '
                 + 'action: configure command execution policy with allowlisted commands/env/cwd, timeout, output redaction, and approvals).'
             );
+        }
+    });
+
+    it('starts non-Memory workflows with a minimal context pack when Memory is unavailable', async () => {
+        const service = new StartableTestFlowService({
+            version: 'flow.workflow/v1',
+            id: 'gate_without_memory',
+            name: 'Gate Without Memory',
+            requires: {
+                capabilities: ['human.approval']
+            },
+            states: {
+                input: {
+                    type: 'input',
+                    outputs: ['input/request.md'],
+                    outcomes: { success: 'approval_gate' }
+                },
+                approval_gate: {
+                    type: 'gate',
+                    gates: [{ id: 'approval', title: 'Approve' }]
+                }
+            },
+            transitions: []
+        });
+
+        const run = await service.startRun({
+            workspaceRootUri,
+            workflowId: 'gate_without_memory',
+            prompt: 'wait for approval'
+        });
+
+        expect(run.status).to.equal('waiting_gate');
+        expect(run.contextPack?.missingService).to.contain('Memory provider');
+        expect(run.contextPack?.workflow.id).to.equal('gate_without_memory');
+        expect(run.gates[0]).to.include({ id: 'approval', status: 'pending' });
+    });
+
+    it('still requires Memory when the workflow declares memory.context', async () => {
+        const service = new StartableTestFlowService(
+            {
+                version: 'flow.workflow/v1',
+                id: 'memory_required',
+                name: 'Memory Required',
+                requires: {
+                    capabilities: ['memory.context']
+                },
+                states: {
+                    input: {
+                        type: 'input',
+                        outputs: ['input/request.md']
+                    }
+                },
+                transitions: []
+            },
+            { ...FLOW_CAPABILITIES, memoryProvider: 'external' }
+        );
+
+        try {
+            await service.startRun({
+                workspaceRootUri,
+                workflowId: 'memory_required',
+                prompt: 'requires memory'
+            });
+            throw new Error('startRun unexpectedly succeeded.');
+        } catch (error) {
+            expect(error).to.be.instanceOf(Error);
+            expect((error as Error).message).to.contain('Memory provider is not available and local fallback is not explicitly enabled');
         }
     });
 

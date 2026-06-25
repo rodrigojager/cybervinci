@@ -1,4 +1,5 @@
 import { SelectedElementSnapshot } from './selected-element';
+import { CyberVinciAiExecutionSelection } from '@cybervinci/ai-runtime/lib/common';
 
 export type VisualAiProviderStatus = 'ready' | 'needs-auth' | 'unavailable' | 'not-configured';
 
@@ -19,10 +20,7 @@ export interface VisualAiProtectedToken {
 }
 
 export interface VisualAiRunRequest {
-    providerId: string;
-    model?: string;
-    reasoningPolicy?: 'off' | 'native' | 'virtual' | 'auto' | 'native_plus_virtual_light';
-    reasoningEffort?: 'none' | 'low' | 'medium' | 'high' | 'xhigh';
+    execution: CyberVinciAiExecutionSelection;
     instruction: string;
     fileUri: string;
     html: string;

@@ -12,6 +12,7 @@ import {
     CodexProviderBackendRequest,
     CodexProviderBackendStatus,
     CodexProviderDetectedProvider,
+    CodexProviderNotificationMessage,
     CodexProviderOptions,
     CodexProviderRuntime,
     CodexProviderService
@@ -21,20 +22,25 @@ import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import {
     parseCyberVinciAiJson,
     CyberVinciAiExecutionSelection,
+    CyberVinciAiModelMetadata,
     CyberVinciAiProviderDescriptor,
     CyberVinciAiProviderListRequest,
     CyberVinciAiRuntimeClient,
     CyberVinciAiRuntimeService,
     CyberVinciAiTaskRequest,
-    CyberVinciAiTaskResult
+    CyberVinciAiTaskResult,
+    CyberVinciAiUsageReport
 } from '../common';
 import { CyberVinciAiContextBroker } from './ai-context-broker';
 
-const DEFAULT_PROVIDER_PRESETS: Array<Pick<CyberVinciAiProviderDescriptor, 'runtime' | 'modelProvider' | 'label' | 'defaultModel'>> = [
-    { runtime: 'codex-app-server', modelProvider: 'codex', label: 'Codex CLI' },
-    { runtime: 'direct-http', modelProvider: 'openrouter', label: 'OpenRouter', defaultModel: 'openrouter/openai/gpt-5' },
+// Fallback only; live Codex app-server model/list results take precedence.
+const CODEX_MODEL_PRESETS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];
+
+const DEFAULT_PROVIDER_PRESETS: Array<Pick<CyberVinciAiProviderDescriptor, 'runtime' | 'modelProvider' | 'label' | 'defaultModel' | 'models' | 'modelMetadata'>> = [
+    { runtime: 'codex-app-server', modelProvider: 'codex', label: 'Codex CLI', defaultModel: 'gpt-5.5', models: CODEX_MODEL_PRESETS },
+    { runtime: 'direct-http', modelProvider: 'openrouter', label: 'OpenRouter', defaultModel: 'openrouter/openai/gpt-5.5' },
     { runtime: 'direct-http', modelProvider: 'opencode-go', label: 'OpenCode Go', defaultModel: 'opencode-go/deepseek-v4-flash' },
-    { runtime: 'direct-http', modelProvider: 'opencode', label: 'OpenCode Zen', defaultModel: 'opencode/gpt-5-codex' },
+    { runtime: 'direct-http', modelProvider: 'opencode', label: 'OpenCode Zen', defaultModel: 'opencode/gpt-5.5' },
     { runtime: 'gemini-cli', modelProvider: 'gemini', label: 'Gemini CLI' },
     { runtime: 'claude-code-cli', modelProvider: 'claude-code', label: 'Claude Code', defaultModel: 'sonnet' },
     { runtime: 'cursor-cli', modelProvider: 'cursor', label: 'Cursor CLI' }
@@ -77,7 +83,22 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
         }
 
         try {
-            const status = await this.codexProviderService.getStatus({ cwd: request.workspacePath });
+            const status = await this.codexProviderService.getStatus({
+                cwd: request.workspacePath,
+                model: request.model,
+                runtime: request.runtime,
+                modelProvider: request.modelProvider,
+                openRouterApiKey: request.openRouterApiKey,
+                openCodeApiKey: request.openCodeApiKey,
+                openCodeExecutablePath: request.openCodeExecutablePath,
+                openCodeAgent: request.openCodeAgent,
+                openCodeVariant: request.openCodeVariant,
+                geminiExecutablePath: request.geminiExecutablePath,
+                claudeExecutablePath: request.claudeExecutablePath,
+                claudeAgent: request.claudeAgent,
+                cursorExecutablePath: request.cursorExecutablePath,
+                cursorMode: request.cursorMode
+            });
             for (const detected of status.detectedProviders ?? []) {
                 const descriptor = this.detectedProviderToDescriptor(detected, status);
                 presets.set(descriptor.id, descriptor);
@@ -136,8 +157,112 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
             execution,
             context: preparedContext.report,
             notifications: result.notifications,
+            usage: this.extractUsageReport(result.notifications),
             diagnostics
         };
+    }
+
+    protected extractUsageReport(notifications: CodexProviderNotificationMessage[]): CyberVinciAiUsageReport | undefined {
+        const raw: unknown[] = [];
+        const usage: CyberVinciAiUsageReport = {
+            source: 'provider-notification'
+        };
+        for (const notification of notifications) {
+            const candidates = this.usageCandidates(notification.params);
+            for (const candidate of candidates) {
+                const record = this.asRecord(candidate);
+                if (!record) {
+                    continue;
+                }
+                const nestedUsage = this.asRecord(record.usage);
+                const source = nestedUsage ?? record;
+                const inputTokens = this.firstNumber(source, ['input_tokens', 'prompt_tokens', 'inputTokens', 'promptTokens']);
+                const outputTokens = this.firstNumber(source, ['output_tokens', 'completion_tokens', 'outputTokens', 'completionTokens']);
+                const cachedInputTokens = this.firstNumber(source, ['cached_input_tokens', 'cachedInputTokens']);
+                const cacheCreationInputTokens = this.firstNumber(source, ['cache_creation_input_tokens', 'cacheCreationInputTokens']);
+                const cacheReadInputTokens = this.firstNumber(source, ['cache_read_input_tokens', 'cacheReadInputTokens']);
+                const totalTokens = this.firstNumber(source, ['total_tokens', 'totalTokens']);
+                const costUsd = this.firstNumber(record, ['total_cost_usd', 'cost_usd', 'totalCostUsd', 'costUsd'])
+                    ?? this.firstNumber(source, ['total_cost_usd', 'cost_usd', 'totalCostUsd', 'costUsd']);
+                if ([inputTokens, outputTokens, cachedInputTokens, cacheCreationInputTokens, cacheReadInputTokens, totalTokens, costUsd].every(value => value === undefined)) {
+                    continue;
+                }
+                usage.inputTokens = this.sumOptional(usage.inputTokens, inputTokens);
+                usage.outputTokens = this.sumOptional(usage.outputTokens, outputTokens);
+                usage.cachedInputTokens = this.sumOptional(usage.cachedInputTokens, cachedInputTokens);
+                usage.cacheCreationInputTokens = this.sumOptional(usage.cacheCreationInputTokens, cacheCreationInputTokens);
+                usage.cacheReadInputTokens = this.sumOptional(usage.cacheReadInputTokens, cacheReadInputTokens);
+                usage.totalTokens = this.sumOptional(usage.totalTokens, totalTokens);
+                usage.costUsd = this.sumOptional(usage.costUsd, costUsd);
+                raw.push(candidate);
+            }
+        }
+        if (
+            usage.inputTokens === undefined &&
+            usage.outputTokens === undefined &&
+            usage.cachedInputTokens === undefined &&
+            usage.cacheCreationInputTokens === undefined &&
+            usage.cacheReadInputTokens === undefined &&
+            usage.totalTokens === undefined &&
+            usage.costUsd === undefined
+        ) {
+            return undefined;
+        }
+        if (usage.totalTokens === undefined) {
+            const total = (usage.inputTokens ?? 0)
+                + (usage.outputTokens ?? 0)
+                + (usage.cachedInputTokens ?? 0)
+                + (usage.cacheCreationInputTokens ?? 0)
+                + (usage.cacheReadInputTokens ?? 0);
+            usage.totalTokens = total > 0 ? total : undefined;
+        }
+        usage.raw = raw.slice(0, 8);
+        return usage;
+    }
+
+    protected usageCandidates(value: unknown): unknown[] {
+        const record = this.asRecord(value);
+        if (!record) {
+            return [];
+        }
+        const candidates: unknown[] = [record];
+        for (const key of ['result', 'message', 'response', 'turn', 'item']) {
+            if (record[key] !== undefined) {
+                candidates.push(record[key]);
+            }
+        }
+        return candidates;
+    }
+
+    protected firstNumber(record: Record<string, unknown>, keys: string[]): number | undefined {
+        for (const key of keys) {
+            const value = this.toFiniteNumber(record[key]);
+            if (value !== undefined) {
+                return value;
+            }
+        }
+        return undefined;
+    }
+
+    protected sumOptional(left: number | undefined, right: number | undefined): number | undefined {
+        return right === undefined ? left : (left ?? 0) + right;
+    }
+
+    protected toFiniteNumber(value: unknown): number | undefined {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            return value;
+        }
+        if (typeof value === 'string' && value.trim()) {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : undefined;
+        }
+        return undefined;
+    }
+
+    protected asRecord(value: unknown): Record<string, unknown> | undefined {
+        return value && typeof value === 'object' && !Array.isArray(value)
+            ? value as Record<string, unknown>
+            : undefined;
     }
 
     protected async resolveExecution(selection: CyberVinciAiExecutionSelection | undefined, workspacePath: string | undefined): Promise<CyberVinciAiExecutionSelection> {
@@ -148,17 +273,82 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
             modelProvider: selection?.modelProvider ?? parsed?.modelProvider
         };
         if (withParsed.runtime && withParsed.modelProvider) {
+            const providerId = this.providerId(withParsed.runtime, withParsed.modelProvider);
+            const provider = await this.findExecutionProvider(providerId, workspacePath, withParsed);
+            if (provider) {
+                this.assertExecutionProviderAvailable(provider);
+            }
             return {
                 reasoningPolicy: 'auto',
                 reasoningEffort: 'medium',
                 ...withParsed,
-                providerId: this.providerId(withParsed.runtime, withParsed.modelProvider)
+                providerId,
+                runtime: provider?.runtime ?? withParsed.runtime,
+                modelProvider: provider?.modelProvider ?? withParsed.modelProvider,
+                label: provider?.label ?? withParsed.label,
+                executablePath: withParsed.executablePath ?? provider?.executablePath,
+                model: this.resolveExecutionModel(provider, withParsed.model)
             };
         }
         return {
             ...(await this.getDefaultExecution({ workspacePath, includeUnavailable: true })),
             ...withParsed
         };
+    }
+
+    protected async findExecutionProvider(
+        providerId: string,
+        workspacePath: string | undefined,
+        selection: CyberVinciAiExecutionSelection
+    ): Promise<CyberVinciAiProviderDescriptor | undefined> {
+        const providers = await this.listProviders({
+            workspacePath,
+            includeUnavailable: true,
+            model: selection.model,
+            runtime: selection.runtime,
+            modelProvider: selection.modelProvider,
+            openRouterApiKey: selection.openRouterApiKey,
+            openCodeApiKey: selection.openCodeApiKey,
+            openCodeExecutablePath: selection.openCodeExecutablePath,
+            openCodeAgent: selection.openCodeAgent,
+            openCodeVariant: selection.openCodeVariant,
+            geminiExecutablePath: selection.geminiExecutablePath,
+            claudeExecutablePath: selection.claudeExecutablePath,
+            claudeAgent: selection.claudeAgent,
+            cursorExecutablePath: selection.cursorExecutablePath,
+            cursorMode: selection.cursorMode
+        });
+        return providers.find(provider => provider.id === providerId);
+    }
+
+    protected assertExecutionProviderAvailable(provider: CyberVinciAiProviderDescriptor): void {
+        if (provider.available && !provider.configurationRequired?.length) {
+            return;
+        }
+        const requirements = provider.configurationRequired?.length
+            ? ` Configuration required: ${provider.configurationRequired.join(', ')}.`
+            : '';
+        const message = provider.message ? ` ${provider.message}` : '';
+        throw new Error(`AI provider '${provider.label}' is not available.${requirements}${message}`.trim());
+    }
+
+    protected resolveExecutionModel(provider: CyberVinciAiProviderDescriptor | undefined, selectedModel: string | undefined): string | undefined {
+        const selected = selectedModel?.trim();
+        if (!provider) {
+            return selected || undefined;
+        }
+        const models = this.mergeModels(provider.models);
+        if (!models?.length) {
+            return selected || provider.defaultModel;
+        }
+        if (selected && models.includes(selected)) {
+            return selected;
+        }
+        const defaultModel = provider.defaultModel?.trim();
+        if (defaultModel && models.includes(defaultModel)) {
+            return defaultModel;
+        }
+        return models[0];
     }
 
     protected toCodexRequest(request: CyberVinciAiTaskRequest, execution: CyberVinciAiExecutionSelection, prompt: string): CodexProviderBackendRequest {
@@ -169,14 +359,20 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
             approvalPolicy: execution.approvalPolicy ?? (previewOnly ? 'never' : 'on-request'),
             sandboxMode: execution.sandboxMode ?? (previewOnly ? 'read-only' : 'workspace-write'),
             reasoningEffort: this.toCodexReasoningEffort(execution),
+            reasoningVariant: this.toCodexReasoningVariant(execution),
+            reasoningVariantOptions: this.toCodexReasoningVariantOptions(execution),
             verbosity: execution.verbosity,
             serviceTier: execution.serviceTier,
             webSearch: execution.webSearch ?? 'disabled',
             webSearchContextSize: execution.webSearchContextSize,
             collaborationMode: execution.collaborationMode
         };
+        const input = request.inputItems?.length
+            ? [{ type: 'text' as const, text: prompt, text_elements: [] }, ...request.inputItems]
+            : undefined;
         return {
             prompt,
+            input,
             sessionId: request.sessionId,
             runtime: execution.runtime,
             executablePath: execution.executablePath,
@@ -212,6 +408,7 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
                     model: execution.model,
                     reasoningPolicy: execution.reasoningPolicy,
                     reasoningEffort: execution.reasoningEffort,
+                    reasoningVariant: execution.reasoningVariant,
                     virtualReasoningMode: execution.virtualReasoningMode
                 }
             }, undefined, 2),
@@ -255,6 +452,22 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
         return execution.reasoningEffort as CodexProviderOptions['reasoningEffort'] | undefined;
     }
 
+    protected toCodexReasoningVariant(execution: CyberVinciAiExecutionSelection): string | undefined {
+        if (execution.reasoningPolicy === 'off' || execution.reasoningVariant === 'default' || execution.reasoningVariant === 'none') {
+            return undefined;
+        }
+        return execution.reasoningVariant?.trim() || undefined;
+    }
+
+    protected toCodexReasoningVariantOptions(execution: CyberVinciAiExecutionSelection): Record<string, unknown> | undefined {
+        if (execution.reasoningPolicy === 'off' || execution.reasoningVariant === 'default' || execution.reasoningVariant === 'none') {
+            return undefined;
+        }
+        return execution.reasoningVariantOptions && Object.keys(execution.reasoningVariantOptions).length
+            ? execution.reasoningVariantOptions
+            : undefined;
+    }
+
     protected detectedProviderToDescriptor(provider: CodexProviderDetectedProvider, status: CodexProviderBackendStatus): CyberVinciAiProviderDescriptor {
         const sameProvider = provider.runtime === status.runtime && provider.modelProvider === status.modelProvider;
         return this.toDescriptor({
@@ -264,7 +477,8 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
             executablePath: provider.executablePath,
             available: provider.available,
             defaultModel: provider.defaultModel,
-            models: sameProvider ? status.models : provider.defaultModel ? [provider.defaultModel] : undefined,
+            models: sameProvider ? status.models : provider.models ?? (provider.defaultModel ? [provider.defaultModel] : undefined),
+            modelMetadata: sameProvider ? status.modelMetadata : provider.modelMetadata,
             capabilities: sameProvider ? status.capabilities : undefined,
             authenticated: sameProvider ? status.authenticated : undefined,
             configurationRequired: sameProvider ? status.configurationRequired : undefined,
@@ -273,15 +487,21 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
     }
 
     protected statusToDescriptor(status: CodexProviderBackendStatus): CyberVinciAiProviderDescriptor {
+        const runtime = status.runtime ?? 'codex-app-server';
+        const modelProvider = status.modelProvider ?? 'codex';
+        const preset = this.findPreset(runtime, modelProvider);
+        const modelMetadata = new Map((status.modelMetadata ?? []).map(model => [model.id, model]));
+        const firstAvailableModel = status.models?.find(model => !modelMetadata.get(model)?.unavailable);
         return this.toDescriptor({
-            runtime: status.runtime ?? 'codex-app-server',
-            modelProvider: status.modelProvider ?? 'codex',
-            label: this.findPresetLabel(status.runtime ?? 'codex-app-server', status.modelProvider ?? 'codex'),
+            runtime,
+            modelProvider,
+            label: this.findPresetLabel(runtime, modelProvider),
             executablePath: status.executablePath,
             available: status.available,
             authenticated: status.authenticated,
-            defaultModel: status.models?.[0],
+            defaultModel: preset?.defaultModel ?? firstAvailableModel ?? status.models?.[0],
             models: status.models,
+            modelMetadata: status.modelMetadata,
             capabilities: status.capabilities,
             configurationRequired: status.configurationRequired,
             message: status.message
@@ -289,8 +509,19 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
     }
 
     protected toDescriptor(provider: Omit<CyberVinciAiProviderDescriptor, 'id' | 'supportsNativeReasoning' | 'supportsVirtualReasoning'>): CyberVinciAiProviderDescriptor {
+        const preset = this.findPreset(provider.runtime, provider.modelProvider);
+        const models = this.mergeModels(
+            provider.models,
+            provider.defaultModel ? [provider.defaultModel] : undefined,
+            preset?.models,
+            preset?.defaultModel ? [preset.defaultModel] : undefined
+        );
+        const modelMetadata = this.mergeModelMetadata(models, provider.modelMetadata, preset?.modelMetadata);
         return {
             ...provider,
+            defaultModel: provider.defaultModel ?? preset?.defaultModel ?? models?.[0],
+            models,
+            modelMetadata,
             id: this.providerId(provider.runtime, provider.modelProvider),
             supportsNativeReasoning: true,
             supportsVirtualReasoning: true
@@ -325,7 +556,64 @@ export class CyberVinciAiRuntimeServiceImpl implements CyberVinciAiRuntimeServic
     }
 
     protected findPresetLabel(runtime: CodexProviderRuntime, modelProvider: string): string {
-        return DEFAULT_PROVIDER_PRESETS.find(provider => provider.runtime === runtime && provider.modelProvider === modelProvider)?.label ?? modelProvider;
+        return this.findPreset(runtime, modelProvider)?.label ?? modelProvider;
+    }
+
+    protected findPreset(runtime: CodexProviderRuntime, modelProvider: string): typeof DEFAULT_PROVIDER_PRESETS[number] | undefined {
+        return DEFAULT_PROVIDER_PRESETS.find(provider => provider.runtime === runtime && provider.modelProvider === modelProvider);
+    }
+
+    protected mergeModels(...modelSets: Array<readonly string[] | undefined>): string[] | undefined {
+        const seen = new Set<string>();
+        const models: string[] = [];
+        for (const modelSet of modelSets) {
+            for (const model of modelSet ?? []) {
+                const trimmed = model.trim();
+                if (!trimmed || seen.has(trimmed)) {
+                    continue;
+                }
+                seen.add(trimmed);
+                models.push(trimmed);
+            }
+        }
+        return models.length ? models : undefined;
+    }
+
+    protected mergeModelMetadata(
+        models: readonly string[] | undefined,
+        ...metadataSets: Array<readonly CyberVinciAiModelMetadata[] | undefined>
+    ): CyberVinciAiModelMetadata[] | undefined {
+        const metadataById = new Map<string, CyberVinciAiModelMetadata>();
+        for (const metadataSet of metadataSets) {
+            for (const metadata of metadataSet ?? []) {
+                const id = metadata.id?.trim();
+                if (!id || metadataById.has(id)) {
+                    continue;
+                }
+                metadataById.set(id, metadata);
+            }
+        }
+        if (!models?.length && !metadataById.size) {
+            return undefined;
+        }
+        const ordered: CyberVinciAiModelMetadata[] = [];
+        const seen = new Set<string>();
+        for (const model of models ?? []) {
+            const id = model.trim();
+            if (!id || seen.has(id)) {
+                continue;
+            }
+            seen.add(id);
+            ordered.push(metadataById.get(id) ?? { id });
+        }
+        for (const metadata of metadataById.values()) {
+            if (seen.has(metadata.id)) {
+                continue;
+            }
+            seen.add(metadata.id);
+            ordered.push(metadata);
+        }
+        return ordered.length ? ordered : undefined;
     }
 
     protected filterProviders(providers: CyberVinciAiProviderDescriptor[], includeUnavailable = false): CyberVinciAiProviderDescriptor[] {

@@ -1,3 +1,8 @@
+import { execFile } from 'child_process';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { promisify } from 'util';
+import { FileUri } from '@theia/core/lib/common/file-uri';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import { LanguageModelRegistry } from '@theia/ai-core';
 import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
@@ -14,6 +19,8 @@ import {
     FlowAgentMarkdownFile,
     FlowAgentMarkdownRequest,
     FlowAgentMarkdownSummary,
+    FlowCleanupRunsRequest,
+    FlowCleanupRunsResult,
     FlowDuplicateAgentMarkdownRequest,
     FlowExportRunRequest,
     FlowExportWorkflowRequest,
@@ -35,7 +42,10 @@ import {
     FlowRunLifecycleRequest,
     FlowRunRequest,
     FlowRunStreamRequest,
+    FlowRunWorkspaceOptions,
+    FlowRunWorkspaceState,
     FlowListPipelinePresetsRequest,
+    FlowSaveModelProfileRequest,
     FlowSaveWorkflowRequest,
     FlowSavePipelinePresetRequest,
     FlowRenameAgentMarkdownRequest,
@@ -44,6 +54,7 @@ import {
     FlowStartRunRequest,
     FlowClient,
     FlowCapabilities,
+    FlowContextPack,
     FlowService,
     FlowSnapshot,
     FlowValidationResult,
@@ -80,6 +91,9 @@ import { MarkdownWorkloadStore } from './markdown-workload-store';
 import { MemoryAdapter } from './memory-adapter';
 import { FileEffectHostAdapter } from './file-effect-host-adapter';
 import { ImageEffectHostAdapter } from './image-effect-host-adapter';
+import { FlowPlaybookRunner } from './flow-playbook-runner';
+
+const execFileAsync = promisify(execFile);
 
 interface CodexProviderRuntimeReport {
     available: boolean;
@@ -112,6 +126,9 @@ export class FlowServiceImpl implements FlowService {
 
     @inject(ImageEffectHostAdapter) @optional()
     protected readonly imageEffectHostAdapter?: ImageEffectHostAdapter;
+
+    @inject(FlowPlaybookRunner) @optional()
+    protected readonly playbookRunner?: FlowPlaybookRunner;
 
     @inject(LanguageModelRegistry) @optional()
     protected readonly languageModelRegistry?: LanguageModelRegistry;
@@ -171,8 +188,12 @@ export class FlowServiceImpl implements FlowService {
         return listFlowWorkflowPatterns();
     }
 
-    async listModelProfiles() {
-        return listFlowModelProfiles();
+    async listModelProfiles(request: FlowWorkspaceRequest = {}) {
+        return listFlowModelProfiles(await this.store.listWorkspaceModelProfiles(request.workspaceRootUri));
+    }
+
+    async saveModelProfile(request: FlowSaveModelProfileRequest) {
+        return this.store.saveModelProfile(request.workspaceRootUri, request.profile);
     }
 
     async listPipelinePresets(request: FlowListPipelinePresetsRequest): Promise<FlowPipelinePreset[]> {
@@ -562,14 +583,99 @@ export class FlowServiceImpl implements FlowService {
         }
     }
 
+    protected async prepareRunWorkspace(
+        workspaceRootUri: string | undefined,
+        workflow: FlowWorkflow,
+        options: FlowRunWorkspaceOptions | undefined
+    ): Promise<{ workspaceRootUri?: string; workspace?: FlowRunWorkspaceState }> {
+        const mode = options?.mode || 'shared';
+        if (mode === 'shared') {
+            return { workspaceRootUri };
+        }
+        if (!workspaceRootUri) {
+            throw new Error(`Flow workspace mode "${mode}" requires an open workspace.`);
+        }
+
+        const sourceRoot = FileUri.fsPath(workspaceRootUri);
+        const suffix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        const workspaceSlug = `${sanitizeWorkflowId(workflow.id)}-${suffix}`;
+        const worktreesRoot = path.join(sourceRoot, '.theia', 'flow', 'worktrees');
+        await fs.mkdir(worktreesRoot, { recursive: true });
+        const targetRoot = path.join(worktreesRoot, workspaceSlug);
+        const targetUri = FileUri.create(targetRoot).toString();
+
+        if (mode === 'temporary_copy') {
+            await fs.cp(sourceRoot, targetRoot, {
+                recursive: true,
+                filter: source => shouldCopyTemporaryWorkspaceEntry(sourceRoot, source)
+            });
+            return {
+                workspaceRootUri: targetUri,
+                workspace: {
+                    mode,
+                    rootUri: targetUri,
+                    sourceRootUri: workspaceRootUri,
+                    createdAt: timestamp(),
+                    cleanupStatus: options?.cleanupOnCompletion ? 'pending' : 'skipped'
+                }
+            };
+        }
+
+        const branch = `flow/${sanitizeWorkflowId(workflow.id)}/${suffix}`;
+        try {
+            await execFileAsync('git', [
+                '-C',
+                sourceRoot,
+                'worktree',
+                'add',
+                '-b',
+                branch,
+                targetRoot,
+                options?.baseBranch || 'HEAD'
+            ], { timeout: 120000 });
+        } catch (error) {
+            const detail = error && typeof error === 'object' && 'stderr' in error
+                ? String((error as { stderr?: unknown }).stderr || '')
+                : error instanceof Error ? error.message : String(error);
+            throw new Error(`Could not create Flow worktree for "${workflow.name}": ${detail.trim() || 'git worktree failed'}`);
+        }
+        return {
+            workspaceRootUri: targetUri,
+            workspace: {
+                mode,
+                rootUri: targetUri,
+                sourceRootUri: workspaceRootUri,
+                branch,
+                createdAt: timestamp(),
+                cleanupStatus: options?.cleanupOnCompletion ? 'pending' : 'skipped'
+            }
+        };
+    }
+
+    protected async buildRunContextPack(workspaceRootUri: string | undefined, workflow: FlowWorkflow): Promise<FlowContextPack> {
+        try {
+            return await this.memory.buildContextPack(workspaceRootUri, workflow);
+        } catch (error) {
+            if (workflowRequiresMemoryContext(workflow)) {
+                throw error;
+            }
+            return minimalFlowContextPack(workspaceRootUri, workflow, error instanceof Error ? error.message : String(error));
+        }
+    }
+
     async startRun(request: FlowStartRunRequest): Promise<FlowRun> {
         const workflow = await this.getWorkflow(request);
         await this.assertHostCapabilities(workflow);
-        const contextPack = await this.memory.buildContextPack(request.workspaceRootUri, workflow);
-        const run = await this.kernelBridge.startRun(workflow, request.prompt, contextPack.summary, request.workspaceRootUri);
+        const contextPack = await this.buildRunContextPack(request.workspaceRootUri, workflow);
+        const runWorkspace = await this.prepareRunWorkspace(request.workspaceRootUri, workflow, request.workspace);
+        const executionWorkspaceRootUri = runWorkspace.workspaceRootUri || request.workspaceRootUri;
+        const run = await this.kernelBridge.startRun(workflow, request.prompt, contextPack.summary, executionWorkspaceRootUri);
+        if (runWorkspace.workspace) {
+            run.workspace = runWorkspace.workspace;
+        }
         run.contextPack = contextPack;
         run.memoryCandidates = await this.memory.collectMemoryCandidates(run);
-        const materializedRun = await this.workloadStore.materializeRun(request.workspaceRootUri, workflow, run);
+        const materializedRun = await this.workloadStore.materializeRun(executionWorkspaceRootUri, workflow, run);
         await this.store.saveRun(request.workspaceRootUri, materializedRun);
         this.publishRunUpdate(request.workspaceRootUri, materializedRun, 'started');
         this.ensureRunStream({ workspaceRootUri: request.workspaceRootUri, runId: materializedRun.id });
@@ -587,9 +693,10 @@ export class FlowServiceImpl implements FlowService {
     async tickRun(request: FlowRunRequest): Promise<FlowRun> {
         const run = await this.getRun(request);
         const workflow = await this.getWorkflow({ ...request, workflowId: run.workflowId });
-        const updated = await this.kernelBridge.tickRun(workflow, run, request.workspaceRootUri);
+        const executionWorkspaceRootUri = run.workspace?.rootUri || request.workspaceRootUri;
+        const updated = await this.kernelBridge.tickRun(workflow, run, executionWorkspaceRootUri);
         updated.memoryCandidates = mergeMemoryCandidates(updated.memoryCandidates, await this.memory.collectMemoryCandidates(updated));
-        const materializedRun = await this.workloadStore.materializeRun(request.workspaceRootUri, workflow, updated);
+        const materializedRun = await this.workloadStore.materializeRun(executionWorkspaceRootUri, workflow, updated);
         await this.store.saveRun(request.workspaceRootUri, materializedRun);
         this.publishRunUpdate(request.workspaceRootUri, materializedRun, 'tick');
         return materializedRun;
@@ -620,13 +727,38 @@ export class FlowServiceImpl implements FlowService {
     async approveGate(request: FlowGateDecisionRequest): Promise<FlowRun> {
         const run = await this.getRun(request);
         const workflow = await this.getWorkflow({ ...request, workflowId: run.workflowId });
-        const updated = await this.kernelBridge.approveGate(workflow, run, request, request.workspaceRootUri);
+        const executionWorkspaceRootUri = run.workspace?.rootUri || request.workspaceRootUri;
+        const updated = await this.kernelBridge.approveGate(workflow, run, request, executionWorkspaceRootUri);
         updated.memoryCandidates = mergeMemoryCandidates(updated.memoryCandidates, await this.memory.collectMemoryCandidates(updated));
-        const materializedRun = await this.workloadStore.materializeRun(request.workspaceRootUri, workflow, updated);
+        const materializedRun = await this.workloadStore.materializeRun(executionWorkspaceRootUri, workflow, updated);
         await this.store.saveRun(request.workspaceRootUri, materializedRun);
         this.publishRunUpdate(request.workspaceRootUri, materializedRun, 'approval');
         this.ensureRunStream({ workspaceRootUri: request.workspaceRootUri, runId: materializedRun.id });
         return materializedRun;
+    }
+
+    async cleanupRuns(request: FlowCleanupRunsRequest): Promise<FlowCleanupRunsResult> {
+        const hasExplicitSelector = Boolean(request.runIds?.length || request.workflowId || request.olderThanDays !== undefined);
+        if (!hasExplicitSelector) {
+            throw new Error('Flow cleanup requires runIds, workflowId, or olderThanDays.');
+        }
+        const cutoff = request.olderThanDays !== undefined
+            ? Date.now() - Math.max(0, request.olderThanDays) * 24 * 60 * 60 * 1000
+            : undefined;
+        const runs = await this.store.listRuns(request.workspaceRootUri);
+        const requestedIds = new Set(request.runIds || []);
+        const runIds = runs
+            .filter(run => requestedIds.size === 0 || requestedIds.has(run.id))
+            .filter(run => !request.workflowId || run.workflowId === request.workflowId)
+            .filter(run => cutoff === undefined || Date.parse(run.updatedAt || run.createdAt) < cutoff)
+            .map(run => run.id);
+        for (const runId of runIds) {
+            await this.unsubscribeRunEvents({ workspaceRootUri: request.workspaceRootUri, runId });
+        }
+        return this.store.cleanupRuns(request.workspaceRootUri, runIds, {
+            includeArtifacts: request.includeArtifacts !== false,
+            includeWorktrees: request.includeWorktrees === true
+        });
     }
 
     async decideEffect(request: FlowEffectDecisionRequest): Promise<FlowRun> {
@@ -796,7 +928,7 @@ export class FlowServiceImpl implements FlowService {
         };
         await this.store.saveWorkflow(request.workspaceRootUri, secondWorkflow);
         const savedWorkflow = await this.getWorkflow({ workspaceRootUri: request.workspaceRootUri, workflowId: secondWorkflow.id });
-        const contextPack = await this.memory.buildContextPack(request.workspaceRootUri, savedWorkflow);
+        const contextPack = await this.buildRunContextPack(request.workspaceRootUri, savedWorkflow);
         const prompt = renderSecondRunPrompt(sourceRun, suggestion);
         const newRun = await this.kernelBridge.startRun(savedWorkflow, prompt, contextPack.summary, request.workspaceRootUri);
         newRun.contextPack = appendSecondRunContext(contextPack, sourceRun, suggestion);
@@ -979,11 +1111,13 @@ export class FlowServiceImpl implements FlowService {
         const filesystemEdit = this.resolveFilesystemEditCapability();
         const imageProviderConfigured = this.hasConfiguredImageProvider() || (this.isExplicitCodexProvider() && codexProvider.imageGeneration);
         const commandPolicyConfigured = this.hasConfiguredCommandPolicy();
+        const playbookExecution = await this.resolvePlaybookExecutionCapability();
         return {
             ...FLOW_CAPABILITIES,
             runEventStream,
             llmAgentExecution: llmProvider.llmAgentExecution,
             llmAgentProvider: llmProvider.llmAgentProvider,
+            playbookExecution,
             filesystemEdit: filesystemEdit.available ? 'available' : 'blocked',
             filesystemEditPolicy: filesystemEdit.available ? 'configured' : 'missing',
             imageGeneration: imageProviderConfigured ? 'available' : 'unavailable',
@@ -1006,6 +1140,20 @@ export class FlowServiceImpl implements FlowService {
             return await this.kernelBridge.supportsRunEventStream?.() === true;
         } catch {
             return false;
+        }
+    }
+
+    protected async resolvePlaybookExecutionCapability(): Promise<FlowCapabilities['playbookExecution']> {
+        if (!this.playbookRunner) {
+            return 'unavailable';
+        }
+        if (!this.playbookRunner.available) {
+            return 'available';
+        }
+        try {
+            return await this.playbookRunner.available() === false ? 'unavailable' : 'available';
+        } catch {
+            return 'unavailable';
         }
     }
 
@@ -1626,6 +1774,55 @@ function timestamp(): string {
     return new Date().toISOString();
 }
 
+function shouldCopyTemporaryWorkspaceEntry(sourceRoot: string, source: string): boolean {
+    const relative = path.relative(sourceRoot, source).replace(/\\/g, '/');
+    if (!relative) {
+        return true;
+    }
+    const first = relative.split('/')[0];
+    if (first === '.git' || first === 'node_modules') {
+        return false;
+    }
+    if (relative.startsWith('.theia/flow/worktrees')) {
+        return false;
+    }
+    return true;
+}
+
+function workflowRequiresMemoryContext(workflow: FlowWorkflow): boolean {
+    return Boolean(workflow.requires?.capabilities?.includes('memory.context'));
+}
+
+function minimalFlowContextPack(workspaceRootUri: string | undefined, workflow: FlowWorkflow, missingService: string | undefined): FlowContextPack {
+    const agentIds = Array.from(new Set(Object.values(workflow.states || {})
+        .flatMap(state => [
+            state.agent,
+            ...Object.values(state.branches || {}).map(branch => branch.agent)
+        ])
+        .filter((agentId): agentId is string => typeof agentId === 'string' && agentId.trim().length > 0)));
+    return {
+        workspaceRootUri,
+        summary: [
+            `Workflow "${workflow.name}" (${workflow.id}) has ${Object.keys(workflow.states || {}).length} states`,
+            `${workflow.transitions?.length || 0} transitions`,
+            agentIds.length > 0 ? `${agentIds.length} agents` : 'no declared agents',
+            missingService ? 'Memory context was skipped because Memory is unavailable for this non-Memory workflow' : undefined
+        ].filter(Boolean).join(', ') + '.',
+        workflow: {
+            id: workflow.id,
+            name: workflow.name,
+            stateCount: Object.keys(workflow.states || {}).length,
+            transitionCount: workflow.transitions?.length || 0,
+            agentIds
+        },
+        files: [],
+        symbols: [],
+        signals: [],
+        sections: [],
+        missingService
+    };
+}
+
 function createSampleWorkflow(): FlowWorkflow {
     return {
         version: 'flow.workflow/v1',
@@ -1640,13 +1837,15 @@ function createSampleWorkflow(): FlowWorkflow {
         states: {
             intake: {
                 type: 'input',
-                outputs: ['request.md']
+                outputs: ['request.md'],
+                outcomes: { success: 'architecture' }
             },
             architecture: {
                 type: 'agent',
                 agent: 'architect',
                 input: { include: ['request.md'] },
-                outputs: ['architecture/plan.md']
+                outputs: ['architecture/plan.md'],
+                outcomes: { success: 'frontend_work' }
             },
             frontend_work: {
                 type: 'agent',
@@ -1656,13 +1855,20 @@ function createSampleWorkflow(): FlowWorkflow {
                 gates: [{
                     id: 'frontend_review_gate',
                     title: 'Review frontend plan',
-                    prompt: 'Approve the simulated frontend workload before QA starts.'
-                }]
+                    prompt: 'Approve the simulated frontend workload before QA starts.',
+                    decisions: [
+                        { id: 'approved', label: 'Approve for QA', outcome: 'approved', to: 'qa' },
+                        { id: 'revision_requested', label: 'Route to another step', outcome: 'revision_requested', allowTargetSelection: true },
+                        { id: 'rejected', label: 'Reject run', outcome: 'rejected', action: 'fail' }
+                    ]
+                }],
+                outcomes: { approved: 'qa', revision_requested: { action: 'wait' }, rejected: { action: 'fail' } }
             },
             qa: {
                 type: 'agent',
                 agent: 'qa',
-                outputs: ['qa/report.md']
+                outputs: ['qa/report.md'],
+                outcomes: { success: 'final_report' }
             },
             final_report: {
                 type: 'report',

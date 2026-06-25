@@ -29,6 +29,8 @@ export const CODEX_CLI_CURSOR_MODE_PREF = 'ai-features.aiProviders.cursorMode';
 export const CODEX_CLI_APPROVAL_POLICY_PREF = 'ai-features.aiProviders.approvalPolicy';
 export const CODEX_CLI_SANDBOX_MODE_PREF = 'ai-features.aiProviders.sandboxMode';
 export const CODEX_CLI_REASONING_EFFORT_PREF = 'ai-features.aiProviders.reasoningEffort';
+export const CODEX_CLI_REASONING_VARIANT_PREF = 'ai-features.aiProviders.reasoningVariant';
+export const CODEX_CLI_REASONING_VARIANT_OPTIONS_PREF = 'ai-features.aiProviders.reasoningVariantOptions';
 export const CODEX_CLI_VERBOSITY_PREF = 'ai-features.aiProviders.verbosity';
 export const CODEX_CLI_SERVICE_TIER_PREF = 'ai-features.aiProviders.serviceTier';
 export const CODEX_CLI_WEB_SEARCH_PREF = 'ai-features.aiProviders.webSearch';
@@ -191,6 +193,18 @@ export const CodexProviderPreferencesSchema: PreferenceSchema = {
             ],
             markdownDescription: nls.localize('theia/ai/ai-providers/reasoningEffort/description',
                 'Optional Codex reasoning effort override.'),
+            title: AI_CORE_PREFERENCES_TITLE
+        },
+        [CODEX_CLI_REASONING_VARIANT_PREF]: {
+            type: 'string',
+            markdownDescription: nls.localize('theia/ai/ai-providers/reasoningVariant/description',
+                'Optional provider-specific model variant, such as a thinking-budget, speed, or quality variant.'),
+            title: AI_CORE_PREFERENCES_TITLE
+        },
+        [CODEX_CLI_REASONING_VARIANT_OPTIONS_PREF]: {
+            type: 'object',
+            markdownDescription: nls.localize('theia/ai/ai-providers/reasoningVariantOptions/description',
+                'Provider-specific options derived from the selected model variant.'),
             title: AI_CORE_PREFERENCES_TITLE
         },
         [CODEX_CLI_VERBOSITY_PREF]: {

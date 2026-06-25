@@ -117,6 +117,37 @@ describe('Flow capability resolution', () => {
         expect(resolution.missing).to.deep.equal([]);
     });
 
+    it('accepts playbook.run only when the host binds a Playbook runner', () => {
+        const workflow = workflowWithCapabilities('playbook.run');
+        workflow.states.design_qa = {
+            type: 'playbook',
+            playbookId: 'canvas-design-qa'
+        };
+
+        const unavailable = resolveFlowWorkflowCapabilities(workflow, FLOW_CAPABILITIES);
+        const available = resolveFlowWorkflowCapabilities(workflow, {
+            ...FLOW_CAPABILITIES,
+            playbookExecution: 'available'
+        });
+
+        expect(unavailable.provided).to.deep.equal([]);
+        expect(unavailable.missing).to.deep.equal(['playbook.run']);
+        expect(available.provided).to.deep.equal(['playbook.run']);
+        expect(available.missing).to.deep.equal([]);
+        expect(formatMissingCapabilities(['playbook.run'], { workflow }))
+            .to.equal('Missing Flow host capability: playbook.run (states: design_qa; host: current host; execution mode: unknown; action: bind a FlowPlaybookRunner host adapter before advertising playbook.run).');
+    });
+
+    it('identifies playbook states affected by playbook.run', () => {
+        const workflow = workflowWithCapabilities('playbook.run');
+        workflow.states.playbook_step = {
+            type: 'playbook',
+            playbookId: 'direct-chat'
+        };
+
+        expect(affectedWorkflowStatesForCapability(workflow, 'playbook.run')).to.deep.equal(['playbook_step']);
+    });
+
     it('does not advertise command.execute as a real capability without a complete command policy path', () => {
         const resolution = resolveFlowWorkflowCapabilities(workflowWithCapabilities(
             'command.execute'

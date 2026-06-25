@@ -10,6 +10,8 @@
 
 import {
     CodexProviderCapabilityStatus,
+    CodexProviderInputItem,
+    CodexProviderModelMetadata,
     CodexProviderNotificationMessage,
     CodexProviderOptions,
     CodexProviderRuntime
@@ -23,6 +25,7 @@ export type CyberVinciAiReasoningPolicy =
     | 'native_plus_virtual_light';
 
 export type CyberVinciAiReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'xhigh';
+export type CyberVinciAiReasoningVariant = string;
 
 export type CyberVinciAiVirtualReasoningMode =
     | 'off'
@@ -36,6 +39,8 @@ export type CyberVinciAiVirtualReasoningMode =
 
 export type CyberVinciAiOutputMode = 'text' | 'json';
 
+export type CyberVinciAiModelMetadata = CodexProviderModelMetadata;
+
 export interface CyberVinciAiExecutionSelection {
     providerId?: string;
     runtime?: CodexProviderRuntime;
@@ -44,6 +49,8 @@ export interface CyberVinciAiExecutionSelection {
     model?: string;
     reasoningPolicy?: CyberVinciAiReasoningPolicy;
     reasoningEffort?: CyberVinciAiReasoningEffort;
+    reasoningVariant?: CyberVinciAiReasoningVariant;
+    reasoningVariantOptions?: Record<string, unknown>;
     virtualReasoningMode?: CyberVinciAiVirtualReasoningMode;
     approvalPolicy?: CodexProviderOptions['approvalPolicy'];
     sandboxMode?: CodexProviderOptions['sandboxMode'];
@@ -77,6 +84,7 @@ export interface CyberVinciAiProviderDescriptor {
     executablePath?: string;
     defaultModel?: string;
     models?: string[];
+    modelMetadata?: CyberVinciAiModelMetadata[];
     capabilities?: CodexProviderCapabilityStatus;
     configurationRequired?: string[];
     message?: string;
@@ -87,6 +95,19 @@ export interface CyberVinciAiProviderDescriptor {
 export interface CyberVinciAiProviderListRequest {
     workspacePath?: string;
     includeUnavailable?: boolean;
+    model?: string;
+    runtime?: CodexProviderRuntime;
+    modelProvider?: string;
+    openRouterApiKey?: string;
+    openCodeApiKey?: string;
+    openCodeExecutablePath?: string;
+    openCodeAgent?: string;
+    openCodeVariant?: string;
+    geminiExecutablePath?: string;
+    claudeExecutablePath?: string;
+    claudeAgent?: string;
+    cursorExecutablePath?: string;
+    cursorMode?: string;
 }
 
 export interface CyberVinciAiContextPolicy {
@@ -150,6 +171,7 @@ export interface CyberVinciAiTaskRequest<TInput = unknown> {
     userPrompt: string;
     systemPrompt?: string;
     input?: TInput;
+    inputItems?: CodexProviderInputItem[];
     context?: CyberVinciAiContextPolicy;
     output?: CyberVinciAiOutputContract;
     effectPolicy?: CyberVinciAiEffectPolicy;
@@ -167,6 +189,19 @@ export interface CyberVinciAiTaskResult<TStructured = unknown> {
     context: CyberVinciAiContextReport;
     notifications: CodexProviderNotificationMessage[];
     diagnostics: string[];
+    usage?: CyberVinciAiUsageReport;
+}
+
+export interface CyberVinciAiUsageReport {
+    inputTokens?: number;
+    outputTokens?: number;
+    cachedInputTokens?: number;
+    cacheCreationInputTokens?: number;
+    cacheReadInputTokens?: number;
+    totalTokens?: number;
+    costUsd?: number;
+    source: 'provider-notification';
+    raw?: unknown[];
 }
 
 export type CyberVinciAiTaskStreamEvent<TStructured = unknown> =

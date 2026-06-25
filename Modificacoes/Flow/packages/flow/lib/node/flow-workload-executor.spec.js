@@ -130,6 +130,33 @@ var MemoryWriteExecutor = /** @class */ (function (_super) {
     }
     return MemoryWriteExecutor;
 }(flow_workload_executor_1.ProviderBackedFlowWorkloadExecutor));
+var MockPlaybookRunner = /** @class */ (function () {
+    function MockPlaybookRunner(result, availableFlag) {
+        if (availableFlag === void 0) { availableFlag = true; }
+        this.result = result;
+        this.availableFlag = availableFlag;
+        this.calls = [];
+    }
+    MockPlaybookRunner.prototype.available = function () {
+        return this.availableFlag;
+    };
+    MockPlaybookRunner.prototype.runPlaybook = function (request) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                this.calls.push(request);
+                return [2 /*return*/, this.result];
+            });
+        });
+    };
+    return MockPlaybookRunner;
+}());
+var PlaybookWorkloadExecutor = /** @class */ (function (_super) {
+    __extends(PlaybookWorkloadExecutor, _super);
+    function PlaybookWorkloadExecutor(runner) {
+        return _super.call(this, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, runner) || this;
+    }
+    return PlaybookWorkloadExecutor;
+}(flow_workload_executor_1.ProviderBackedFlowWorkloadExecutor));
 function createExecutionContext(workspaceRootUri, statePatch) {
     var _a, _b;
     if (statePatch === void 0) { statePatch = {}; }
@@ -419,6 +446,58 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', function
             }
         });
     }); });
+    it('resolves Auto Virtual Reasoning to Fast for simple Flow work', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var stages, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    stages = [];
+                    return [4 /*yield*/, (0, flow_workload_executor_1.runVirtualReasoningHarness)({
+                            mode: 'auto',
+                            basePayload: { request: 'What is 2 + 2?' },
+                            invoke: function (payload) { return __awaiter(void 0, void 0, void 0, function () {
+                                var stage;
+                                return __generator(this, function (_a) {
+                                    stage = payload.virtualReasoning.stage;
+                                    stages.push(stage);
+                                    return [2 /*return*/, "result:".concat(stage)];
+                                });
+                            }); }
+                        })];
+                case 1:
+                    result = _a.sent();
+                    (0, chai_1.expect)(stages).to.deep.equal(['draft', 'critique', 'revise']);
+                    (0, chai_1.expect)(result).to.equal('result:revise');
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('resolves Auto Virtual Reasoning to Balanced for coding Flow work', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var stages, result;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    stages = [];
+                    return [4 /*yield*/, (0, flow_workload_executor_1.runVirtualReasoningHarness)({
+                            mode: 'auto',
+                            basePayload: { request: 'Debug this TypeScript workflow error.' },
+                            invoke: function (payload) { return __awaiter(void 0, void 0, void 0, function () {
+                                var stage;
+                                return __generator(this, function (_a) {
+                                    stage = payload.virtualReasoning.stage;
+                                    stages.push(stage);
+                                    return [2 /*return*/, "result:".concat(stage)];
+                                });
+                            }); }
+                        })];
+                case 1:
+                    result = _a.sent();
+                    (0, chai_1.expect)(stages).to.deep.equal(['classify', 'plan', 'draft', 'critique', 'revise', 'verify']);
+                    (0, chai_1.expect)(result).to.equal('result:revise');
+                    return [2 /*return*/];
+            }
+        });
+    }); });
     it('falls back to the best available Virtual Reasoning draft on later-stage failure', function () { return __awaiter(void 0, void 0, void 0, function () {
         var stages, result;
         return __generator(this, function (_a) {
@@ -442,8 +521,33 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', function
                         })];
                 case 1:
                     result = _a.sent();
-                    (0, chai_1.expect)(stages).to.deep.equal(['classify', 'plan', 'draft', 'critique']);
+                    (0, chai_1.expect)(stages).to.deep.equal(['classify', 'plan', 'draft', 'critique', 'verify']);
                     (0, chai_1.expect)(result).to.equal('result:draft');
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('passes the Flow workload-output envelope contract into Virtual Reasoning stage payloads', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var instructions;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    instructions = [];
+                    return [4 /*yield*/, (0, flow_workload_executor_1.runVirtualReasoningHarness)({
+                            mode: 'fast',
+                            basePayload: { request: 'solve' },
+                            invoke: function (payload) { return __awaiter(void 0, void 0, void 0, function () {
+                                var virtualReasoning;
+                                return __generator(this, function (_a) {
+                                    virtualReasoning = payload.virtualReasoning;
+                                    instructions.push(String(virtualReasoning.instructions[0]));
+                                    return [2 /*return*/, "result:".concat(virtualReasoning.stage)];
+                                });
+                            }); }
+                        })];
+                case 1:
+                    _a.sent();
+                    (0, chai_1.expect)(instructions[0]).to.contain('workload-output envelope JSON');
                     return [2 /*return*/];
             }
         });
@@ -590,6 +694,101 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', function
                     aggregate = _b.apply(_a, [_d.sent()]);
                     (0, chai_1.expect)(aggregate.candidateCount).to.equal(2);
                     (0, chai_1.expect)(aggregate.strategy).to.equal('single_round');
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('executa playbook workload por FlowPlaybookRunner e registra resultado', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var context, runner, executor, aggregatePath, aggregate, _a, _b;
+        var _c, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
+                case 0:
+                    context = createExecutionContext(workspaceRootUri, {
+                        id: 'design_qa',
+                        type: 'playbook',
+                        playbookId: 'canvas-design-qa',
+                        prompt: 'Check the current Canvas document.',
+                        playbookInput: {
+                            mode: 'qa'
+                        },
+                        outputs: ['playbook/result.json']
+                    });
+                    runner = new MockPlaybookRunner({
+                        ok: true,
+                        stop: true,
+                        message: 'Design QA completed.',
+                        value: {
+                            score: 92
+                        },
+                        artifacts: [{
+                                path: 'qa/report.md',
+                                content: '# QA\n\nLooks good.'
+                            }],
+                        signals: {
+                            'design_qa.score': 92
+                        },
+                        issues: [{
+                                severity: 'non_blocking',
+                                type: 'design_qa',
+                                summary: 'Footer should be checked in a real Canvas run.'
+                            }]
+                    });
+                    executor = new PlaybookWorkloadExecutor(runner);
+                    return [4 /*yield*/, executor.execute(context)];
+                case 1:
+                    _e.sent();
+                    (0, chai_1.expect)(runner.calls).to.have.length(1);
+                    (0, chai_1.expect)(runner.calls[0]).to.deep.include({
+                        workspaceRootUri: workspaceRootUri,
+                        workflowId: context.workflow.id,
+                        runId: context.run.id,
+                        stateId: 'design_qa',
+                        workloadId: context.workload.id,
+                        playbookId: 'canvas-design-qa',
+                        prompt: 'Check the current Canvas document.'
+                    });
+                    (0, chai_1.expect)(runner.calls[0].input.flow.prompt).to.equal('run this task');
+                    (0, chai_1.expect)(context.workload.status).to.equal('done');
+                    (0, chai_1.expect)(context.run.stateStatuses.design_qa).to.equal('done');
+                    (0, chai_1.expect)(context.workload.issues).to.include('Footer should be checked in a real Canvas run.');
+                    (0, chai_1.expect)(context.run.signals.some(function (signal) { return signal.key === 'design_qa.playbook.id' && signal.value === 'canvas-design-qa'; })).to.equal(true);
+                    (0, chai_1.expect)(context.run.signals.some(function (signal) { return signal.key === 'design_qa.score' && signal.value === 92; })).to.equal(true);
+                    (0, chai_1.expect)((_c = context.workload.outputEnvelope) === null || _c === void 0 ? void 0 : _c.result.status).to.equal('completed');
+                    (0, chai_1.expect)((_d = context.workload.outputEnvelope) === null || _d === void 0 ? void 0 : _d.issues.some(function (issue) { return issue.summary === 'Footer should be checked in a real Canvas run.'; })).to.equal(true);
+                    aggregatePath = path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.workload.id, 'output', 'artifacts', 'playbook', 'result.json');
+                    _b = (_a = JSON).parse;
+                    return [4 /*yield*/, fs.readFile(aggregatePath, 'utf8')];
+                case 2:
+                    aggregate = _b.apply(_a, [_e.sent()]);
+                    (0, chai_1.expect)(aggregate.playbookId).to.equal('canvas-design-qa');
+                    (0, chai_1.expect)(aggregate.ok).to.equal(true);
+                    (0, chai_1.expect)(aggregate.stop).to.equal(true);
+                    (0, chai_1.expect)(aggregate.value.score).to.equal(92);
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('falha playbook workload quando o host nao disponibiliza runner', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var context, runner, executor;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    context = createExecutionContext(workspaceRootUri, {
+                        id: 'design_qa',
+                        type: 'playbook',
+                        playbookId: 'canvas-design-qa'
+                    });
+                    runner = new MockPlaybookRunner({ ok: true }, false);
+                    executor = new PlaybookWorkloadExecutor(runner);
+                    return [4 /*yield*/, executor.execute(context)];
+                case 1:
+                    _a.sent();
+                    (0, chai_1.expect)(runner.calls).to.have.length(0);
+                    (0, chai_1.expect)(context.workload.status).to.equal('failed');
+                    (0, chai_1.expect)(context.run.stateStatuses.design_qa).to.equal('failed');
+                    (0, chai_1.expect)(context.workload.issues[0]).to.contain('Playbook runner is not available');
+                    (0, chai_1.expect)(context.run.events.some(function (event) { return event.type === 'workload.failed'; })).to.equal(true);
                     return [2 /*return*/];
             }
         });

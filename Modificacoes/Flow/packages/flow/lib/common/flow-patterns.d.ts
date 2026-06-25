@@ -50,3 +50,4 @@ export interface FlowPatternCompileRequest {
 export declare function listFlowWorkflowPatterns(): FlowWorkflowPattern[];
 export declare function getFlowWorkflowPattern(id: FlowWorkflowPatternId | string): FlowWorkflowPattern | undefined;
 export declare function compileFlowWorkflowPattern(request: FlowPatternCompileRequest): FlowWorkflow;
+//# sourceMappingURL=flow-patterns.d.ts.map

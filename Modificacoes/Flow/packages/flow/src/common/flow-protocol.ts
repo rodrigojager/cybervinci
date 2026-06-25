@@ -1,5 +1,5 @@
 import { JsonRpcServer } from '@theia/core';
-import { FlowGateStatus, FlowMemoryScope, FlowModelProfile, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowCapabilities, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowVersion } from './flow-types';
+import { FlowGateStatus, FlowMemoryScope, FlowModelProfile, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunWorkspaceOptions, FlowCapabilities, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowVersion } from './flow-types';
 import { FlowPatternCompileRequest, FlowWorkflowPattern } from './flow-patterns';
 import { FlowDynamicWorkflowPlan } from './flow-dynamic-workflow';
 import { FlowWorkflowTemplate } from './flow-templates';
@@ -173,9 +173,14 @@ export interface FlowSavePipelinePresetRequest extends FlowWorkspaceRequest {
     overwrite?: boolean;
 }
 
+export interface FlowSaveModelProfileRequest extends FlowWorkspaceRequest {
+    profile: FlowModelProfile;
+}
+
 export interface FlowStartRunRequest extends FlowWorkspaceRequest {
     workflowId: string;
     prompt: string;
+    workspace?: FlowRunWorkspaceOptions;
 }
 
 export interface FlowRunRequest extends FlowWorkspaceRequest {
@@ -193,7 +198,24 @@ export interface FlowRunStreamRequest extends FlowRunRequest {
 export interface FlowGateDecisionRequest extends FlowRunRequest {
     gateId: string;
     decision: Exclude<FlowGateStatus, 'pending'>;
+    decisionId?: string;
+    targetStateId?: string;
     note?: string;
+    approvedBy?: string;
+}
+
+export interface FlowCleanupRunsRequest extends FlowWorkspaceRequest {
+    runIds?: string[];
+    workflowId?: string;
+    olderThanDays?: number;
+    includeArtifacts?: boolean;
+    includeWorktrees?: boolean;
+}
+
+export interface FlowCleanupRunsResult {
+    removedRuns: string[];
+    removedPaths: string[];
+    failed: Array<{ id?: string; path?: string; message: string }>;
 }
 
 export interface FlowMemoryWriteRequest extends FlowRunRequest {
@@ -246,7 +268,7 @@ export interface FlowService extends JsonRpcServer<FlowClient> {
     listWorkflows(request: FlowWorkspaceRequest): Promise<FlowWorkflow[]>;
     listWorkflowTemplates(): Promise<FlowWorkflowTemplate[]>;
     listWorkflowPatterns(): Promise<FlowWorkflowPattern[]>;
-    listModelProfiles(): Promise<FlowModelProfile[]>;
+    listModelProfiles(request?: FlowWorkspaceRequest): Promise<FlowModelProfile[]>;
     listPipelinePresets(request: FlowListPipelinePresetsRequest): Promise<FlowPipelinePreset[]>;
     listAgentMarkdownFiles(request: FlowWorkspaceRequest): Promise<FlowAgentMarkdownSummary[]>;
     getAgentMarkdownFile(request: FlowAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
@@ -261,6 +283,7 @@ export interface FlowService extends JsonRpcServer<FlowClient> {
     planDynamicWorkflow(request: FlowPlanDynamicWorkflowRequest): Promise<FlowDynamicWorkflowPlan>;
     runDynamicWorkflow(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun>;
     savePipelinePreset(request: FlowSavePipelinePresetRequest): Promise<FlowPipelinePreset>;
+    saveModelProfile(request: FlowSaveModelProfileRequest): Promise<FlowModelProfile>;
     getWorkflow(request: FlowWorkflowRequest): Promise<FlowWorkflow>;
     openWorkflowFile(request: FlowWorkflowFileRequest): Promise<FlowWorkflow>;
     importWorkflow(request: FlowImportWorkflowRequest): Promise<FlowWorkflow>;
@@ -282,6 +305,7 @@ export interface FlowService extends JsonRpcServer<FlowClient> {
     cancelRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
     finalizeRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
     approveGate(request: FlowGateDecisionRequest): Promise<FlowRun>;
+    cleanupRuns(request: FlowCleanupRunsRequest): Promise<FlowCleanupRunsResult>;
     decideEffect(request: FlowEffectDecisionRequest): Promise<FlowRun>;
     approveMemoryCandidate(request: FlowMemoryWriteRequest): Promise<FlowRun>;
     approveSecondRunSuggestion(request: FlowSecondRunApprovalRequest): Promise<FlowRun>;

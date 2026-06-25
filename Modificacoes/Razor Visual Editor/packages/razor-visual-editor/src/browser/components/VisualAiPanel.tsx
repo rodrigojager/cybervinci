@@ -1,49 +1,44 @@
 import * as React from '@theia/core/shared/react';
-import { VisualAiProviderDescriptor } from '../types/visual-ai';
+import {
+    CyberVinciAiExecutionSelection,
+    CyberVinciAiProviderDescriptor,
+    CyberVinciAiRuntimeService
+} from '@cybervinci/ai-runtime/lib/common';
+import { CyberVinciAiExecutionPicker } from '@cybervinci/ai-runtime/lib/browser/components';
+import { SelectedElementSnapshot } from '../types/selected-element';
 
 export interface VisualAiPanelRunOptions {
-    providerId: string;
-    model: string;
-    reasoningPolicy: 'off' | 'native' | 'virtual' | 'auto' | 'native_plus_virtual_light';
-    reasoningEffort: 'none' | 'low' | 'medium' | 'high' | 'xhigh';
+    execution: CyberVinciAiExecutionSelection;
     instruction: string;
+    includeSelectedElementContext: boolean;
 }
 
 export interface VisualAiPanelProps {
-    providers: VisualAiProviderDescriptor[];
-    loadingProviders: boolean;
+    runtimeService?: CyberVinciAiRuntimeService;
+    workspacePath?: string;
+    selectedElement?: SelectedElementSnapshot;
+    includeSelectedElementContext: boolean;
     running: boolean;
     summary?: string;
     error?: string;
     onRun(options: VisualAiPanelRunOptions): Promise<void>;
-    onRefreshProviders(): void;
+    onIncludeSelectedElementContextChange(include: boolean): void;
     onClose(): void;
 }
 
 export function VisualAiPanel(props: VisualAiPanelProps): React.ReactElement {
-    const [providerId, setProviderId] = React.useState('');
-    const [model, setModel] = React.useState('auto');
-    const [reasoningPolicy, setReasoningPolicy] = React.useState<VisualAiPanelRunOptions['reasoningPolicy']>('auto');
-    const [reasoningEffort, setReasoningEffort] = React.useState<VisualAiPanelRunOptions['reasoningEffort']>('medium');
+    const [execution, setExecution] = React.useState<CyberVinciAiExecutionSelection>({
+        reasoningPolicy: 'auto',
+        reasoningEffort: 'medium'
+    });
+    const [selectedProvider, setSelectedProvider] = React.useState<CyberVinciAiProviderDescriptor | undefined>();
     const [instruction, setInstruction] = React.useState('');
-    const selectedProvider = props.providers.find(provider => provider.id === providerId) ?? props.providers[0];
-    const modelListId = React.useMemo(() => `cv-ai-models-${Math.random().toString(36).slice(2)}`, []);
-
-    React.useEffect(() => {
-        if (!providerId && props.providers.length > 0) {
-            const preferred = props.providers.find(provider => provider.status === 'ready') ?? props.providers[0];
-            setProviderId(preferred.id);
-            setModel(preferred.defaultModel ?? preferred.models[0] ?? 'auto');
-        }
-    }, [providerId, props.providers]);
-
-    React.useEffect(() => {
-        if (selectedProvider && !model) {
-            setModel(selectedProvider.defaultModel ?? selectedProvider.models[0] ?? 'auto');
-        }
-    }, [model, selectedProvider]);
-
-    const canRun = Boolean(instruction.trim()) && Boolean(selectedProvider) && selectedProvider.status === 'ready' && !props.running;
+    const providerUnavailable = !!selectedProvider && (!selectedProvider.available || !!selectedProvider.configurationRequired?.length);
+    const canRun = Boolean(props.runtimeService)
+        && Boolean(instruction.trim())
+        && Boolean(execution.providerId)
+        && !providerUnavailable
+        && !props.running;
 
     return <section className='cv-ai-panel' role='dialog' aria-label='Visual AI editor'>
         <header>
@@ -58,60 +53,19 @@ export function VisualAiPanel(props: VisualAiPanelProps): React.ReactElement {
                 <i className='fa fa-times' />
             </button>
         </header>
-        <div className='cv-ai-grid'>
-            <label>
-                <span>Provider</span>
-                <select value={providerId} onChange={event => {
-                    const nextProvider = props.providers.find(provider => provider.id === event.currentTarget.value);
-                    setProviderId(event.currentTarget.value);
-                    setModel(nextProvider?.defaultModel ?? nextProvider?.models[0] ?? 'auto');
-                }}>
-                    {props.providers.map(provider => <option key={provider.id} value={provider.id}>{provider.label}</option>)}
-                </select>
-            </label>
-            <label>
-                <span>Model</span>
-                <input
-                    value={model}
-                    list={modelListId}
-                    placeholder='auto, gpt-5, etc.'
-                    onChange={event => setModel(event.currentTarget.value)}
-                />
-                <datalist id={modelListId}>
-                    {(selectedProvider?.models ?? []).map(item => <option key={item} value={item} />)}
-                </datalist>
-            </label>
-            <label>
-                <span>Reasoning</span>
-                <select value={reasoningPolicy} onChange={event => setReasoningPolicy(event.currentTarget.value as VisualAiPanelRunOptions['reasoningPolicy'])}>
-                    <option value='auto'>Auto</option>
-                    <option value='native'>Native</option>
-                    <option value='virtual'>Virtual</option>
-                    <option value='native_plus_virtual_light'>Native + virtual</option>
-                    <option value='off'>Off</option>
-                </select>
-            </label>
-            <label>
-                <span>Effort</span>
-                <select value={reasoningEffort} onChange={event => setReasoningEffort(event.currentTarget.value as VisualAiPanelRunOptions['reasoningEffort'])}>
-                    <option value='none'>None</option>
-                    <option value='low'>Low</option>
-                    <option value='medium'>Medium</option>
-                    <option value='high'>High</option>
-                    <option value='xhigh'>X High</option>
-                </select>
-            </label>
-        </div>
-        <div className={`cv-ai-provider-status ${selectedProvider?.status ?? 'unavailable'}`}>
-            {props.loadingProviders
-                ? 'Checking providers...'
-                : selectedProvider
-                    ? `${statusLabel(selectedProvider.status)}${selectedProvider.statusMessage ? `: ${selectedProvider.statusMessage}` : ''}`
-                    : 'No provider available.'}
-            <button type='button' onClick={props.onRefreshProviders} title='Refresh providers'>
-                <i className='fa fa-refresh' />
-            </button>
-        </div>
+        {props.runtimeService ? <CyberVinciAiExecutionPicker
+            service={props.runtimeService}
+            workspacePath={props.workspacePath}
+            value={execution}
+            disabled={props.running}
+            onSelectedProviderChange={setSelectedProvider}
+            onChange={setExecution}
+        /> : <div className='cv-ai-runtime-error'>CyberVinci AI Runtime is not available in this build.</div>}
+        <SelectedElementContext
+            selection={props.selectedElement}
+            include={props.includeSelectedElementContext}
+            onIncludeChange={props.onIncludeSelectedElementContextChange}
+        />
         <label className='cv-ai-instruction'>
             <span>What should change?</span>
             <textarea
@@ -130,12 +84,40 @@ export function VisualAiPanel(props: VisualAiPanelProps): React.ReactElement {
         {props.summary && !props.error && <p className='cv-ai-message'>{props.summary}</p>}
         <footer>
             <button type='button' className='cv-ai-secondary' onClick={props.onClose}>Cancel</button>
-            <button type='button' className='cv-ai-primary' onClick={() => props.onRun({ providerId, model, reasoningPolicy, reasoningEffort, instruction })} disabled={!canRun}>
+            <button type='button' className='cv-ai-primary' onClick={() => props.onRun({
+                execution,
+                instruction,
+                includeSelectedElementContext: props.includeSelectedElementContext
+            })} disabled={!canRun}>
                 <SparklesIcon /> {props.running ? 'Running...' : 'Run AI'}
             </button>
         </footer>
     </section>;
 }
+
+const SelectedElementContext: React.FC<{
+    selection?: SelectedElementSnapshot;
+    include: boolean;
+    onIncludeChange(include: boolean): void;
+}> = ({ selection, include, onIncludeChange }) => {
+    if (!selection) {
+        return <div className='cv-ai-context empty'>
+            <span>Context</span>
+            <strong>No selected element</strong>
+        </div>;
+    }
+    const title = selectedElementTitle(selection);
+    return <div className={`cv-ai-context${include ? '' : ' excluded'}`}>
+        <span>Context</span>
+        {include ? <button type='button' className='cv-ai-context-chip' title={`Remove ${title} from AI context`} onClick={() => onIncludeChange(false)}>
+            <i className='fa fa-crosshairs' />
+            <strong>{title}</strong>
+            <i className='fa fa-times' />
+        </button> : <button type='button' className='cv-ai-context-restore' title={`Use ${title} as AI context`} onClick={() => onIncludeChange(true)}>
+            Selected element excluded. Click to restore.
+        </button>}
+    </div>;
+};
 
 export function SparklesIcon(): React.ReactElement {
     return <svg className='cv-ai-sparkles-icon' viewBox='0 0 24 24' aria-hidden='true'>
@@ -145,15 +127,9 @@ export function SparklesIcon(): React.ReactElement {
     </svg>;
 }
 
-function statusLabel(status: VisualAiProviderDescriptor['status']): string {
-    switch (status) {
-        case 'ready':
-            return 'Ready';
-        case 'needs-auth':
-            return 'Needs authentication';
-        case 'not-configured':
-            return 'Not configured';
-        default:
-            return 'Unavailable';
-    }
+function selectedElementTitle(selection: SelectedElementSnapshot): string {
+    const classes = selection.classes.slice(0, 2).map(className => `.${className}`).join('');
+    const id = selection.attributes.id ? `#${selection.attributes.id}` : '';
+    const tag = selection.tagName ? `<${selection.tagName}>` : selection.type;
+    return `${selection.label || tag} ${tag}${id}${classes}`.trim();
 }

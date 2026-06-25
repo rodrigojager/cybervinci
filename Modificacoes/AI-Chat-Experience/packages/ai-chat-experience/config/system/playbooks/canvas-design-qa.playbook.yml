@@ -1,0 +1,173 @@
+version: cybervinci.catalog/v1
+playbooks:
+  - version: cybervinci.playbook/v1
+    id: canvas-design-qa
+    name: Canvas Design QA
+    category: Canvas
+    source: system
+    enabled: false
+    description: V2 playbook for reference capture, Vision Judge, layout diagnostics, repair planning, Canvas operations, and verification.
+    entry: known-reference
+    tools:
+      - system.canvas.getReferenceFromKnownSite
+      - system.canvas.captureCurrentDocument
+      - system.canvas.captureScreenshot
+      - system.canvas.collectLayoutDiagnostics
+      - system.vision.judge
+      - system.canvas.applyOperations
+    guards:
+      - system.canvas.detectOverlaps
+      - system.canvas.detectTextOverflow
+      - system.canvas.validateFooterPresence
+      - system.canvas.validateCloneCompleteness
+    states:
+      - id: known-reference
+        type: tool
+        tool: system.canvas.getReferenceFromKnownSite
+        saveAs: knownReference
+        args:
+          prompt: ${input.prompt}
+        transitions:
+          - to: capture-document
+      - id: capture-document
+        type: tool
+        tool: system.canvas.captureCurrentDocument
+        saveAs: document
+        args:
+          uri: ${input.uri}
+        transitions:
+          - to: capture-snapshot
+      - id: capture-snapshot
+        type: tool
+        tool: system.canvas.captureScreenshot
+        saveAs: visualSnapshot
+        args:
+          uri: ${input.uri}
+        transitions:
+          - to: layout-diagnostics
+      - id: layout-diagnostics
+        type: tool
+        tool: system.canvas.collectLayoutDiagnostics
+        saveAs: layoutDiagnostics
+        args:
+          uri: ${input.uri}
+        transitions:
+          - to: vision-judge
+      - id: vision-judge
+        type: guard
+        guard: system.vision.judge
+        saveAs: visionJudge
+        args:
+          prompt: ${input.prompt}
+          reference: ${state.knownReference}
+          document: ${state.document}
+          layoutDiagnostics: ${state.layoutDiagnostics}
+          visualSnapshot: ${state.visualSnapshot}
+          uri: ${input.uri}
+          visionJudgeMode: ${input.visionJudgeMode}
+        onPass: done
+        onFail: choose-repair-path
+      - id: choose-repair-path
+        type: condition
+        cases:
+          - if:
+              lengthGreaterThan:
+                - ${state.visionJudge.suggestedOperations}
+                - 0
+            next: apply-suggested-operations
+        default: repair-plan
+      - id: repair-plan
+        type: ai
+        agent: canvas-repair-planner
+        prompt: |
+          Plan the smallest Canvas operation set needed to repair the current design.
+
+          User request:
+          ${input.prompt}
+
+          Vision Judge report:
+          ${state.visionJudge}
+
+          Deterministic layout diagnostics:
+          ${state.layoutDiagnostics}
+
+          Return only JSON with a short summary and an operations array of Canvas operations.
+        input:
+          userRequest: ${input.prompt}
+          document: ${state.document}
+          layoutDiagnostics: ${state.layoutDiagnostics}
+          visionJudge: ${state.visionJudge}
+        outputMode: json
+        outputSchema:
+          type: object
+          additionalProperties: true
+          properties:
+            summary:
+              type: string
+            operations:
+              type: array
+        saveAs: repairPlan
+        transitions:
+          - to: apply-operations
+      - id: apply-suggested-operations
+        type: tool
+        tool: system.canvas.applyOperations
+        saveAs: applyResult
+        args:
+          uri: ${input.uri}
+          operations: ${state.visionJudge.suggestedOperations}
+        transitions:
+          - to: verify
+      - id: apply-operations
+        type: tool
+        tool: system.canvas.applyOperations
+        saveAs: applyResult
+        args:
+          uri: ${input.uri}
+          operations: ${state.repairPlan.operations}
+        transitions:
+          - to: verify
+      - id: verify
+        type: guard
+        guard: system.vision.judge
+        saveAs: verification
+        args:
+          prompt: |
+            Verify the repaired Canvas output against the original request.
+
+            Original request:
+            ${input.prompt}
+
+            Applied result:
+            ${state.applyResult}
+          reference: ${state.knownReference}
+          uri: ${input.uri}
+          visionJudgeMode: ${input.visionJudgeMode}
+        onPass: done
+        onFail: ask-continue
+      - id: ask-continue
+        type: ask
+        text: Canvas still has visual or layout issues. Continue another repair pass?
+        options:
+          - id: continue
+            label: Continue repair
+            next: capture-document
+          - id: stop
+            label: Stop with report
+            next: done
+      - id: done
+        type: response
+        prompt: |
+          ## Canvas Design QA
+
+          Status: ${state.verification.summary}
+
+          Initial report: ${state.visionJudge.summary}
+
+          Applied operations: ${state.applyResult.applied}
+
+          Remaining diagnostics: ${state.verification.issues}
+        transitions:
+          - to: end
+      - id: end
+        type: end

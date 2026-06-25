@@ -54,6 +54,7 @@ import { FrontendApplicationConfigProvider } from '@theia/core/lib/browser/front
 import { Disposable } from '@theia/core/lib/common';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { MarkdownStringImpl } from '@theia/core/lib/common/markdown-rendering';
+import { PreferenceService } from '@theia/core/lib/common/preferences';
 import URI from '@theia/core/lib/common/uri';
 import { inject, injectable } from '@theia/core/shared/inversify';
 import { EditorManager } from '@theia/editor/lib/browser';
@@ -84,6 +85,7 @@ const OPEN_CODER_CODEX_CLI_READ_ONLY_MODE_ID = 'ai-providers-read-only';
 const OPEN_CODER_CODEX_CLI_WORKSPACE_MODE_ID = 'ai-providers-workspace-write';
 const OPEN_CODER_CODEX_CLI_FULL_ACCESS_MODE_ID = 'ai-providers-danger-full-access';
 const OPEN_CODER_CODEX_CLI_PLAN_MODE_ID = 'ai-providers-plan';
+const CYBERVINCI_AI_CHAT_WORKDIR_PREF = 'cybervinci.aiChat.workdir';
 const CODEX_CLI_CONTEXT_TEXT_LIMIT = 12000;
 const CODEX_CLI_SELECTION_TEXT_LIMIT = 8000;
 const CODEX_CLI_DIAGNOSTIC_LIMIT = 20;
@@ -134,6 +136,9 @@ export class OpenCoderAgent extends CoderAgent {
 
     @inject(WorkspaceService)
     protected readonly codexProviderWorkspaceService: WorkspaceService;
+
+    @inject(PreferenceService)
+    protected readonly codexProviderPreferenceService: PreferenceService;
 
     @inject(EditorManager)
     protected readonly codexProviderEditorManager: EditorManager;
@@ -297,7 +302,22 @@ export class OpenCoderAgent extends CoderAgent {
         if (this.hasCodexProviderControl(request, 'plan') || request.request.modeId === OPEN_CODER_CODEX_CLI_PLAN_MODE_ID) {
             options.collaborationMode = 'plan';
         }
+        const cwd = this.resolveCodexProviderWorkdir();
+        if (cwd) {
+            options.cwd = cwd;
+        }
         return options;
+    }
+
+    protected resolveCodexProviderWorkdir(): string | undefined {
+        const configured = this.codexProviderPreferenceService.get<string>(CYBERVINCI_AI_CHAT_WORKDIR_PREF, undefined);
+        if (typeof configured === 'string' && configured.trim()) {
+            return configured.trim();
+        }
+        const editorUri = this.codexProviderEditorManager.currentEditor?.editor?.uri;
+        const workspaceRoot = this.codexProviderWorkspaceService.getWorkspaceRootUri(editorUri)
+            ?? this.codexProviderWorkspaceService.tryGetRoots()[0]?.resource;
+        return workspaceRoot ? FileUri.fsPath(workspaceRoot) : undefined;
     }
 
     protected toCodexSandboxMode(request: MutableChatRequestModel): CodexProviderOptions['sandboxMode'] | undefined {
@@ -440,6 +460,10 @@ export class OpenCoderAgent extends CoderAgent {
 
     protected toCodexProviderIdeContext(): string {
         const sections: string[] = [];
+        const workdir = this.resolveCodexProviderWorkdir();
+        if (workdir) {
+            sections.push(`Default AI workdir:\n- ${workdir}\nUse this as the default location for relative paths unless the user explicitly names another directory.`);
+        }
         const roots = this.codexProviderWorkspaceService.tryGetRoots().map(root => root.resource.path.fsPath());
         if (roots.length) {
             sections.push(`Workspace roots:\n${roots.map(root => `- ${root}`).join('\n')}`);
@@ -1085,8 +1109,28 @@ export class OpenCoderAgent extends CoderAgent {
                 }
                 const kind = change.type === FileChangeType.ADDED ? 'add' : change.type === FileChangeType.DELETED ? 'delete' : 'modify';
                 observed.set(change.resource.toString(), { uri: change.resource, kind });
+                this.revealCodexProviderObservedFileChange(change.resource, kind).catch(() => { });
             }
         });
+    }
+
+    protected async revealCodexProviderObservedFileChange(uri: URI, kind: CodexProviderObservedFileChange['kind']): Promise<void> {
+        if (kind === 'delete') {
+            return;
+        }
+        let stat: FileStat;
+        try {
+            stat = await this.codexProviderFileService.resolve(uri);
+        } catch {
+            return;
+        }
+        if (!this.shouldSnapshotCodexProviderFile(stat)) {
+            return;
+        }
+        if (await this.tryReadCodexProviderTextFile(uri) === undefined) {
+            return;
+        }
+        await this.codexProviderEditorManager.open(uri, { mode: 'reveal' });
     }
 
     protected async captureCodexProviderInitialWorkspaceSnapshots(request: MutableChatRequestModel): Promise<void> {
@@ -1297,14 +1341,14 @@ export class OpenCoderAgent extends CoderAgent {
         if (!filePath) {
             return undefined;
         }
-        if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(filePath)) {
-            return new URI(filePath);
-        }
         if (this.isAbsoluteCodexProviderPath(filePath)) {
             return FileUri.create(filePath);
         }
+        if (this.isCodexProviderUriString(filePath)) {
+            return new URI(filePath);
+        }
         if (workingDirectory) {
-            return FileUri.create(workingDirectory).resolve(this.normalizeCodexProviderRelativePath(filePath));
+            return this.toCodexProviderDirectoryUri(workingDirectory).resolve(this.normalizeCodexProviderRelativePath(filePath));
         }
         const roots = this.codexProviderWorkspaceService.tryGetRoots();
         const root = roots[0]?.resource;
@@ -1313,6 +1357,20 @@ export class OpenCoderAgent extends CoderAgent {
 
     protected isAbsoluteCodexProviderPath(filePath: string): boolean {
         return /^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith('/') || filePath.startsWith('\\\\');
+    }
+
+    protected isCodexProviderUriString(value: string): boolean {
+        return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value);
+    }
+
+    protected toCodexProviderDirectoryUri(value: string): URI {
+        if (this.isAbsoluteCodexProviderPath(value)) {
+            return FileUri.create(value);
+        }
+        if (this.isCodexProviderUriString(value)) {
+            return new URI(value);
+        }
+        return FileUri.create(value);
     }
 
     protected normalizeCodexProviderRelativePath(filePath: string): string {

@@ -180,10 +180,11 @@ export class FlowAgentProviderRegistry implements FlowAgentProviderResolver {
         if (!this.codexProviderService) {
             throw new Error(this.unsupportedProviderMessage(context, providerId, 'CodexProviderService is not available in this backend container.'));
         }
+        const optionRequest = codexProviderRequestOptions(context.state.provider?.options);
         const request = {
-            runtime: runtimeProvider?.runtime,
-            modelProvider: runtimeProvider?.modelProvider,
-            ...codexProviderRequestOptions(context.state.provider?.options)
+            ...optionRequest,
+            runtime: runtimeProvider?.runtime ?? optionRequest.runtime,
+            modelProvider: runtimeProvider?.modelProvider ?? optionRequest.modelProvider
         };
         try {
             const status = await this.codexProviderService.getStatus({ cwd: process.cwd(), model: modelId, ...request });
@@ -240,6 +241,8 @@ function stringOption(options: Record<string, unknown> | undefined, key: string)
 
 function codexProviderRequestOptions(options: Record<string, unknown> | undefined): Partial<CodexProviderBackendRequest> {
     return {
+        runtime: codexRuntimeOption(options, 'runtime'),
+        modelProvider: stringOption(options, 'modelProvider'),
         executablePath: stringOption(options, 'executablePath'),
         profile: stringOption(options, 'profile'),
         openRouterApiKey: stringOption(options, 'openRouterApiKey'),
@@ -253,6 +256,11 @@ function codexProviderRequestOptions(options: Record<string, unknown> | undefine
         cursorExecutablePath: stringOption(options, 'cursorExecutablePath'),
         cursorMode: stringOption(options, 'cursorMode')
     };
+}
+
+function codexRuntimeOption(options: Record<string, unknown> | undefined, key: string): CodexProviderRuntime | undefined {
+    const value = stringOption(options, key);
+    return value && isCodexProviderRuntime(value) ? value : undefined;
 }
 
 function parseCodexRuntimeProviderId(providerId: string): { runtime: CodexProviderRuntime; modelProvider: string } | undefined {

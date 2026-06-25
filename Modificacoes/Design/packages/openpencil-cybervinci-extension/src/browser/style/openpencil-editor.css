@@ -202,6 +202,13 @@
     padding: 0 8px;
 }
 
+.openpencil-toolbar .openpencil-ai-run,
+.openpencil-runtime-export-toolbar .openpencil-ai-run {
+    color: var(--openpencil-accent-foreground, var(--theia-button-foreground));
+    background: var(--cybervinci-ai-action-gradient, var(--theia-button-background));
+    border-color: transparent;
+}
+
 .openpencil-toolbar .openpencil-ai-run span,
 .openpencil-runtime-export-toolbar .openpencil-ai-run span,
 .openpencil-toolbar .openpencil-text-edit-run span,
@@ -1782,6 +1789,7 @@ body.openpencil-panel-resizing * {
     --openpencil-muted-foreground: var(--theia-descriptionForeground);
     --openpencil-accent: var(--theia-list-activeSelectionBackground, var(--theia-toolbar-activeBackground));
     --openpencil-accent-foreground: var(--theia-list-activeSelectionForeground, var(--theia-foreground));
+    --cybervinci-ai-action-gradient: linear-gradient(135deg, var(--theia-button-background, var(--openpencil-accent)), var(--theia-textLink-foreground, var(--theia-focusBorder, var(--openpencil-accent))));
     --openpencil-border: var(--theia-panel-border);
     --openpencil-input: var(--theia-input-border, var(--theia-panel-border));
     --openpencil-ring: var(--theia-focusBorder);
@@ -1907,6 +1915,18 @@ body.openpencil-panel-resizing * {
 .openpencil-file-menu-shell > summary::-webkit-details-marker,
 .openpencil-tool-dropdown > summary::-webkit-details-marker {
     display: none;
+}
+
+.openpencil-control-caret {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 0;
+    height: 0;
+    border-top: 4px solid currentColor;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+    opacity: 0.9;
+    pointer-events: none;
 }
 
 .openpencil-menu {
@@ -2220,15 +2240,10 @@ body.openpencil-panel-resizing * {
     gap: 2px;
 }
 
-.openpencil-shape-trigger > svg:last-child {
+.openpencil-shape-trigger > .openpencil-shape-caret {
     position: absolute;
-    right: 4px;
-    bottom: 4px;
-    width: 10px;
-    height: 10px;
-    color: var(--openpencil-foreground);
-    opacity: 1;
-    stroke: currentColor;
+    right: 5px;
+    bottom: 5px;
 }
 
 .openpencil-tool-dropdown[open] > .openpencil-shape-trigger {
@@ -2712,6 +2727,541 @@ body.openpencil-panel-resizing * {
     z-index: 5000 !important;
 }
 
+.openpencil-ai-prompt-popover-layer,
+.openpencil-ai-prompt-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: transparent;
+}
+
+.openpencil-ai-prompt-dialog {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: auto;
+    width: min(720px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    padding: 14px;
+    --cybervinci-ai-action-gradient: linear-gradient(135deg, var(--theia-button-background, var(--theia-focusBorder)), var(--theia-textLink-foreground, var(--theia-focusBorder)));
+    color: var(--theia-editorWidget-foreground, var(--theia-foreground));
+    background: var(--theia-editorWidget-background, var(--theia-sideBar-background, var(--theia-editor-background)));
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 8px;
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+    font-size: 12px;
+}
+
+.openpencil-ai-prompt-dialog-input {
+    width: 100%;
+    min-height: 92px;
+    resize: vertical;
+    padding: 8px;
+    color: var(--theia-input-foreground, var(--theia-foreground));
+    background: var(--theia-input-background, var(--theia-editor-background));
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    outline: none;
+}
+
+.openpencil-ai-prompt-dialog-input:focus,
+.openpencil-ai-prompt-dialog-select:focus,
+.openpencil-ai-visual-model-select:focus,
+.openpencil-ai-model-picker-button:focus,
+.openpencil-ai-visual-reference-input:focus {
+    border-color: var(--theia-focusBorder);
+    box-shadow: 0 0 0 1px var(--theia-focusBorder);
+}
+
+.openpencil-ai-prompt-dialog-fields {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) minmax(260px, 1.6fr) minmax(120px, 1fr) minmax(120px, 1fr);
+    gap: 10px;
+    margin-top: 0;
+}
+
+.openpencil-ai-prompt-dialog-fields.compact {
+    grid-template-columns: minmax(120px, 160px);
+    gap: 8px;
+}
+
+.openpencil-ai-prompt-dialog-fields.compact .openpencil-ai-prompt-dialog-field {
+    max-width: 180px;
+}
+
+.openpencil-ai-prompt-dialog {
+    --cybervinci-ai-select-button-background: var(--theia-dropdown-background, var(--theia-input-background));
+    --cybervinci-ai-select-menu-background: var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background)));
+    --cybervinci-ai-select-menu-border: var(--theia-menu-border, var(--theia-panel-border));
+    --cybervinci-ai-select-menu-foreground: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    --cybervinci-ai-select-option-active-background: var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground));
+    --cybervinci-ai-select-option-active-foreground: var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground));
+    --cybervinci-ai-select-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+}
+
+.openpencil-ai-runtime-picker-host {
+    min-width: 0;
+}
+
+@supports (color: color-mix(in srgb, white, black)) {
+    .openpencil-ai-prompt-dialog {
+        --cybervinci-ai-select-button-background: color-mix(in srgb, var(--theia-dropdown-background, var(--theia-input-background)) 94%, var(--theia-editor-foreground, #ffffff) 6%);
+        --cybervinci-ai-select-menu-background: color-mix(in srgb, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))) 94%, var(--theia-editor-foreground, #ffffff) 6%);
+    }
+}
+
+.openpencil-ai-runtime-picker-host .cv-ai-runtime-execution-picker {
+    gap: 6px;
+}
+
+.openpencil-ai-runtime-picker-host .cv-ai-runtime-picker-button {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.openpencil-ai-runtime-picker-host .cv-ai-runtime-picker-button:not(.compact) {
+    min-width: 132px;
+    max-width: min(220px, 100%);
+}
+
+.openpencil-ai-runtime-picker-host .cv-ai-runtime-picker-button.compact {
+    min-width: 96px;
+    max-width: 180px;
+}
+
+.openpencil-ai-runtime-picker-host .cv-ai-runtime-provider-message,
+.openpencil-ai-runtime-picker-host .cv-ai-runtime-error {
+    flex-basis: 100%;
+    margin-top: 2px;
+}
+
+.openpencil-ai-prompt-dialog-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+    font-size: 12px;
+}
+
+.openpencil-ai-prompt-dialog-select {
+    width: 100%;
+    height: 28px;
+    min-width: 0;
+    padding: 0 26px 0 8px;
+    color: var(--theia-dropdown-foreground, var(--theia-input-foreground, var(--theia-foreground)));
+    background: var(--cybervinci-ai-select-button-background, var(--theia-dropdown-background, var(--theia-input-background, var(--theia-editor-background))));
+    border: 1px solid var(--theia-dropdown-border, var(--theia-input-border, var(--theia-panel-border)));
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.openpencil-ai-select-shell {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.openpencil-ai-select-shell > .openpencil-control-caret {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    transform: translateY(-50%);
+}
+
+.openpencil-ai-prompt-dialog-model-native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-width: 0;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.openpencil-ai-model-picker {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+.openpencil-ai-model-picker-button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    width: 100%;
+    height: 28px;
+    min-width: 0;
+    padding: 0 8px;
+    color: var(--theia-dropdown-foreground, var(--theia-input-foreground, var(--theia-foreground)));
+    background: var(--cybervinci-ai-select-button-background, var(--theia-dropdown-background, var(--theia-input-background, var(--theia-editor-background))));
+    border: 1px solid var(--theia-dropdown-border, var(--theia-input-border, var(--theia-panel-border)));
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: left;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.openpencil-ai-model-picker-caret {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.openpencil-ai-model-picker-button:disabled {
+    opacity: 0.6;
+}
+
+.openpencil-ai-model-picker-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.openpencil-ai-model-picker-button > .openpencil-ai-model-picker-option-badges {
+    flex: 0 0 auto;
+}
+
+.openpencil-ai-model-picker-option-badges,
+.openpencil-ai-model-selected-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+.openpencil-ai-model-picker-menu {
+    position: fixed;
+    z-index: 9100;
+    top: 0;
+    left: 0;
+    width: min(560px, calc(100vw - 56px));
+    max-height: min(420px, calc(100vh - 16px));
+    overflow: auto;
+    padding: 4px;
+    color: var(--cybervinci-ai-select-menu-foreground, var(--theia-menu-foreground, var(--theia-editor-foreground)));
+    background: var(--cybervinci-ai-select-menu-background, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))));
+    border: 1px solid var(--cybervinci-ai-select-menu-border, var(--theia-menu-border, var(--theia-panel-border)));
+    border-radius: 5px;
+    box-shadow: var(--cybervinci-ai-select-shadow, 0 10px 26px rgba(0, 0, 0, 0.36));
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.openpencil-ai-model-picker-option {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(0, auto);
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 26px;
+    padding: 3px 7px;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: left;
+}
+
+.openpencil-ai-model-picker-option:not(:disabled):hover,
+.openpencil-ai-model-picker-option.selected {
+    color: var(--cybervinci-ai-select-option-active-foreground, var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground)));
+    background: var(--cybervinci-ai-select-option-active-background, var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground)));
+}
+
+.openpencil-ai-model-picker-option:disabled,
+.openpencil-ai-model-picker-option.unavailable {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.openpencil-ai-model-picker-option-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.openpencil-ai-model-picker-empty {
+    padding: 7px 8px;
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+    font-size: 12px;
+}
+
+.openpencil-ai-model-selected-badges {
+    min-height: 18px;
+    margin-top: 0;
+}
+
+.openpencil-ai-model-capability-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+    line-height: 1;
+}
+
+.openpencil-ai-model-capability-icon.cybervinci-product-icon::before {
+    width: 16px;
+    height: 16px;
+    -webkit-mask-size: 16px 16px;
+    mask-size: 16px 16px;
+}
+
+.openpencil-ai-model-capability-icon-free {
+    color: var(--theia-charts-green, #89d185);
+}
+
+.openpencil-ai-model-capability-icon-paid {
+    color: var(--theia-charts-red, #f14c4c);
+}
+
+.openpencil-ai-model-capability-icon-unavailable {
+    color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
+}
+
+.openpencil-ai-model-capability-icon-vision,
+.openpencil-ai-model-capability-icon-media {
+    color: var(--theia-charts-blue, #3794ff);
+}
+
+.openpencil-ai-model-capability-icon-capability {
+    color: var(--theia-charts-purple, #b180d7);
+}
+
+.openpencil-ai-model-capability-icon-muted {
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+}
+
+.openpencil-ai-model-capability-icon-unknown {
+    color: var(--theia-editorWarning-foreground, #cca700);
+}
+
+.cybervinci-product-icon-eye {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M2.062%2012.348a1%201%200%200%201%200-.696%2010.75%2010.75%200%200%201%2019.876%200%201%201%200%200%201%200%20.696%2010.75%2010.75%200%200%201-19.876%200%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%273%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-file-image {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M15%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7Z%27%2F%3E%3Cpath%20d%3D%27M14%202v4a2%202%200%200%200%202%202h4%27%2F%3E%3Ccircle%20cx%3D%2710%27%20cy%3D%2712%27%20r%3D%272%27%2F%3E%3Cpath%20d%3D%27m20%2017-1.296-1.296a2.41%202.41%200%200%200-3.408%200L9%2022%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-video {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27m16%2013%205.223%203.482a.5.5%200%200%200%20.777-.416V7.87a.5.5%200%200%200-.752-.432L16%2010.5%27%2F%3E%3Crect%20x%3D%272%27%20y%3D%276%27%20width%3D%2714%27%20height%3D%2712%27%20rx%3D%272%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-volume-2 {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M11%204.702a.705.705%200%200%200-1.203-.498L6.413%207.587A1.4%201.4%200%200%201%205.416%208H3a1%201%200%200%200-1%201v6a1%201%200%200%200%201%201h2.416a1.4%201.4%200%200%201%20.997.413l3.383%203.384A.705.705%200%200%200%2011%2019.298z%27%2F%3E%3Cpath%20d%3D%27M16%209a5%205%200%200%201%200%206%27%2F%3E%3Cpath%20d%3D%27M19.364%2018.364a9%209%200%200%200%200-12.728%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-file-type-2 {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M4%2022h14a2%202%200%200%200%202-2V7l-5-5H6a2%202%200%200%200-2%202v4%27%2F%3E%3Cpath%20d%3D%27M14%202v4a2%202%200%200%200%202%202h4%27%2F%3E%3Cpath%20d%3D%27M2%2013v-1h6v1%27%2F%3E%3Cpath%20d%3D%27M5%2012v6%27%2F%3E%3Cpath%20d%3D%27M4%2018h2%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-wrench {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M14.7%206.3a1%201%200%200%200%200%201.4l1.6%201.6a1%201%200%200%200%201.4%200l3.77-3.77a6%206%200%200%201-7.94%207.94l-6.91%206.91a2.12%202.12%200%200%201-3-3l6.91-6.91a6%206%200%200%201%207.94-7.94l-3.76%203.76z%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-dollar-sign {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cline%20x1%3D%2712%27%20x2%3D%2712%27%20y1%3D%272%27%20y2%3D%2722%27%2F%3E%3Cpath%20d%3D%27M17%205H9.5a3.5%203.5%200%200%200%200%207h5a3.5%203.5%200%200%201%200%207H6%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-braces {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M8%203H7a2%202%200%200%200-2%202v5a2%202%200%200%201-2%202%202%202%200%200%201%202%202v5c0%201.1.9%202%202%202h1%27%2F%3E%3Cpath%20d%3D%27M16%2021h1a2%202%200%200%200%202-2v-5c0-1.1.9-2%202-2a2%202%200%200%201-2-2V5a2%202%200%200%200-2-2h-1%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-ban {
+    --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Cpath%20d%3D%27m4.9%204.9%2014.2%2014.2%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.openpencil-ai-visual-reference-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    margin-top: 0;
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+    font-size: 12px;
+}
+
+.openpencil-ai-visual-reference-row[hidden],
+.openpencil-ai-visual-judge-row[hidden] {
+    display: none;
+}
+
+.openpencil-ai-visual-reference-input {
+    width: 100%;
+    height: 28px;
+    min-width: 0;
+    padding: 0 8px;
+    color: var(--theia-input-foreground, var(--theia-foreground));
+    background: var(--theia-input-background, var(--theia-editor-background));
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+}
+
+.openpencil-ai-visual-judge-row {
+    display: grid;
+    grid-template-columns: 120px minmax(132px, 0.9fr) minmax(180px, 1.4fr) auto;
+    align-items: center;
+    gap: 8px;
+    margin-top: 0;
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+    font-size: 12px;
+}
+
+.openpencil-ai-visual-judge-toggle,
+.openpencil-ai-visual-show-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 28px;
+    color: var(--theia-foreground);
+}
+
+.openpencil-ai-visual-judge-toggle input,
+.openpencil-ai-visual-show-all input {
+    margin: 0;
+}
+
+.openpencil-ai-visual-provider-select:disabled,
+.openpencil-ai-visual-model-select:disabled,
+.openpencil-ai-visual-judge-toggle input:disabled + span,
+.openpencil-ai-visual-show-all input:disabled + span {
+    opacity: 0.6;
+}
+
+.openpencil-ai-prompt-dialog-details {
+    min-height: 18px;
+    margin-top: 0;
+    color: var(--theia-descriptionForeground, var(--theia-foreground));
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.openpencil-ai-prompt-dialog-error {
+    min-height: 18px;
+    margin-top: 0;
+    color: var(--theia-errorForeground, #f14c4c);
+    font-size: 12px;
+}
+
+.openpencil-ai-prompt-dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.openpencil-ai-prompt-dialog-action-spacer {
+    flex: 1 1 auto;
+}
+
+.openpencil-ai-prompt-dialog-configure[hidden] {
+    display: none;
+}
+
+.openpencil-ai-prompt-dialog-actions .theia-button {
+    min-width: 76px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 5px;
+    font-weight: 700;
+}
+
+.openpencil-ai-prompt-dialog-actions .theia-button.main.openpencil-ai-prompt-dialog-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--theia-button-foreground, #ffffff) !important;
+    background: var(--cybervinci-ai-action-gradient, var(--theia-button-background)) !important;
+    border: 1px solid transparent !important;
+}
+
+.openpencil-ai-prompt-dialog-submit:disabled {
+    opacity: 0.55;
+}
+
+.openpencil-ai-sparkles-icon {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    fill: currentColor;
+}
+
+@media (max-width: 760px) {
+    .openpencil-ai-prompt-dialog-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .openpencil-ai-prompt-dialog-model-field {
+        grid-column: 1 / -1;
+    }
+
+    .openpencil-ai-model-picker-menu {
+        width: 100%;
+    }
+
+    .openpencil-ai-model-picker-option {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .openpencil-ai-visual-judge-row {
+        grid-template-columns: 132px minmax(0, 1fr);
+    }
+
+    .openpencil-ai-visual-judge-row > .openpencil-ai-select-shell:nth-child(3) {
+        grid-column: 2;
+    }
+
+    .openpencil-ai-visual-show-all {
+        grid-column: 2;
+    }
+}
+
+@media (max-width: 520px) {
+    .openpencil-ai-prompt-dialog-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .openpencil-ai-visual-judge-row {
+        grid-template-columns: 1fr;
+    }
+
+    .openpencil-ai-visual-judge-row > .openpencil-ai-select-shell:nth-child(3) {
+        grid-column: auto;
+    }
+}
+
 @media (max-width: 980px) {
     .openpencil-topbar,
     .openpencil-sdk-topbar {
@@ -2937,6 +3487,13 @@ body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-acti
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-text-edit-run:hover,
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-text-edit-run:hover {
     background: var(--openpencil-accent-hover);
+}
+
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-ai-run,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-ai-run,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-ai-run:hover,
+body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-sdk-topbar-actions .openpencil-ai-run:hover {
+    background: var(--cybervinci-ai-action-gradient);
 }
 
 body:is(.vs-dark, .vs):not(.hc-black):not(.hc-light) .openpencil-topbar-actions .openpencil-export-run:disabled,

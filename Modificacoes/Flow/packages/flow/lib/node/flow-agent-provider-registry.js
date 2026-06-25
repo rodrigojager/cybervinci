@@ -102,7 +102,7 @@ var FlowAgentProviderRegistry = function () {
         }
         FlowAgentProviderRegistry_1.prototype.resolveProvider = function (context) {
             return __awaiter(this, void 0, void 0, function () {
-                var providerId, inheritedProvider, command, customCommand;
+                var providerId, inheritedProvider, command, codexRuntimeProvider, customCommand;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -132,8 +132,9 @@ var FlowAgentProviderRegistry = function () {
                             if (providerId === 'theia' || providerId === 'theia-language-model') {
                                 return [2 /*return*/, this.resolveTheiaProvider(context, providerId)];
                             }
-                            if (providerId === 'codex' || providerId === 'codex-provider') {
-                                return [2 /*return*/, this.resolveCodexProvider(context, providerId)];
+                            codexRuntimeProvider = parseCodexRuntimeProviderId(providerId);
+                            if (providerId === 'codex' || providerId === 'codex-provider' || codexRuntimeProvider) {
+                                return [2 /*return*/, this.resolveCodexProvider(context, providerId, codexRuntimeProvider)];
                             }
                             customCommand = process.env[customProviderCommandEnvName(providerId)];
                             if (customCommand === null || customCommand === void 0 ? void 0 : customCommand.trim()) {
@@ -261,31 +262,31 @@ var FlowAgentProviderRegistry = function () {
                 });
             });
         };
-        FlowAgentProviderRegistry_1.prototype.resolveCodexProvider = function (context, providerId) {
+        FlowAgentProviderRegistry_1.prototype.resolveCodexProvider = function (context, providerId, runtimeProvider) {
             return __awaiter(this, void 0, void 0, function () {
-                var modelId, status_1, error_1;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var modelId, optionRequest, request, status_1, error_1;
+                var _a, _b, _c;
+                return __generator(this, function (_d) {
+                    switch (_d.label) {
                         case 0:
                             modelId = resolveModelId(context);
-                            if (modelId) {
-                                throw new Error(this.unsupportedProviderMessage(context, providerId, "CodexProviderService cannot honor modelId \"".concat(modelId, "\" through its current Flow API. Remove modelId or use a command-backed provider via ").concat(customProviderCommandEnvName(providerId), ".")));
-                            }
                             if (!this.codexProviderService) {
                                 throw new Error(this.unsupportedProviderMessage(context, providerId, 'CodexProviderService is not available in this backend container.'));
                             }
-                            _a.label = 1;
+                            optionRequest = codexProviderRequestOptions((_a = context.state.provider) === null || _a === void 0 ? void 0 : _a.options);
+                            request = __assign(__assign({}, optionRequest), { runtime: (_b = runtimeProvider === null || runtimeProvider === void 0 ? void 0 : runtimeProvider.runtime) !== null && _b !== void 0 ? _b : optionRequest.runtime, modelProvider: (_c = runtimeProvider === null || runtimeProvider === void 0 ? void 0 : runtimeProvider.modelProvider) !== null && _c !== void 0 ? _c : optionRequest.modelProvider });
+                            _d.label = 1;
                         case 1:
-                            _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, this.codexProviderService.getStatus({ cwd: process.cwd() })];
+                            _d.trys.push([1, 3, , 4]);
+                            return [4 /*yield*/, this.codexProviderService.getStatus(__assign({ cwd: process.cwd(), model: modelId }, request))];
                         case 2:
-                            status_1 = _a.sent();
+                            status_1 = _d.sent();
                             if (status_1.available && status_1.authenticated !== false) {
-                                return [2 /*return*/, { codexProvider: this.codexProviderService, providerId: providerId }];
+                                return [2 /*return*/, { codexProvider: this.codexProviderService, providerId: providerId, modelId: modelId, request: request }];
                             }
                             throw new Error('Codex provider is not available or authenticated.');
                         case 3:
-                            error_1 = _a.sent();
+                            error_1 = _d.sent();
                             throw new Error(this.unsupportedProviderMessage(context, providerId, "".concat(errorToMessage(error_1), " Ensure the Codex provider is installed, available, and authenticated.")));
                         case 4: return [2 /*return*/];
                     }
@@ -340,6 +341,48 @@ function defaultTheiaSelections() {
 function stringOption(options, key) {
     var value = options === null || options === void 0 ? void 0 : options[key];
     return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+function codexProviderRequestOptions(options) {
+    return {
+        runtime: codexRuntimeOption(options, 'runtime'),
+        modelProvider: stringOption(options, 'modelProvider'),
+        executablePath: stringOption(options, 'executablePath'),
+        profile: stringOption(options, 'profile'),
+        openRouterApiKey: stringOption(options, 'openRouterApiKey'),
+        openCodeApiKey: stringOption(options, 'openCodeApiKey'),
+        openCodeExecutablePath: stringOption(options, 'openCodeExecutablePath'),
+        openCodeAgent: stringOption(options, 'openCodeAgent'),
+        openCodeVariant: stringOption(options, 'openCodeVariant'),
+        geminiExecutablePath: stringOption(options, 'geminiExecutablePath'),
+        claudeExecutablePath: stringOption(options, 'claudeExecutablePath'),
+        claudeAgent: stringOption(options, 'claudeAgent'),
+        cursorExecutablePath: stringOption(options, 'cursorExecutablePath'),
+        cursorMode: stringOption(options, 'cursorMode')
+    };
+}
+function codexRuntimeOption(options, key) {
+    var value = stringOption(options, key);
+    return value && isCodexProviderRuntime(value) ? value : undefined;
+}
+function parseCodexRuntimeProviderId(providerId) {
+    var separator = providerId.indexOf(':');
+    if (separator <= 0) {
+        return undefined;
+    }
+    var runtime = providerId.slice(0, separator);
+    var modelProvider = providerId.slice(separator + 1);
+    if (!isCodexProviderRuntime(runtime) || !modelProvider) {
+        return undefined;
+    }
+    return { runtime: runtime, modelProvider: modelProvider };
+}
+function isCodexProviderRuntime(value) {
+    return value === 'codex-app-server'
+        || value === 'direct-http'
+        || value === 'opencode-cli'
+        || value === 'gemini-cli'
+        || value === 'claude-code-cli'
+        || value === 'cursor-cli';
 }
 function normalizeLegacyProviderAlias(providerId) {
     if (providerId === 'chat' || providerId === 'llm') {

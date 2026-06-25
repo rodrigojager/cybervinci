@@ -15,24 +15,74 @@ import {
     CodexProviderRuntime
 } from '@cybervinci/ai-providers/lib/common';
 import { CodexProviderRuntimeProvider } from '@cybervinci/ai-providers/lib/browser/ai-providers-runtime-provider';
-import { CancellationToken } from '@theia/core';
+import {
+    CODEX_CLI_CLAUDE_AGENT_PREF,
+    CODEX_CLI_CLAUDE_EXECUTABLE_PATH_PREF,
+    CODEX_CLI_CURSOR_EXECUTABLE_PATH_PREF,
+    CODEX_CLI_CURSOR_MODE_PREF,
+    CODEX_CLI_EXECUTABLE_PATH_PREF,
+    CODEX_CLI_GEMINI_EXECUTABLE_PATH_PREF,
+    CODEX_CLI_MODEL_PREF,
+    CODEX_CLI_MODEL_PROVIDER_PREF,
+    CODEX_CLI_OPENCODE_AGENT_PREF,
+    CODEX_CLI_OPENCODE_API_KEY_PREF,
+    CODEX_CLI_OPENCODE_EXECUTABLE_PATH_PREF,
+    CODEX_CLI_OPENCODE_VARIANT_PREF,
+    CODEX_CLI_OPENROUTER_API_KEY_PREF,
+    CODEX_CLI_PROFILE_PREF,
+    CODEX_CLI_REASONING_EFFORT_PREF,
+    CODEX_CLI_REASONING_VARIANT_OPTIONS_PREF,
+    CODEX_CLI_REASONING_VARIANT_PREF,
+    CODEX_CLI_RUNTIME_PREF,
+    CODEX_CLI_SERVICE_TIER_PREF
+} from '@cybervinci/ai-providers/lib/common/ai-providers-preferences';
+import { CancellationToken, PreferenceService } from '@theia/core';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import {
     parseCyberVinciAiJson,
     CyberVinciAiExecutionSelection,
+    CyberVinciAiProviderDescriptor,
+    CyberVinciAiProviderListRequest,
     CyberVinciAiRuntimeService,
     CyberVinciAiTaskRequest,
+    CyberVinciAiTaskResult,
     CyberVinciAiTaskStreamEvent
 } from '../common';
+
+export const CyberVinciAiRuntimeBackendService = Symbol('CyberVinciAiRuntimeBackendService');
 
 @injectable()
 export class CyberVinciAiRuntimeFrontendService {
 
-    @inject(CyberVinciAiRuntimeService) @optional()
+    @inject(CyberVinciAiRuntimeBackendService) @optional()
     protected readonly aiRuntimeService: CyberVinciAiRuntimeService | undefined;
 
     @inject(CodexProviderRuntimeProvider) @optional()
     protected readonly providerRuntime: CodexProviderRuntimeProvider | undefined;
+
+    @inject(PreferenceService)
+    protected readonly preferenceService: PreferenceService;
+
+    async listProviders(request: CyberVinciAiProviderListRequest = {}): Promise<CyberVinciAiProviderDescriptor[]> {
+        if (!this.aiRuntimeService) {
+            throw new Error('CyberVinci AI Runtime service is not available.');
+        }
+        return this.aiRuntimeService.listProviders(this.withProviderPreferences(request));
+    }
+
+    async getDefaultExecution(request: CyberVinciAiProviderListRequest = {}): Promise<CyberVinciAiExecutionSelection> {
+        if (!this.aiRuntimeService) {
+            return this.defaultExecutionFromPreferences();
+        }
+        return this.aiRuntimeService.getDefaultExecution(this.withProviderPreferences(request));
+    }
+
+    async runTask<TInput = unknown, TStructured = unknown>(request: CyberVinciAiTaskRequest<TInput>): Promise<CyberVinciAiTaskResult<TStructured>> {
+        if (!this.aiRuntimeService) {
+            throw new Error('CyberVinci AI Runtime service is not available.');
+        }
+        return this.aiRuntimeService.runTask<TInput, TStructured>(this.withTaskProviderPreferences(request));
+    }
 
     async *runTaskStream<TInput = unknown, TStructured = unknown>(
         request: CyberVinciAiTaskRequest<TInput>,
@@ -121,6 +171,7 @@ export class CyberVinciAiRuntimeFrontendService {
     protected async resolveExecution(selection: CyberVinciAiExecutionSelection | undefined, workspacePath: string | undefined): Promise<CyberVinciAiExecutionSelection> {
         const parsed = selection?.providerId ? this.parseProviderId(selection.providerId) : undefined;
         const withParsed: CyberVinciAiExecutionSelection = {
+            ...this.providerPreferenceSelection(),
             ...selection,
             runtime: selection?.runtime ?? parsed?.runtime,
             modelProvider: selection?.modelProvider ?? parsed?.modelProvider
@@ -150,6 +201,74 @@ export class CyberVinciAiRuntimeFrontendService {
         };
     }
 
+    protected withProviderPreferences(request: CyberVinciAiProviderListRequest = {}): CyberVinciAiProviderListRequest {
+        const preferences = this.providerPreferenceSelection();
+        return {
+            ...request,
+            model: request.model ?? preferences.model,
+            runtime: request.runtime ?? preferences.runtime,
+            modelProvider: request.modelProvider ?? preferences.modelProvider,
+            openRouterApiKey: request.openRouterApiKey ?? preferences.openRouterApiKey,
+            openCodeApiKey: request.openCodeApiKey ?? preferences.openCodeApiKey,
+            openCodeExecutablePath: request.openCodeExecutablePath ?? preferences.openCodeExecutablePath,
+            openCodeAgent: request.openCodeAgent ?? preferences.openCodeAgent,
+            openCodeVariant: request.openCodeVariant ?? preferences.openCodeVariant,
+            geminiExecutablePath: request.geminiExecutablePath ?? preferences.geminiExecutablePath,
+            claudeExecutablePath: request.claudeExecutablePath ?? preferences.claudeExecutablePath,
+            claudeAgent: request.claudeAgent ?? preferences.claudeAgent,
+            cursorExecutablePath: request.cursorExecutablePath ?? preferences.cursorExecutablePath,
+            cursorMode: request.cursorMode ?? preferences.cursorMode
+        };
+    }
+
+    protected withTaskProviderPreferences<TInput>(request: CyberVinciAiTaskRequest<TInput>): CyberVinciAiTaskRequest<TInput> {
+        return {
+            ...request,
+            execution: {
+                ...this.providerPreferenceSelection(),
+                ...request.execution
+            }
+        };
+    }
+
+    protected defaultExecutionFromPreferences(): CyberVinciAiExecutionSelection {
+        const preferences = this.providerPreferenceSelection();
+        return {
+            providerId: this.providerId(preferences.runtime ?? 'codex-app-server', preferences.modelProvider ?? 'codex'),
+            label: preferences.modelProvider ?? 'Codex CLI',
+            reasoningPolicy: 'auto',
+            reasoningEffort: 'medium',
+            ...preferences
+        };
+    }
+
+    protected providerPreferenceSelection(): CyberVinciAiExecutionSelection {
+        const runtime = this.preferenceService.get<CodexProviderRuntime>(CODEX_CLI_RUNTIME_PREF, 'codex-app-server');
+        const modelProvider = this.preferenceService.get<string>(CODEX_CLI_MODEL_PROVIDER_PREF, 'codex');
+        return {
+            providerId: this.providerId(runtime, modelProvider),
+            runtime,
+            modelProvider,
+            model: this.preferenceService.get<string>(CODEX_CLI_MODEL_PREF, undefined),
+            reasoningEffort: this.preferenceService.get<CyberVinciAiExecutionSelection['reasoningEffort']>(CODEX_CLI_REASONING_EFFORT_PREF, undefined),
+            reasoningVariant: this.preferenceService.get<string>(CODEX_CLI_REASONING_VARIANT_PREF, undefined),
+            reasoningVariantOptions: this.preferenceService.get<Record<string, unknown>>(CODEX_CLI_REASONING_VARIANT_OPTIONS_PREF, undefined),
+            serviceTier: this.preferenceService.get<CodexProviderOptions['serviceTier']>(CODEX_CLI_SERVICE_TIER_PREF, undefined),
+            executablePath: this.preferenceService.get<string>(CODEX_CLI_EXECUTABLE_PATH_PREF, undefined),
+            profile: this.preferenceService.get<string>(CODEX_CLI_PROFILE_PREF, undefined),
+            openRouterApiKey: this.preferenceService.get<string>(CODEX_CLI_OPENROUTER_API_KEY_PREF, undefined),
+            openCodeApiKey: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_API_KEY_PREF, undefined),
+            openCodeExecutablePath: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_EXECUTABLE_PATH_PREF, undefined),
+            openCodeAgent: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_AGENT_PREF, undefined),
+            openCodeVariant: this.preferenceService.get<string>(CODEX_CLI_OPENCODE_VARIANT_PREF, undefined),
+            geminiExecutablePath: this.preferenceService.get<string>(CODEX_CLI_GEMINI_EXECUTABLE_PATH_PREF, undefined),
+            claudeExecutablePath: this.preferenceService.get<string>(CODEX_CLI_CLAUDE_EXECUTABLE_PATH_PREF, undefined),
+            claudeAgent: this.preferenceService.get<string>(CODEX_CLI_CLAUDE_AGENT_PREF, undefined),
+            cursorExecutablePath: this.preferenceService.get<string>(CODEX_CLI_CURSOR_EXECUTABLE_PATH_PREF, undefined),
+            cursorMode: this.preferenceService.get<string>(CODEX_CLI_CURSOR_MODE_PREF, undefined)
+        };
+    }
+
     protected toProviderRequest<TInput>(request: CyberVinciAiTaskRequest<TInput>, execution: CyberVinciAiExecutionSelection, prompt: string): CodexProviderBackendRequest {
         const previewOnly = request.effectPolicy?.previewOnly ?? request.effectPolicy?.workspaceWrites !== 'allowed';
         const options: Partial<CodexProviderOptions> = {
@@ -158,6 +277,8 @@ export class CyberVinciAiRuntimeFrontendService {
             approvalPolicy: execution.approvalPolicy ?? (previewOnly ? 'never' : 'on-request'),
             sandboxMode: execution.sandboxMode ?? (previewOnly ? 'read-only' : 'workspace-write'),
             reasoningEffort: this.toProviderReasoningEffort(execution),
+            reasoningVariant: this.toProviderReasoningVariant(execution),
+            reasoningVariantOptions: this.toProviderReasoningVariantOptions(execution),
             verbosity: execution.verbosity,
             serviceTier: execution.serviceTier,
             webSearch: execution.webSearch ?? 'disabled',
@@ -201,6 +322,7 @@ export class CyberVinciAiRuntimeFrontendService {
                     model: execution.model,
                     reasoningPolicy: execution.reasoningPolicy,
                     reasoningEffort: execution.reasoningEffort,
+                    reasoningVariant: execution.reasoningVariant,
                     virtualReasoningMode: execution.virtualReasoningMode
                 }
             }, undefined, 2),
@@ -242,6 +364,22 @@ export class CyberVinciAiRuntimeFrontendService {
             return undefined;
         }
         return execution.reasoningEffort as CodexProviderOptions['reasoningEffort'] | undefined;
+    }
+
+    protected toProviderReasoningVariant(execution: CyberVinciAiExecutionSelection): string | undefined {
+        if (execution.reasoningPolicy === 'off' || execution.reasoningVariant === 'default' || execution.reasoningVariant === 'none') {
+            return undefined;
+        }
+        return execution.reasoningVariant?.trim() || undefined;
+    }
+
+    protected toProviderReasoningVariantOptions(execution: CyberVinciAiExecutionSelection): Record<string, unknown> | undefined {
+        if (execution.reasoningPolicy === 'off' || execution.reasoningVariant === 'default' || execution.reasoningVariant === 'none') {
+            return undefined;
+        }
+        return execution.reasoningVariantOptions && Object.keys(execution.reasoningVariantOptions).length
+            ? execution.reasoningVariantOptions
+            : undefined;
     }
 
     protected notificationToTextDelta(message: CodexProviderNotificationMessage, receivedAgentDelta: boolean): string {

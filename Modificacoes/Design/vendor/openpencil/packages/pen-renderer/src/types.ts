@@ -19,8 +19,10 @@ export interface IconLookupFn {
 export interface PenRendererOptions {
   /** URL pattern for CanvasKit WASM files. Default: '/canvaskit/' */
   canvasKitPath?: string | ((file: string) => string);
-  /** Base URL for bundled font files. Default: '/fonts/' */
+  /** Base URL for bundled font files. Used only when bundled font loading is enabled. */
   fontBasePath?: string;
+  /** Fetch bundled font files before CDN fallback. Default: enabled only when fontBasePath is provided. */
+  loadBundledFonts?: boolean;
   /** Custom Google Fonts CSS endpoint. Default: 'https://fonts.googleapis.com/css2' */
   googleFontsCssUrl?: string;
   /** Icon lookup function. Default: null (icons render as fallback circle) */

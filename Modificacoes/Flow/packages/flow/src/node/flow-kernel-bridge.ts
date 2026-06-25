@@ -12,6 +12,7 @@ import { generateUuid } from '@theia/core/lib/common';
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import {
     FlowEvent,
+    FlowGateDecisionDefinition,
     FlowGateDecisionRequest,
     FlowGateStatus,
     FlowHumanGate,
@@ -19,6 +20,7 @@ import {
     FlowRun,
     FlowRunExecutionMode,
     FlowStateRuntimeStatus,
+    FlowOutcomeRoute,
     FlowWorkloadResultIssue,
     FlowWorkflow,
     FlowWorkflowTransition,
@@ -1681,9 +1683,9 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                 await this.workloadExecutor.execute(context);
             }));
             const failedWorkload = activeWorkloads.find(workload => workload.status === 'failed');
-            if (failedWorkload && !hasMatchingTransition(workflow, run, failedWorkload.stateId)) {
-                run.status = 'failed';
+            if (failedWorkload) {
                 run.stateStatuses[failedWorkload.stateId] = 'failed';
+                await advanceFromState(workflow, run, failedWorkload.stateId, workspaceRootUri, 'failed');
                 return touch(run);
             }
             const activeParent = findActiveParallelParent(workflow, activeStateIds);
@@ -1694,7 +1696,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                     stateId: activeParent,
                     message: `Parallel state "${activeParent}" completed.`
                 });
-                await advanceFromState(workflow, run, activeParent, workspaceRootUri);
+                await advanceFromState(workflow, run, activeParent, workspaceRootUri, 'success');
                 return touch(run);
             }
         } else {
@@ -1711,9 +1713,9 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
                 context.workspaceRootUri = workspaceRootUri;
             }
             await this.workloadExecutor.execute(context);
-            if (activeWorkload.status === 'failed' && !hasMatchingTransition(workflow, run, activeWorkload.stateId)) {
-                run.status = 'failed';
+            if (activeWorkload.status === 'failed') {
                 run.stateStatuses[activeWorkload.stateId] = 'failed';
+                await advanceFromState(workflow, run, activeWorkload.stateId, workspaceRootUri, 'failed');
                 return touch(run);
             }
             }
@@ -1723,7 +1725,7 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
             return touch(run);
         }
 
-        await advanceFromState(workflow, run, activeStateId, workspaceRootUri);
+        await advanceFromState(workflow, run, activeStateId, workspaceRootUri, 'success');
         return touch(run);
     }
 
@@ -1732,33 +1734,44 @@ export class SimulatedFlowKernelBridge implements FlowKernelBridge {
         if (!gate) {
             throw new Error(`Unknown gate "${request.gateId}".`);
         }
+        const gateDecision = resolveGateDecision(gate, request);
         gate.status = request.decision;
+        gate.selectedDecisionId = gateDecision?.id || request.decisionId || request.decision;
+        gate.selectedTargetStateId = request.targetStateId || gateDecision?.to;
+        gate.note = request.note;
         const eventType = request.decision === 'approved' ? 'gate.approved' : request.decision === 'rejected' ? 'gate.rejected' : 'gate.revision_requested';
         pushEvent(run, {
             type: eventType,
             gateId: gate.id,
             stateId: gate.stateId,
             message: `Gate "${gate.title}" ${request.decision}.`,
-            payload: { note: request.note }
+            payload: {
+                note: request.note,
+                decisionId: gate.selectedDecisionId,
+                targetStateId: gate.selectedTargetStateId,
+                approvedBy: request.approvedBy
+            }
         });
 
         const gateStateId = gate.stateId;
-        if (request.decision === 'approved' && gateStateId) {
+        if (gateStateId) {
             run.status = 'running';
-            run.stateStatuses[gateStateId] = 'done';
+            run.stateStatuses[gateStateId] = request.decision === 'rejected' ? 'failed' : 'done';
             run.signals.push({
                 key: gateStateId === 'contract_gate' ? 'contract.status' : `${gateStateId}.status`,
-                value: 'approved',
+                value: request.decision,
                 stateId: gateStateId,
                 runId: run.id,
                 createdAt: timestamp()
             });
-            await advanceFromState(workflow, run, gateStateId, workspaceRootUri);
+            const explicitRoute = gateDecisionRoute(gateDecision, request);
+            if (explicitRoute) {
+                await applyOutcomeRoute(workflow, run, gateStateId, gateDecision?.outcome || request.decision, explicitRoute, workspaceRootUri);
+            } else {
+                await advanceFromState(workflow, run, gateStateId, workspaceRootUri, gateDecision?.outcome || request.decision);
+            }
         } else {
             run.status = request.decision === 'rejected' ? 'failed' : 'waiting_gate';
-            if (gateStateId) {
-                run.stateStatuses[gateStateId] = request.decision === 'rejected' ? 'failed' : 'review';
-            }
         }
         return touch(run);
     }
@@ -1822,6 +1835,11 @@ async function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string,
         return;
     }
 
+    if (state.type === 'loop') {
+        await enterLoopState(workflow, run, stateId, state, workspaceRootUri);
+        return;
+    }
+
     if (state.type === 'input') {
         await materializeInputStateArtifacts(run, stateId, state, workspaceRootUri);
         run.stateStatuses[stateId] = 'done';
@@ -1830,7 +1848,7 @@ async function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string,
             stateId,
             message: `State "${stateId}" completed.`
         });
-        await advanceFromState(workflow, run, stateId, workspaceRootUri);
+        await advanceFromState(workflow, run, stateId, workspaceRootUri, 'success');
         return;
     }
 
@@ -1873,17 +1891,32 @@ async function enterState(workflow: FlowWorkflow, run: FlowRun, stateId: string,
     });
 }
 
-async function advanceFromState(workflow: FlowWorkflow, run: FlowRun, stateId: string, workspaceRootUri?: string): Promise<void> {
+async function advanceFromState(
+    workflow: FlowWorkflow,
+    run: FlowRun,
+    stateId: string,
+    workspaceRootUri?: string,
+    outcome: string = 'success'
+): Promise<boolean> {
+    const outcomeRoute = resolveOutcomeRoute(workflow, run, stateId, outcome);
+    if (outcomeRoute) {
+        await applyOutcomeRoute(workflow, run, stateId, outcome, outcomeRoute, workspaceRootUri);
+        return true;
+    }
     const transitions = (workflow.transitions || [])
         .filter(transition => transition.from === stateId)
         .sort((left, right) => (right.priority || 0) - (left.priority || 0));
 
     if (transitions.length === 0) {
+        if (outcome === 'failed' || outcome === 'error' || outcome === 'rejected' || run.stateStatuses[stateId] === 'failed') {
+            failRun(run, stateId, `State "${stateId}" finished with outcome "${outcome}" and no route handled it.`);
+            return true;
+        }
         completeRun(run);
-        return;
+        return true;
     }
 
-    const transition = transitions.find(candidate => evaluateGuard(workflow, run, candidate.guard));
+    const transition = transitions.find(candidate => transitionMatchesOutcome(candidate, outcome) && evaluateGuard(workflow, run, candidate.guard));
     if (!transition) {
         if (run.stateStatuses[stateId] === 'failed') {
             run.status = 'failed';
@@ -1892,10 +1925,10 @@ async function advanceFromState(workflow: FlowWorkflow, run: FlowRun, stateId: s
                 stateId,
                 message: `No transition guard matched for failed state "${stateId}".`
             });
-            return;
+            return true;
         }
         completeRun(run);
-        return;
+        return true;
     }
     const transitionId = transition.id || `${transition.from}-${transition.to}`;
     pushEvent(run, {
@@ -1913,12 +1946,313 @@ async function advanceFromState(workflow: FlowWorkflow, run: FlowRun, stateId: s
         payload: { loopCounter: transitionLoopCounter(transition.guard) }
     });
     await enterState(workflow, run, transition.to, workspaceRootUri);
+    return true;
 }
 
-function hasMatchingTransition(workflow: FlowWorkflow, run: FlowRun, stateId: string): boolean {
-    return (workflow.transitions || [])
-        .filter(transition => transition.from === stateId)
-        .some(transition => evaluateGuard(workflow, run, transition.guard));
+function transitionMatchesOutcome(transition: FlowWorkflowTransition, outcome: string): boolean {
+    const expectedEvents = outcomeRouteTransitionEvents(outcome);
+    return expectedEvents.includes(transition.on);
+}
+
+async function enterLoopState(
+    workflow: FlowWorkflow,
+    run: FlowRun,
+    stateId: string,
+    state: FlowWorkflowState,
+    workspaceRootUri?: string
+): Promise<void> {
+    const config = state.loop;
+    if (!config?.body) {
+        failRun(run, stateId, `Loop state "${stateId}" does not declare a body state.`);
+        return;
+    }
+    if (config.until && evaluateGuard(workflow, run, config.until)) {
+        run.stateStatuses[stateId] = 'done';
+        pushEvent(run, {
+            type: 'loop.completed',
+            stateId,
+            message: `Loop "${stateId}" completed because its until guard matched.`
+        });
+        pushEvent(run, {
+            type: 'state.completed',
+            stateId,
+            message: `State "${stateId}" completed.`
+        });
+        await advanceFromState(workflow, run, stateId, workspaceRootUri, 'success');
+        return;
+    }
+
+    const iterationCount = loopIterationCount(run, stateId, config.counter);
+    const maxIterations = typeof config.maxIterations === 'number' ? config.maxIterations : 1;
+    if (iterationCount >= maxIterations) {
+        run.stateStatuses[stateId] = 'failed';
+        pushEvent(run, {
+            type: 'loop.exhausted',
+            stateId,
+            message: `Loop "${stateId}" exhausted after ${iterationCount} iteration(s).`,
+            payload: { maxIterations, counter: config.counter }
+        });
+        await advanceFromState(workflow, run, stateId, workspaceRootUri, 'exhausted');
+        return;
+    }
+
+    const iteration = iterationCount + 1;
+    run.signals.push({
+        key: config.counter || `${stateId}.iteration`,
+        value: iteration,
+        stateId,
+        runId: run.id,
+        createdAt: timestamp()
+    });
+    pushEvent(run, {
+        type: 'loop.iteration_started',
+        stateId,
+        message: `Loop "${stateId}" started iteration ${iteration}.`,
+        payload: {
+            iteration,
+            counter: config.counter,
+            body: config.body,
+            repair: config.repair
+        }
+    });
+    await enterState(workflow, run, config.body, workspaceRootUri);
+}
+
+async function applyOutcomeRoute(
+    workflow: FlowWorkflow,
+    run: FlowRun,
+    stateId: string,
+    outcome: string,
+    route: FlowOutcomeRoute | string,
+    workspaceRootUri?: string
+): Promise<void> {
+    const normalizedRoute = typeof route === 'string' ? { to: route } : route;
+    const transitionId = outcomeRouteTransitionId(workflow, stateId, outcome, normalizedRoute);
+    pushEvent(run, {
+        type: 'state.outcome_resolved',
+        transitionId,
+        stateId,
+        message: `State "${stateId}" resolved outcome "${outcome}".`,
+        payload: { ...normalizedRoute }
+    });
+
+    if (normalizedRoute.to) {
+        run.status = 'running';
+        await enterState(workflow, run, normalizedRoute.to, workspaceRootUri);
+        return;
+    }
+
+    switch (normalizedRoute.action) {
+        case 'complete':
+        case 'stop':
+            completeRun(run);
+            return;
+        case 'fail':
+            failRun(run, stateId, normalizedRoute.note || `State "${stateId}" failed with outcome "${outcome}".`);
+            return;
+        case 'cancel':
+            run.status = 'cancelled';
+            run.currentStateIds = [];
+            pushEvent(run, {
+                type: 'run.cancelled',
+                stateId,
+                message: normalizedRoute.note || `Run cancelled by outcome "${outcome}".`
+            });
+            touch(run);
+            return;
+        case 'pause':
+            run.status = 'paused';
+            run.currentStateIds = [stateId];
+            run.stateStatuses[stateId] = 'waiting';
+            pushEvent(run, {
+                type: 'run.paused',
+                stateId,
+                message: normalizedRoute.note || `Run paused by outcome "${outcome}".`
+            });
+            touch(run);
+            return;
+        case 'wait':
+            run.status = 'waiting_gate';
+            run.currentStateIds = [stateId];
+            run.stateStatuses[stateId] = 'waiting';
+            pushEvent(run, {
+                type: 'transition.evaluated',
+                transitionId,
+                stateId,
+                message: normalizedRoute.note || `Run is waiting after outcome "${outcome}".`
+            });
+            touch(run);
+            return;
+        case 'continue':
+        default:
+            completeRun(run);
+            return;
+    }
+}
+
+function outcomeRouteTransitionId(
+    workflow: FlowWorkflow,
+    stateId: string,
+    outcome: string,
+    route: FlowOutcomeRoute
+): string | undefined {
+    if (!route.to) {
+        return undefined;
+    }
+    const preferredEvents = outcomeRouteTransitionEvents(outcome);
+    const candidates = (workflow.transitions || []).filter(transition => transition.from === stateId && transition.to === route.to);
+    const preferred = candidates.find(transition => preferredEvents.includes(transition.on));
+    const transition = preferred || (candidates.length === 1 ? candidates[0] : undefined);
+    return transition ? transition.id || `${transition.from}-${transition.to}` : undefined;
+}
+
+function outcomeRouteTransitionEvents(outcome: string): string[] {
+    switch (outcome) {
+        case 'approved':
+            return ['gate.approved', 'state.completed', 'workload.completed'];
+        case 'rejected':
+        case 'revision_requested':
+        case 'changes_requested':
+        case 'failed':
+        case 'error':
+            return ['gate.rejected', 'workload.failed', 'workload.completed', 'state.completed'];
+        case 'success':
+        case 'completed':
+        default:
+            return ['state.completed', 'workload.completed', 'run.started', 'gate.approved'];
+    }
+}
+
+function resolveOutcomeRoute(
+    workflow: FlowWorkflow,
+    run: FlowRun,
+    stateId: string,
+    outcome: string
+): FlowOutcomeRoute | string | undefined {
+    const state = getState(workflow, stateId);
+    const aliases = outcomeAliases(outcome);
+    for (const alias of aliases) {
+        const route = state.outcomes?.[alias];
+        if (route) {
+            return route;
+        }
+    }
+    if (outcome === 'failed' || outcome === 'error' || outcome === 'rejected') {
+        const repairRoute = resolveLoopRepairRoute(workflow, stateId);
+        if (repairRoute) {
+            return repairRoute;
+        }
+    }
+    if (outcome === 'success' || outcome === 'completed' || outcome === 'approved') {
+        const loopController = findLoopControllerForBody(workflow, stateId);
+        if (loopController) {
+            return loopController;
+        }
+    }
+    return undefined;
+}
+
+function outcomeAliases(outcome: string): string[] {
+    const aliases = [outcome];
+    if (outcome === 'success') {
+        aliases.push('completed', 'approved');
+    } else if (outcome === 'completed') {
+        aliases.push('success', 'approved');
+    } else if (outcome === 'approved') {
+        aliases.push('success', 'completed');
+    } else if (outcome === 'failed') {
+        aliases.push('error', 'rejected');
+    } else if (outcome === 'error') {
+        aliases.push('failed');
+    } else if (outcome === 'revision_requested') {
+        aliases.push('changes_requested', 'failed');
+    }
+    return Array.from(new Set(aliases));
+}
+
+function resolveLoopRepairRoute(workflow: FlowWorkflow, stateId: string): FlowOutcomeRoute | undefined {
+    for (const [candidateId, candidate] of Object.entries(workflow.states)) {
+        if (candidate.type === 'loop' && candidate.loop?.body === stateId && candidate.loop.repair) {
+            return {
+                to: candidate.loop.repair,
+                label: `Repair ${stateId}`,
+                note: `Loop "${candidateId}" routed failed body "${stateId}" to repair.`
+            };
+        }
+    }
+    return undefined;
+}
+
+function findLoopControllerForBody(workflow: FlowWorkflow, stateId: string): FlowOutcomeRoute | undefined {
+    for (const [candidateId, candidate] of Object.entries(workflow.states)) {
+        if (candidate.type === 'loop' && (candidate.loop?.body === stateId || candidate.loop?.repair === stateId)) {
+            return {
+                to: candidateId,
+                label: `Return to loop ${candidateId}`
+            };
+        }
+    }
+    return undefined;
+}
+
+function loopIterationCount(run: FlowRun, stateId: string, counter?: string): number {
+    return run.events.filter(event =>
+        event.type === 'loop.iteration_started'
+        && event.stateId === stateId
+        && (!counter || event.payload?.counter === counter)
+    ).length;
+}
+
+function resolveGateDecision(gate: FlowHumanGate, request: FlowGateDecisionRequest): FlowGateDecisionDefinition | undefined {
+    return (gate.decisions || []).find(decision => decision.id === request.decisionId)
+        || (gate.decisions || []).find(decision => decision.id === request.decision)
+        || defaultGateDecision(request.decision);
+}
+
+function defaultGateDecision(decision: Exclude<FlowGateStatus, 'pending'>): FlowGateDecisionDefinition {
+    if (decision === 'approved') {
+        return { id: 'approved', label: 'Approve', outcome: 'approved' };
+    }
+    if (decision === 'revision_requested') {
+        return { id: 'revision_requested', label: 'Request changes', outcome: 'revision_requested', action: 'wait', allowTargetSelection: true };
+    }
+    return { id: 'rejected', label: 'Reject', outcome: 'rejected', action: 'fail' };
+}
+
+function gateDecisionRoute(
+    decision: FlowGateDecisionDefinition | undefined,
+    request: FlowGateDecisionRequest
+): FlowOutcomeRoute | undefined {
+    if (request.targetStateId) {
+        return { to: request.targetStateId, label: decision?.label };
+    }
+    if (decision?.to || decision?.action) {
+        return {
+            to: decision.to,
+            action: decision.action,
+            label: decision.label
+        };
+    }
+    return undefined;
+}
+
+function failRun(run: FlowRun, stateId: string | undefined, message: string): void {
+    run.status = 'failed';
+    run.currentStateIds = [];
+    if (stateId) {
+        run.stateStatuses[stateId] = 'failed';
+    }
+    pushEvent(run, {
+        type: 'state.failed',
+        stateId,
+        message
+    });
+    pushEvent(run, {
+        type: 'run.failed',
+        stateId,
+        message
+    });
+    touch(run);
 }
 
 async function materializeInputStateArtifacts(
@@ -2012,6 +2346,8 @@ function evaluateGuard(workflow: FlowWorkflow, run: FlowRun, guard: FlowWorkflow
                 return signalEquals(run, value);
             case 'gate.status':
                 return gateStatusEquals(run, value);
+            case 'effect.status':
+                return effectStatusEquals(run, value);
             case 'branches.all_completed':
                 return Array.isArray(value) && value.every(branchId => run.stateStatuses[String(branchId)] === 'done');
             case 'loop.lt':
@@ -2088,6 +2424,18 @@ function gateStatusEquals(run: FlowRun, value: unknown): boolean {
     return run.gates.some(gate => gate.id === record.id && gate.status === record.value);
 }
 
+function effectStatusEquals(run: FlowRun, value: unknown): boolean {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+    const record = value as Record<string, unknown>;
+    const kind = typeof record.kind === 'string' ? record.kind : undefined;
+    return run.effects.some(effect =>
+        (!kind || effect.kind === kind)
+        && effect.status === record.value
+    );
+}
+
 function loopCount(run: FlowRun, value: unknown): number {
     const counter = loopCounter(value);
     if (!counter) {
@@ -2144,6 +2492,11 @@ function createGate(workflow: FlowWorkflow, run: FlowRun, stateId: string): void
         id: configuredGate?.id || generateUuid(),
         title: configuredGate?.title || `Approve ${stateId}`,
         prompt: configuredGate?.prompt || `Approve state "${stateId}" before the run continues.`,
+        decisions: configuredGate?.decisions || [
+            { id: 'approved', label: 'Approve', outcome: 'approved' },
+            { id: 'revision_requested', label: 'Request changes', outcome: 'revision_requested', action: 'wait', allowTargetSelection: true },
+            { id: 'rejected', label: 'Reject', outcome: 'rejected', action: 'fail' }
+        ],
         stateId,
         status: 'pending'
     };
@@ -2869,6 +3222,10 @@ function toKernelState(state: FlowWorkflowState): FlowWorkflowState {
     return {
         type: state.type,
         agent: state.agent,
+        playbookId: state.playbookId,
+        playbook: state.playbook,
+        prompt: state.prompt,
+        playbookInput: state.playbookInput,
         agentRole: state.agentRole,
         provider: state.provider,
         modelExecution: state.modelExecution,
@@ -2967,11 +3324,47 @@ function resolveKernelCommand(): KernelCommand | undefined {
     if (configured) {
         return { executable: configured, argsPrefix: [] };
     }
-    const cwd = process.cwd();
-    const localMain = path.join(cwd, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
-    return fileExistsSyncish(localMain)
-        ? { executable: 'go', argsPrefix: ['run', './flow-kernel/cmd/flow-kernel'], cwd }
-        : undefined;
+    for (const cwd of resolveKernelSearchRoots()) {
+        const localMain = path.join(cwd, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
+        if (fileExistsSyncish(localMain)) {
+            return { executable: 'go', argsPrefix: ['run', './flow-kernel/cmd/flow-kernel'], cwd };
+        }
+    }
+    return undefined;
+}
+
+function resolveKernelSearchRoots(): string[] {
+    const seeds = [
+        process.cwd(),
+        path.resolve(__dirname, '..', '..', '..', '..')
+    ];
+    const roots: string[] = [];
+    const seen = new Set<string>();
+    const addRoot = (candidate: string): void => {
+        const resolved = path.resolve(candidate);
+        const key = process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+        if (seen.has(key)) {
+            return;
+        }
+        seen.add(key);
+        roots.push(resolved);
+    };
+
+    for (const seed of seeds) {
+        let current = path.resolve(seed);
+        for (let depth = 0; depth < 8; depth += 1) {
+            addRoot(current);
+            addRoot(path.join(current, 'Modificacoes', 'Flow'));
+            addRoot(path.join(current, 'Flow'));
+            const parent = path.dirname(current);
+            if (parent === current) {
+                break;
+            }
+            current = parent;
+        }
+    }
+
+    return roots;
 }
 
 function resolveKernelHttpEndpoint(): string | undefined {

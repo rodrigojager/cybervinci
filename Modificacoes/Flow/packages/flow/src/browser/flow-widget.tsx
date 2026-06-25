@@ -1,6 +1,7 @@
 import { OpenerService, ReactWidget, open } from '@theia/core/lib/browser';
 import { FrontendLanguageModelRegistry, LanguageModel } from '@theia/ai-core';
 import { nls } from '@theia/core/lib/common';
+import { CommandService } from '@theia/core/lib/common/command';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import URI from '@theia/core/lib/common/uri';
 import { CyberVinciAiButton, CyberVinciAiExecutionPicker } from '@cybervinci/ai-runtime/lib/browser';
@@ -21,6 +22,7 @@ import {
     FlowMemoryScope,
     FlowModelExecutionProfile,
     FlowModelProfile,
+    FlowOutcomeRoute,
     FlowRun,
     FlowRunExecutionMode,
     FlowClient,
@@ -75,6 +77,8 @@ interface FlowWidgetState {
     templates: FlowWorkflowTemplate[];
     workflowPatterns: FlowWorkflowPattern[];
     modelProfiles: FlowModelProfile[];
+    selectedModelProfileId?: string;
+    modelProfileDraft?: FlowModelProfile;
     languageModels: FlowLanguageModelOption[];
     pipelinePresets: FlowPipelinePreset[];
     agents: FlowAgentMarkdownSummary[];
@@ -86,6 +90,8 @@ interface FlowWidgetState {
     selectedPipelinePresetId?: string;
     selectedKind: 'state' | 'transition';
     selectedId?: string;
+    detailsPopoverOpen: boolean;
+    detailsEditMode: boolean;
     workflowUndoStack: FlowWorkflowHistoryEntry[];
     workflowRedoStack: FlowWorkflowHistoryEntry[];
     workflowSourceText?: string;
@@ -116,7 +122,7 @@ interface FlowWorkflowHistoryEntry {
     selectedId?: string;
 }
 
-type FlowTopMenu = 'workflow' | 'file' | 'agents' | 'history';
+type FlowTopMenu = 'workflow' | 'prompt' | 'file' | 'agents' | 'models' | 'kanban' | 'history';
 type FlowAiInteractionMode = 'chat' | 'saved-flow' | 'dynamic-flow';
 
 export interface FlowExternalRunOptions {
@@ -182,6 +188,9 @@ export class FlowWidget extends ReactWidget {
     @inject(CyberVinciAiRuntimeService) @optional()
     protected readonly aiRuntime?: CyberVinciAiRuntimeService;
 
+    @inject(CommandService)
+    protected readonly commandService: CommandService;
+
     @inject(OpenerService)
     protected readonly openerService: OpenerService;
 
@@ -196,6 +205,8 @@ export class FlowWidget extends ReactWidget {
         patternParameters: {},
         patternRoleOverrides: {},
         selectedKind: 'state',
+        detailsPopoverOpen: false,
+        detailsEditMode: false,
         workflowUndoStack: [],
         workflowRedoStack: [],
         workflowSourceVisible: false,
@@ -275,19 +286,25 @@ export class FlowWidget extends ReactWidget {
                 this.flowService.getSnapshot({ workspaceRootUri }),
                 this.flowService.listWorkflowTemplates(),
                 this.flowService.listWorkflowPatterns(),
-                this.flowService.listModelProfiles(),
+                this.flowService.listModelProfiles({ workspaceRootUri }),
                 this.flowService.listPipelinePresets({ workspaceRootUri }),
                 this.flowService.listAgentMarkdownFiles({ workspaceRootUri }),
                 this.languageModelRegistry.getLanguageModels()
             ]);
             const selectedPatternId = this.state.selectedPatternId || workflowPatterns[0]?.id;
             const selectedPattern = workflowPatterns.find(pattern => pattern.id === selectedPatternId);
+            const selectedModelProfileId = this.state.selectedModelProfileId || modelProfiles[0]?.id;
+            const selectedModelProfile = modelProfiles.find(profile => profile.id === selectedModelProfileId) || modelProfiles[0];
             this.state = {
                 ...this.state,
                 snapshot: normalizeFlowSnapshotEvents(snapshot),
                 templates,
                 workflowPatterns,
                 modelProfiles,
+                selectedModelProfileId: selectedModelProfile?.id,
+                modelProfileDraft: this.state.modelProfileDraft?.id === selectedModelProfile?.id
+                    ? this.state.modelProfileDraft
+                    : selectedModelProfile ? cloneFlowModelProfile(selectedModelProfile) : undefined,
                 languageModels: toFlowLanguageModelOptions(languageModels),
                 pipelinePresets,
                 agents,
@@ -332,6 +349,11 @@ export class FlowWidget extends ReactWidget {
         const canResumeRun = lifecycleControls && !runReadOnly && run?.status === 'paused';
         const canCancelRun = lifecycleControls && Boolean(run) && !runReadOnly && !runTerminal;
         const canFinalizeRun = lifecycleControls && Boolean(run) && !runReadOnly && runTerminal;
+        const canCleanupRun = Boolean(run) && runTerminal;
+        const runPromptReady = this.state.prompt.trim().length > 0;
+        const startRunTitle = runPromptReady
+            ? 'Start run'
+            : 'Nao da para iniciar a run: preencha o Prompt da run primeiro.';
         const selectedWorkflowState = workflow && this.state.selectedKind === 'state' && this.state.selectedId ? findFlowWorkflowState(workflow, this.state.selectedId) : undefined;
         const selectedState = selectedWorkflowState?.state;
         const selectedTransition = workflow && this.state.selectedKind === 'transition' && this.state.selectedId
@@ -427,12 +449,46 @@ export class FlowWidget extends ReactWidget {
                                 modelProfiles={this.state.modelProfiles}
                                 languageModels={this.state.languageModels}
                                 busy={this.state.busy}
+                                promptReady={runPromptReady}
+                                missingPromptTitle={startRunTitle}
                                 onSelect={this.setSelectedPattern}
                                 onUpdateParameter={this.updatePatternParameter}
                                 onUpdateRoleOverride={this.updatePatternRoleOverride}
                                 onCreate={() => this.runMenuCommand(this.createWorkflowFromPattern)}
                                 onRun={() => this.runMenuCommand(this.runWorkflowPattern)}
                             />
+                        </div>}
+                    </div>
+                    <div className={`flow__menu flow__menu--prompt ${this.state.openMenu === 'prompt' ? 'flow__menu--open' : ''}`}>
+                        <button
+                            type='button'
+                            className='flow__menu-trigger'
+                            aria-haspopup='menu'
+                            aria-expanded={this.state.openMenu === 'prompt'}
+                            onClick={() => this.toggleTopMenu('prompt')}
+                        >
+                            <i className='codicon codicon-edit' /> Prompt
+                        </button>
+                        {this.state.openMenu === 'prompt' && <div className='flow__menu-panel flow__menu-panel--prompt'>
+                            <section className='flow__prompt-menu-card' aria-label='Prompt da run'>
+                                <header>
+                                    <div>
+                                        <h3>Prompt da run</h3>
+                                        <span>Entrada principal desta execucao</span>
+                                    </div>
+                                    <code>input/request.md</code>
+                                </header>
+                                <textarea
+                                    rows={5}
+                                    value={this.state.prompt}
+                                    onChange={event => this.setPrompt(event.currentTarget.value)}
+                                    placeholder='Descreva o que esta pipeline deve fazer nesta execucao.'
+                                    aria-label='Prompt da run do Flow'
+                                />
+                                <p className='flow__menu-note'>
+                                    O bloco intake materializa este texto quando a run comeca. Ao executar um Flow salvo pelo AI Chat, o input do chat substitui este prompt nesta run.
+                                </p>
+                            </section>
                         </div>}
                     </div>
                     <div className={`flow__menu flow__menu--file ${this.state.openMenu === 'file' ? 'flow__menu--open' : ''}`}>
@@ -503,6 +559,61 @@ export class FlowWidget extends ReactWidget {
                             />
                         </div>}
                     </div>
+                    <div className={`flow__menu flow__menu--models ${this.state.openMenu === 'models' ? 'flow__menu--open' : ''}`}>
+                        <button
+                            type='button'
+                            className='flow__menu-trigger'
+                            aria-haspopup='menu'
+                            aria-expanded={this.state.openMenu === 'models'}
+                            onClick={() => this.toggleTopMenu('models')}
+                        >
+                            <i className='codicon codicon-settings-gear' /> Model presets
+                        </button>
+                        {this.state.openMenu === 'models' && <div className='flow__menu-panel flow__menu-panel--models'>
+                            <ModelProfileLibrary
+                                profiles={this.state.modelProfiles}
+                                selectedId={this.state.selectedModelProfileId}
+                                draft={this.state.modelProfileDraft}
+                                aiRuntime={this.aiRuntime}
+                                languageModels={this.state.languageModels}
+                                busy={this.state.busy}
+                                onSelect={this.setSelectedModelProfile}
+                                onUpdate={this.updateModelProfileDraft}
+                                onUpdateExecution={this.updateModelProfileExecutionDraft}
+                                onSave={this.saveModelProfileDraft}
+                                onConfigureProvider={this.configureAiProvider}
+                            />
+                        </div>}
+                    </div>
+                    <div className={`flow__menu flow__menu--kanban ${this.state.openMenu === 'kanban' ? 'flow__menu--open' : ''}`}>
+                        <button
+                            type='button'
+                            className='flow__menu-trigger'
+                            aria-haspopup='menu'
+                            aria-expanded={this.state.openMenu === 'kanban'}
+                            onClick={() => this.toggleTopMenu('kanban')}
+                        >
+                            <i className='codicon codicon-board' /> Kanban
+                        </button>
+                        {this.state.openMenu === 'kanban' && <div className='flow__menu-panel flow__menu-panel--kanban'>
+                            <section className='flow__run-popover-grid'>
+                                <Kanban run={run} onOpenArtifact={this.openArtifact} />
+                                <RunObservability
+                                    run={run}
+                                    selectedArtifactId={this.state.selectedArtifactId}
+                                    onSelectArtifact={this.selectArtifact}
+                                    onOpenArtifact={this.openArtifact}
+                                    onDecideMemoryCandidate={this.decideMemoryCandidate}
+                                    onDecideEffect={this.decideEffect}
+                                    onApproveSecondRunSuggestion={this.approveSecondRunSuggestion}
+                                    onDismissSecondRunSuggestion={this.dismissSecondRunSuggestion}
+                                    busy={this.state.busy}
+                                    readOnly={runReadOnly}
+                                />
+                                <EventLog events={run?.events || []} />
+                            </section>
+                        </div>}
+                    </div>
                     <button
                         className={this.state.runHistoryVisible ? 'flow__history-button flow__history-button--open' : 'flow__history-button'}
                         title='Historico de runs'
@@ -519,7 +630,7 @@ export class FlowWidget extends ReactWidget {
                     <button title='Redo local workflow edit' onClick={this.redoWorkflowEdit} disabled={this.state.busy || !canRedoWorkflow}>
                         <i className='codicon codicon-redo' />
                     </button>
-                    <button title='Start run' onClick={this.startRun} disabled={this.state.busy || !workflow || workflow.file?.editable === false}>
+                    <button title={startRunTitle} onClick={this.startRun} disabled={this.state.busy || !workflow || workflow.file?.editable === false || !runPromptReady}>
                         <i className='codicon codicon-debug-start' />
                     </button>
                     <CyberVinciAiButton
@@ -543,6 +654,9 @@ export class FlowWidget extends ReactWidget {
                     </button>
                     <button title='Finalize run with report' onClick={this.finalizeRun} disabled={this.state.busy || !canFinalizeRun}>
                         <i className='codicon codicon-file-text' />
+                    </button>
+                    <button title='Clean active run artifacts and metadata' onClick={this.cleanupActiveRun} disabled={this.state.busy || !canCleanupRun}>
+                        <i className='codicon codicon-trash' />
                     </button>
                 </div>
             </header>
@@ -594,6 +708,8 @@ export class FlowWidget extends ReactWidget {
                         onMoveState={this.moveWorkflowState}
                         onDeleteState={this.deleteWorkflowState}
                         onDeleteTransition={this.deleteWorkflowTransition}
+                        onOpenStateDetails={this.openStateDetails}
+                        onOpenTransitionDetails={this.openTransitionDetails}
                         onUndo={this.undoWorkflowEdit}
                         onRedo={this.redoWorkflowEdit}
                         canUndo={canUndoWorkflow}
@@ -602,7 +718,34 @@ export class FlowWidget extends ReactWidget {
                         editable={workflow.file?.editable !== false}
                     />}
                 </section>
-                <aside className='flow__inspector'>
+            </main>
+
+            {this.state.detailsPopoverOpen && (selectedState || selectedTransition) && <section
+                className='flow__state-popover'
+                role='dialog'
+                aria-modal='false'
+                aria-label='Flow node details'
+            >
+                <header className='flow__state-popover-header'>
+                    <div>
+                        <h3>{selectedState ? this.state.selectedId : 'Transition'}</h3>
+                        <span>{selectedState ? `${selectedState.type}${this.state.detailsEditMode ? ' / editing' : ''}` : selectedTransition ? `${selectedTransition.from} -> ${selectedTransition.to}${this.state.detailsEditMode ? ' / editing' : ''}` : ''}</span>
+                    </div>
+                    <div className='flow__state-popover-actions'>
+                        {!this.state.detailsEditMode && <button
+                            type='button'
+                            title='Editar campos do bloco'
+                            disabled={!workflow || workflow.file?.editable === false}
+                            onClick={this.startDetailsEdit}
+                        >
+                            <i className='codicon codicon-edit' /> Edit
+                        </button>}
+                        <button type='button' title='Fechar detalhes do bloco' onClick={this.closeDetailsPopover}>
+                            <i className='codicon codicon-close' />
+                        </button>
+                    </div>
+                </header>
+                <div className='flow__state-popover-body'>
                     <Inspector
                         workflow={workflow}
                         run={run}
@@ -612,39 +755,26 @@ export class FlowWidget extends ReactWidget {
                         agents={this.state.agents}
                         modelProfiles={this.state.modelProfiles}
                         languageModels={this.state.languageModels}
+                        aiRuntime={this.aiRuntime}
+                        editing={this.state.detailsEditMode}
                         gates={run?.gates || []}
                         validation={validation}
                         onUpdateState={this.updateWorkflowState}
                         onSelectStateAgent={this.selectStateAgent}
                         onOpenAgent={this.openAgentMarkdown}
+                        onConfigureAiProvider={this.configureAiProvider}
                         onAddBranch={this.addParallelBranch}
                         onDeleteState={this.deleteWorkflowState}
                         onUpdateTransition={this.updateWorkflowTransition}
                         onDeleteTransition={this.deleteWorkflowTransition}
-                        onSaveWorkflow={this.saveWorkflowFile}
+                        onSaveWorkflow={this.saveWorkflowFileAndExitEdit}
+                        onExitEdit={this.exitDetailsEdit}
                         onApproveGate={this.approveGate}
                         onOpenArtifact={this.openArtifact}
                         readOnlyRun={runReadOnly}
                     />
-                </aside>
-            </main>
-
-            <section className='flow__ops'>
-                <Kanban run={run} onOpenArtifact={this.openArtifact} />
-                <RunObservability
-                    run={run}
-                    selectedArtifactId={this.state.selectedArtifactId}
-                    onSelectArtifact={this.selectArtifact}
-                    onOpenArtifact={this.openArtifact}
-                    onDecideMemoryCandidate={this.decideMemoryCandidate}
-                    onDecideEffect={this.decideEffect}
-                    onApproveSecondRunSuggestion={this.approveSecondRunSuggestion}
-                    onDismissSecondRunSuggestion={this.dismissSecondRunSuggestion}
-                    busy={this.state.busy}
-                    readOnly={runReadOnly}
-                />
-                <EventLog events={run?.events || []} />
-            </section>
+                </div>
+            </section>}
 
             {capabilities && <footer className='flow__statusbar'>
                 <CapabilityStatus
@@ -745,6 +875,7 @@ export class FlowWidget extends ReactWidget {
                 service={this.aiRuntime}
                 value={this.state.aiExecution}
                 disabled={this.state.busy}
+                onConfigureProvider={this.configureAiProvider}
                 onChange={selection => this.setAiExecution(selection)}
             />
             <label className='flow__prompt-field'>
@@ -790,13 +921,17 @@ export class FlowWidget extends ReactWidget {
         if (!(target instanceof Element)) {
             return;
         }
-        if (target.closest('.flow__top-menus, .flow__run-history')) {
+        if (target.closest('.flow__top-menus, .flow__run-history, .cv-ai-runtime-menu')) {
             return;
         }
         this.closeTopMenus();
     };
 
     protected readonly handleTopMenuKeyDown = (event: KeyboardEvent): void => {
+        if (event.key === 'Escape' && this.state.detailsPopoverOpen) {
+            this.closeDetailsPopover();
+            return;
+        }
         if (event.key === 'Escape' && (this.state.openMenu || this.state.runHistoryVisible)) {
             this.closeTopMenus();
         }
@@ -848,6 +983,71 @@ export class FlowWidget extends ReactWidget {
             patternRoleOverrides: {}
         };
         this.update();
+    };
+
+    protected readonly setSelectedModelProfile = (selectedModelProfileId: string): void => {
+        const profile = this.state.modelProfiles.find(candidate => candidate.id === selectedModelProfileId);
+        this.state = {
+            ...this.state,
+            selectedModelProfileId,
+            modelProfileDraft: profile ? cloneFlowModelProfile(profile) : undefined
+        };
+        this.update();
+    };
+
+    protected readonly updateModelProfileDraft = (patch: Partial<FlowModelProfile>): void => {
+        const draft = this.state.modelProfileDraft
+            || this.state.modelProfiles.find(profile => profile.id === this.state.selectedModelProfileId);
+        if (!draft) {
+            return;
+        }
+        this.state = {
+            ...this.state,
+            modelProfileDraft: {
+                ...draft,
+                ...patch
+            }
+        };
+        this.update();
+    };
+
+    protected readonly updateModelProfileExecutionDraft = (selection: CyberVinciAiExecutionSelection): void => {
+        const draft = this.state.modelProfileDraft
+            || this.state.modelProfiles.find(profile => profile.id === this.state.selectedModelProfileId);
+        if (!draft) {
+            return;
+        }
+        const statePatch = aiExecutionSelectionToFlowStatePatch(selection, {
+            ...(draft.execution || {}),
+            profileId: draft.id
+        });
+        this.updateModelProfileDraft({
+            provider: statePatch.provider,
+            execution: {
+                ...(statePatch.modelExecution || {}),
+                profileId: draft.id
+            }
+        });
+    };
+
+    protected readonly saveModelProfileDraft = async (): Promise<void> => {
+        const draft = this.state.modelProfileDraft;
+        if (!draft) {
+            return;
+        }
+        await this.withBusy(async () => {
+            const workspaceRootUri = await this.workspaceRootUri();
+            const saved = await this.flowService.saveModelProfile({ workspaceRootUri, profile: draft });
+            const modelProfiles = await this.flowService.listModelProfiles({ workspaceRootUri });
+            const selected = modelProfiles.find(profile => profile.id === saved.id) || saved;
+            this.state = {
+                ...this.state,
+                modelProfiles,
+                selectedModelProfileId: selected.id,
+                modelProfileDraft: cloneFlowModelProfile(selected),
+                error: undefined
+            };
+        });
     };
 
     protected readonly updatePatternParameter = (parameterId: string, value: string | number | boolean): void => {
@@ -937,6 +1137,72 @@ export class FlowWidget extends ReactWidget {
         this.state = { ...this.state, selectedKind, selectedId };
         this.update();
     }
+
+    protected readonly openStateDetails = (selectedId: string): void => {
+        this.state = {
+            ...this.state,
+            selectedKind: 'state',
+            selectedId,
+            detailsPopoverOpen: true,
+            detailsEditMode: false,
+            openMenu: undefined,
+            runHistoryVisible: false
+        };
+        this.update();
+    };
+
+    protected readonly openTransitionDetails = (selectedId: string): void => {
+        this.state = {
+            ...this.state,
+            selectedKind: 'transition',
+            selectedId,
+            detailsPopoverOpen: true,
+            detailsEditMode: false,
+            openMenu: undefined,
+            runHistoryVisible: false
+        };
+        this.update();
+    };
+
+    protected readonly startDetailsEdit = (): void => {
+        if (!this.state.detailsPopoverOpen) {
+            return;
+        }
+        this.state = { ...this.state, detailsEditMode: true };
+        this.update();
+    };
+
+    protected readonly exitDetailsEdit = (): void => {
+        if (!this.state.detailsPopoverOpen) {
+            return;
+        }
+        this.state = { ...this.state, detailsEditMode: false };
+        this.update();
+    };
+
+    protected readonly closeDetailsPopover = (): void => {
+        if (!this.state.detailsPopoverOpen) {
+            return;
+        }
+        this.state = { ...this.state, detailsPopoverOpen: false, detailsEditMode: false };
+        this.update();
+    };
+
+    protected readonly saveWorkflowFileAndExitEdit = async (): Promise<void> => {
+        await this.saveWorkflowFile();
+        if (!this.state.workflowSavePreview && !this.state.error) {
+            this.state = { ...this.state, detailsEditMode: false };
+            this.update();
+        }
+    };
+
+    protected readonly configureAiProvider = async (provider: CyberVinciAiProviderDescriptor): Promise<void> => {
+        await this.commandService.executeCommand('chat:ai-providers-configure', {
+            providerId: provider.id,
+            runtime: provider.runtime,
+            modelProvider: provider.modelProvider
+        });
+    };
 
     protected readonly updateWorkflowSourceDraft = async (workflowSourceText: string): Promise<void> => {
         const snapshot = this.state.snapshot;
@@ -1236,7 +1502,7 @@ export class FlowWidget extends ReactWidget {
     async runWorkflowFromExternalPrompt(options: FlowExternalRunOptions = {}): Promise<void> {
         await this.withBusy(async () => {
             const workspaceRootUri = options.workspaceRootUri || await this.workspaceRootUri();
-            const prompt = externalPromptText(options) || this.state.prompt;
+            const prompt = this.requireRunPrompt(externalPromptText(options) || this.state.prompt);
             const workflow = options.workflowId
                 ? await this.flowService.getWorkflow({ workspaceRootUri, workflowId: options.workflowId })
                 : this.state.snapshot?.activeWorkflow;
@@ -1255,7 +1521,7 @@ export class FlowWidget extends ReactWidget {
     async runDynamicWorkflowFromExternalPrompt(options: FlowExternalRunOptions = {}): Promise<void> {
         await this.withBusy(async () => {
             const workspaceRootUri = options.workspaceRootUri || await this.workspaceRootUri();
-            const prompt = externalPromptText(options) || this.state.prompt;
+            const prompt = this.requireRunPrompt(externalPromptText(options) || this.state.prompt);
             const activeRun = await this.flowService.runDynamicWorkflow({
                 workspaceRootUri,
                 prompt,
@@ -1298,6 +1564,14 @@ export class FlowWidget extends ReactWidget {
         await this.subscribeActiveRunStream(activeRun.id);
     }
 
+    protected requireRunPrompt(value: string | undefined): string {
+        const prompt = value?.trim();
+        if (!prompt) {
+            throw new Error('Preencha o Prompt da run antes de iniciar a execucao. Quando este Flow salvo for chamado pelo AI Chat, o texto do chat sera usado como esse prompt.');
+        }
+        return prompt;
+    }
+
     protected readonly startRun = async (): Promise<void> => {
         await this.withBusy(async () => {
             const snapshot = this.state.snapshot;
@@ -1305,10 +1579,11 @@ export class FlowWidget extends ReactWidget {
             if (!workflow || !snapshot) {
                 return;
             }
+            const prompt = this.requireRunPrompt(this.state.prompt);
             const activeRun = await this.flowService.startRun({
                 workspaceRootUri: await this.workspaceRootUri(),
                 workflowId: workflow.id,
-                prompt: this.state.prompt
+                prompt
             });
             this.state = {
                 ...this.state,
@@ -1503,13 +1778,14 @@ export class FlowWidget extends ReactWidget {
             if (!patternId) {
                 return;
             }
+            const prompt = this.requireRunPrompt(this.state.prompt);
             const workspaceRootUri = await this.workspaceRootUri();
             const activeRun = await this.flowService.runWorkflowPattern({
                 workspaceRootUri,
                 patternId,
                 parameters: this.state.patternParameters,
                 roleOverrides: patternRoleOverridesOrUndefined(this.state.patternRoleOverrides),
-                prompt: this.state.prompt
+                prompt
             });
             const activeWorkflow = await this.flowService.getWorkflow({ workspaceRootUri, workflowId: activeRun.workflowId });
             const workflows = await this.flowService.listWorkflows({ workspaceRootUri });
@@ -2188,6 +2464,33 @@ export class FlowWidget extends ReactWidget {
         await this.runLifecycleAction('finalizeRun', 'Finalized from Flow UI.');
     };
 
+    protected readonly cleanupActiveRun = async (): Promise<void> => {
+        await this.withBusy(async () => {
+            const snapshot = this.state.snapshot;
+            const activeRun = snapshot?.activeRun;
+            if (!snapshot || !activeRun) {
+                return;
+            }
+            const workspaceRootUri = await this.workspaceRootUri();
+            await this.unsubscribeActiveRunStream();
+            const result = await this.flowService.cleanupRuns({
+                workspaceRootUri,
+                runIds: [activeRun.id],
+                includeArtifacts: true,
+                includeWorktrees: true
+            });
+            this.state = {
+                ...this.state,
+                snapshot: {
+                    ...snapshot,
+                    activeRun: undefined
+                },
+                error: result.failed.length ? `Run cleanup completed with ${result.failed.length} issue(s).` : undefined
+            };
+            this.update();
+        });
+    };
+
     protected async runLifecycleAction(action: 'pauseRun' | 'resumeRun' | 'cancelRun' | 'finalizeRun', reason: string): Promise<void> {
         await this.withBusy(async () => {
             const snapshot = this.state.snapshot;
@@ -2209,7 +2512,13 @@ export class FlowWidget extends ReactWidget {
         });
     }
 
-    protected readonly approveGate = async (gateId: string, decision: 'approved' | 'rejected' | 'revision_requested'): Promise<void> => {
+    protected readonly approveGate = async (
+        gateId: string,
+        decision: 'approved' | 'rejected' | 'revision_requested',
+        decisionId?: string,
+        targetStateId?: string,
+        note?: string
+    ): Promise<void> => {
         await this.withBusy(async () => {
             const snapshot = this.state.snapshot;
             const activeRun = this.state.snapshot?.activeRun;
@@ -2220,7 +2529,11 @@ export class FlowWidget extends ReactWidget {
                 workspaceRootUri: await this.workspaceRootUri(),
                 runId: activeRun.id,
                 gateId,
-                decision
+                decision,
+                decisionId,
+                targetStateId,
+                note,
+                approvedBy: 'Flow UI'
             });
             this.applyRunUpdate(updatedRun);
             await this.subscribeActiveRunStream(updatedRun.id);
@@ -2450,6 +2763,168 @@ function AgentLibrary(props: {
     </section>;
 }
 
+function ModelProfileLibrary(props: {
+    profiles: FlowModelProfile[];
+    selectedId?: string;
+    draft?: FlowModelProfile;
+    aiRuntime?: CyberVinciAiRuntimeService;
+    languageModels: FlowLanguageModelOption[];
+    busy: boolean;
+    onSelect: (profileId: string) => void;
+    onUpdate: (patch: Partial<FlowModelProfile>) => void;
+    onUpdateExecution: (selection: CyberVinciAiExecutionSelection) => void;
+    onSave: () => Promise<void>;
+    onConfigureProvider: (provider: CyberVinciAiProviderDescriptor) => Promise<void>;
+}): React.ReactElement {
+    const draft = props.draft;
+    const execution = draft?.execution || {};
+    const currentModelId = draft?.provider?.modelId || '';
+    const modelOptions = uniqueStrings([
+        '',
+        ...props.languageModels.map(model => model.id),
+        ...props.profiles.map(profile => profile.provider?.modelId).filter((value): value is string => Boolean(value)),
+        currentModelId
+    ]);
+    const updateExecution = (patch: Partial<FlowModelExecutionProfile>): void => {
+        if (!draft) {
+            return;
+        }
+        props.onUpdate({
+            execution: {
+                ...execution,
+                ...patch,
+                profileId: draft.id
+            }
+        });
+    };
+    return <section className='flow__model-profile-library' aria-label='Model profile presets'>
+        <div className='flow__agent-library-header'>
+            <div>
+                <h3>Model presets</h3>
+                <span>Defaults globais para blocos do Flow</span>
+            </div>
+            <button title='Save model preset override' onClick={props.onSave} disabled={props.busy || !draft}>
+                <i className='codicon codicon-save' /> Salvar
+            </button>
+        </div>
+        <label className='flow__factory-field'>
+            <span>Preset</span>
+            <select
+                value={props.selectedId || ''}
+                disabled={props.busy || props.profiles.length === 0}
+                onChange={event => props.onSelect(event.currentTarget.value)}
+                aria-label='Model preset'
+            >
+                {props.profiles.map(profile => <option key={profile.id} value={profile.id}>{profile.name} ({profile.id})</option>)}
+            </select>
+        </label>
+        {!draft && <p className='flow__menu-note'>Nenhum preset disponivel.</p>}
+        {draft && <>
+        <div className='flow__model-profile-grid'>
+            <label>
+                <span>ID</span>
+                <input value={draft.id} disabled title='IDs sao estaveis porque workflows podem referenciar este preset.' />
+            </label>
+            <label>
+                <span>Nome</span>
+                <input
+                    value={draft.name}
+                    disabled={props.busy}
+                    onChange={event => props.onUpdate({ name: event.currentTarget.value })}
+                />
+            </label>
+        </div>
+        <label className='flow__model-profile-field'>
+            <span>Descricao</span>
+            <textarea
+                rows={2}
+                value={draft.description}
+                disabled={props.busy}
+                onChange={event => props.onUpdate({ description: event.currentTarget.value })}
+                placeholder='Quando este preset deve ser usado.'
+            />
+        </label>
+        <div className='flow__model-profile-grid'>
+            <label>
+                <span>Tags</span>
+                <input
+                    value={(draft.tags || []).join(', ')}
+                    disabled={props.busy}
+                    onChange={event => props.onUpdate({ tags: textToList(event.currentTarget.value) })}
+                    placeholder='cost, review, coding'
+                />
+            </label>
+            <div className='flow__token-limit-control'>
+                <label>
+                    <span>Output tokens</span>
+                    <select
+                        value={execution.maxTokens === undefined ? 'unlimited' : 'limited'}
+                        disabled={props.busy}
+                        onChange={event => updateExecution({
+                            maxTokens: event.currentTarget.value === 'limited'
+                                ? execution.maxTokens ?? DEFAULT_MAX_TOKEN_LIMIT
+                                : undefined
+                        })}
+                    >
+                        <option value='unlimited'>Ilimitado</option>
+                        <option value='limited'>Limitar</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Max output tokens</span>
+                    <input
+                        type='number'
+                        min='1'
+                        value={execution.maxTokens ?? ''}
+                        disabled={props.busy || execution.maxTokens === undefined}
+                        placeholder='Sem limite'
+                        onChange={event => updateExecution({ maxTokens: numberOrUndefined(event.currentTarget.value) })}
+                    />
+                </label>
+            </div>
+        </div>
+        {props.aiRuntime ? <div className='flow__model-profile-picker'>
+            <CyberVinciAiExecutionPicker
+                service={props.aiRuntime}
+                value={flowModelProfileToAiExecutionSelection(draft)}
+                disabled={props.busy}
+                onConfigureProvider={props.onConfigureProvider}
+                onChange={props.onUpdateExecution}
+            />
+        </div> : <div className='flow__model-profile-grid'>
+            <label>
+                <span>Provider</span>
+                <select
+                    value={draft.provider?.providerId || 'inherit'}
+                    disabled={props.busy}
+                    onChange={event => props.onUpdate({
+                        provider: providerSelectionOrUndefined(event.currentTarget.value === 'inherit' ? undefined : event.currentTarget.value, draft.provider?.modelId, draft.provider?.options)
+                    })}
+                >
+                    <option value='inherit'>Use chat/default</option>
+                    {flowProviderOptions().map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+            </label>
+            <label>
+                <span>Model</span>
+                <select
+                    value={currentModelId}
+                    disabled={props.busy}
+                    onChange={event => props.onUpdate({
+                        provider: providerSelectionOrUndefined(draft.provider?.providerId, event.currentTarget.value, draft.provider?.options)
+                    })}
+                >
+                    {modelOptions.map(modelId => <option key={modelId || 'default'} value={modelId}>{modelOptionLabel(props.languageModels, modelId, 'Provider default / selected chat model')}</option>)}
+                </select>
+            </label>
+        </div>}
+        <p className='flow__menu-note'>
+            Salvar cria ou substitui um override em <code>.theia/flow/model-profiles/{draft.id}.json</code>. Blocos que usam este preset passam a herdar a nova configuracao.
+        </p>
+        </>}
+    </section>;
+}
+
 function PatternFactory(props: {
     patterns: FlowWorkflowPattern[];
     selectedPattern?: FlowWorkflowPattern;
@@ -2459,6 +2934,8 @@ function PatternFactory(props: {
     modelProfiles: FlowModelProfile[];
     languageModels: FlowLanguageModelOption[];
     busy: boolean;
+    promptReady: boolean;
+    missingPromptTitle: string;
     onSelect: (patternId: string) => void;
     onUpdateParameter: (parameterId: string, value: string | number | boolean) => void;
     onUpdateRoleOverride: (roleId: string, override: FlowPatternRoleOverride | undefined) => void;
@@ -2506,7 +2983,7 @@ function PatternFactory(props: {
             <button title='Create editable workflow from pattern' onClick={props.onCreate} disabled={props.busy || !pattern}>
                 <i className='codicon codicon-add' /> Criar flow
             </button>
-            <button title='Create and start workflow from the current prompt' onClick={props.onRun} disabled={props.busy || !pattern}>
+            <button title={props.promptReady ? 'Create and start workflow from the current prompt' : props.missingPromptTitle} onClick={props.onRun} disabled={props.busy || !pattern || !props.promptReady}>
                 <i className='codicon codicon-run' /> Rodar agora
             </button>
         </div>
@@ -2784,6 +3261,8 @@ function WorkflowCanvas(props: {
     onMoveState: (stateId: string, position: { x: number; y: number }) => Promise<void>;
     onDeleteState: (stateId: string) => Promise<void>;
     onDeleteTransition: (transitionId: string) => Promise<void>;
+    onOpenStateDetails: (stateId: string) => void;
+    onOpenTransitionDetails: (transitionId: string) => void;
     onUndo: () => Promise<void>;
     onRedo: () => Promise<void>;
     canUndo: boolean;
@@ -3207,6 +3686,10 @@ function WorkflowCanvas(props: {
                         key={edge.id}
                         className={`flow__flow-edge ${props.selectedId === edge.id ? 'flow__flow-edge--selected' : ''} ${issueSeverity ? `flow__flow-edge--${issueSeverity}` : ''}`}
                         onClick={() => props.onSelectTransition(edge.id)}
+                        onDoubleClick={event => {
+                            event.stopPropagation();
+                            props.onOpenTransitionDetails(edge.id);
+                        }}
                         onKeyDown={event => {
                             if (event.key === 'Enter' || event.key === ' ') {
                                 event.preventDefault();
@@ -3242,6 +3725,10 @@ function WorkflowCanvas(props: {
                     style={{ left: node.x, top: node.y, width: node.width, height: node.height }}
                     onPointerDown={event => startNodeDrag(event, node)}
                     onClick={event => void onNodeClick(event, node.id)}
+                    onDoubleClick={event => {
+                        event.stopPropagation();
+                        props.onOpenStateDetails(node.id);
+                    }}
                     onKeyDown={event => {
                         if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault();
@@ -3385,17 +3872,27 @@ function Inspector(props: {
     agents: FlowAgentMarkdownSummary[];
     modelProfiles: FlowModelProfile[];
     languageModels: FlowLanguageModelOption[];
+    aiRuntime?: CyberVinciAiRuntimeService;
+    editing: boolean;
     gates: FlowHumanGate[];
     validation?: FlowSnapshot['validation'];
     onUpdateState: (stateId: string, statePatch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
     onSelectStateAgent: (stateId: string, selection: string) => Promise<void>;
     onOpenAgent: (agentIdOrPath: string) => Promise<void>;
+    onConfigureAiProvider: (provider: CyberVinciAiProviderDescriptor) => Promise<void>;
     onAddBranch: (parallelStateId: string, branchType: FlowStateType) => Promise<string | undefined>;
     onDeleteState: (stateId: string) => Promise<void>;
     onUpdateTransition: (transitionId: string, transitionPatch: Partial<FlowWorkflowTransition>) => Promise<void>;
     onDeleteTransition: (transitionId: string) => Promise<void>;
     onSaveWorkflow: () => Promise<void>;
-    onApproveGate: (gateId: string, decision: 'approved' | 'rejected' | 'revision_requested') => Promise<void>;
+    onExitEdit: () => void;
+    onApproveGate: (
+        gateId: string,
+        decision: 'approved' | 'rejected' | 'revision_requested',
+        decisionId?: string,
+        targetStateId?: string,
+        note?: string
+    ) => Promise<void>;
     onOpenArtifact: (artifactUri: string) => Promise<void>;
     readOnlyRun: boolean;
 }): React.ReactElement {
@@ -3412,7 +3909,7 @@ function Inspector(props: {
             <KeyValue label='Event' value={transition.on} />
             <KeyValue label='Priority' value={transition.priority?.toString() || 'default'} />
             <JsonBlock title='Guard' value={transition.guard || {}} />
-            <TransitionEditor
+            {props.editing && <TransitionEditor
                 transitionId={transitionKey(transition)}
                 transition={transition}
                 stateIds={flowWorkflowStateIds(props.workflow)}
@@ -3423,7 +3920,8 @@ function Inspector(props: {
                 onUpdateTransition={props.onUpdateTransition}
                 onDeleteTransition={props.onDeleteTransition}
                 onSaveWorkflow={props.onSaveWorkflow}
-            />
+                onExitEdit={props.onExitEdit}
+            />}
             <EventSummary title='Last evaluation' event={evaluated} />
             <EventSummary title='Last firing' event={fired} />
             {(evaluated?.payload || fired?.payload) && <JsonBlock title='Guard payload / reason' value={{
@@ -3445,25 +3943,8 @@ function Inspector(props: {
     const events = relevantStateEvents(props.run?.events || [], selectedStateId, stateWorkloads.map(workload => workload.id), stateGates.map(gate => gate.id));
     const validationIssues = props.validation ? [...props.validation.errors, ...props.validation.warnings]
         .filter(issue => issue.path?.includes(`states.${selectedStateId}`) || issue.message.includes(selectedStateId)) : [];
-    return <Panel title='State'>
-        <KeyValue label='Id' value={selectedStateId} />
-        <KeyValue label='Type' value={state.type} />
-        <KeyValue label='Agent' value={state.agent || 'none'} />
-        {state.type === 'agent' && <KeyValue label='Provider / model' value={providerSummary(state.provider)} />}
-        {state.agent && <AgentMarkdownActions
-            workflow={props.workflow}
-            agentIdOrPath={state.agent}
-            onOpenAgent={props.onOpenAgent}
-        />}
-        <KeyValue label='Inputs' value={(state.input?.include || []).join(', ') || 'none'} />
-        <KeyValue label='Outputs' value={(state.outputs || []).join(', ') || 'none'} />
-        <KeyValue label='Signals' value={(state.input?.signals || []).join(', ') || signals.map(signal => signal.key).join(', ') || 'none'} />
-        <KeyValue label='Timeout' value={state.timeoutMs ? `${state.timeoutMs} ms` : 'none'} />
-        <KeyValue label='Retry' value={state.retry ? `max ${state.retry.max}${state.retry.counter ? ` / ${state.retry.counter}` : ''}` : 'none'} />
-        <KeyValue label='Workloads' value={stateWorkloads.length.toString()} />
-        {state.waitFor && <KeyValue label='Wait for' value={state.waitFor.join(', ') || 'none'} />}
-        {state.branches && <KeyValue label='Branches' value={Object.keys(state.branches).join(', ') || 'none'} />}
-        <StateEditor
+    if (props.editing) {
+        return <StateEditor
             workflow={props.workflow}
             stateId={selectedStateId}
             state={state}
@@ -3472,13 +3953,37 @@ function Inspector(props: {
             agents={props.agents}
             modelProfiles={props.modelProfiles}
             languageModels={props.languageModels}
+            aiRuntime={props.aiRuntime}
             onUpdateState={props.onUpdateState}
             onSelectAgent={props.onSelectStateAgent}
             onOpenAgent={props.onOpenAgent}
+            onConfigureAiProvider={props.onConfigureAiProvider}
             onAddBranch={props.onAddBranch}
             onDeleteState={props.onDeleteState}
             onSaveWorkflow={props.onSaveWorkflow}
-        />
+            onExitEdit={props.onExitEdit}
+        />;
+    }
+    return <Panel title='State'>
+        <KeyValue label='Id' value={selectedStateId} />
+        <KeyValue label='Type' value={state.type} />
+        <KeyValue label='Agent' value={state.agent || 'none'} />
+        {state.type === 'input' && <KeyValue label='Run prompt' value='Prompt menu -> input/request.md at run start' />}
+        {state.prompt && state.type !== 'input' && <KeyValue label='State prompt' value={state.prompt} />}
+        {state.type === 'agent' && <KeyValue label='Provider / model' value={providerSummary(state.provider)} />}
+        <KeyValue label='Inputs' value={(state.input?.include || []).join(', ') || 'none'} />
+        <KeyValue label='Outputs' value={(state.outputs || []).join(', ') || 'none'} />
+        <KeyValue label='Signals' value={(state.input?.signals || []).join(', ') || signals.map(signal => signal.key).join(', ') || 'none'} />
+        <KeyValue label='Timeout' value={state.timeoutMs ? `${state.timeoutMs} ms` : 'none'} />
+        <KeyValue label='Retry' value={state.retry ? `max ${state.retry.max}${state.retry.counter ? ` / ${state.retry.counter}` : ''}` : 'none'} />
+        <KeyValue label='Workloads' value={stateWorkloads.length.toString()} />
+        {state.waitFor && <KeyValue label='Wait for' value={state.waitFor.join(', ') || 'none'} />}
+        {state.branches && <KeyValue label='Branches' value={Object.keys(state.branches).join(', ') || 'none'} />}
+        {!props.editing && <StateReadOnlySummary
+            workflow={props.workflow}
+            state={state}
+            onOpenAgent={props.onOpenAgent}
+        />}
         <RunList title='Artifacts' empty='No artifacts for this state.' items={artifacts.map(artifact => ({
             id: artifact.id,
             title: artifact.uri,
@@ -3508,22 +4013,264 @@ function Inspector(props: {
                 workload.issues.length ? `issues ${workload.issues.join(', ')}` : undefined
             ].filter(Boolean).join(' / ')
         }))} />
-        {stateGates.map(gate => <div className='flow__gate' key={gate.id}>
-            <strong>{gate.title}</strong>
-            <span>{gate.status}</span>
-            {gate.prompt && <small>{gate.prompt}</small>}
-            {gate.status === 'pending' && !props.readOnlyRun && <div className='flow__gate-actions'>
-                <button onClick={() => props.onApproveGate(gate.id, 'approved')}>Approve</button>
-                <button onClick={() => props.onApproveGate(gate.id, 'revision_requested')}>Review</button>
-                <button onClick={() => props.onApproveGate(gate.id, 'rejected')}>Reject</button>
-            </div>}
-        </div>)}
+        {stateGates.map(gate => <GateDecisionCard
+            key={gate.id}
+            gate={gate}
+            stateIds={props.workflow ? flowWorkflowStateIds(props.workflow) : []}
+            readOnly={props.readOnlyRun}
+            onApproveGate={props.onApproveGate}
+        />)}
         <RunList title='Relevant events' empty='No events for this state.' items={events.map(event => ({
             id: event.id,
             title: `${event.type} / ${new Date(event.timestamp).toLocaleTimeString()}`,
             meta: event.message
         }))} />
     </Panel>;
+}
+
+function GateDecisionCard(props: {
+    gate: FlowHumanGate;
+    stateIds: string[];
+    readOnly: boolean;
+    onApproveGate: (
+        gateId: string,
+        decision: 'approved' | 'rejected' | 'revision_requested',
+        decisionId?: string,
+        targetStateId?: string,
+        note?: string
+    ) => Promise<void>;
+}): React.ReactElement {
+    const decisions: NonNullable<FlowHumanGate['decisions']> = props.gate.decisions?.length ? props.gate.decisions : defaultGateDecisionDefinitions();
+    const [targets, setTargets] = React.useState<Record<string, string>>({});
+    const [notes, setNotes] = React.useState<Record<string, string>>({});
+    return <div className='flow__gate' key={props.gate.id}>
+        <header className='flow__gate-header'>
+            <div>
+                <strong>{props.gate.title}</strong>
+                {props.gate.prompt && <small>{props.gate.prompt}</small>}
+            </div>
+            <span>{props.gate.status}</span>
+        </header>
+        {props.gate.status === 'pending' && !props.readOnly && <div className='flow__gate-decision-list'>
+            {decisions.map(decision => {
+                const status = gateDecisionStatus(decision);
+                const target = targets[decision.id] || decision.to || '';
+                const note = notes[decision.id] || '';
+                return <article key={decision.id} className='flow__gate-decision'>
+                    <div>
+                        <strong>{decision.label}</strong>
+                        <span>{decision.outcome || status}{decision.action ? ` / ${decision.action}` : ''}</span>
+                    </div>
+                    {decision.allowTargetSelection && <select
+                        value={target}
+                        onChange={event => setTargets(current => ({ ...current, [decision.id]: event.currentTarget.value }))}
+                    >
+                        <option value=''>Configured route</option>
+                        {props.stateIds.map(stateId => <option key={stateId} value={stateId}>{stateId}</option>)}
+                    </select>}
+                    {decision.requireNote && <textarea
+                        rows={2}
+                        value={note}
+                        placeholder='Decision note'
+                        onChange={event => setNotes(current => ({ ...current, [decision.id]: event.currentTarget.value }))}
+                    />}
+                    <button
+                        type='button'
+                        disabled={decision.requireNote && !note.trim()}
+                        onClick={() => props.onApproveGate(props.gate.id, status, decision.id, target || undefined, note || undefined)}
+                    >
+                        {decision.label}
+                    </button>
+                </article>;
+            })}
+        </div>}
+    </div>;
+}
+
+function gateDecisionStatus(decision: NonNullable<FlowHumanGate['decisions']>[number]): 'approved' | 'rejected' | 'revision_requested' {
+    const value = `${decision.outcome || decision.id}`.toLowerCase();
+    if (value.includes('reject') || value.includes('fail')) {
+        return 'rejected';
+    }
+    if (value.includes('revision') || value.includes('change') || value.includes('repair')) {
+        return 'revision_requested';
+    }
+    return 'approved';
+}
+
+function StateReadOnlySummary(props: {
+    workflow: FlowWorkflow;
+    state: FlowWorkflow['states'][string];
+    onOpenAgent: (agentIdOrPath: string) => Promise<void>;
+}): React.ReactElement {
+    const agentMarkdownPath = props.state.agent ? resolveWorkflowAgentRelativePath(props.workflow, props.state.agent) : undefined;
+    const execution = props.state.modelExecution;
+    return <section className='flow__state-readonly' aria-label='State summary'>
+        {props.state.type === 'input' && <article className='flow__summary-card'>
+            <h4>Prompt da run</h4>
+            <p>O texto usado na execucao vem do menu <strong>Prompt</strong> do topo e e salvo como <code>input/request.md</code>. Ao rodar este Flow salvo pelo AI Chat, o input do chat substitui esse prompt na run.</p>
+        </article>}
+        {props.state.type === 'agent' && <article className='flow__summary-card'>
+            <div className='flow__summary-card-heading'>
+                <h4>Library agent</h4>
+                <button
+                    type='button'
+                    disabled={!props.state.agent}
+                    title='Open the shared agent Markdown file'
+                    onClick={() => props.state.agent && props.onOpenAgent(props.state.agent)}
+                >
+                    <i className='codicon codicon-go-to-file' /> Open library
+                </button>
+            </div>
+            <p>
+                Este botao abre o markdown original do agente. Alteracoes nesse arquivo afetam a biblioteca/agente salvo; ajustes exclusivos deste bloco ficam nos overrides do workflow.
+            </p>
+            <dl className='flow__summary-grid'>
+                <div>
+                    <dt>Agent</dt>
+                    <dd>{props.state.agent || 'none'}</dd>
+                </div>
+                <div>
+                    <dt>Markdown</dt>
+                    <dd>{agentMarkdownPath || 'none'}</dd>
+                </div>
+            </dl>
+        </article>}
+        {props.state.type === 'agent' && <article className='flow__summary-card'>
+            <h4>Model execution</h4>
+            <dl className='flow__summary-grid'>
+                <div>
+                    <dt>Profile</dt>
+                    <dd>{execution?.profileId || 'inherit'}</dd>
+                </div>
+                <div>
+                    <dt>Provider/model</dt>
+                    <dd>{providerSummary(props.state.provider)}</dd>
+                </div>
+                <div>
+                    <dt>Reasoning</dt>
+                    <dd>{[
+                        execution?.reasoningPolicy || 'auto',
+                        execution?.nativeReasoning?.effort,
+                        execution?.virtualReasoning?.mode,
+                        execution?.reasoningVariant,
+                        execution?.serviceTier
+                    ].filter(Boolean).join(' / ') || 'default'}</dd>
+                </div>
+                <div>
+                    <dt>Max tokens</dt>
+                    <dd>{execution?.maxTokens ?? 'provider default'}</dd>
+                </div>
+            </dl>
+        </article>}
+        {(props.state.systemPrompt || props.state.taskPrompt || props.state.deliverables?.length) && <article className='flow__summary-card'>
+            <h4>Block overrides</h4>
+            <p>Estes valores pertencem a esta instancia do bloco no workflow. Clique em <strong>Edit</strong> para altera-los.</p>
+            {props.state.systemPrompt && <ReadonlyText title='System prompt' value={props.state.systemPrompt} />}
+            {props.state.taskPrompt && <ReadonlyText title='Task prompt' value={props.state.taskPrompt} />}
+            {props.state.deliverables?.length ? <div className='flow__readonly-deliverables'>
+                <span>Deliverables</span>
+                {props.state.deliverables.map(deliverable => <code key={deliverable.path}>{deliverable.path}</code>)}
+            </div> : undefined}
+        </article>}
+    </section>;
+}
+
+function ReadonlyText(props: { title: string; value: string }): React.ReactElement {
+    return <div className='flow__readonly-text'>
+        <span>{props.title}</span>
+        <p>{props.value}</p>
+    </div>;
+}
+
+function FlowAgentGroupedPicker(props: {
+    model: FlowAgentSelectModel;
+    value: string;
+    disabled: boolean;
+    onSelect: (selection: string) => Promise<void>;
+}): React.ReactElement {
+    const [open, setOpen] = React.useState(false);
+    const [menuDirection, setMenuDirection] = React.useState<'above' | 'below'>('below');
+    const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+    const [expanded, setExpanded] = React.useState<Record<string, boolean>>(() => ({
+        workflow: props.model.workflow.some(option => option.value === props.value) || !props.value,
+        workspace: props.model.workspace.some(option => option.value === props.value),
+        catalog: props.model.catalog.some(option => option.value === props.value)
+    }));
+    React.useEffect(() => {
+        const close = (event: MouseEvent): void => {
+            if (!(event.target as HTMLElement).closest('.flow__agent-picker')) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', close, true);
+        return () => document.removeEventListener('mousedown', close, true);
+    }, []);
+    const groups: Array<{ id: keyof FlowAgentSelectModelGroups; label: string; options: FlowAgentSelectOption[] }> = [
+        { id: 'workflow', label: 'Workflow agents', options: props.model.workflow },
+        { id: 'workspace', label: 'Workspace agents', options: props.model.workspace },
+        { id: 'catalog', label: 'Agents library', options: props.model.catalog }
+    ].filter((group): group is { id: keyof FlowAgentSelectModelGroups; label: string; options: FlowAgentSelectOption[] } => group.options.length > 0);
+    const selectedLabel = flowAgentSelectLabel(props.model, props.value);
+    const choose = async (selection: string): Promise<void> => {
+        setOpen(false);
+        await props.onSelect(selection);
+    };
+    const toggleOpen = (): void => {
+        if (!open) {
+            const rect = buttonRef.current?.getBoundingClientRect();
+            const spaceBelow = rect ? window.innerHeight - rect.bottom : window.innerHeight;
+            const spaceAbove = rect?.top ?? 0;
+            setMenuDirection(spaceBelow < 300 && spaceAbove > spaceBelow ? 'above' : 'below');
+        }
+        setOpen(current => !current);
+    };
+    return <div className='flow__agent-picker'>
+        <button
+            type='button'
+            ref={buttonRef}
+            className='flow__agent-picker-button'
+            disabled={props.disabled}
+            aria-haspopup='menu'
+            aria-expanded={open}
+            title={selectedLabel}
+            onClick={toggleOpen}
+        >
+            <span>{selectedLabel}</span>
+            <i className='codicon codicon-chevron-down' />
+        </button>
+        {open && <div className={`flow__agent-picker-menu flow__agent-picker-menu--${menuDirection}`} role='menu'>
+            <button
+                type='button'
+                className={`flow__agent-picker-option${!props.value ? ' flow__agent-picker-option--selected' : ''}`}
+                onClick={() => choose('')}
+            >
+                <span>Sem agente</span>
+            </button>
+            {groups.map(group => <section className='flow__agent-picker-group' key={group.id}>
+                <button
+                    type='button'
+                    className='flow__agent-picker-group-header'
+                    onClick={() => setExpanded(current => ({ ...current, [group.id]: !current[group.id] }))}
+                >
+                    <i className={`codicon ${expanded[group.id] ? 'codicon-chevron-down' : 'codicon-chevron-right'}`} />
+                    <span>{group.label}</span>
+                    <small>{group.options.length}</small>
+                </button>
+                {expanded[group.id] && <div className='flow__agent-picker-options'>
+                    {group.options.map(option => <button
+                        type='button'
+                        key={option.value}
+                        className={`flow__agent-picker-option${option.value === props.value ? ' flow__agent-picker-option--selected' : ''}`}
+                        title={option.label}
+                        onClick={() => choose(option.value)}
+                    >
+                        <span>{option.label}</span>
+                    </button>)}
+                </div>}
+            </section>)}
+        </div>}
+    </div>;
 }
 
 function StateEditor(props: {
@@ -3535,77 +4282,128 @@ function StateEditor(props: {
     agents: FlowAgentMarkdownSummary[];
     modelProfiles: FlowModelProfile[];
     languageModels: FlowLanguageModelOption[];
+    aiRuntime?: CyberVinciAiRuntimeService;
     onUpdateState: (stateId: string, statePatch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
     onSelectAgent: (stateId: string, selection: string) => Promise<void>;
     onOpenAgent: (agentIdOrPath: string) => Promise<void>;
+    onConfigureAiProvider: (provider: CyberVinciAiProviderDescriptor) => Promise<void>;
     onAddBranch: (parallelStateId: string, branchType: FlowStateType) => Promise<string | undefined>;
     onDeleteState: (stateId: string) => Promise<void>;
     onSaveWorkflow: () => Promise<void>;
+    onExitEdit: () => void;
 }): React.ReactElement {
     const updateInput = (patch: Partial<NonNullable<FlowWorkflow['states'][string]['input']>>) =>
         props.onUpdateState(props.stateId, { input: compactObject({ ...(props.state.input || {}), ...patch }) });
     const agentSelect = createFlowAgentSelectModel(props.workflow, props.agents, props.state.agent);
+    const agentMarkdownPath = props.state.agent ? resolveWorkflowAgentRelativePath(props.workflow, props.state.agent) : undefined;
+    const stateIds = flowWorkflowStateIds(props.workflow).filter(stateId => stateId !== props.stateId);
     return <section className='flow__state-editor' aria-label='State editor'>
-        <div className='flow__section-heading'>
+        <div className='flow__section-heading flow__section-heading--actions'>
             <h4>Workflow fields</h4>
-            <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Save workflow file'>
-                <i className='codicon codicon-save' /> Save
-            </button>
-            <button onClick={() => props.onDeleteState(props.stateId)} disabled={!props.editable} title='Delete state'>
-                <i className='codicon codicon-trash' /> Delete
-            </button>
+            <div className='flow__section-actions'>
+                <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Salvar o workflow e voltar para o resumo'>
+                    <i className='codicon codicon-check' /> Aplicar e voltar
+                </button>
+                <button type='button' onClick={props.onExitEdit} title='Voltar para exibicao com as configuracoes atuais'>
+                    <i className='codicon codicon-eye' /> Voltar ao resumo
+                </button>
+                <button onClick={() => props.onDeleteState(props.stateId)} disabled={!props.editable} title='Delete state'>
+                    <i className='codicon codicon-trash' /> Delete
+                </button>
+            </div>
         </div>
         {props.issues.length > 0 && <div className='flow__inline-validation'>
             {props.issues.map(issue => <span key={`${issue.code}-${issue.path || issue.message}`}>{issue.message}</span>)}
         </div>}
-        <div className='flow__form-section'>
-            <h5>Agente</h5>
+        {props.state.type === 'input' && <div className='flow__form-section flow__form-section--note'>
+            <h5>Prompt da run</h5>
+            <p className='flow__field-help'>
+                O texto que entra no workflow vem do menu <strong>Prompt</strong> no topo do Flow. Ao iniciar a run, esse texto e salvo como <code>input/request.md</code> e passa para os proximos blocos. Se este Flow salvo for chamado pelo AI Chat, o input do chat substitui esse prompt nesta run.
+            </p>
+        </div>}
+        {props.state.type !== 'agent' && props.state.type !== 'input' && <div className='flow__form-section'>
+            <h5>Prompt do bloco</h5>
             <label>
-                <span>Agent</span>
-                <select
-                    value={agentSelect.value}
+                <span>Prompt / intent</span>
+                <textarea
+                    rows={3}
+                    value={props.state.prompt || ''}
                     disabled={!props.editable}
-                    onChange={event => props.onSelectAgent(props.stateId, event.currentTarget.value)}
-                    aria-label='Selecionar agente do Flow'
-                >
-                    <option value=''>Sem agente</option>
-                    {agentSelect.workflow.length > 0 && <optgroup label='Workflow'>
-                        {agentSelect.workflow.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </optgroup>}
-                    {agentSelect.workspace.length > 0 && <optgroup label='Workspace'>
-                        {agentSelect.workspace.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </optgroup>}
-                    {agentSelect.catalog.length > 0 && <optgroup label='Agency Agents'>
-                        {agentSelect.catalog.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </optgroup>}
-                </select>
+                    placeholder='Explique o objetivo deste bloco no workflow.'
+                    onChange={event => props.onUpdateState(props.stateId, { prompt: emptyToUndefined(event.currentTarget.value) })}
+                />
             </label>
             <label>
-                <span>Agent id/path manual</span>
-                <div className='flow__agent-field'>
-                    <input
-                        value={props.state.agent || ''}
-                        disabled={!props.editable}
-                        placeholder='ex: frontend ou agents/frontend.md'
-                        onChange={event => props.onUpdateState(props.stateId, { agent: emptyToUndefined(event.currentTarget.value) })}
-                    />
-                    <button
-                        disabled={!props.state.agent}
-                        title='Open agent Markdown in Theia editor'
-                        onClick={() => props.state.agent && props.onOpenAgent(props.state.agent)}
-                    >
-                        <i className='codicon codicon-edit' />
-                    </button>
-                </div>
+                <span>Task prompt</span>
+                <textarea
+                    rows={3}
+                    value={props.state.taskPrompt || ''}
+                    disabled={!props.editable}
+                    placeholder='Instrucao especifica que este bloco deve cumprir.'
+                    onChange={event => props.onUpdateState(props.stateId, { taskPrompt: emptyToUndefined(event.currentTarget.value) })}
+                />
             </label>
-            {props.state.type === 'agent' && <>
-            <ModelExecutionEditor
+        </div>}
+        {props.state.type === 'agent' && <div className='flow__form-section flow__agent-editor'>
+            <div className='flow__form-section-title'>
+                <h5>Agente do bloco</h5>
+                <button
+                    disabled={!props.state.agent}
+                    title='Open agent Markdown in Theia editor'
+                    onClick={() => props.state.agent && props.onOpenAgent(props.state.agent)}
+                >
+                    <i className='codicon codicon-edit' /> Open
+                </button>
+            </div>
+            <p className='flow__field-help'>
+                O markdown escolhido vem da biblioteca de agentes. Os prompts e deliverables abaixo sao ajustes deste bloco e ficam salvos apenas neste workflow.
+            </p>
+            <div className='flow__editor-grid flow__editor-grid--two'>
+                <label>
+                    <span>Perfil da biblioteca</span>
+                    <FlowAgentGroupedPicker
+                        model={agentSelect}
+                        value={agentSelect.value}
+                        disabled={!props.editable}
+                        onSelect={selection => props.onSelectAgent(props.stateId, selection)}
+                    />
+                </label>
+                <label>
+                    <span>ID ou caminho salvo no bloco</span>
+                    <div className='flow__agent-field'>
+                        <input
+                            value={props.state.agent || ''}
+                            disabled={!props.editable}
+                            placeholder='ex: frontend ou agents/frontend.md'
+                            onChange={event => props.onUpdateState(props.stateId, { agent: emptyToUndefined(event.currentTarget.value) })}
+                        />
+                        <button
+                            disabled={!props.state.agent}
+                            title='Open agent Markdown in Theia editor'
+                            onClick={() => props.state.agent && props.onOpenAgent(props.state.agent)}
+                        >
+                            <i className='codicon codicon-edit' />
+                        </button>
+                    </div>
+                </label>
+            </div>
+            {agentMarkdownPath && <p className='flow__agent-path'>Markdown da biblioteca: <code>{agentMarkdownPath}</code></p>}
+        </div>}
+        {props.state.type === 'agent' && <>
+        <ModelExecutionEditor
                 state={props.state}
                 modelProfiles={props.modelProfiles}
                 languageModels={props.languageModels}
+                aiRuntime={props.aiRuntime}
                 editable={props.editable}
+                onConfigureProvider={props.onConfigureAiProvider}
                 onUpdate={patch => props.onUpdateState(props.stateId, patch)}
             />
+        <div className='flow__form-section flow__prompt-overrides'>
+            <h5>Instrucoes deste bloco</h5>
+            <p className='flow__field-help'>
+                Estes campos complementam ou especializam o agente para este passo do Flow. Editar aqui nao altera o markdown generico da biblioteca.
+            </p>
             <label>
                 <span>System prompt</span>
                 <textarea
@@ -3626,18 +4424,13 @@ function StateEditor(props: {
                     onChange={event => props.onUpdateState(props.stateId, { taskPrompt: emptyToUndefined(event.currentTarget.value) })}
                 />
             </label>
-            <label>
-                <span>Deliverables</span>
-                <textarea
-                    rows={4}
-                    value={deliverablesToText(props.state.deliverables)}
-                    disabled={!props.editable}
-                    placeholder='path | description | kind | required'
-                    onChange={event => props.onUpdateState(props.stateId, { deliverables: textToDeliverables(event.currentTarget.value) })}
-                />
-            </label>
-            </>}
+            <DeliverablesEditor
+                value={props.state.deliverables}
+                editable={props.editable}
+                onChange={deliverables => props.onUpdateState(props.stateId, { deliverables })}
+            />
         </div>
+        </>}
         <div className='flow__form-section'>
             <h5>Entrada e saida</h5>
             <label>
@@ -3711,6 +4504,25 @@ function StateEditor(props: {
                 </label>
             </div>
         </div>
+        {props.state.type === 'gate' && <GateConfigEditor
+            stateId={props.stateId}
+            state={props.state}
+            stateIds={stateIds}
+            editable={props.editable}
+            onUpdate={patch => props.onUpdateState(props.stateId, patch)}
+        />}
+        {props.state.type === 'loop' && <LoopEditor
+            state={props.state}
+            stateIds={stateIds}
+            editable={props.editable}
+            onUpdate={patch => props.onUpdateState(props.stateId, patch)}
+        />}
+        <OutcomesEditor
+            state={props.state}
+            stateIds={stateIds}
+            editable={props.editable}
+            onUpdate={patch => props.onUpdateState(props.stateId, patch)}
+        />
         {props.state.type === 'parallel' && <section className='flow__branch-editor' aria-label='Parallel branches'>
             <div className='flow__section-heading'>
                 <h4>Branches</h4>
@@ -3747,6 +4559,327 @@ function StateEditor(props: {
             onUpdate={patch => props.onUpdateState(props.stateId, patch)}
         />}
     </section>;
+}
+
+function GateConfigEditor(props: {
+    stateId: string;
+    state: FlowWorkflow['states'][string];
+    stateIds: string[];
+    editable: boolean;
+    onUpdate: (patch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
+}): React.ReactElement {
+    const gate: FlowHumanGate = props.state.gates?.[0] || {
+        id: `${props.stateId}_approval`,
+        title: 'Approve next step',
+        stateId: props.stateId,
+        decisions: defaultGateDecisionDefinitions()
+    };
+    const decisions = gate.decisions?.length ? gate.decisions : defaultGateDecisionDefinitions();
+    const updateGate = (patch: Partial<FlowHumanGate>): Promise<void> =>
+        props.onUpdate({ gates: [compactObject({ ...gate, ...patch, stateId: props.stateId })] });
+    const updateDecision = (index: number, patch: Partial<NonNullable<FlowHumanGate['decisions']>[number]>): Promise<void> => {
+        const next = decisions.map((decision, candidateIndex) => candidateIndex === index ? compactObject({ ...decision, ...patch }) : decision);
+        return updateGate({ decisions: next });
+    };
+    return <div className='flow__form-section flow__gate-config-editor'>
+        <h5>Human approval</h5>
+        <div className='flow__editor-grid flow__editor-grid--two'>
+            <label>
+                <span>Gate id</span>
+                <input
+                    value={gate.id}
+                    disabled={!props.editable}
+                    onChange={event => updateGate({ id: event.currentTarget.value })}
+                />
+            </label>
+            <label>
+                <span>Title</span>
+                <input
+                    value={gate.title}
+                    disabled={!props.editable}
+                    onChange={event => updateGate({ title: event.currentTarget.value })}
+                />
+            </label>
+        </div>
+        <label>
+            <span>Prompt shown to the user</span>
+            <textarea
+                rows={3}
+                value={gate.prompt || ''}
+                disabled={!props.editable}
+                onChange={event => updateGate({ prompt: emptyToUndefined(event.currentTarget.value) })}
+            />
+        </label>
+        <div className='flow__decision-editor-list'>
+            {decisions.map((decision, index) => <article key={`${decision.id}-${index}`} className='flow__decision-editor-row'>
+                <input
+                    value={decision.id}
+                    disabled={!props.editable}
+                    placeholder='approved'
+                    onChange={event => updateDecision(index, { id: event.currentTarget.value })}
+                />
+                <input
+                    value={decision.label}
+                    disabled={!props.editable}
+                    placeholder='Approve'
+                    onChange={event => updateDecision(index, { label: event.currentTarget.value })}
+                />
+                <select
+                    value={decision.outcome || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateDecision(index, { outcome: emptyToUndefined(event.currentTarget.value) })}
+                >
+                    <option value=''>Outcome follows id</option>
+                    {['approved', 'rejected', 'revision_requested', 'success', 'failed', 'cancelled'].map(outcome => <option key={outcome} value={outcome}>{outcome}</option>)}
+                </select>
+                <select
+                    value={decision.to || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateDecision(index, { to: emptyToUndefined(event.currentTarget.value) })}
+                >
+                    <option value=''>No fixed target</option>
+                    {props.stateIds.map(stateId => <option key={stateId} value={stateId}>{stateId}</option>)}
+                </select>
+                <select
+                    value={decision.action || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateDecision(index, { action: emptyToUndefined(event.currentTarget.value) as NonNullable<FlowHumanGate['decisions']>[number]['action'] })}
+                >
+                    <option value=''>No terminal action</option>
+                    {OUTCOME_ACTIONS.map(action => <option key={action} value={action}>{action}</option>)}
+                </select>
+                <label className='flow__inline-check'>
+                    <input
+                        type='checkbox'
+                        checked={decision.allowTargetSelection === true}
+                        disabled={!props.editable}
+                        onChange={event => updateDecision(index, { allowTargetSelection: event.currentTarget.checked || undefined })}
+                    />
+                    <span>choose target</span>
+                </label>
+                <label className='flow__inline-check'>
+                    <input
+                        type='checkbox'
+                        checked={decision.requireNote === true}
+                        disabled={!props.editable}
+                        onChange={event => updateDecision(index, { requireNote: event.currentTarget.checked || undefined })}
+                    />
+                    <span>note</span>
+                </label>
+                <button
+                    type='button'
+                    disabled={!props.editable}
+                    title='Remove decision'
+                    onClick={() => updateGate({ decisions: decisions.filter((_, candidateIndex) => candidateIndex !== index) })}
+                >
+                    <i className='codicon codicon-trash' />
+                </button>
+            </article>)}
+        </div>
+        <button
+            type='button'
+            disabled={!props.editable}
+            onClick={() => updateGate({ decisions: [...decisions, { id: 'custom', label: 'Custom decision', outcome: 'success' }] })}
+        >
+            <i className='codicon codicon-add' /> Add decision
+        </button>
+    </div>;
+}
+
+function LoopEditor(props: {
+    state: FlowWorkflow['states'][string];
+    stateIds: string[];
+    editable: boolean;
+    onUpdate: (patch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
+}): React.ReactElement {
+    const loop = props.state.loop || { body: '', maxIterations: 3 };
+    const updateLoop = (patch: Partial<NonNullable<FlowWorkflow['states'][string]['loop']>>): Promise<void> =>
+        props.onUpdate({ loop: compactObject({ ...loop, ...patch }) });
+    return <div className='flow__form-section flow__loop-editor'>
+        <h5>Loop controller</h5>
+        <div className='flow__editor-grid flow__editor-grid--two'>
+            <label>
+                <span>Body state</span>
+                <select
+                    value={loop.body || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateLoop({ body: event.currentTarget.value })}
+                >
+                    <option value=''>Choose body state</option>
+                    {props.stateIds.map(stateId => <option key={stateId} value={stateId}>{stateId}</option>)}
+                </select>
+            </label>
+            <label>
+                <span>Repair state</span>
+                <select
+                    value={loop.repair || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateLoop({ repair: emptyToUndefined(event.currentTarget.value) })}
+                >
+                    <option value=''>No automatic repair target</option>
+                    {props.stateIds.map(stateId => <option key={stateId} value={stateId}>{stateId}</option>)}
+                </select>
+            </label>
+            <label>
+                <span>Max iterations</span>
+                <input
+                    type='number'
+                    min='1'
+                    value={loop.maxIterations ?? ''}
+                    disabled={!props.editable}
+                    onChange={event => updateLoop({ maxIterations: numberOrUndefined(event.currentTarget.value) })}
+                />
+            </label>
+            <label>
+                <span>Counter key</span>
+                <input
+                    value={loop.counter || ''}
+                    disabled={!props.editable}
+                    placeholder='review_loop.iteration'
+                    onChange={event => updateLoop({ counter: emptyToUndefined(event.currentTarget.value) })}
+                />
+            </label>
+        </div>
+        <label>
+            <span>Until guard JSON</span>
+            <textarea
+                rows={3}
+                value={loop.until ? JSON.stringify(loop.until, undefined, 2) : ''}
+                disabled={!props.editable}
+                placeholder='{"signal.equals":{"key":"review.status","value":"approved"}}'
+                onChange={event => updateLoop({ until: parseJsonObjectOrUndefined(event.currentTarget.value) })}
+            />
+        </label>
+    </div>;
+}
+
+function OutcomesEditor(props: {
+    state: FlowWorkflow['states'][string];
+    stateIds: string[];
+    editable: boolean;
+    onUpdate: (patch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
+}): React.ReactElement {
+    const outcomes = props.state.outcomes || {};
+    const entries = Object.entries(outcomes);
+    const updateOutcome = (outcomeId: string, patch: Partial<{ id: string; to: string; action: string; label: string }>): Promise<void> => {
+        const next = { ...outcomes };
+        const current = outcomeRouteFields(next[outcomeId]);
+        const nextId = patch.id || outcomeId;
+        delete next[outcomeId];
+        const route = compactObject({
+            to: patch.to !== undefined ? emptyToUndefined(patch.to) : current.to,
+            action: patch.action !== undefined ? emptyToUndefined(patch.action) : current.action,
+            label: patch.label !== undefined ? emptyToUndefined(patch.label) : current.label
+        }) as FlowOutcomeRoute;
+        next[nextId] = route.to && !route.action && !route.label ? route.to : route;
+        return props.onUpdate({ outcomes: Object.keys(next).length ? next : undefined });
+    };
+    const removeOutcome = (outcomeId: string): Promise<void> => {
+        const next = { ...outcomes };
+        delete next[outcomeId];
+        return props.onUpdate({ outcomes: Object.keys(next).length ? next : undefined });
+    };
+    return <div className='flow__form-section flow__outcomes-editor'>
+        <h5>Outcome routes</h5>
+        <p className='flow__field-help'>Cada outcome define para onde a run vai depois deste bloco. Use uma etapa de destino ou uma acao terminal.</p>
+        {entries.length === 0 && <p className='flow__field-help'>Nenhum outcome configurado. O motor usa transicoes antigas ou encerra a run.</p>}
+        {entries.map(([outcomeId, route]) => {
+            const fields = outcomeRouteFields(route);
+            return <article key={outcomeId} className='flow__outcome-row'>
+                <input
+                    value={outcomeId}
+                    disabled={!props.editable}
+                    placeholder='success'
+                    onChange={event => updateOutcome(outcomeId, { id: event.currentTarget.value })}
+                />
+                <select
+                    value={fields.to || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateOutcome(outcomeId, { to: event.currentTarget.value })}
+                >
+                    <option value=''>No target</option>
+                    {props.stateIds.map(stateId => <option key={stateId} value={stateId}>{stateId}</option>)}
+                </select>
+                <select
+                    value={fields.action || ''}
+                    disabled={!props.editable}
+                    onChange={event => updateOutcome(outcomeId, { action: event.currentTarget.value })}
+                >
+                    <option value=''>No action</option>
+                    {OUTCOME_ACTIONS.map(action => <option key={action} value={action}>{action}</option>)}
+                </select>
+                <input
+                    value={fields.label || ''}
+                    disabled={!props.editable}
+                    placeholder='Label'
+                    onChange={event => updateOutcome(outcomeId, { label: event.currentTarget.value })}
+                />
+                <button type='button' disabled={!props.editable} title='Remove outcome' onClick={() => removeOutcome(outcomeId)}>
+                    <i className='codicon codicon-trash' />
+                </button>
+            </article>;
+        })}
+        <div className='flow__outcome-actions'>
+            <button
+                type='button'
+                disabled={!props.editable}
+                onClick={() => props.onUpdate({ outcomes: { ...outcomes, success: { action: 'complete' } } })}
+            >
+                <i className='codicon codicon-add' /> Add success route
+            </button>
+            <button
+                type='button'
+                disabled={!props.editable}
+                onClick={() => props.onUpdate({ outcomes: { ...outcomes, failed: { action: 'fail' } } })}
+            >
+                <i className='codicon codicon-error' /> Add failed route
+            </button>
+            <button
+                type='button'
+                disabled={!props.editable}
+                onClick={() => props.onUpdate({ outcomes: { ...outcomes, revision_requested: { action: 'wait' } } })}
+            >
+                <i className='codicon codicon-git-pull-request' /> Add rework route
+            </button>
+        </div>
+    </div>;
+}
+
+const OUTCOME_ACTIONS = ['continue', 'complete', 'fail', 'pause', 'wait', 'cancel', 'stop'] as const;
+
+function defaultGateDecisionDefinitions(): NonNullable<FlowHumanGate['decisions']> {
+    return [
+        { id: 'approved', label: 'Approve', outcome: 'approved' },
+        { id: 'revision_requested', label: 'Request changes', outcome: 'revision_requested', allowTargetSelection: true },
+        { id: 'rejected', label: 'Reject', outcome: 'rejected', action: 'fail' }
+    ];
+}
+
+function outcomeRouteFields(route: NonNullable<FlowWorkflow['states'][string]['outcomes']>[string] | undefined): { to?: string; action?: string; label?: string } {
+    if (typeof route === 'string') {
+        return { to: route };
+    }
+    if (!route || typeof route !== 'object' || Array.isArray(route)) {
+        return {};
+    }
+    return {
+        to: typeof route.to === 'string' ? route.to : undefined,
+        action: typeof route.action === 'string' ? route.action : undefined,
+        label: typeof route.label === 'string' ? route.label : undefined
+    };
+}
+
+function parseJsonObjectOrUndefined(value: string): Record<string, unknown> | undefined {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return undefined;
+    }
+    try {
+        const parsed = JSON.parse(trimmed);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 function DynamicParallelEditor(props: {
@@ -3922,7 +5055,9 @@ function ModelExecutionEditor(props: {
     state: FlowWorkflow['states'][string];
     modelProfiles: FlowModelProfile[];
     languageModels: FlowLanguageModelOption[];
+    aiRuntime?: CyberVinciAiRuntimeService;
     editable: boolean;
+    onConfigureProvider: (provider: CyberVinciAiProviderDescriptor) => Promise<void>;
     onUpdate: (patch: Partial<FlowWorkflow['states'][string]>) => Promise<void>;
 }): React.ReactElement {
     const execution = props.state.modelExecution || {};
@@ -3950,14 +5085,51 @@ function ModelExecutionEditor(props: {
                     onChange={event => {
                         const profile = props.modelProfiles.find(candidate => candidate.id === event.currentTarget.value);
                         void props.onUpdate({
-                            provider: profile?.provider,
-                            modelExecution: profile ? { ...profile.execution, profileId: profile.id } : undefined
+                            provider: undefined,
+                            modelExecution: profile ? { profileId: profile.id } : undefined
                         });
                     }}
                 >
                     {props.modelProfiles.map(profile => <option key={profile.id} value={profile.id}>{profile.name}</option>)}
                 </select>
             </label>
+            <div className='flow__token-limit-control'>
+                <label>
+                    <span>Output tokens</span>
+                    <select
+                        value={execution.maxTokens === undefined ? 'unlimited' : 'limited'}
+                        disabled={!props.editable}
+                        onChange={event => updateExecution({
+                            maxTokens: event.currentTarget.value === 'limited'
+                                ? execution.maxTokens ?? DEFAULT_MAX_TOKEN_LIMIT
+                                : undefined
+                        })}
+                    >
+                        <option value='unlimited'>Ilimitado</option>
+                        <option value='limited'>Limitar</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Max output tokens</span>
+                    <input
+                        type='number'
+                        min='1'
+                        value={execution.maxTokens ?? ''}
+                        disabled={!props.editable || execution.maxTokens === undefined}
+                        placeholder='Sem limite'
+                        onChange={event => updateExecution({ maxTokens: numberOrUndefined(event.currentTarget.value) })}
+                    />
+                </label>
+            </div>
+            {props.aiRuntime ? <div className='flow__model-execution-picker'>
+                <CyberVinciAiExecutionPicker
+                    service={props.aiRuntime}
+                    value={flowStateToAiExecutionSelection(props.state)}
+                    disabled={!props.editable}
+                    onConfigureProvider={props.onConfigureProvider}
+                    onChange={selection => props.onUpdate(aiExecutionSelectionToFlowStatePatch(selection, execution))}
+                />
+            </div> : <>
             <label>
                 <span>Provider</span>
                 <select
@@ -4014,6 +5186,7 @@ function ModelExecutionEditor(props: {
                     <option value='low'>Low</option>
                     <option value='medium'>Medium</option>
                     <option value='high'>High</option>
+                    <option value='xhigh'>X High</option>
                 </select>
             </label>
             <label>
@@ -4040,47 +5213,113 @@ function ModelExecutionEditor(props: {
                 </select>
             </label>
             <label>
-                <span>Temperature</span>
-                <input
-                    type='range'
-                    min='0'
-                    max='1'
-                    step='0.05'
-                    value={execution.temperature ?? 0.2}
+                <span>Service tier</span>
+                <select
+                    value={execution.serviceTier || 'default'}
                     disabled={!props.editable}
-                    onChange={event => updateExecution({ temperature: numberOrUndefined(event.currentTarget.value) })}
-                />
+                    onChange={event => updateExecution({
+                        serviceTier: event.currentTarget.value === 'default'
+                            ? undefined
+                            : event.currentTarget.value as FlowModelExecutionProfile['serviceTier']
+                    })}
+                >
+                    <option value='default'>Default</option>
+                    <option value='fast'>Fast</option>
+                    <option value='flex'>Flex</option>
+                </select>
             </label>
             <label>
-                <span>Max output tokens</span>
+                <span>Model variant</span>
                 <input
-                    type='number'
-                    min='0'
-                    value={execution.maxTokens ?? ''}
+                    value={execution.reasoningVariant || ''}
                     disabled={!props.editable}
-                    placeholder='default'
-                    onChange={event => updateExecution({ maxTokens: numberOrUndefined(event.currentTarget.value) })}
+                    placeholder='Provider default'
+                    onChange={event => updateExecution({ reasoningVariant: emptyToUndefined(event.currentTarget.value) })}
                 />
             </label>
+            </>}
         </div>
     </section>;
 }
 
-function AgentMarkdownActions(props: {
-    workflow: FlowWorkflow;
-    agentIdOrPath: string;
-    onOpenAgent: (agentIdOrPath: string) => Promise<void>;
+function DeliverablesEditor(props: {
+    value?: FlowDeliverable[];
+    editable: boolean;
+    onChange: (value?: FlowDeliverable[]) => Promise<void>;
 }): React.ReactElement {
-    const relativePath = props.workflow.agents?.[props.agentIdOrPath] || props.agentIdOrPath;
-    return <section className='flow__agent-markdown' aria-label='Agent Markdown'>
-        <div className='flow__section-heading'>
-            <h4>Agent Markdown</h4>
-            <button onClick={() => props.onOpenAgent(props.agentIdOrPath)} title='Open agent Markdown in Theia editor'>
-                <i className='codicon codicon-edit' /> Open
+    const deliverables = props.value || [];
+    const updateDeliverable = (index: number, patch: Partial<FlowDeliverable>): void => {
+        const next = deliverables.map((deliverable, candidateIndex) =>
+            candidateIndex === index ? normalizeDeliverable({ ...deliverable, ...patch }) : deliverable
+        );
+        void props.onChange(deliverablesOrUndefined(next));
+    };
+    const removeDeliverable = (index: number): void => {
+        void props.onChange(deliverablesOrUndefined(deliverables.filter((_, candidateIndex) => candidateIndex !== index)));
+    };
+    const addDeliverable = (): void => {
+        void props.onChange([...(props.value || []), { path: '', kind: 'markdown', required: true }]);
+    };
+    return <section className='flow__deliverables-editor' aria-label='Deliverables'>
+        <div className='flow__section-heading flow__section-heading--actions'>
+            <h4>Deliverables</h4>
+            <button type='button' disabled={!props.editable} onClick={addDeliverable}>
+                <i className='codicon codicon-add' /> Add
             </button>
         </div>
-        <code>{relativePath}</code>
-        <p>Agents describe role, instructions, inputs, and output format only. Workflow flow control remains in the workflow file and kernel.</p>
+        {deliverables.length === 0 && <p className='flow__field-help'>Nenhum arquivo esperado para este bloco.</p>}
+        {deliverables.map((deliverable, index) => {
+            const kindOptions = uniqueStrings(['markdown', 'json', 'text', 'patch', 'image', deliverable.kind || '']).filter(Boolean);
+            return <div className='flow__deliverable-row' key={`${index}-${deliverable.path || 'new'}`}>
+                <label className='flow__deliverable-path'>
+                    <span>Path</span>
+                    <input
+                        value={deliverable.path || ''}
+                        disabled={!props.editable}
+                        placeholder='review/adversarial-review.md'
+                        onChange={event => updateDeliverable(index, { path: event.currentTarget.value })}
+                    />
+                </label>
+                <label className='flow__deliverable-description'>
+                    <span>Description</span>
+                    <input
+                        value={deliverable.description || ''}
+                        disabled={!props.editable}
+                        placeholder='O que este bloco deve entregar'
+                        onChange={event => updateDeliverable(index, { description: emptyToUndefined(event.currentTarget.value) })}
+                    />
+                </label>
+                <label>
+                    <span>Kind</span>
+                    <select
+                        value={deliverable.kind || ''}
+                        disabled={!props.editable}
+                        onChange={event => updateDeliverable(index, { kind: emptyToUndefined(event.currentTarget.value) })}
+                    >
+                        <option value=''>Default</option>
+                        {kindOptions.map(kind => <option key={kind} value={kind}>{kind}</option>)}
+                    </select>
+                </label>
+                <label className='flow__deliverable-required'>
+                    <span>Required</span>
+                    <input
+                        type='checkbox'
+                        checked={deliverable.required !== false}
+                        disabled={!props.editable}
+                        onChange={event => updateDeliverable(index, { required: event.currentTarget.checked })}
+                    />
+                </label>
+                <button
+                    type='button'
+                    className='flow__icon-button'
+                    disabled={!props.editable}
+                    title='Remove deliverable'
+                    onClick={() => removeDeliverable(index)}
+                >
+                    <i className='codicon codicon-trash' />
+                </button>
+            </div>;
+        })}
     </section>;
 }
 
@@ -4093,6 +5332,7 @@ function TransitionEditor(props: {
     onUpdateTransition: (transitionId: string, transitionPatch: Partial<FlowWorkflowTransition>) => Promise<void>;
     onDeleteTransition: (transitionId: string) => Promise<void>;
     onSaveWorkflow: () => Promise<void>;
+    onExitEdit: () => void;
 }): React.ReactElement {
     const [guardText, setGuardText] = React.useState(formatGuard(props.transition.guard));
     const [guardError, setGuardError] = React.useState<string>();
@@ -4126,8 +5366,11 @@ function TransitionEditor(props: {
     return <section className='flow__transition-editor' aria-label='Transition editor'>
         <div className='flow__section-heading'>
             <h4>Transition fields</h4>
-            <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Save workflow file'>
-                <i className='codicon codicon-save' /> Save
+            <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Salvar o workflow e voltar para o resumo'>
+                <i className='codicon codicon-check' /> Aplicar e voltar
+            </button>
+            <button type='button' onClick={props.onExitEdit} title='Voltar para exibicao com as configuracoes atuais'>
+                <i className='codicon codicon-eye' /> Voltar ao resumo
             </button>
             <button onClick={() => props.onDeleteTransition(props.transitionId)} disabled={!props.editable} title='Delete transition'>
                 <i className='codicon codicon-trash' /> Delete
@@ -4943,6 +6186,12 @@ function edgeMidpoint(edge: FlowCanvasEdge, axis: 'x' | 'y'): number {
 function edgePath(edge: FlowCanvasEdge): string {
     const from = edge.points[0] || { x: 0, y: 0 };
     const to = edge.points[1] || from;
+    if (to.x <= from.x) {
+        const returnLoop = Math.max(96, Math.abs(to.x - from.x) * 0.35 + 96);
+        const reverseOffset = from.y > to.y ? 72 : 0;
+        const controlX = Math.max(from.x, to.x) + returnLoop + reverseOffset;
+        return `M ${from.x} ${from.y} C ${controlX} ${from.y}, ${controlX} ${to.y}, ${to.x} ${to.y}`;
+    }
     const curve = Math.max(48, Math.abs(to.x - from.x) * 0.45);
     return `M ${from.x} ${from.y} C ${from.x + curve} ${from.y}, ${to.x - curve} ${to.y}, ${to.x} ${to.y}`;
 }
@@ -4957,6 +6206,7 @@ const AGENCY_CANVAS_STATE_TYPES: FlowStateType[] = [
     'join',
     'condition',
     'gate',
+    'loop',
     'command',
     'memory_write',
     'report'
@@ -4965,12 +6215,14 @@ const AGENCY_CANVAS_STATE_TYPES: FlowStateType[] = [
 const AGENCY_CANVAS_BRANCH_TYPES: FlowStateType[] = [
     'agent',
     'condition',
+    'loop',
     'command',
     'memory_write',
     'report'
 ];
 
 const WORKFLOW_HISTORY_LIMIT = 50;
+const DEFAULT_MAX_TOKEN_LIMIT = 10000;
 
 function pushWorkflowHistory(stack: FlowWorkflowHistoryEntry[], entry: FlowWorkflowHistoryEntry): FlowWorkflowHistoryEntry[] {
     return [...stack, entry].slice(-WORKFLOW_HISTORY_LIMIT);
@@ -5248,6 +6500,8 @@ function stateTypeIcon(stateType: FlowStateType): string {
             return 'codicon-symbol-boolean';
         case 'gate':
             return 'codicon-pass';
+        case 'loop':
+            return 'codicon-sync';
         case 'command':
             return 'codicon-terminal';
         case 'memory_write':
@@ -5270,6 +6524,10 @@ function providerSummary(provider?: FlowProviderSelection): string {
     return `${provider.providerId} / ${provider.modelId || 'default model'}`;
 }
 
+function resolveWorkflowAgentRelativePath(workflow: FlowWorkflow, agentIdOrPath: string): string {
+    return workflow.agents?.[agentIdOrPath] || agentIdOrPath;
+}
+
 function providerSelectionOrUndefined(providerId: string | undefined, modelId: string | undefined, options?: Record<string, unknown>): FlowProviderSelection | undefined {
     const trimmedProviderId = providerId?.trim();
     const trimmedModelId = modelId?.trim();
@@ -5281,6 +6539,109 @@ function providerSelectionOrUndefined(providerId: string | undefined, modelId: s
         modelId: trimmedModelId,
         options
     });
+}
+
+function flowStateToAiExecutionSelection(state: FlowWorkflow['states'][string]): CyberVinciAiExecutionSelection {
+    const execution = state.modelExecution || {};
+    return {
+        providerId: state.provider?.providerId,
+        model: state.provider?.modelId,
+        ...flowProviderOptionsToAiSelection(state.provider?.options),
+        reasoningPolicy: execution.reasoningPolicy,
+        reasoningEffort: execution.nativeReasoning?.effort,
+        reasoningVariant: execution.reasoningVariant,
+        reasoningVariantOptions: execution.reasoningVariantOptions,
+        virtualReasoningMode: execution.virtualReasoning?.mode,
+        serviceTier: execution.serviceTier === 'default' ? undefined : execution.serviceTier
+    };
+}
+
+function flowModelProfileToAiExecutionSelection(profile: FlowModelProfile): CyberVinciAiExecutionSelection {
+    const execution = profile.execution || {};
+    return {
+        providerId: profile.provider?.providerId,
+        model: profile.provider?.modelId,
+        ...flowProviderOptionsToAiSelection(profile.provider?.options),
+        reasoningPolicy: execution.reasoningPolicy,
+        reasoningEffort: execution.nativeReasoning?.effort,
+        reasoningVariant: execution.reasoningVariant,
+        reasoningVariantOptions: execution.reasoningVariantOptions,
+        virtualReasoningMode: execution.virtualReasoning?.mode,
+        serviceTier: execution.serviceTier === 'default' ? undefined : execution.serviceTier
+    };
+}
+
+function aiExecutionSelectionToFlowStatePatch(
+    selection: CyberVinciAiExecutionSelection,
+    currentExecution: FlowModelExecutionProfile
+): Partial<FlowWorkflow['states'][string]> {
+    const reasoningEffort = selection.reasoningEffort;
+    const virtualReasoningMode = selection.virtualReasoningMode;
+    const modelExecution = modelExecutionOrUndefined({
+        ...currentExecution,
+        reasoningPolicy: selection.reasoningPolicy,
+        reasoningVariant: selection.reasoningVariant,
+        reasoningVariantOptions: selection.reasoningVariantOptions,
+        serviceTier: selection.serviceTier,
+        nativeReasoning: reasoningEffort
+            ? compactObject({
+                ...(currentExecution.nativeReasoning || {}),
+                enabled: reasoningEffort !== 'none',
+                effort: reasoningEffort
+            })
+            : currentExecution.nativeReasoning,
+        virtualReasoning: virtualReasoningMode
+            ? compactObject({
+                ...(currentExecution.virtualReasoning || {}),
+                enabled: virtualReasoningMode !== 'off',
+                mode: virtualReasoningMode
+            })
+            : currentExecution.virtualReasoning
+    });
+    return {
+        provider: providerSelectionOrUndefined(selection.providerId, selection.model, flowProviderOptionsFromAiSelection(selection)),
+        modelExecution
+    };
+}
+
+function flowProviderOptionsToAiSelection(options: Record<string, unknown> | undefined): Partial<CyberVinciAiExecutionSelection> {
+    if (!options) {
+        return {};
+    }
+    const option = <K extends keyof CyberVinciAiExecutionSelection>(key: K): CyberVinciAiExecutionSelection[K] | undefined =>
+        options[key] as CyberVinciAiExecutionSelection[K] | undefined;
+    return compactObject({
+        runtime: option('runtime'),
+        modelProvider: option('modelProvider'),
+        executablePath: option('executablePath'),
+        profile: option('profile'),
+        openCodeExecutablePath: option('openCodeExecutablePath'),
+        openCodeAgent: option('openCodeAgent'),
+        openCodeVariant: option('openCodeVariant'),
+        geminiExecutablePath: option('geminiExecutablePath'),
+        claudeExecutablePath: option('claudeExecutablePath'),
+        claudeAgent: option('claudeAgent'),
+        cursorExecutablePath: option('cursorExecutablePath'),
+        cursorMode: option('cursorMode')
+    });
+}
+
+function flowProviderOptionsFromAiSelection(selection: CyberVinciAiExecutionSelection): Record<string, unknown> | undefined {
+    const options = compactObject({
+        runtime: selection.runtime,
+        modelProvider: selection.modelProvider,
+        executablePath: selection.executablePath,
+        profile: selection.profile,
+        openCodeExecutablePath: selection.openCodeExecutablePath,
+        openCodeAgent: selection.openCodeAgent,
+        openCodeVariant: selection.openCodeVariant,
+        geminiExecutablePath: selection.geminiExecutablePath,
+        claudeExecutablePath: selection.claudeExecutablePath,
+        claudeAgent: selection.claudeAgent,
+        cursorExecutablePath: selection.cursorExecutablePath,
+        cursorMode: selection.cursorMode
+    });
+    return Object.keys(options).length > 0 ? options : undefined;
 }
 
 function externalPromptText(options: FlowExternalRunOptions): string | undefined {
@@ -5295,6 +6656,10 @@ function externalPromptText(options: FlowExternalRunOptions): string | undefined
 function modelExecutionOrUndefined(modelExecution: FlowModelExecutionProfile): FlowModelExecutionProfile | undefined {
     const compacted = compactObject(modelExecution as Record<string, unknown>) as FlowModelExecutionProfile;
     return Object.keys(compacted).length > 0 ? compacted : undefined;
+}
+
+function cloneFlowModelProfile(profile: FlowModelProfile): FlowModelProfile {
+    return JSON.parse(JSON.stringify(profile)) as FlowModelProfile;
 }
 
 function patternRoleOverrideOrUndefined(override: FlowPatternRoleOverride): FlowPatternRoleOverride | undefined {
@@ -5362,6 +6727,22 @@ export function deliverablesToText(value?: FlowDeliverable[]): string {
         deliverable.kind,
         deliverable.required === undefined ? undefined : String(deliverable.required)
     ].filter(entry => entry !== undefined && entry !== '').join(' | ')).join('\n');
+}
+
+function normalizeDeliverable(deliverable: FlowDeliverable): FlowDeliverable {
+    return compactObject({
+        path: deliverable.path?.trim() || '',
+        description: deliverable.description?.trim() || undefined,
+        kind: deliverable.kind?.trim() || undefined,
+        required: deliverable.required === false ? false : deliverable.required === true ? true : undefined
+    }) as FlowDeliverable;
+}
+
+function deliverablesOrUndefined(deliverables: FlowDeliverable[]): FlowDeliverable[] | undefined {
+    const normalized = deliverables
+        .map(normalizeDeliverable)
+        .filter(deliverable => Boolean(deliverable.path || deliverable.description || deliverable.kind || deliverable.required !== undefined));
+    return normalized.length > 0 ? normalized : undefined;
 }
 
 function requiredToBoolean(value: string | undefined): boolean | undefined {
@@ -5666,12 +7047,17 @@ interface FlowAgentSelectOption {
     label: string;
 }
 
-function createFlowAgentSelectModel(workflow: FlowWorkflow, agents: FlowAgentMarkdownSummary[], currentAgent: string | undefined): {
-    value: string;
+interface FlowAgentSelectModelGroups {
     workflow: FlowAgentSelectOption[];
     workspace: FlowAgentSelectOption[];
     catalog: FlowAgentSelectOption[];
-} {
+}
+
+interface FlowAgentSelectModel extends FlowAgentSelectModelGroups {
+    value: string;
+}
+
+function createFlowAgentSelectModel(workflow: FlowWorkflow, agents: FlowAgentMarkdownSummary[], currentAgent: string | undefined): FlowAgentSelectModel {
     const workflowOptions = Object.entries(workflow.agents || {})
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([agentId, relativePath]) => ({
@@ -5706,6 +7092,13 @@ function createFlowAgentSelectModel(workflow: FlowWorkflow, agents: FlowAgentMar
         workspace: workspaceOptions,
         catalog: catalogOptions
     };
+}
+
+function flowAgentSelectLabel(model: FlowAgentSelectModel, value: string): string {
+    if (!value) {
+        return 'Sem agente';
+    }
+    return [...model.workflow, ...model.workspace, ...model.catalog].find(option => option.value === value)?.label || value;
 }
 
 function flowAgentOptionLabel(agent: FlowAgentMarkdownSummary): string {

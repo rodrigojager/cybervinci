@@ -119,7 +119,8 @@ var BUILT_IN_PRESETS = [
             states: {
                 input: {
                     type: 'input',
-                    outputs: ['input/request.md']
+                    outputs: ['input/request.md'],
+                    outcomes: { success: 'sisyphus_coordinator' }
                 },
                 sisyphus_coordinator: {
                     type: 'agent',
@@ -132,7 +133,8 @@ var BUILT_IN_PRESETS = [
                         { path: 'plan/plan.md', description: 'Approved implementation plan', required: true, kind: 'markdown' },
                         { path: 'plan/acceptance-criteria.md', description: 'Measurable validation criteria', required: true, kind: 'markdown' },
                         { path: 'plan/work-order.md', description: 'Scoped work order for the ultraworker', required: true, kind: 'markdown' }
-                    ]
+                    ],
+                    outcomes: { success: 'plan_gate' }
                 },
                 plan_gate: {
                     type: 'gate',
@@ -140,8 +142,18 @@ var BUILT_IN_PRESETS = [
                     gates: [{
                             id: 'sisyphus_plan_approval',
                             title: 'Approve Sisyphus plan',
-                            prompt: 'Review the coordinator plan and approve before ultrawork execution starts.'
-                        }]
+                            prompt: 'Review the coordinator plan and approve before ultrawork execution starts.',
+                            decisions: [
+                                { id: 'approved', label: 'Approve ultrawork', outcome: 'approved', to: 'sisyphus_ultraworker' },
+                                { id: 'revision_requested', label: 'Send back to coordinator', outcome: 'revision_requested', to: 'sisyphus_coordinator' },
+                                { id: 'rejected', label: 'Reject run', outcome: 'rejected', action: 'fail' }
+                            ]
+                        }],
+                    outcomes: {
+                        approved: 'sisyphus_ultraworker',
+                        revision_requested: 'sisyphus_coordinator',
+                        rejected: { action: 'fail' }
+                    }
                 },
                 sisyphus_ultraworker: {
                     type: 'agent',
@@ -154,7 +166,8 @@ var BUILT_IN_PRESETS = [
                         { path: 'work/summary.md', description: 'Implementation summary', required: true, kind: 'markdown' },
                         { path: 'work/changes.md', description: 'Changed files and rationale', required: true, kind: 'markdown' },
                         { path: 'work/evidence.md', description: 'Verification evidence and commands run', required: true, kind: 'markdown' }
-                    ]
+                    ],
+                    outcomes: { success: 'sisyphus_reviewer' }
                 },
                 sisyphus_reviewer: {
                     type: 'agent',
@@ -166,7 +179,8 @@ var BUILT_IN_PRESETS = [
                     deliverables: [
                         { path: 'review/review.md', description: 'Pass/fail review with findings', required: true, kind: 'markdown' },
                         { path: 'review/status.json', description: 'Machine-readable review status', required: true, kind: 'json' }
-                    ]
+                    ],
+                    outcomes: { success: 'final_report' }
                 },
                 final_report: {
                     type: 'report',

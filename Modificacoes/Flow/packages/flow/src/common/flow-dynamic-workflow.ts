@@ -101,7 +101,7 @@ function chooseGeneratedWorkflow(prompt: string): FlowDynamicWorkflowPlan | unde
                 verifier: 'agents/dynamic/verifier.md'
             },
             states: {
-                input: { type: 'input', outputs: ['input/request.md'] },
+                input: { type: 'input', outputs: ['input/request.md'], outcomes: { success: 'planner' } },
                 planner: {
                     type: 'agent',
                     agent: 'planner',
@@ -113,7 +113,8 @@ function chooseGeneratedWorkflow(prompt: string): FlowDynamicWorkflowPlan | unde
                     },
                     systemPrompt: 'You are the planning stage for a dynamically generated CyberVinci Flow workflow.',
                     taskPrompt: 'Turn the user request into a concise execution plan and acceptance criteria.',
-                    outputs: ['plan/plan.md', 'plan/acceptance-criteria.md']
+                    outputs: ['plan/plan.md', 'plan/acceptance-criteria.md'],
+                    outcomes: { success: 'executor' }
                 },
                 executor: {
                     type: 'agent',
@@ -127,7 +128,8 @@ function chooseGeneratedWorkflow(prompt: string): FlowDynamicWorkflowPlan | unde
                     systemPrompt: 'You are the execution stage for a dynamically generated CyberVinci Flow workflow.',
                     taskPrompt: 'Execute the plan and produce the requested result without exposing internal reasoning.',
                     input: { include: ['input/request.md', 'plan/plan.md', 'plan/acceptance-criteria.md'] },
-                    outputs: ['work/result.md']
+                    outputs: ['work/result.md'],
+                    outcomes: { success: 'verifier' }
                 },
                 verifier: {
                     type: 'agent',
@@ -141,7 +143,8 @@ function chooseGeneratedWorkflow(prompt: string): FlowDynamicWorkflowPlan | unde
                     systemPrompt: 'You are the verification stage for a dynamically generated CyberVinci Flow workflow.',
                     taskPrompt: 'Check the result against the original request and acceptance criteria. Return concise required fixes and approval status.',
                     input: { include: ['input/request.md', 'plan/acceptance-criteria.md', 'work/result.md'] },
-                    outputs: ['verification/verification.md']
+                    outputs: ['verification/verification.md'],
+                    outcomes: { success: 'final_report' }
                 },
                 final_report: {
                     type: 'report',

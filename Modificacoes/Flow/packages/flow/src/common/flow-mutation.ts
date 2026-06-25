@@ -63,7 +63,30 @@ export function createFlowWorkflowState(stateType: FlowStateType, stateId: strin
     if (stateType === 'gate') {
         return {
             ...base,
-            gates: [{ id: `${stateId}_approval`, title: 'Approve next step', stateId }]
+            gates: [{
+                id: `${stateId}_approval`,
+                title: 'Approve next step',
+                stateId,
+                decisions: [
+                    { id: 'approved', label: 'Approve', outcome: 'approved' },
+                    { id: 'revision_requested', label: 'Request changes', outcome: 'revision_requested', allowTargetSelection: true },
+                    { id: 'rejected', label: 'Reject', outcome: 'rejected', action: 'fail' }
+                ]
+            }]
+        };
+    }
+    if (stateType === 'loop') {
+        return {
+            ...base,
+            loop: {
+                body: '',
+                maxIterations: 3,
+                counter: `${stateId}.iteration`
+            },
+            outcomes: {
+                success: { action: 'complete' },
+                exhausted: { action: 'fail' }
+            }
         };
     }
     if (stateType === 'command') {
@@ -114,6 +137,7 @@ export function addFlowWorkflowTransition(workflow: FlowWorkflow, from: string, 
         transition,
         workflow: {
             ...workflow,
+            states: upsertStateOutcome(workflow.states, from, 'success', to),
             transitions: [...(workflow.transitions || []), transition]
         }
     };
@@ -258,6 +282,65 @@ function collectWaitForReferences(candidateId: string, state: FlowWorkflowState,
     if ((state.waitFor || []).includes(stateId)) {
         references.push(`state ${candidateId}.waitFor`);
     }
+    for (const [outcomeId, route] of Object.entries(state.outcomes || {})) {
+        const target = typeof route === 'string' ? route : route?.to;
+        if (target === stateId) {
+            references.push(`state ${candidateId}.outcomes.${outcomeId}`);
+        }
+    }
+    for (const gate of state.gates || []) {
+        for (const decision of gate.decisions || []) {
+            if (decision.to === stateId) {
+                references.push(`state ${candidateId}.gates.${gate.id}.decisions.${decision.id}`);
+            }
+        }
+    }
+    if (state.loop?.body === stateId) {
+        references.push(`state ${candidateId}.loop.body`);
+    }
+    if (state.loop?.repair === stateId) {
+        references.push(`state ${candidateId}.loop.repair`);
+    }
+}
+
+function upsertStateOutcome(
+    states: FlowWorkflow['states'],
+    stateId: string,
+    outcomeId: string,
+    targetStateId: string
+): FlowWorkflow['states'] {
+    if (states[stateId]) {
+        return {
+            ...states,
+            [stateId]: compactFlowState({
+                ...states[stateId],
+                outcomes: {
+                    ...(states[stateId].outcomes || {}),
+                    [outcomeId]: targetStateId
+                }
+            })
+        };
+    }
+    const nextStates = { ...states };
+    for (const [parentId, parentState] of Object.entries(nextStates)) {
+        if (parentState.branches?.[stateId]) {
+            nextStates[parentId] = compactFlowState({
+                ...parentState,
+                branches: {
+                    ...parentState.branches,
+                    [stateId]: compactFlowState({
+                        ...parentState.branches[stateId],
+                        outcomes: {
+                            ...(parentState.branches[stateId].outcomes || {}),
+                            [outcomeId]: targetStateId
+                        }
+                    })
+                }
+            });
+            break;
+        }
+    }
+    return nextStates;
 }
 
 function compactFlowObject<T extends Record<string, unknown>>(value: T): T {

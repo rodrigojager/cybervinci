@@ -45,6 +45,7 @@ export class CanvasRenderer {
     this.options = options ?? {};
     this.nodeRenderer = new SkiaNodeRenderer(ck, {
       fontBasePath: this.options.fontBasePath,
+      loadBundledFonts: this.options.loadBundledFonts,
       googleFontsCssUrl: this.options.googleFontsCssUrl,
     });
     if (this.options.iconLookup) {

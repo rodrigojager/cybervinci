@@ -16,13 +16,13 @@
       "path": "../ai-core"
     },
     {
-      "path": "../core"
-    },
-    {
       "path": "../ai-runtime"
     },
     {
       "path": "../branding"
+    },
+    {
+      "path": "../core"
     },
     {
       "path": "../editor"

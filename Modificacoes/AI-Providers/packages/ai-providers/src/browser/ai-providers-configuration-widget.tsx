@@ -40,7 +40,7 @@ import {
     CODEX_CLI_WEB_SEARCH_CONTEXT_SIZE_PREF,
     CODEX_CLI_WEB_SEARCH_PREF
 } from '../common/ai-providers-preferences';
-import { CodexProviderDetectedProvider, CodexProviderRuntime, CodexProviderStatus } from '../common/ai-providers-service';
+import { CodexProviderDetectedProvider, CodexProviderModelMetadata, CodexProviderRuntime, CodexProviderStatus } from '../common/ai-providers-service';
 import { CYBERVINCI_AI_PROVIDERS_OUTPUT_CHANNEL, CodexProviderFrontendService } from './ai-providers-frontend-service';
 import { CODEX_CLI_LANGUAGE_MODEL_ID } from './ai-providers-language-model';
 
@@ -68,6 +68,7 @@ interface ProviderPresetConfig {
     runtime: CodexProviderRuntime;
     provider: string;
     defaultModel?: string;
+    models?: string[];
 }
 
 interface ProviderCatalogItem {
@@ -78,11 +79,15 @@ interface ProviderCatalogItem {
     recommended?: boolean;
 }
 
+// Fallback only; live Codex app-server model/list results take precedence.
+const CODEX_MODEL_PRESETS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];
+const STALE_CODEX_MODEL_PRESETS = ['gpt-5-codex', 'gpt-5-mini'];
+
 const PROVIDER_PRESET_CONFIG: Record<ProviderPreset, ProviderPresetConfig> = {
-    codex: { runtime: 'codex-app-server', provider: 'codex' },
-    openrouter: { runtime: 'direct-http', provider: 'openrouter', defaultModel: 'openrouter/openai/gpt-5' },
+    codex: { runtime: 'codex-app-server', provider: 'codex', defaultModel: 'gpt-5.5', models: CODEX_MODEL_PRESETS },
+    openrouter: { runtime: 'direct-http', provider: 'openrouter', defaultModel: 'openrouter/openai/gpt-5.5' },
     'opencode-go': { runtime: 'direct-http', provider: 'opencode-go', defaultModel: 'opencode-go/deepseek-v4-flash' },
-    opencode: { runtime: 'direct-http', provider: 'opencode', defaultModel: 'opencode/gpt-5-codex' },
+    opencode: { runtime: 'direct-http', provider: 'opencode', defaultModel: 'opencode/gpt-5.5' },
     gemini: { runtime: 'gemini-cli', provider: 'gemini' },
     'claude-code': { runtime: 'claude-code-cli', provider: 'claude-code', defaultModel: 'sonnet' },
     cursor: { runtime: 'cursor-cli', provider: 'cursor' }
@@ -383,7 +388,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
                             <div className="ai-configuration-value-row">
                                 <span className="ai-configuration-value-row-label">{nls.localizeByDefault('Models')}:</span>
                                 <span className="ai-configuration-value-row-value">
-                                    {status.models.slice(0, 12).join(', ')}{status.models.length > 12 ? ', ...' : ''}
+                                    {this.modelSummaryLabels(status).join(', ')}{status.models.length > 12 ? ', ...' : ''}
                                 </span>
                             </div>
                         ) : undefined}
@@ -821,7 +826,11 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
         if (model.startsWith('openrouter/') || model.startsWith('opencode-go/') || model.startsWith('opencode/')) {
             return false;
         }
-        return preset !== 'codex';
+        return true;
+    }
+
+    protected isStaleCodexPreset(model: string, preset: ProviderPreset): boolean {
+        return preset === 'codex' && STALE_CODEX_MODEL_PRESETS.includes(model);
     }
 
     protected currentPreset(): 'readOnly' | 'agent' | 'fullAccess' {
@@ -907,10 +916,8 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
     protected async pickCurrentModel(): Promise<void> {
         const status = this.status ?? await this.codexProvider.getStatus();
         const currentModel = this.preferenceService.get<string>(CODEX_CLI_MODEL_PREF, '');
-        const models = Array.from(new Set([
-            currentModel,
-            ...(status.models ?? [])
-        ].filter((model): model is string => !!model)));
+        const models = this.modelOptionsForCurrentProvider(status, currentModel);
+        const metadataById = this.modelMetadataForCurrentProvider(status);
         if (!models.length) {
             const input = await this.quickInputService.input({
                 placeHolder: this.modelPlaceholder(),
@@ -931,7 +938,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
             },
             ...models.map(model => ({
                 label: model,
-                description: this.currentProviderLabel(),
+                description: this.modelCostLabel(metadataById.get(model)) ?? this.currentProviderLabel(),
                 detail: model === currentModel ? nls.localizeByDefault('Current') : undefined,
                 value: model
             })),
@@ -975,9 +982,64 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
         return nls.localize('theia/ai-providers/configuration/providerDefault', 'Provider default');
     }
 
+    protected modelOptionsForCurrentProvider(status: CodexProviderStatus | undefined, currentModel = this.preferenceService.get<string>(CODEX_CLI_MODEL_PREF, '')): string[] {
+        const preset = this.currentProviderPreset();
+        const config = PROVIDER_PRESET_CONFIG[preset];
+        const currentProviderModel = currentModel && this.modelMatchesProvider(currentModel, preset) && !this.isStaleCodexPreset(currentModel, preset)
+            ? currentModel
+            : undefined;
+        const statusModels = status?.runtime === config.runtime && status.modelProvider === config.provider ? status.models ?? [] : [];
+        return Array.from(new Set([
+            currentProviderModel,
+            ...statusModels,
+            config.defaultModel,
+            ...(config.models ?? [])
+        ].filter((model): model is string => !!model)));
+    }
+
+    protected modelMetadataForCurrentProvider(status: CodexProviderStatus | undefined): Map<string, CodexProviderModelMetadata> {
+        const preset = this.currentProviderPreset();
+        const config = PROVIDER_PRESET_CONFIG[preset];
+        const metadata = status?.runtime === config.runtime && status.modelProvider === config.provider
+            ? status.modelMetadata ?? []
+            : [];
+        return new Map(metadata.map(model => [model.id, model]));
+    }
+
+    protected modelSummaryLabels(status: CodexProviderStatus): string[] {
+        const metadataById = new Map((status.modelMetadata ?? []).map(model => [model.id, model]));
+        return status.models?.slice(0, 12).map(model => this.modelOptionLabel(model, metadataById.get(model))) ?? [];
+    }
+
+    protected modelOptionLabel(model: string, metadata: CodexProviderModelMetadata | undefined): string {
+        const cost = this.modelCostLabel(metadata);
+        return cost ? `${model} - ${cost}` : model;
+    }
+
+    protected modelCostLabel(metadata: CodexProviderModelMetadata | undefined): string | undefined {
+        if (metadata?.unavailable) {
+            return metadata.unavailableReason ? `Unavailable: ${metadata.unavailableReason}` : 'Unavailable';
+        }
+        switch (metadata?.cost) {
+            case 'free':
+                return 'Free';
+            case 'free-limited':
+                return 'Free limited';
+            case 'included':
+                return 'Included';
+            case 'paid':
+                return 'Paid';
+            case 'unknown':
+                return 'Unknown cost';
+            default:
+                return undefined;
+        }
+    }
+
     protected renderModelPreference(): React.ReactNode {
         const preferenceName = CODEX_CLI_MODEL_PREF;
-        const models = this.status?.models ?? [];
+        const models = this.modelOptionsForCurrentProvider(this.status);
+        const metadataById = this.modelMetadataForCurrentProvider(this.status);
         const listId = 'ai-providers-model-options';
         return (
             <div className="ai-configuration-value-row">
@@ -999,7 +1061,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
                     />
                     {models.length ? (
                         <datalist id={listId}>
-                            {models.map(model => <option key={model} value={model} />)}
+                            {models.map(model => <option key={model} value={model} label={this.modelOptionLabel(model, metadataById.get(model))} />)}
                         </datalist>
                     ) : undefined}
                 </span>

@@ -1,0 +1,17 @@
+version: cybervinci.catalog/v1
+playbooks:
+  - version: cybervinci.playbook/v1
+    id: native-agent-delegate
+    name: Native Agent Delegate (Legacy Disabled)
+    category: Agents
+    source: core
+    enabled: false
+    description: >-
+      Legacy compatibility placeholder. Standard CyberVinci agents now use autonomous playbooks and do not delegate to
+      the original Theia native agent.
+    entry: disabled
+    tools: []
+    states:
+      - id: disabled
+        type: response
+        text: Native delegation is disabled. Use the agent-specific autonomous playbook instead.

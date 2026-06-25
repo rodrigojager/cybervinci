@@ -1,4 +1,4 @@
-import { FlowArtifact, FlowFileMetadata, FlowPipelinePreset, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunExportResult, FlowWorkflow, FlowWorkflowExportResult, FlowWorkflowFileFormat, FlowWorkflowVersion } from '../common';
+import { FlowArtifact, FlowCleanupRunsResult, FlowFileMetadata, FlowModelProfile, FlowPipelinePreset, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunExportResult, FlowWorkflow, FlowWorkflowExportResult, FlowWorkflowFileFormat, FlowWorkflowVersion } from '../common';
 export declare class FlowStore {
     listWorkflows(workspaceRootUri?: string): Promise<FlowWorkflow[]>;
     getWorkflow(workspaceRootUri: string | undefined, workflowId: string): Promise<FlowWorkflow | undefined>;
@@ -22,6 +22,8 @@ export declare class FlowStore {
     savePipelinePreset(workspaceRootUri: string | undefined, preset: FlowPipelinePreset, options?: {
         overwrite?: boolean;
     }): Promise<FlowPipelinePreset>;
+    listWorkspaceModelProfiles(workspaceRootUri: string | undefined): Promise<FlowModelProfile[]>;
+    saveModelProfile(workspaceRootUri: string | undefined, profile: FlowModelProfile): Promise<FlowModelProfile>;
     createWorkflowFromPreset(workspaceRootUri: string | undefined, preset: FlowPipelinePreset, options?: {
         workflowId?: string;
         name?: string;
@@ -38,18 +40,23 @@ export declare class FlowStore {
     listRuns(workspaceRootUri?: string): Promise<FlowRun[]>;
     getRun(workspaceRootUri: string | undefined, runId: string): Promise<FlowRun | undefined>;
     saveRun(workspaceRootUri: string | undefined, run: FlowRun): Promise<void>;
+    cleanupRuns(workspaceRootUri: string | undefined, runIds: string[], options?: {
+        includeArtifacts?: boolean;
+        includeWorktrees?: boolean;
+    }): Promise<FlowCleanupRunsResult>;
     writeRunReport(workspaceRootUri: string | undefined, runId: string, relativePath: string, content: string): Promise<string>;
     workflowFileMetadata(workspaceRootUri: string | undefined, workflowId: string): Promise<FlowFileMetadata>;
     runFileMetadata(workspaceRootUri: string | undefined, runId: string): Promise<FlowFileMetadata>;
     protected workflowFile(workspaceRootUri: string | undefined, workflowId: string, format?: FlowWorkflowFileFormat): Promise<string>;
     protected pipelinePresetFile(workspaceRootUri: string | undefined, presetId: string): Promise<string>;
+    protected modelProfileFile(workspaceRootUri: string | undefined, profileId: string): Promise<string>;
     protected nextWorkflowIdentity(workspaceRootUri: string | undefined, requestedId: string, requestedName: string): Promise<{
         id: string;
         name: string;
     }>;
     protected runFile(workspaceRootUri: string | undefined, runId: string): Promise<string>;
     protected findWorkflowFile(workspaceRootUri: string | undefined, workflowId: string): Promise<string | undefined>;
-    protected ensureDir(workspaceRootUri: string | undefined, child: 'workflows' | 'runs' | 'exports' | 'workflow-history' | 'presets'): Promise<string>;
+    protected ensureDir(workspaceRootUri: string | undefined, child: 'workflows' | 'runs' | 'exports' | 'workflow-history' | 'presets' | 'model-profiles'): Promise<string>;
     protected readJson<T>(file: string): Promise<T>;
     protected readJsonLines<T>(file: string): Promise<T[]>;
     protected readWorkflowFile(file: string): Promise<FlowWorkflow>;

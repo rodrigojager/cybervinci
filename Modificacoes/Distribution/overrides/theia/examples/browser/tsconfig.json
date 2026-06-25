@@ -117,6 +117,9 @@
       "path": "../../packages/branding"
     },
     {
+      "path": "../../packages/cybervinci-markdown-mermaid-preview"
+    },
+    {
       "path": "../../packages/debug"
     },
     {

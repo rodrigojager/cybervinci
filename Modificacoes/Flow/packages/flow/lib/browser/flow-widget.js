@@ -113,13 +113,18 @@ exports.FlowWidget = void 0;
 exports.textToDeliverables = textToDeliverables;
 exports.deliverablesToText = deliverablesToText;
 var browser_1 = require("@theia/core/lib/browser");
+var ai_core_1 = require("@theia/ai-core");
 var common_1 = require("@theia/core/lib/common");
+var command_1 = require("@theia/core/lib/common/command");
+var file_uri_1 = require("@theia/core/lib/common/file-uri");
 var uri_1 = require("@theia/core/lib/common/uri");
+var browser_2 = require("@cybervinci/ai-runtime/lib/browser");
+var common_2 = require("@cybervinci/ai-runtime/lib/common");
 var inversify_1 = require("@theia/core/shared/inversify");
 var React = require("@theia/core/shared/react");
-var browser_2 = require("@theia/workspace/lib/browser");
+var browser_3 = require("@theia/workspace/lib/browser");
 var flow_artifacts_1 = require("./flow-artifacts");
-var common_2 = require("../common");
+var common_3 = require("../common");
 var FlowWidget = function () {
     var _classDecorators = [(0, inversify_1.injectable)()];
     var _classDescriptor;
@@ -136,6 +141,15 @@ var FlowWidget = function () {
     var _workspaceService_decorators;
     var _workspaceService_initializers = [];
     var _workspaceService_extraInitializers = [];
+    var _languageModelRegistry_decorators;
+    var _languageModelRegistry_initializers = [];
+    var _languageModelRegistry_extraInitializers = [];
+    var _aiRuntime_decorators;
+    var _aiRuntime_initializers = [];
+    var _aiRuntime_extraInitializers = [];
+    var _commandService_decorators;
+    var _commandService_initializers = [];
+    var _commandService_extraInitializers = [];
     var _openerService_decorators;
     var _openerService_initializers = [];
     var _openerService_extraInitializers = [];
@@ -147,23 +161,36 @@ var FlowWidget = function () {
             _this.flowService = (__runInitializers(_this, _instanceExtraInitializers), __runInitializers(_this, _flowService_initializers, void 0));
             _this.flowClient = (__runInitializers(_this, _flowService_extraInitializers), __runInitializers(_this, _flowClient_initializers, void 0));
             _this.workspaceService = (__runInitializers(_this, _flowClient_extraInitializers), __runInitializers(_this, _workspaceService_initializers, void 0));
-            _this.openerService = (__runInitializers(_this, _workspaceService_extraInitializers), __runInitializers(_this, _openerService_initializers, void 0));
+            _this.languageModelRegistry = (__runInitializers(_this, _workspaceService_extraInitializers), __runInitializers(_this, _languageModelRegistry_initializers, void 0));
+            _this.aiRuntime = (__runInitializers(_this, _languageModelRegistry_extraInitializers), __runInitializers(_this, _aiRuntime_initializers, void 0));
+            _this.commandService = (__runInitializers(_this, _aiRuntime_extraInitializers), __runInitializers(_this, _commandService_initializers, void 0));
+            _this.openerService = (__runInitializers(_this, _commandService_extraInitializers), __runInitializers(_this, _openerService_initializers, void 0));
             _this.state = (__runInitializers(_this, _openerService_extraInitializers), {
                 templates: [],
                 workflowPatterns: [],
                 modelProfiles: [],
+                languageModels: [],
                 pipelinePresets: [],
                 agents: [],
                 agentSearch: '',
                 patternParameters: {},
                 patternRoleOverrides: {},
                 selectedKind: 'state',
+                detailsPopoverOpen: false,
+                detailsEditMode: false,
                 workflowUndoStack: [],
                 workflowRedoStack: [],
                 workflowSourceVisible: false,
                 runHistory: [],
                 runHistoryVisible: false,
                 prompt: 'Build the next CyberVinci feature with explicit artifacts and a human review gate.',
+                aiMode: 'dynamic-flow',
+                aiPromptOpen: false,
+                aiPrompt: '',
+                aiExecution: {
+                    reasoningPolicy: 'auto',
+                    reasoningEffort: 'medium'
+                },
                 busy: false
             });
             _this.streamDisposers = [];
@@ -172,26 +199,31 @@ var FlowWidget = function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0: return [4 /*yield*/, this.withBusy(function () { return __awaiter(_this, void 0, void 0, function () {
-                                var workspaceRootUri, _a, snapshot, templates, workflowPatterns, modelProfiles, pipelinePresets, agents, selectedPatternId, selectedPattern;
-                                var _b, _c, _d;
-                                return __generator(this, function (_e) {
-                                    switch (_e.label) {
+                                var workspaceRootUri, _a, snapshot, templates, workflowPatterns, modelProfiles, pipelinePresets, agents, languageModels, selectedPatternId, selectedPattern, selectedModelProfileId, selectedModelProfile;
+                                var _b, _c, _d, _e, _f, _g, _h;
+                                return __generator(this, function (_j) {
+                                    switch (_j.label) {
                                         case 0: return [4 /*yield*/, this.workspaceRootUri()];
                                         case 1:
-                                            workspaceRootUri = _e.sent();
+                                            workspaceRootUri = _j.sent();
                                             return [4 /*yield*/, Promise.all([
                                                     this.flowService.getSnapshot({ workspaceRootUri: workspaceRootUri }),
                                                     this.flowService.listWorkflowTemplates(),
                                                     this.flowService.listWorkflowPatterns(),
-                                                    this.flowService.listModelProfiles(),
+                                                    this.flowService.listModelProfiles({ workspaceRootUri: workspaceRootUri }),
                                                     this.flowService.listPipelinePresets({ workspaceRootUri: workspaceRootUri }),
-                                                    this.flowService.listAgentMarkdownFiles({ workspaceRootUri: workspaceRootUri })
+                                                    this.flowService.listAgentMarkdownFiles({ workspaceRootUri: workspaceRootUri }),
+                                                    this.languageModelRegistry.getLanguageModels()
                                                 ])];
                                         case 2:
-                                            _a = _e.sent(), snapshot = _a[0], templates = _a[1], workflowPatterns = _a[2], modelProfiles = _a[3], pipelinePresets = _a[4], agents = _a[5];
+                                            _a = _j.sent(), snapshot = _a[0], templates = _a[1], workflowPatterns = _a[2], modelProfiles = _a[3], pipelinePresets = _a[4], agents = _a[5], languageModels = _a[6];
                                             selectedPatternId = this.state.selectedPatternId || ((_b = workflowPatterns[0]) === null || _b === void 0 ? void 0 : _b.id);
                                             selectedPattern = workflowPatterns.find(function (pattern) { return pattern.id === selectedPatternId; });
-                                            this.state = __assign(__assign({}, this.state), { snapshot: normalizeFlowSnapshotEvents(snapshot), templates: templates, workflowPatterns: workflowPatterns, modelProfiles: modelProfiles, pipelinePresets: pipelinePresets, agents: agents, selectedTemplateId: this.state.selectedTemplateId || ((_c = templates[0]) === null || _c === void 0 ? void 0 : _c.id), selectedPatternId: selectedPatternId, patternParameters: __assign(__assign({}, initialPatternParameterValues(selectedPattern)), this.state.patternParameters), patternRoleOverrides: this.state.patternRoleOverrides, selectedPipelinePresetId: this.state.selectedPipelinePresetId || ((_d = pipelinePresets[0]) === null || _d === void 0 ? void 0 : _d.id), selectedId: this.state.selectedId || (snapshot.activeWorkflow ? Object.keys(snapshot.activeWorkflow.states)[0] : undefined), workflowUndoStack: [], workflowRedoStack: [], workflowSourceText: undefined, workflowSourceError: undefined, workflowSourceVisible: false, workflowSavePreview: undefined, error: undefined });
+                                            selectedModelProfileId = this.state.selectedModelProfileId || ((_c = modelProfiles[0]) === null || _c === void 0 ? void 0 : _c.id);
+                                            selectedModelProfile = modelProfiles.find(function (profile) { return profile.id === selectedModelProfileId; }) || modelProfiles[0];
+                                            this.state = __assign(__assign({}, this.state), { snapshot: normalizeFlowSnapshotEvents(snapshot), templates: templates, workflowPatterns: workflowPatterns, modelProfiles: modelProfiles, selectedModelProfileId: selectedModelProfile === null || selectedModelProfile === void 0 ? void 0 : selectedModelProfile.id, modelProfileDraft: ((_d = this.state.modelProfileDraft) === null || _d === void 0 ? void 0 : _d.id) === (selectedModelProfile === null || selectedModelProfile === void 0 ? void 0 : selectedModelProfile.id)
+                                                    ? this.state.modelProfileDraft
+                                                    : selectedModelProfile ? cloneFlowModelProfile(selectedModelProfile) : undefined, languageModels: toFlowLanguageModelOptions(languageModels), pipelinePresets: pipelinePresets, agents: agents, selectedTemplateId: this.state.selectedTemplateId || ((_e = templates[0]) === null || _e === void 0 ? void 0 : _e.id), selectedPatternId: selectedPatternId, patternParameters: __assign(__assign({}, initialPatternParameterValues(selectedPattern)), this.state.patternParameters), patternRoleOverrides: this.state.patternRoleOverrides, selectedPipelinePresetId: this.state.selectedPipelinePresetId || ((_f = pipelinePresets[0]) === null || _f === void 0 ? void 0 : _f.id), selectedAiWorkflowId: this.state.selectedAiWorkflowId || ((_g = snapshot.activeWorkflow) === null || _g === void 0 ? void 0 : _g.id) || ((_h = snapshot.workflows[0]) === null || _h === void 0 ? void 0 : _h.id), selectedId: this.state.selectedId || (snapshot.activeWorkflow ? Object.keys(snapshot.activeWorkflow.states)[0] : undefined), workflowUndoStack: [], workflowRedoStack: [], workflowSourceText: undefined, workflowSourceError: undefined, workflowSourceVisible: false, workflowSavePreview: undefined, error: undefined });
                                             return [2 /*return*/];
                                     }
                                 });
@@ -202,6 +234,12 @@ var FlowWidget = function () {
                     }
                 });
             }); };
+            _this.toggleAiPromptPanel = function () {
+                var _a, _b, _c, _d;
+                var aiPromptOpen = !_this.state.aiPromptOpen;
+                _this.state = __assign(__assign({}, _this.state), { aiPromptOpen: aiPromptOpen, aiPrompt: _this.state.aiPrompt || _this.state.prompt, selectedAiWorkflowId: _this.state.selectedAiWorkflowId || ((_b = (_a = _this.state.snapshot) === null || _a === void 0 ? void 0 : _a.activeWorkflow) === null || _b === void 0 ? void 0 : _b.id) || ((_d = (_c = _this.state.snapshot) === null || _c === void 0 ? void 0 : _c.workflows[0]) === null || _d === void 0 ? void 0 : _d.id), aiQuestion: aiPromptOpen ? _this.state.aiQuestion : undefined, aiAnswer: aiPromptOpen ? _this.state.aiAnswer : undefined });
+                _this.update();
+            };
             _this.handleTopMenuPointerDown = function (event) {
                 if (!_this.state.openMenu && !_this.state.runHistoryVisible) {
                     return;
@@ -210,12 +248,16 @@ var FlowWidget = function () {
                 if (!(target instanceof Element)) {
                     return;
                 }
-                if (target.closest('.flow__top-menus, .flow__run-history')) {
+                if (target.closest('.flow__top-menus, .flow__run-history, .cv-ai-runtime-menu')) {
                     return;
                 }
                 _this.closeTopMenus();
             };
             _this.handleTopMenuKeyDown = function (event) {
+                if (event.key === 'Escape' && _this.state.detailsPopoverOpen) {
+                    _this.closeDetailsPopover();
+                    return;
+                }
                 if (event.key === 'Escape' && (_this.state.openMenu || _this.state.runHistoryVisible)) {
                     _this.closeTopMenus();
                 }
@@ -230,6 +272,67 @@ var FlowWidget = function () {
                 _this.state = __assign(__assign({}, _this.state), { selectedPatternId: selectedPatternId, patternParameters: initialPatternParameterValues(pattern), patternRoleOverrides: {} });
                 _this.update();
             };
+            _this.setSelectedModelProfile = function (selectedModelProfileId) {
+                var profile = _this.state.modelProfiles.find(function (candidate) { return candidate.id === selectedModelProfileId; });
+                _this.state = __assign(__assign({}, _this.state), { selectedModelProfileId: selectedModelProfileId, modelProfileDraft: profile ? cloneFlowModelProfile(profile) : undefined });
+                _this.update();
+            };
+            _this.updateModelProfileDraft = function (patch) {
+                var draft = _this.state.modelProfileDraft
+                    || _this.state.modelProfiles.find(function (profile) { return profile.id === _this.state.selectedModelProfileId; });
+                if (!draft) {
+                    return;
+                }
+                _this.state = __assign(__assign({}, _this.state), { modelProfileDraft: __assign(__assign({}, draft), patch) });
+                _this.update();
+            };
+            _this.updateModelProfileExecutionDraft = function (selection) {
+                var draft = _this.state.modelProfileDraft
+                    || _this.state.modelProfiles.find(function (profile) { return profile.id === _this.state.selectedModelProfileId; });
+                if (!draft) {
+                    return;
+                }
+                var statePatch = aiExecutionSelectionToFlowStatePatch(selection, __assign(__assign({}, (draft.execution || {})), { profileId: draft.id }));
+                _this.updateModelProfileDraft({
+                    provider: statePatch.provider,
+                    execution: __assign(__assign({}, (statePatch.modelExecution || {})), { profileId: draft.id })
+                });
+            };
+            _this.saveModelProfileDraft = function () { return __awaiter(_this, void 0, void 0, function () {
+                var draft;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            draft = this.state.modelProfileDraft;
+                            if (!draft) {
+                                return [2 /*return*/];
+                            }
+                            return [4 /*yield*/, this.withBusy(function () { return __awaiter(_this, void 0, void 0, function () {
+                                    var workspaceRootUri, saved, modelProfiles, selected;
+                                    return __generator(this, function (_a) {
+                                        switch (_a.label) {
+                                            case 0: return [4 /*yield*/, this.workspaceRootUri()];
+                                            case 1:
+                                                workspaceRootUri = _a.sent();
+                                                return [4 /*yield*/, this.flowService.saveModelProfile({ workspaceRootUri: workspaceRootUri, profile: draft })];
+                                            case 2:
+                                                saved = _a.sent();
+                                                return [4 /*yield*/, this.flowService.listModelProfiles({ workspaceRootUri: workspaceRootUri })];
+                                            case 3:
+                                                modelProfiles = _a.sent();
+                                                selected = modelProfiles.find(function (profile) { return profile.id === saved.id; }) || saved;
+                                                this.state = __assign(__assign({}, this.state), { modelProfiles: modelProfiles, selectedModelProfileId: selected.id, modelProfileDraft: cloneFlowModelProfile(selected), error: undefined });
+                                                return [2 /*return*/];
+                                        }
+                                    });
+                                }); })];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            }); };
             _this.updatePatternParameter = function (parameterId, value) {
                 var _a;
                 _this.state = __assign(__assign({}, _this.state), { patternParameters: __assign(__assign({}, _this.state.patternParameters), (_a = {}, _a[parameterId] = value, _a)) });
@@ -374,6 +477,63 @@ var FlowWidget = function () {
                     }
                 });
             }); };
+            _this.openStateDetails = function (selectedId) {
+                _this.state = __assign(__assign({}, _this.state), { selectedKind: 'state', selectedId: selectedId, detailsPopoverOpen: true, detailsEditMode: false, openMenu: undefined, runHistoryVisible: false });
+                _this.update();
+            };
+            _this.openTransitionDetails = function (selectedId) {
+                _this.state = __assign(__assign({}, _this.state), { selectedKind: 'transition', selectedId: selectedId, detailsPopoverOpen: true, detailsEditMode: false, openMenu: undefined, runHistoryVisible: false });
+                _this.update();
+            };
+            _this.startDetailsEdit = function () {
+                if (!_this.state.detailsPopoverOpen) {
+                    return;
+                }
+                _this.state = __assign(__assign({}, _this.state), { detailsEditMode: true });
+                _this.update();
+            };
+            _this.exitDetailsEdit = function () {
+                if (!_this.state.detailsPopoverOpen) {
+                    return;
+                }
+                _this.state = __assign(__assign({}, _this.state), { detailsEditMode: false });
+                _this.update();
+            };
+            _this.closeDetailsPopover = function () {
+                if (!_this.state.detailsPopoverOpen) {
+                    return;
+                }
+                _this.state = __assign(__assign({}, _this.state), { detailsPopoverOpen: false, detailsEditMode: false });
+                _this.update();
+            };
+            _this.saveWorkflowFileAndExitEdit = function () { return __awaiter(_this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.saveWorkflowFile()];
+                        case 1:
+                            _a.sent();
+                            if (!this.state.workflowSavePreview && !this.state.error) {
+                                this.state = __assign(__assign({}, this.state), { detailsEditMode: false });
+                                this.update();
+                            }
+                            return [2 /*return*/];
+                    }
+                });
+            }); };
+            _this.configureAiProvider = function (provider) { return __awaiter(_this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.commandService.executeCommand('chat:ai-providers-configure', {
+                                providerId: provider.id,
+                                runtime: provider.runtime,
+                                modelProvider: provider.modelProvider
+                            })];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            }); };
             _this.updateWorkflowSourceDraft = function (workflowSourceText) { return __awaiter(_this, void 0, void 0, function () {
                 var snapshot, currentWorkflow, workflow, validation;
                 return __generator(this, function (_a) {
@@ -383,8 +543,8 @@ var FlowWidget = function () {
                         return [2 /*return*/];
                     }
                     try {
-                        workflow = (0, common_2.parseWorkflowSource)(workflowSourceText, currentWorkflow);
-                        validation = (0, common_2.validateFlowWorkflow)(workflow);
+                        workflow = (0, common_3.parseWorkflowSource)(workflowSourceText, currentWorkflow);
+                        validation = (0, common_3.validateFlowWorkflow)(workflow);
                         this.state = __assign(__assign({}, this.state), { workflowSourceText: workflowSourceText, workflowSourceError: undefined, snapshot: __assign(__assign({}, snapshot), { validation: validation }), error: undefined });
                     }
                     catch (error) {
@@ -406,14 +566,14 @@ var FlowWidget = function () {
                                 return [2 /*return*/];
                             }
                             try {
-                                activeWorkflow = (0, common_2.parseWorkflowSource)(workflowSourceText, currentWorkflow);
+                                activeWorkflow = (0, common_3.parseWorkflowSource)(workflowSourceText, currentWorkflow);
                             }
                             catch (error) {
                                 this.state = __assign(__assign({}, this.state), { workflowSourceError: error instanceof Error ? error.message : String(error) });
                                 this.update();
                                 return [2 /*return*/];
                             }
-                            validation = (0, common_2.validateFlowWorkflow)(activeWorkflow);
+                            validation = (0, common_3.validateFlowWorkflow)(activeWorkflow);
                             if (!validation.valid) {
                                 this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { validation: validation }), workflowSourceError: undefined, error: "Workflow source was not applied because it has ".concat(validation.errors.length, " validation error").concat(validation.errors.length === 1 ? '' : 's', ".") });
                                 this.update();
@@ -422,7 +582,7 @@ var FlowWidget = function () {
                             return [4 /*yield*/, this.setActiveWorkflow(activeWorkflow, this.state.selectedKind, this.state.selectedId, true)];
                         case 1:
                             _a.sent();
-                            this.state = __assign(__assign({}, this.state), { workflowSourceText: (0, common_2.formatWorkflowSource)(activeWorkflow), workflowSourceError: undefined });
+                            this.state = __assign(__assign({}, this.state), { workflowSourceText: (0, common_3.formatWorkflowSource)(activeWorkflow), workflowSourceError: undefined });
                             this.update();
                             return [2 /*return*/];
                     }
@@ -449,7 +609,7 @@ var FlowWidget = function () {
                             if (!snapshot || !workflow) {
                                 return [2 /*return*/, undefined];
                             }
-                            _a = (0, common_2.addFlowWorkflowState)(workflow, stateType), activeWorkflow = _a.workflow, stateId = _a.stateId;
+                            _a = (0, common_3.addFlowWorkflowState)(workflow, stateType), activeWorkflow = _a.workflow, stateId = _a.stateId;
                             return [4 /*yield*/, this.replaceActiveWorkflow(activeWorkflow, 'state', stateId)];
                         case 1:
                             _b.sent();
@@ -464,12 +624,12 @@ var FlowWidget = function () {
                         case 0:
                             snapshot = this.state.snapshot;
                             workflow = snapshot === null || snapshot === void 0 ? void 0 : snapshot.activeWorkflow;
-                            existingState = workflow ? (0, common_2.findFlowWorkflowState)(workflow, stateId) : undefined;
+                            existingState = workflow ? (0, common_3.findFlowWorkflowState)(workflow, stateId) : undefined;
                             if (!snapshot || !workflow || !existingState) {
                                 return [2 /*return*/];
                             }
-                            updatedState = (0, common_2.compactFlowState)(__assign(__assign({}, existingState.state), statePatch));
-                            return [4 /*yield*/, this.replaceActiveWorkflow((0, common_2.replaceFlowWorkflowState)(workflow, stateId, updatedState), 'state', stateId)];
+                            updatedState = (0, common_3.compactFlowState)(__assign(__assign({}, existingState.state), statePatch));
+                            return [4 /*yield*/, this.replaceActiveWorkflow((0, common_3.replaceFlowWorkflowState)(workflow, stateId, updatedState), 'state', stateId)];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -483,12 +643,12 @@ var FlowWidget = function () {
                         case 0:
                             snapshot = this.state.snapshot;
                             workflow = snapshot === null || snapshot === void 0 ? void 0 : snapshot.activeWorkflow;
-                            existingState = workflow ? (0, common_2.findFlowWorkflowState)(workflow, stateId) : undefined;
+                            existingState = workflow ? (0, common_3.findFlowWorkflowState)(workflow, stateId) : undefined;
                             if (!snapshot || !workflow || !existingState) {
                                 return [2 /*return*/];
                             }
-                            updatedState = (0, common_2.compactFlowState)(__assign(__assign({}, existingState.state), { layout: __assign(__assign({}, (existingState.state.layout || {})), { x: Math.round(Math.max(0, position.x)), y: Math.round(Math.max(0, position.y)) }) }));
-                            return [4 /*yield*/, this.replaceActiveWorkflow((0, common_2.replaceFlowWorkflowState)(workflow, stateId, updatedState), 'state', stateId)];
+                            updatedState = (0, common_3.compactFlowState)(__assign(__assign({}, existingState.state), { layout: __assign(__assign({}, (existingState.state.layout || {})), { x: Math.round(Math.max(0, position.x)), y: Math.round(Math.max(0, position.y)) }) }));
+                            return [4 /*yield*/, this.replaceActiveWorkflow((0, common_3.replaceFlowWorkflowState)(workflow, stateId, updatedState), 'state', stateId)];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -502,11 +662,11 @@ var FlowWidget = function () {
                         case 0:
                             snapshot = this.state.snapshot;
                             workflow = snapshot === null || snapshot === void 0 ? void 0 : snapshot.activeWorkflow;
-                            parallelState = workflow ? (0, common_2.findFlowWorkflowState)(workflow, parallelStateId) : undefined;
+                            parallelState = workflow ? (0, common_3.findFlowWorkflowState)(workflow, parallelStateId) : undefined;
                             if (!snapshot || !workflow || !parallelState || parallelState.state.type !== 'parallel') {
                                 return [2 /*return*/, undefined];
                             }
-                            _a = (0, common_2.addFlowParallelBranch)(workflow, parallelStateId, branchType), activeWorkflow = _a.workflow, branchId = _a.branchId;
+                            _a = (0, common_3.addFlowParallelBranch)(workflow, parallelStateId, branchType), activeWorkflow = _a.workflow, branchId = _a.branchId;
                             if (!branchId) {
                                 return [2 /*return*/, undefined];
                             }
@@ -524,18 +684,18 @@ var FlowWidget = function () {
                         case 0:
                             snapshot = this.state.snapshot;
                             workflow = snapshot === null || snapshot === void 0 ? void 0 : snapshot.activeWorkflow;
-                            existingState = workflow ? (0, common_2.findFlowWorkflowState)(workflow, stateId) : undefined;
+                            existingState = workflow ? (0, common_3.findFlowWorkflowState)(workflow, stateId) : undefined;
                             if (!snapshot || !workflow || !existingState) {
                                 return [2 /*return*/];
                             }
-                            references = (0, common_2.flowWorkflowStateReferences)(workflow, stateId);
+                            references = (0, common_3.flowWorkflowStateReferences)(workflow, stateId);
                             if (references.length > 0) {
                                 this.state = __assign(__assign({}, this.state), { error: "Cannot delete state \"".concat(stateId, "\" because it is still referenced by ").concat(references.join(', '), ". Remove those references first.") });
                                 this.update();
                                 return [2 /*return*/];
                             }
-                            activeWorkflow = (0, common_2.removeFlowWorkflowState)(workflow, stateId);
-                            nextStateId = (0, common_2.flowWorkflowStateIds)(activeWorkflow)[0];
+                            activeWorkflow = (0, common_3.removeFlowWorkflowState)(workflow, stateId);
+                            nextStateId = (0, common_3.flowWorkflowStateIds)(activeWorkflow)[0];
                             return [4 /*yield*/, this.replaceActiveWorkflow(activeWorkflow, nextStateId ? 'state' : 'transition', nextStateId)];
                         case 1:
                             _a.sent();
@@ -553,7 +713,7 @@ var FlowWidget = function () {
                             if (!snapshot || !workflow) {
                                 return [2 /*return*/, undefined];
                             }
-                            _a = (0, common_2.addFlowWorkflowTransition)(workflow, from, to), activeWorkflow = _a.workflow, transition = _a.transition;
+                            _a = (0, common_3.addFlowWorkflowTransition)(workflow, from, to), activeWorkflow = _a.workflow, transition = _a.transition;
                             if (!transition) {
                                 return [2 /*return*/, undefined];
                             }
@@ -602,7 +762,7 @@ var FlowWidget = function () {
                                 return [2 /*return*/];
                             }
                             activeWorkflow = __assign(__assign({}, workflow), { transitions: transitions });
-                            return [4 /*yield*/, this.replaceActiveWorkflow(activeWorkflow, 'state', (0, common_2.flowWorkflowStateIds)(activeWorkflow)[0])];
+                            return [4 /*yield*/, this.replaceActiveWorkflow(activeWorkflow, 'state', (0, common_3.flowWorkflowStateIds)(activeWorkflow)[0])];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -662,7 +822,7 @@ var FlowWidget = function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0: return [4 /*yield*/, this.withBusy(function () { return __awaiter(_this, void 0, void 0, function () {
-                                var snapshot, workflow, activeRun, _a, _b;
+                                var snapshot, workflow, prompt, activeRun, _a, _b;
                                 var _c;
                                 var _d;
                                 return __generator(this, function (_e) {
@@ -673,12 +833,13 @@ var FlowWidget = function () {
                                             if (!workflow || !snapshot) {
                                                 return [2 /*return*/];
                                             }
+                                            prompt = this.requireRunPrompt(this.state.prompt);
                                             _b = (_a = this.flowService).startRun;
                                             _c = {};
                                             return [4 /*yield*/, this.workspaceRootUri()];
                                         case 1: return [4 /*yield*/, _b.apply(_a, [(_c.workspaceRootUri = _e.sent(),
                                                     _c.workflowId = workflow.id,
-                                                    _c.prompt = this.state.prompt,
+                                                    _c.prompt = prompt,
                                                     _c)])];
                                         case 2:
                                             activeRun = _e.sent();
@@ -962,7 +1123,7 @@ var FlowWidget = function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0: return [4 /*yield*/, this.withBusy(function () { return __awaiter(_this, void 0, void 0, function () {
-                                var patternId, workspaceRootUri, activeRun, activeWorkflow, workflows, validation, previousSnapshot, capabilities, _a;
+                                var patternId, prompt, workspaceRootUri, activeRun, activeWorkflow, workflows, validation, previousSnapshot, capabilities, _a;
                                 return __generator(this, function (_b) {
                                     switch (_b.label) {
                                         case 0:
@@ -970,6 +1131,7 @@ var FlowWidget = function () {
                                             if (!patternId) {
                                                 return [2 /*return*/];
                                             }
+                                            prompt = this.requireRunPrompt(this.state.prompt);
                                             return [4 /*yield*/, this.workspaceRootUri()];
                                         case 1:
                                             workspaceRootUri = _b.sent();
@@ -978,7 +1140,7 @@ var FlowWidget = function () {
                                                     patternId: patternId,
                                                     parameters: this.state.patternParameters,
                                                     roleOverrides: patternRoleOverridesOrUndefined(this.state.patternRoleOverrides),
-                                                    prompt: this.state.prompt
+                                                    prompt: prompt
                                                 })];
                                         case 2:
                                             activeRun = _b.sent();
@@ -1014,6 +1176,168 @@ var FlowWidget = function () {
                                     }
                                 });
                             }); }, function (error) { return classifyExecutionModeFromError(error); })];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            }); };
+            _this.runFlowAiPrompt = function () { return __awaiter(_this, void 0, void 0, function () {
+                var aiRuntime, prompt;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!this.aiRuntime) {
+                                this.state = __assign(__assign({}, this.state), { error: 'CyberVinci AI Runtime is not available.' });
+                                this.update();
+                                return [2 /*return*/];
+                            }
+                            aiRuntime = this.aiRuntime;
+                            prompt = this.state.aiPrompt.trim();
+                            if (!prompt) {
+                                return [2 /*return*/];
+                            }
+                            return [4 /*yield*/, this.withBusy(function () { return __awaiter(_this, void 0, void 0, function () {
+                                    var workspaceRootUri, workspacePath, result_1, workflowId, activeRun_1, _a, authoringSpec, workflows, pipelinePresets, aiProviders, capabilities, _b, input, result, draft, activeRun;
+                                    var _c, _d, _e, _f, _g, _h, _j, _k;
+                                    return __generator(this, function (_l) {
+                                        switch (_l.label) {
+                                            case 0: return [4 /*yield*/, this.workspaceRootUri()];
+                                            case 1:
+                                                workspaceRootUri = _l.sent();
+                                                return [4 /*yield*/, this.workspaceRootPath()];
+                                            case 2:
+                                                workspacePath = _l.sent();
+                                                if (!(this.state.aiMode === 'chat')) return [3 /*break*/, 4];
+                                                return [4 /*yield*/, aiRuntime.runTask({
+                                                        surfaceId: 'flow',
+                                                        action: 'flow.chat',
+                                                        workspacePath: workspacePath,
+                                                        userPrompt: prompt,
+                                                        systemPrompt: 'You are CyberVinci Flow AI. Answer concisely about workflows, saved flows, dynamic flows, agents, and pipeline execution. Do not start a workflow unless the user selects a Flow mode.',
+                                                        input: {
+                                                            activeWorkflow: ((_c = this.state.snapshot) === null || _c === void 0 ? void 0 : _c.activeWorkflow) ? (0, common_3.redactFlowSecretsValue)(this.state.snapshot.activeWorkflow) : undefined,
+                                                            workflows: (((_d = this.state.snapshot) === null || _d === void 0 ? void 0 : _d.workflows) || []).map(toFlowWorkflowSummaryForAi),
+                                                            selectedWorkflowId: this.state.selectedAiWorkflowId,
+                                                            selectedPipelinePresetId: this.state.selectedPipelinePresetId
+                                                        },
+                                                        context: {
+                                                            mode: 'memory-if-available',
+                                                            maxItems: 5,
+                                                            tokenBudget: 1200
+                                                        },
+                                                        output: {
+                                                            mode: 'text'
+                                                        },
+                                                        effectPolicy: {
+                                                            previewOnly: true,
+                                                            workspaceWrites: 'forbidden',
+                                                            shellExecution: 'forbidden',
+                                                            requireUserConfirmation: false
+                                                        },
+                                                        execution: __assign(__assign({}, this.state.aiExecution), { collaborationMode: 'default' })
+                                                    })];
+                                            case 3:
+                                                result_1 = _l.sent();
+                                                this.state = __assign(__assign({}, this.state), { prompt: prompt, aiPrompt: prompt, aiPromptOpen: true, aiQuestion: undefined, aiAnswer: result_1.text, error: undefined });
+                                                return [2 /*return*/];
+                                            case 4:
+                                                if (!(this.state.aiMode === 'saved-flow')) return [3 /*break*/, 7];
+                                                workflowId = this.state.selectedAiWorkflowId || ((_f = (_e = this.state.snapshot) === null || _e === void 0 ? void 0 : _e.activeWorkflow) === null || _f === void 0 ? void 0 : _f.id) || ((_h = (_g = this.state.snapshot) === null || _g === void 0 ? void 0 : _g.workflows[0]) === null || _h === void 0 ? void 0 : _h.id);
+                                                if (!workflowId) {
+                                                    throw new Error('Selecione um workflow salvo para rodar a pipeline completa.');
+                                                }
+                                                return [4 /*yield*/, this.flowService.startRun({
+                                                        workspaceRootUri: workspaceRootUri,
+                                                        workflowId: workflowId,
+                                                        prompt: prompt
+                                                    })];
+                                            case 5:
+                                                activeRun_1 = _l.sent();
+                                                return [4 /*yield*/, this.applyExternalRunState(workspaceRootUri, activeRun_1.workflowId, activeRun_1, prompt)];
+                                            case 6:
+                                                _l.sent();
+                                                this.state = __assign(__assign({}, this.state), { prompt: prompt, aiPrompt: prompt, aiPromptOpen: false, aiQuestion: undefined, aiAnswer: undefined, selectedAiWorkflowId: workflowId, error: undefined });
+                                                return [2 /*return*/];
+                                            case 7: return [4 /*yield*/, Promise.all([
+                                                    this.flowService.getAiAuthoringSpec(),
+                                                    this.flowService.listWorkflows({ workspaceRootUri: workspaceRootUri }),
+                                                    this.flowService.listPipelinePresets({ workspaceRootUri: workspaceRootUri }),
+                                                    aiRuntime.listProviders({ workspacePath: workspacePath, includeUnavailable: true })
+                                                ])];
+                                            case 8:
+                                                _a = _l.sent(), authoringSpec = _a[0], workflows = _a[1], pipelinePresets = _a[2], aiProviders = _a[3];
+                                                _b = ((_j = this.state.snapshot) === null || _j === void 0 ? void 0 : _j.capabilities);
+                                                if (_b) return [3 /*break*/, 10];
+                                                return [4 /*yield*/, this.flowService.getCapabilities()];
+                                            case 9:
+                                                _b = (_l.sent());
+                                                _l.label = 10;
+                                            case 10:
+                                                capabilities = _b;
+                                                input = {
+                                                    authoringSpec: authoringSpec,
+                                                    activeWorkflow: ((_k = this.state.snapshot) === null || _k === void 0 ? void 0 : _k.activeWorkflow) ? (0, common_3.redactFlowSecretsValue)(this.state.snapshot.activeWorkflow) : undefined,
+                                                    workflowSummaries: workflows.map(toFlowWorkflowSummaryForAi),
+                                                    workflowPatterns: this.state.workflowPatterns,
+                                                    modelProfiles: this.state.modelProfiles,
+                                                    pipelinePresets: pipelinePresets,
+                                                    aiProviders: aiProviders,
+                                                    languageModels: this.state.languageModels,
+                                                    capabilities: capabilities,
+                                                    selectedPatternId: this.state.selectedPatternId,
+                                                    selectedPipelinePresetId: this.state.selectedPipelinePresetId
+                                                };
+                                                return [4 /*yield*/, aiRuntime.runTask({
+                                                        surfaceId: 'flow',
+                                                        action: 'flow.authorWorkflow',
+                                                        workspacePath: workspacePath,
+                                                        userPrompt: prompt,
+                                                        systemPrompt: authoringSpec.systemPrompt,
+                                                        input: input,
+                                                        context: {
+                                                            mode: 'memory-if-available',
+                                                            maxItems: 8,
+                                                            tokenBudget: 1600
+                                                        },
+                                                        output: {
+                                                            mode: 'json',
+                                                            schemaName: 'FlowAiAuthoringDraft',
+                                                            schema: authoringSpec.outputSchema,
+                                                            instructions: 'Return exactly one FlowAiAuthoringDraft. Use ask_user only when required information is missing.'
+                                                        },
+                                                        effectPolicy: {
+                                                            previewOnly: false,
+                                                            workspaceWrites: 'allow-with-approval',
+                                                            shellExecution: 'forbidden',
+                                                            requireUserConfirmation: true
+                                                        },
+                                                        execution: __assign(__assign({}, this.state.aiExecution), { collaborationMode: 'default' })
+                                                    })];
+                                            case 11:
+                                                result = _l.sent();
+                                                draft = coerceFlowAiAuthoringDraft(result.structured);
+                                                if (draft.action === 'ask_user') {
+                                                    this.state = __assign(__assign({}, this.state), { prompt: prompt, aiPrompt: prompt, aiPromptOpen: true, aiQuestion: draft.questionMarkdown || draft.reason || 'Flow AI needs more detail before it can build the workflow.', error: undefined });
+                                                    return [2 /*return*/];
+                                                }
+                                                return [4 /*yield*/, this.flowService.runDynamicWorkflow({
+                                                        workspaceRootUri: workspaceRootUri,
+                                                        prompt: prompt,
+                                                        preferSaved: true,
+                                                        authoringDraft: draft
+                                                    })];
+                                            case 12:
+                                                activeRun = _l.sent();
+                                                return [4 /*yield*/, this.applyExternalRunState(workspaceRootUri, activeRun.workflowId, activeRun, prompt)];
+                                            case 13:
+                                                _l.sent();
+                                                this.state = __assign(__assign({}, this.state), { prompt: prompt, aiPrompt: prompt, aiPromptOpen: false, aiQuestion: undefined, aiAnswer: undefined, error: undefined });
+                                                return [2 /*return*/];
+                                        }
+                                    });
+                                }); }, function (error) { return classifyExecutionModeFromError(error); })];
                         case 1:
                             _a.sent();
                             return [2 /*return*/];
@@ -1166,6 +1490,50 @@ var FlowWidget = function () {
                     }
                 });
             }); };
+            _this.selectStateAgent = function (stateId, selection) { return __awaiter(_this, void 0, void 0, function () {
+                var workflow, existingState, relativePath, existingAgentId, agentId, activeWorkflow;
+                var _a;
+                var _b, _c;
+                return __generator(this, function (_d) {
+                    switch (_d.label) {
+                        case 0:
+                            workflow = (_b = this.state.snapshot) === null || _b === void 0 ? void 0 : _b.activeWorkflow;
+                            existingState = workflow ? (0, common_3.findFlowWorkflowState)(workflow, stateId) : undefined;
+                            if (!workflow || !existingState) {
+                                return [2 /*return*/];
+                            }
+                            if (!!selection) return [3 /*break*/, 2];
+                            return [4 /*yield*/, this.updateWorkflowState(stateId, { agent: undefined })];
+                        case 1:
+                            _d.sent();
+                            return [2 /*return*/];
+                        case 2:
+                            if (!selection.startsWith('id:')) return [3 /*break*/, 4];
+                            return [4 /*yield*/, this.updateWorkflowState(stateId, { agent: selection.slice(3) })];
+                        case 3:
+                            _d.sent();
+                            return [2 /*return*/];
+                        case 4:
+                            if (!!selection.startsWith('path:')) return [3 /*break*/, 6];
+                            return [4 /*yield*/, this.updateWorkflowState(stateId, { agent: selection })];
+                        case 5:
+                            _d.sent();
+                            return [2 /*return*/];
+                        case 6:
+                            relativePath = selection.slice(5);
+                            existingAgentId = (_c = Object.entries(workflow.agents || {}).find(function (_a) {
+                                var pathValue = _a[1];
+                                return pathValue === relativePath;
+                            })) === null || _c === void 0 ? void 0 : _c[0];
+                            agentId = existingAgentId || uniqueWorkflowAgentId(workflow, relativePath);
+                            activeWorkflow = (0, common_3.replaceFlowWorkflowState)(__assign(__assign({}, workflow), { agents: __assign(__assign({}, (workflow.agents || {})), (_a = {}, _a[agentId] = relativePath, _a)) }), stateId, __assign(__assign({}, existingState.state), { agent: agentId }));
+                            return [4 /*yield*/, this.replaceActiveWorkflow(activeWorkflow, 'state', stateId)];
+                        case 7:
+                            _d.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            }); };
             _this.openArtifact = function (artifactUri) { return __awaiter(_this, void 0, void 0, function () {
                 var _this = this;
                 return __generator(this, function (_a) {
@@ -1278,7 +1646,7 @@ var FlowWidget = function () {
                                             if (!workflow || !snapshot) {
                                                 return [2 /*return*/];
                                             }
-                                            localValidation = (0, common_2.validateFlowWorkflow)(workflow);
+                                            localValidation = (0, common_3.validateFlowWorkflow)(workflow);
                                             if (!localValidation.valid) {
                                                 this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { validation: localValidation }), error: "Workflow was not saved because it has ".concat(localValidation.errors.length, " validation error").concat(localValidation.errors.length === 1 ? '' : 's', ".") });
                                                 return [2 /*return*/];
@@ -1289,7 +1657,7 @@ var FlowWidget = function () {
                                             return [4 /*yield*/, this.flowService.reloadWorkflow({ workspaceRootUri: workspaceRootUri, workflowId: workflow.id })];
                                         case 2:
                                             fileWorkflow = _a.sent();
-                                            diff = (0, common_2.compareFlowWorkflowStructure)(fileWorkflow, workflow);
+                                            diff = (0, common_3.compareFlowWorkflowStructure)(fileWorkflow, workflow);
                                             if (diff.items.length > 0) {
                                                 this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { validation: localValidation }), workflowSavePreview: diff, error: undefined });
                                                 return [2 /*return*/];
@@ -1321,7 +1689,7 @@ var FlowWidget = function () {
                                             if (!workflow || !snapshot) {
                                                 return [2 /*return*/];
                                             }
-                                            localValidation = (0, common_2.validateFlowWorkflow)(workflow);
+                                            localValidation = (0, common_3.validateFlowWorkflow)(workflow);
                                             if (!localValidation.valid) {
                                                 this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { validation: localValidation }), workflowSavePreview: undefined, error: "Workflow was not saved because it has ".concat(localValidation.errors.length, " validation error").concat(localValidation.errors.length === 1 ? '' : 's', ".") });
                                                 return [2 /*return*/];
@@ -1369,7 +1737,7 @@ var FlowWidget = function () {
                                                 return [4 /*yield*/, this.flowService.getSnapshot({ workspaceRootUri: workspaceRootUri })];
                                             case 3:
                                                 snapshot = _a.sent();
-                                                this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { activeWorkflow: workflow, validation: (0, common_2.validateFlowWorkflow)(workflow) }), workflowUndoStack: [], workflowRedoStack: [], workflowSourceText: (0, common_2.formatWorkflowSource)(workflow), workflowSourceError: undefined, workflowSavePreview: undefined, selectedKind: 'state', selectedId: Object.keys(workflow.states || {})[0], error: undefined });
+                                                this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { activeWorkflow: workflow, validation: (0, common_3.validateFlowWorkflow)(workflow) }), workflowUndoStack: [], workflowRedoStack: [], workflowSourceText: (0, common_3.formatWorkflowSource)(workflow), workflowSourceError: undefined, workflowSavePreview: undefined, selectedKind: 'state', selectedId: Object.keys(workflow.states || {})[0], error: undefined });
                                                 return [2 /*return*/];
                                         }
                                     });
@@ -1589,7 +1957,7 @@ var FlowWidget = function () {
                                                 _e = { workflows: workflows, activeWorkflow: activeWorkflow };
                                                 return [4 /*yield*/, this.flowService.validateWorkflow(activeWorkflow)];
                                             case 4:
-                                                _a.state = __assign.apply(void 0, _b.concat([(_d.snapshot = __assign.apply(void 0, _c.concat([(_e.validation = _f.sent(), _e)])), _d.selectedKind = 'state', _d.selectedId = Object.keys(activeWorkflow.states || {})[0], _d.workflowUndoStack = [], _d.workflowRedoStack = [], _d.workflowSourceText = (0, common_2.formatWorkflowSource)(activeWorkflow), _d.workflowSourceError = undefined, _d.workflowSavePreview = undefined, _d.error = undefined, _d)]));
+                                                _a.state = __assign.apply(void 0, _b.concat([(_d.snapshot = __assign.apply(void 0, _c.concat([(_e.validation = _f.sent(), _e)])), _d.selectedKind = 'state', _d.selectedId = Object.keys(activeWorkflow.states || {})[0], _d.workflowUndoStack = [], _d.workflowRedoStack = [], _d.workflowSourceText = (0, common_3.formatWorkflowSource)(activeWorkflow), _d.workflowSourceError = undefined, _d.workflowSavePreview = undefined, _d.error = undefined, _d)]));
                                                 return [2 /*return*/];
                                         }
                                     });
@@ -1678,7 +2046,47 @@ var FlowWidget = function () {
                     }
                 });
             }); };
-            _this.approveGate = function (gateId, decision) { return __awaiter(_this, void 0, void 0, function () {
+            _this.cleanupActiveRun = function () { return __awaiter(_this, void 0, void 0, function () {
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.withBusy(function () { return __awaiter(_this, void 0, void 0, function () {
+                                var snapshot, activeRun, workspaceRootUri, result;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            snapshot = this.state.snapshot;
+                                            activeRun = snapshot === null || snapshot === void 0 ? void 0 : snapshot.activeRun;
+                                            if (!snapshot || !activeRun) {
+                                                return [2 /*return*/];
+                                            }
+                                            return [4 /*yield*/, this.workspaceRootUri()];
+                                        case 1:
+                                            workspaceRootUri = _a.sent();
+                                            return [4 /*yield*/, this.unsubscribeActiveRunStream()];
+                                        case 2:
+                                            _a.sent();
+                                            return [4 /*yield*/, this.flowService.cleanupRuns({
+                                                    workspaceRootUri: workspaceRootUri,
+                                                    runIds: [activeRun.id],
+                                                    includeArtifacts: true,
+                                                    includeWorktrees: true
+                                                })];
+                                        case 3:
+                                            result = _a.sent();
+                                            this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { activeRun: undefined }), error: result.failed.length ? "Run cleanup completed with ".concat(result.failed.length, " issue(s).") : undefined });
+                                            this.update();
+                                            return [2 /*return*/];
+                                    }
+                                });
+                            }); })];
+                        case 1:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            }); };
+            _this.approveGate = function (gateId, decision, decisionId, targetStateId, note) { return __awaiter(_this, void 0, void 0, function () {
                 var _this = this;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -1701,6 +2109,10 @@ var FlowWidget = function () {
                                                     _c.runId = activeRun.id,
                                                     _c.gateId = gateId,
                                                     _c.decision = decision,
+                                                    _c.decisionId = decisionId,
+                                                    _c.targetStateId = targetStateId,
+                                                    _c.note = note,
+                                                    _c.approvedBy = 'Flow UI',
                                                     _c)])];
                                         case 2:
                                             updatedRun = _e.sent();
@@ -1897,12 +2309,17 @@ var FlowWidget = function () {
             return _this;
         }
         FlowWidget_1.prototype.init = function () {
+            var _this = this;
             this.id = FlowWidget.ID;
             this.title.label = FlowWidget.LABEL;
             this.title.caption = FlowWidget.LABEL;
             this.title.closable = true;
             this.addClass('flow-widget');
             this.registerRunStreamClient();
+            this.toDispose.push(this.languageModelRegistry.onChange(function (event) {
+                _this.state = __assign(__assign({}, _this.state), { languageModels: toFlowLanguageModelOptions(event.models) });
+                _this.update();
+            }));
             document.addEventListener('pointerdown', this.handleTopMenuPointerDown);
             document.addEventListener('keydown', this.handleTopMenuKeyDown);
             this.refresh();
@@ -1950,9 +2367,9 @@ var FlowWidget = function () {
             var runWorkflow = (_a = run === null || run === void 0 ? void 0 : run.audit) === null || _a === void 0 ? void 0 : _a.workflow;
             var activeWorkflow = snapshot === null || snapshot === void 0 ? void 0 : snapshot.activeWorkflow;
             var workflow = runWorkflow && (!activeWorkflow || run.workflowId === activeWorkflow.id) ? runWorkflow : activeWorkflow;
-            var validation = runWorkflow && (workflow === null || workflow === void 0 ? void 0 : workflow.id) === runWorkflow.id ? (0, common_2.validateFlowWorkflow)(runWorkflow) : snapshot === null || snapshot === void 0 ? void 0 : snapshot.validation;
-            var canvas = workflow ? (0, common_2.deriveFlowCanvasModel)(workflow, run) : undefined;
-            var workflowSourceText = (_b = this.state.workflowSourceText) !== null && _b !== void 0 ? _b : (workflow ? (0, common_2.formatWorkflowSource)(workflow) : '');
+            var validation = runWorkflow && (workflow === null || workflow === void 0 ? void 0 : workflow.id) === runWorkflow.id ? (0, common_3.validateFlowWorkflow)(runWorkflow) : snapshot === null || snapshot === void 0 ? void 0 : snapshot.validation;
+            var canvas = workflow ? (0, common_3.deriveFlowCanvasModel)(workflow, run) : undefined;
+            var workflowSourceText = (_b = this.state.workflowSourceText) !== null && _b !== void 0 ? _b : (workflow ? (0, common_3.formatWorkflowSource)(workflow) : '');
             var capabilities = snapshot === null || snapshot === void 0 ? void 0 : snapshot.capabilities;
             var executionMode = resolveExecutionMode(run === null || run === void 0 ? void 0 : run.executionMode, this.state.executionModeHint, snapshot === null || snapshot === void 0 ? void 0 : snapshot.capabilities.kernelBridge);
             var executionModeMessage = (run === null || run === void 0 ? void 0 : run.executionModeMessage) || this.state.executionModeHintMessage;
@@ -1964,7 +2381,12 @@ var FlowWidget = function () {
             var canResumeRun = lifecycleControls && !runReadOnly && (run === null || run === void 0 ? void 0 : run.status) === 'paused';
             var canCancelRun = lifecycleControls && Boolean(run) && !runReadOnly && !runTerminal;
             var canFinalizeRun = lifecycleControls && Boolean(run) && !runReadOnly && runTerminal;
-            var selectedWorkflowState = workflow && this.state.selectedKind === 'state' && this.state.selectedId ? (0, common_2.findFlowWorkflowState)(workflow, this.state.selectedId) : undefined;
+            var canCleanupRun = Boolean(run) && runTerminal;
+            var runPromptReady = this.state.prompt.trim().length > 0;
+            var startRunTitle = runPromptReady
+                ? 'Start run'
+                : 'Nao da para iniciar a run: preencha o Prompt da run primeiro.';
+            var selectedWorkflowState = workflow && this.state.selectedKind === 'state' && this.state.selectedId ? (0, common_3.findFlowWorkflowState)(workflow, this.state.selectedId) : undefined;
             var selectedState = selectedWorkflowState === null || selectedWorkflowState === void 0 ? void 0 : selectedWorkflowState.state;
             var selectedTransition = workflow && this.state.selectedKind === 'transition' && this.state.selectedId
                 ? workflow.transitions.find(function (transition) { return (transition.id || "".concat(transition.from, "-").concat(transition.to)) === _this.state.selectedId; })
@@ -2025,7 +2447,27 @@ var FlowWidget = function () {
                             <button title='Save current workflow as pipeline preset' onClick={function () { return _this.runMenuCommand(_this.saveCurrentWorkflowAsPreset); }} disabled={this.state.busy || !workflow}>
                                 <i className='codicon codicon-save-as'/> Salvar como preset
                             </button>
-                            <PatternFactory patterns={this.state.workflowPatterns} selectedPattern={selectedPattern} selectedPatternId={this.state.selectedPatternId} parameters={this.state.patternParameters} roleOverrides={this.state.patternRoleOverrides} modelProfiles={this.state.modelProfiles} busy={this.state.busy} onSelect={this.setSelectedPattern} onUpdateParameter={this.updatePatternParameter} onUpdateRoleOverride={this.updatePatternRoleOverride} onCreate={function () { return _this.runMenuCommand(_this.createWorkflowFromPattern); }} onRun={function () { return _this.runMenuCommand(_this.runWorkflowPattern); }}/>
+                            <PatternFactory patterns={this.state.workflowPatterns} selectedPattern={selectedPattern} selectedPatternId={this.state.selectedPatternId} parameters={this.state.patternParameters} roleOverrides={this.state.patternRoleOverrides} modelProfiles={this.state.modelProfiles} languageModels={this.state.languageModels} busy={this.state.busy} promptReady={runPromptReady} missingPromptTitle={startRunTitle} onSelect={this.setSelectedPattern} onUpdateParameter={this.updatePatternParameter} onUpdateRoleOverride={this.updatePatternRoleOverride} onCreate={function () { return _this.runMenuCommand(_this.createWorkflowFromPattern); }} onRun={function () { return _this.runMenuCommand(_this.runWorkflowPattern); }}/>
+                        </div>}
+                    </div>
+                    <div className={"flow__menu flow__menu--prompt ".concat(this.state.openMenu === 'prompt' ? 'flow__menu--open' : '')}>
+                        <button type='button' className='flow__menu-trigger' aria-haspopup='menu' aria-expanded={this.state.openMenu === 'prompt'} onClick={function () { return _this.toggleTopMenu('prompt'); }}>
+                            <i className='codicon codicon-edit'/> Prompt
+                        </button>
+                        {this.state.openMenu === 'prompt' && <div className='flow__menu-panel flow__menu-panel--prompt'>
+                            <section className='flow__prompt-menu-card' aria-label='Prompt da run'>
+                                <header>
+                                    <div>
+                                        <h3>Prompt da run</h3>
+                                        <span>Entrada principal desta execucao</span>
+                                    </div>
+                                    <code>input/request.md</code>
+                                </header>
+                                <textarea rows={5} value={this.state.prompt} onChange={function (event) { return _this.setPrompt(event.currentTarget.value); }} placeholder='Descreva o que esta pipeline deve fazer nesta execucao.' aria-label='Prompt da run do Flow'/>
+                                <p className='flow__menu-note'>
+                                    O bloco intake materializa este texto quando a run comeca. Ao executar um Flow salvo pelo AI Chat, o input do chat substitui este prompt nesta run.
+                                </p>
+                            </section>
                         </div>}
                     </div>
                     <div className={"flow__menu flow__menu--file ".concat(this.state.openMenu === 'file' ? 'flow__menu--open' : '')}>
@@ -2061,8 +2503,8 @@ var FlowWidget = function () {
                                 <button title='Export complete run audit package' onClick={function () { return _this.runMenuCommand(_this.exportRun); }} disabled={this.state.busy || !run}>
                                     <i className='codicon codicon-export'/> Exportar run
                                 </button>
-                                <button title='Editar fonte JSON/YAML do workflow' onClick={function () { return _this.runMenuCommand(_this.toggleWorkflowSourcePanel); }} disabled={this.state.busy || !workflow}>
-                                    <i className='codicon codicon-json'/> {this.state.workflowSourceVisible ? 'Ocultar fonte' : 'Editar fonte'}
+                                <button title='Ver fonte JSON/YAML interna do workflow' onClick={function () { return _this.runMenuCommand(_this.toggleWorkflowSourcePanel); }} disabled={this.state.busy || !workflow}>
+                                    <i className='codicon codicon-json'/> {this.state.workflowSourceVisible ? 'Ocultar fonte' : 'Ver fonte'}
                                 </button>
                             </div>
                         </div>}
@@ -2073,6 +2515,26 @@ var FlowWidget = function () {
                         </button>
                         {this.state.openMenu === 'agents' && <div className='flow__menu-panel flow__menu-panel--agents'>
                             <AgentLibrary agents={this.state.agents} search={this.state.agentSearch} busy={this.state.busy} onSearch={this.setAgentSearch} onOpen={function (relativePath) { return _this.runMenuCommand(function () { return _this.openAgentMarkdown(relativePath); }); }} onCreate={function () { return _this.runMenuCommand(_this.createAgentMarkdown); }} onDuplicate={function (sourceRelativePath) { return _this.runMenuCommand(function () { return _this.duplicateAgentMarkdown(sourceRelativePath); }); }} onRename={function (sourceRelativePath) { return _this.runMenuCommand(function () { return _this.renameAgentMarkdown(sourceRelativePath); }); }}/>
+                        </div>}
+                    </div>
+                    <div className={"flow__menu flow__menu--models ".concat(this.state.openMenu === 'models' ? 'flow__menu--open' : '')}>
+                        <button type='button' className='flow__menu-trigger' aria-haspopup='menu' aria-expanded={this.state.openMenu === 'models'} onClick={function () { return _this.toggleTopMenu('models'); }}>
+                            <i className='codicon codicon-settings-gear'/> Model presets
+                        </button>
+                        {this.state.openMenu === 'models' && <div className='flow__menu-panel flow__menu-panel--models'>
+                            <ModelProfileLibrary profiles={this.state.modelProfiles} selectedId={this.state.selectedModelProfileId} draft={this.state.modelProfileDraft} aiRuntime={this.aiRuntime} languageModels={this.state.languageModels} busy={this.state.busy} onSelect={this.setSelectedModelProfile} onUpdate={this.updateModelProfileDraft} onUpdateExecution={this.updateModelProfileExecutionDraft} onSave={this.saveModelProfileDraft} onConfigureProvider={this.configureAiProvider}/>
+                        </div>}
+                    </div>
+                    <div className={"flow__menu flow__menu--kanban ".concat(this.state.openMenu === 'kanban' ? 'flow__menu--open' : '')}>
+                        <button type='button' className='flow__menu-trigger' aria-haspopup='menu' aria-expanded={this.state.openMenu === 'kanban'} onClick={function () { return _this.toggleTopMenu('kanban'); }}>
+                            <i className='codicon codicon-board'/> Kanban
+                        </button>
+                        {this.state.openMenu === 'kanban' && <div className='flow__menu-panel flow__menu-panel--kanban'>
+                            <section className='flow__run-popover-grid'>
+                                <Kanban run={run} onOpenArtifact={this.openArtifact}/>
+                                <RunObservability run={run} selectedArtifactId={this.state.selectedArtifactId} onSelectArtifact={this.selectArtifact} onOpenArtifact={this.openArtifact} onDecideMemoryCandidate={this.decideMemoryCandidate} onDecideEffect={this.decideEffect} onApproveSecondRunSuggestion={this.approveSecondRunSuggestion} onDismissSecondRunSuggestion={this.dismissSecondRunSuggestion} busy={this.state.busy} readOnly={runReadOnly}/>
+                                <EventLog events={(run === null || run === void 0 ? void 0 : run.events) || []}/>
+                            </section>
                         </div>}
                     </div>
                     <button className={this.state.runHistoryVisible ? 'flow__history-button flow__history-button--open' : 'flow__history-button'} title='Historico de runs' onClick={this.toggleRunHistory} disabled={this.state.busy}>
@@ -2086,12 +2548,10 @@ var FlowWidget = function () {
                     <button title='Redo local workflow edit' onClick={this.redoWorkflowEdit} disabled={this.state.busy || !canRedoWorkflow}>
                         <i className='codicon codicon-redo'/>
                     </button>
-                    <button title='Start run' onClick={this.startRun} disabled={this.state.busy || !workflow || ((_h = workflow.file) === null || _h === void 0 ? void 0 : _h.editable) === false}>
+                    <button title={startRunTitle} onClick={this.startRun} disabled={this.state.busy || !workflow || ((_h = workflow.file) === null || _h === void 0 ? void 0 : _h.editable) === false || !runPromptReady}>
                         <i className='codicon codicon-debug-start'/>
                     </button>
-                    <button title='Run dynamic workflow from current prompt' onClick={this.runDynamicWorkflowFromPrompt} disabled={this.state.busy || !this.state.prompt.trim()}>
-                        <i className='codicon codicon-symbol-event'/>
-                    </button>
+                    <browser_2.CyberVinciAiButton label='' title='Open Flow AI' active={this.state.aiPromptOpen} onClick={this.toggleAiPromptPanel} disabled={this.state.busy || !this.aiRuntime}/>
                     <button title={manualTickFallback ? 'Tick run manually (fallback)' : 'Tick disabled while kernel event stream is active'} onClick={this.tickRun} disabled={this.state.busy || !run || runReadOnly || !manualTickFallback}>
                         <i className='codicon codicon-debug-step-over'/>
                     </button>
@@ -2107,22 +2567,20 @@ var FlowWidget = function () {
                     <button title='Finalize run with report' onClick={this.finalizeRun} disabled={this.state.busy || !canFinalizeRun}>
                         <i className='codicon codicon-file-text'/>
                     </button>
+                    <button title='Clean active run artifacts and metadata' onClick={this.cleanupActiveRun} disabled={this.state.busy || !canCleanupRun}>
+                        <i className='codicon codicon-trash'/>
+                    </button>
                 </div>
             </header>
 
-            <section className='flow__prompt'>
-                <label className='flow__prompt-field'>
-                    <span>Prompt da run</span>
-                    <textarea rows={3} value={this.state.prompt} onChange={function (event) { return _this.setPrompt(event.currentTarget.value); }} placeholder='Descreva objetivo, entradas, restricoes e entregaveis esperados.' aria-label='Run prompt'/>
-                </label>
-            </section>
+            {this.state.aiPromptOpen && this.renderAiPromptPanel()}
 
             {this.state.error && <div className='flow__error'>{this.state.error}</div>}
             {((_j = workflow === null || workflow === void 0 ? void 0 : workflow.file) === null || _j === void 0 ? void 0 : _j.unsupportedReason) && <div className='flow__validation'><span>{workflow.file.unsupportedReason}</span></div>}
             {validation && !validation.valid && <ValidationIssues issues={validation.errors}/>}
             {this.state.workflowSavePreview && <WorkflowSavePreview diff={this.state.workflowSavePreview} onConfirm={this.confirmSaveWorkflowFile} onCancel={this.cancelSaveWorkflowPreview} busy={this.state.busy}/>}
             {this.state.workflowSourceVisible && workflow && <section className='flow__workflow-source-panel'>
-                <WorkflowSourceEditor workflow={workflow} value={workflowSourceText} validation={validation} parseError={this.state.workflowSourceError} editable={((_k = workflow.file) === null || _k === void 0 ? void 0 : _k.editable) !== false} selectedKind={this.state.selectedKind} selectedId={this.state.selectedId} onChange={this.updateWorkflowSourceDraft} onApply={this.applyWorkflowSourceDraft} onSelectIssue={this.selectValidationIssue}/>
+                <WorkflowSourceEditor workflow={workflow} value={workflowSourceText} validation={validation} parseError={this.state.workflowSourceError} selectedKind={this.state.selectedKind} selectedId={this.state.selectedId} onSelectIssue={this.selectValidationIssue}/>
             </section>}
 
             {this.state.runHistoryVisible && <RunHistoryPanel runs={this.state.runHistory} activeRunId={run === null || run === void 0 ? void 0 : run.id} busy={this.state.busy} onOpen={this.openRunFromHistory} onClose={function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
@@ -2131,18 +2589,29 @@ var FlowWidget = function () {
 
             <main className='flow__main'>
                 <section className='flow__canvas-pane'>
-                    {workflow && canvas && <WorkflowCanvas workflow={workflow} nodes={canvas.nodes} edges={canvas.edges} width={canvas.width} height={canvas.height} selectedId={this.state.selectedId} onSelectState={function (id) { return _this.select('state', id); }} onSelectTransition={function (id) { return _this.select('transition', id); }} onAddState={this.addWorkflowState} onAddTransition={this.addWorkflowTransition} onMoveState={this.moveWorkflowState} onDeleteState={this.deleteWorkflowState} onDeleteTransition={this.deleteWorkflowTransition} onUndo={this.undoWorkflowEdit} onRedo={this.redoWorkflowEdit} canUndo={canUndoWorkflow} canRedo={canRedoWorkflow} validation={validation} editable={((_l = workflow.file) === null || _l === void 0 ? void 0 : _l.editable) !== false}/>}
+                    {workflow && canvas && <WorkflowCanvas workflow={workflow} nodes={canvas.nodes} edges={canvas.edges} width={canvas.width} height={canvas.height} selectedId={this.state.selectedId} onSelectState={function (id) { return _this.select('state', id); }} onSelectTransition={function (id) { return _this.select('transition', id); }} onAddState={this.addWorkflowState} onAddTransition={this.addWorkflowTransition} onMoveState={this.moveWorkflowState} onDeleteState={this.deleteWorkflowState} onDeleteTransition={this.deleteWorkflowTransition} onOpenStateDetails={this.openStateDetails} onOpenTransitionDetails={this.openTransitionDetails} onUndo={this.undoWorkflowEdit} onRedo={this.redoWorkflowEdit} canUndo={canUndoWorkflow} canRedo={canRedoWorkflow} validation={validation} editable={((_k = workflow.file) === null || _k === void 0 ? void 0 : _k.editable) !== false}/>}
                 </section>
-                <aside className='flow__inspector'>
-                    <Inspector workflow={workflow} run={run} selectedStateId={this.state.selectedKind === 'state' ? this.state.selectedId : undefined} selectedState={selectedState} selectedTransition={selectedTransition} modelProfiles={this.state.modelProfiles} gates={(run === null || run === void 0 ? void 0 : run.gates) || []} validation={validation} onUpdateState={this.updateWorkflowState} onOpenAgent={this.openAgentMarkdown} onAddBranch={this.addParallelBranch} onDeleteState={this.deleteWorkflowState} onUpdateTransition={this.updateWorkflowTransition} onDeleteTransition={this.deleteWorkflowTransition} onSaveWorkflow={this.saveWorkflowFile} onApproveGate={this.approveGate} onOpenArtifact={this.openArtifact} readOnlyRun={runReadOnly}/>
-                </aside>
             </main>
 
-            <section className='flow__ops'>
-                <Kanban run={run} onOpenArtifact={this.openArtifact}/>
-                <RunObservability run={run} selectedArtifactId={this.state.selectedArtifactId} onSelectArtifact={this.selectArtifact} onOpenArtifact={this.openArtifact} onDecideMemoryCandidate={this.decideMemoryCandidate} onDecideEffect={this.decideEffect} onApproveSecondRunSuggestion={this.approveSecondRunSuggestion} onDismissSecondRunSuggestion={this.dismissSecondRunSuggestion} busy={this.state.busy} readOnly={runReadOnly}/>
-                <EventLog events={(run === null || run === void 0 ? void 0 : run.events) || []}/>
-            </section>
+            {this.state.detailsPopoverOpen && (selectedState || selectedTransition) && <section className='flow__state-popover' role='dialog' aria-modal='false' aria-label='Flow node details'>
+                <header className='flow__state-popover-header'>
+                    <div>
+                        <h3>{selectedState ? this.state.selectedId : 'Transition'}</h3>
+                        <span>{selectedState ? "".concat(selectedState.type).concat(this.state.detailsEditMode ? ' / editing' : '') : selectedTransition ? "".concat(selectedTransition.from, " -> ").concat(selectedTransition.to).concat(this.state.detailsEditMode ? ' / editing' : '') : ''}</span>
+                    </div>
+                    <div className='flow__state-popover-actions'>
+                        {!this.state.detailsEditMode && <button type='button' title='Editar campos do bloco' disabled={!workflow || ((_l = workflow.file) === null || _l === void 0 ? void 0 : _l.editable) === false} onClick={this.startDetailsEdit}>
+                            <i className='codicon codicon-edit'/> Edit
+                        </button>}
+                        <button type='button' title='Fechar detalhes do bloco' onClick={this.closeDetailsPopover}>
+                            <i className='codicon codicon-close'/>
+                        </button>
+                    </div>
+                </header>
+                <div className='flow__state-popover-body'>
+                    <Inspector workflow={workflow} run={run} selectedStateId={this.state.selectedKind === 'state' ? this.state.selectedId : undefined} selectedState={selectedState} selectedTransition={selectedTransition} agents={this.state.agents} modelProfiles={this.state.modelProfiles} languageModels={this.state.languageModels} aiRuntime={this.aiRuntime} editing={this.state.detailsEditMode} gates={(run === null || run === void 0 ? void 0 : run.gates) || []} validation={validation} onUpdateState={this.updateWorkflowState} onSelectStateAgent={this.selectStateAgent} onOpenAgent={this.openAgentMarkdown} onConfigureAiProvider={this.configureAiProvider} onAddBranch={this.addParallelBranch} onDeleteState={this.deleteWorkflowState} onUpdateTransition={this.updateWorkflowTransition} onDeleteTransition={this.deleteWorkflowTransition} onSaveWorkflow={this.saveWorkflowFileAndExitEdit} onExitEdit={this.exitDetailsEdit} onApproveGate={this.approveGate} onOpenArtifact={this.openArtifact} readOnlyRun={runReadOnly}/>
+                </div>
+            </section>}
 
             {capabilities && <footer className='flow__statusbar'>
                 <CapabilityStatus capabilities={capabilities} workflow={workflow} executionMode={executionMode} executionModeMessage={executionModeMessage}/>
@@ -2152,6 +2621,85 @@ var FlowWidget = function () {
         FlowWidget_1.prototype.setPrompt = function (prompt) {
             this.state = __assign(__assign({}, this.state), { prompt: prompt });
             this.update();
+        };
+        FlowWidget_1.prototype.setAiPrompt = function (aiPrompt) {
+            this.state = __assign(__assign({}, this.state), { aiPrompt: aiPrompt });
+            this.update();
+        };
+        FlowWidget_1.prototype.setAiExecution = function (aiExecution) {
+            this.state = __assign(__assign({}, this.state), { aiExecution: aiExecution });
+            this.update();
+        };
+        FlowWidget_1.prototype.setAiMode = function (aiMode) {
+            var _a, _b, _c, _d;
+            this.state = __assign(__assign({}, this.state), { aiMode: aiMode, selectedAiWorkflowId: this.state.selectedAiWorkflowId || ((_b = (_a = this.state.snapshot) === null || _a === void 0 ? void 0 : _a.activeWorkflow) === null || _b === void 0 ? void 0 : _b.id) || ((_d = (_c = this.state.snapshot) === null || _c === void 0 ? void 0 : _c.workflows[0]) === null || _d === void 0 ? void 0 : _d.id) });
+            this.update();
+        };
+        FlowWidget_1.prototype.setSelectedAiWorkflow = function (selectedAiWorkflowId) {
+            this.state = __assign(__assign({}, this.state), { selectedAiWorkflowId: selectedAiWorkflowId });
+            this.update();
+        };
+        FlowWidget_1.prototype.renderAiPromptPanel = function () {
+            var _this = this;
+            var _a, _b;
+            if (!this.aiRuntime) {
+                return undefined;
+            }
+            var workflows = ((_a = this.state.snapshot) === null || _a === void 0 ? void 0 : _a.workflows) || [];
+            var selectedWorkflow = workflows.find(function (workflow) { return workflow.id === _this.state.selectedAiWorkflowId; })
+                || ((_b = this.state.snapshot) === null || _b === void 0 ? void 0 : _b.activeWorkflow)
+                || workflows[0];
+            var selectedPipelinePreset = this.state.pipelinePresets.find(function (preset) { return preset.id === _this.state.selectedPipelinePresetId; });
+            return <section className='flow__ai-panel'>
+            <header>
+                <div>
+                    <h3>Flow AI</h3>
+                    {this.state.aiQuestion && <p>{this.state.aiQuestion}</p>}
+                    {this.state.aiAnswer && <p>{this.state.aiAnswer}</p>}
+                </div>
+                <button type='button' className='flow__ai-close' title='Close Flow AI' onClick={this.toggleAiPromptPanel}>
+                    <i className='codicon codicon-close'/>
+                </button>
+            </header>
+            <div className='flow__ai-mode-grid' aria-label='Flow AI mode'>
+                {this.renderAiModeButton('chat', 'comment-discussion', 'Chat')}
+                {this.renderAiModeButton('saved-flow', 'type-hierarchy-sub', 'Saved Flow')}
+                {this.renderAiModeButton('dynamic-flow', 'sparkle', 'Dynamic Flow')}
+            </div>
+            <div className='flow__ai-route-summary'>
+                <span>Modo: <strong>{flowAiModeLabel(this.state.aiMode)}</strong></span>
+                {this.state.aiMode === 'saved-flow'
+                    ? <span>Workflow: <strong>{(selectedWorkflow === null || selectedWorkflow === void 0 ? void 0 : selectedWorkflow.name) || 'Nenhum workflow salvo'}</strong></span>
+                    : <span>Preset: <strong>{(selectedPipelinePreset === null || selectedPipelinePreset === void 0 ? void 0 : selectedPipelinePreset.name) || 'Automático'}</strong></span>}
+            </div>
+            {this.state.aiMode === 'saved-flow' && <label className='flow__factory-field'>
+                <span>Workflow salvo</span>
+                <select value={(selectedWorkflow === null || selectedWorkflow === void 0 ? void 0 : selectedWorkflow.id) || ''} disabled={this.state.busy || workflows.length === 0} onChange={function (event) { return _this.setSelectedAiWorkflow(event.currentTarget.value); }} aria-label='Workflow salvo para Flow AI'>
+                    {workflows.map(function (workflow) { return <option key={workflow.id} value={workflow.id}>{workflow.name} ({workflow.id})</option>; })}
+                </select>
+            </label>}
+            <browser_2.CyberVinciAiExecutionPicker service={this.aiRuntime} value={this.state.aiExecution} disabled={this.state.busy} onConfigureProvider={this.configureAiProvider} onChange={function (selection) { return _this.setAiExecution(selection); }}/>
+            <label className='flow__prompt-field'>
+                <span>Prompt da run</span>
+                <textarea rows={4} value={this.state.aiPrompt} onChange={function (event) { return _this.setAiPrompt(event.currentTarget.value); }} placeholder='Descreva objetivo, entradas, restricoes e entregaveis esperados.' aria-label='Flow AI prompt'/>
+            </label>
+            <footer>
+                <button type='button' className='theia-button secondary' onClick={this.toggleAiPromptPanel} disabled={this.state.busy}>
+                    Cancelar
+                </button>
+                <button type='button' className='theia-button main' onClick={this.runFlowAiPrompt} disabled={this.state.busy || !this.state.aiPrompt.trim()}>
+                    <i className='codicon codicon-sparkle'/> {flowAiRunLabel(this.state.aiMode)}
+                </button>
+            </footer>
+        </section>;
+        };
+        FlowWidget_1.prototype.renderAiModeButton = function (mode, icon, label) {
+            var _this = this;
+            var active = this.state.aiMode === mode;
+            return <button type='button' className={active ? 'flow__ai-mode flow__ai-mode--active' : 'flow__ai-mode'} onClick={function () { return _this.setAiMode(mode); }} disabled={this.state.busy} aria-pressed={active}>
+            <i className={"codicon codicon-".concat(icon)}/>
+            <span>{label}</span>
+        </button>;
         };
         FlowWidget_1.prototype.closeTopMenus = function () {
             if (!this.state.openMenu && !this.state.runHistoryVisible) {
@@ -2217,8 +2765,8 @@ var FlowWidget = function () {
                                     selectedId: this.state.selectedId
                                 })
                                 : this.state.workflowUndoStack;
-                            optimisticValidation = (0, common_2.validateFlowWorkflow)(activeWorkflow);
-                            this.state = __assign(__assign({}, this.state), { selectedKind: selectedKind, selectedId: selectedId, workflowUndoStack: workflowUndoStack, workflowRedoStack: pushHistory ? [] : this.state.workflowRedoStack, snapshot: __assign(__assign({}, snapshot), { workflows: snapshot.workflows.map(function (candidate) { return candidate.id === activeWorkflow.id ? activeWorkflow : candidate; }), activeWorkflow: activeWorkflow, validation: optimisticValidation }), workflowSourceText: (0, common_2.formatWorkflowSource)(activeWorkflow), workflowSourceError: undefined, workflowSavePreview: undefined, error: undefined });
+                            optimisticValidation = (0, common_3.validateFlowWorkflow)(activeWorkflow);
+                            this.state = __assign(__assign({}, this.state), { selectedKind: selectedKind, selectedId: selectedId, workflowUndoStack: workflowUndoStack, workflowRedoStack: pushHistory ? [] : this.state.workflowRedoStack, snapshot: __assign(__assign({}, snapshot), { workflows: snapshot.workflows.map(function (candidate) { return candidate.id === activeWorkflow.id ? activeWorkflow : candidate; }), activeWorkflow: activeWorkflow, validation: optimisticValidation }), workflowSourceText: (0, common_3.formatWorkflowSource)(activeWorkflow), workflowSourceError: undefined, workflowSavePreview: undefined, error: undefined });
                             this.update();
                             _b.label = 1;
                         case 1:
@@ -2262,7 +2810,7 @@ var FlowWidget = function () {
                                             _d.label = 2;
                                         case 2:
                                             workspaceRootUri = _a;
-                                            prompt = externalPromptText(options) || this.state.prompt;
+                                            prompt = this.requireRunPrompt(externalPromptText(options) || this.state.prompt);
                                             if (!options.workflowId) return [3 /*break*/, 4];
                                             return [4 /*yield*/, this.flowService.getWorkflow({ workspaceRootUri: workspaceRootUri, workflowId: options.workflowId })];
                                         case 3:
@@ -2316,7 +2864,7 @@ var FlowWidget = function () {
                                             _b.label = 2;
                                         case 2:
                                             workspaceRootUri = _a;
-                                            prompt = externalPromptText(options) || this.state.prompt;
+                                            prompt = this.requireRunPrompt(externalPromptText(options) || this.state.prompt);
                                             return [4 /*yield*/, this.flowService.runDynamicWorkflow({
                                                     workspaceRootUri: workspaceRootUri,
                                                     prompt: prompt,
@@ -2379,6 +2927,13 @@ var FlowWidget = function () {
                 });
             });
         };
+        FlowWidget_1.prototype.requireRunPrompt = function (value) {
+            var prompt = value === null || value === void 0 ? void 0 : value.trim();
+            if (!prompt) {
+                throw new Error('Preencha o Prompt da run antes de iniciar a execucao. Quando este Flow salvo for chamado pelo AI Chat, o texto do chat sera usado como esse prompt.');
+            }
+            return prompt;
+        };
         FlowWidget_1.prototype.applyRunUpdate = function (run) {
             var snapshot = this.state.snapshot;
             if (!snapshot) {
@@ -2416,7 +2971,7 @@ var FlowWidget = function () {
                             _c.label = 5;
                         case 5:
                             activeWorkflow = _a;
-                            this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { workflows: snapshot.workflows.map(function (candidate) { return candidate.id === activeWorkflow.id ? activeWorkflow : candidate; }), activeWorkflow: activeWorkflow, validation: validation || fallbackValidation }), workflowUndoStack: [], workflowRedoStack: [], workflowSourceText: (0, common_2.formatWorkflowSource)(activeWorkflow), workflowSourceError: undefined, workflowSavePreview: undefined, error: undefined });
+                            this.state = __assign(__assign({}, this.state), { snapshot: __assign(__assign({}, snapshot), { workflows: snapshot.workflows.map(function (candidate) { return candidate.id === activeWorkflow.id ? activeWorkflow : candidate; }), activeWorkflow: activeWorkflow, validation: validation || fallbackValidation }), workflowUndoStack: [], workflowRedoStack: [], workflowSourceText: (0, common_3.formatWorkflowSource)(activeWorkflow), workflowSourceError: undefined, workflowSavePreview: undefined, error: undefined });
                             return [2 /*return*/];
                     }
                 });
@@ -2512,6 +3067,20 @@ var FlowWidget = function () {
                 });
             });
         };
+        FlowWidget_1.prototype.workspaceRootPath = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var roots, root;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.workspaceService.roots];
+                        case 1:
+                            roots = _a.sent();
+                            root = roots[0];
+                            return [2 /*return*/, root ? file_uri_1.FileUri.fsPath(root.resource.toString()) : undefined];
+                    }
+                });
+            });
+        };
         FlowWidget_1.prototype.subscribeActiveRunStream = function (runId) {
             return __awaiter(this, void 0, void 0, function () {
                 var workspaceRootUri, activeRun, snapshot;
@@ -2572,15 +3141,21 @@ var FlowWidget = function () {
     (function () {
         var _a;
         var _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create((_a = _classSuper[Symbol.metadata]) !== null && _a !== void 0 ? _a : null) : void 0;
-        _flowService_decorators = [(0, inversify_1.inject)(common_2.FlowService)];
-        _flowClient_decorators = [(0, inversify_1.inject)(common_2.FlowClient)];
-        _workspaceService_decorators = [(0, inversify_1.inject)(browser_2.WorkspaceService)];
+        _flowService_decorators = [(0, inversify_1.inject)(common_3.FlowService)];
+        _flowClient_decorators = [(0, inversify_1.inject)(common_3.FlowClient)];
+        _workspaceService_decorators = [(0, inversify_1.inject)(browser_3.WorkspaceService)];
+        _languageModelRegistry_decorators = [(0, inversify_1.inject)(ai_core_1.FrontendLanguageModelRegistry)];
+        _aiRuntime_decorators = [(0, inversify_1.inject)(common_2.CyberVinciAiRuntimeService), (0, inversify_1.optional)()];
+        _commandService_decorators = [(0, inversify_1.inject)(command_1.CommandService)];
         _openerService_decorators = [(0, inversify_1.inject)(browser_1.OpenerService)];
         _init_decorators = [(0, inversify_1.postConstruct)()];
         __esDecorate(_classThis, null, _init_decorators, { kind: "method", name: "init", static: false, private: false, access: { has: function (obj) { return "init" in obj; }, get: function (obj) { return obj.init; } }, metadata: _metadata }, null, _instanceExtraInitializers);
         __esDecorate(null, null, _flowService_decorators, { kind: "field", name: "flowService", static: false, private: false, access: { has: function (obj) { return "flowService" in obj; }, get: function (obj) { return obj.flowService; }, set: function (obj, value) { obj.flowService = value; } }, metadata: _metadata }, _flowService_initializers, _flowService_extraInitializers);
         __esDecorate(null, null, _flowClient_decorators, { kind: "field", name: "flowClient", static: false, private: false, access: { has: function (obj) { return "flowClient" in obj; }, get: function (obj) { return obj.flowClient; }, set: function (obj, value) { obj.flowClient = value; } }, metadata: _metadata }, _flowClient_initializers, _flowClient_extraInitializers);
         __esDecorate(null, null, _workspaceService_decorators, { kind: "field", name: "workspaceService", static: false, private: false, access: { has: function (obj) { return "workspaceService" in obj; }, get: function (obj) { return obj.workspaceService; }, set: function (obj, value) { obj.workspaceService = value; } }, metadata: _metadata }, _workspaceService_initializers, _workspaceService_extraInitializers);
+        __esDecorate(null, null, _languageModelRegistry_decorators, { kind: "field", name: "languageModelRegistry", static: false, private: false, access: { has: function (obj) { return "languageModelRegistry" in obj; }, get: function (obj) { return obj.languageModelRegistry; }, set: function (obj, value) { obj.languageModelRegistry = value; } }, metadata: _metadata }, _languageModelRegistry_initializers, _languageModelRegistry_extraInitializers);
+        __esDecorate(null, null, _aiRuntime_decorators, { kind: "field", name: "aiRuntime", static: false, private: false, access: { has: function (obj) { return "aiRuntime" in obj; }, get: function (obj) { return obj.aiRuntime; }, set: function (obj, value) { obj.aiRuntime = value; } }, metadata: _metadata }, _aiRuntime_initializers, _aiRuntime_extraInitializers);
+        __esDecorate(null, null, _commandService_decorators, { kind: "field", name: "commandService", static: false, private: false, access: { has: function (obj) { return "commandService" in obj; }, get: function (obj) { return obj.commandService; }, set: function (obj, value) { obj.commandService = value; } }, metadata: _metadata }, _commandService_initializers, _commandService_extraInitializers);
         __esDecorate(null, null, _openerService_decorators, { kind: "field", name: "openerService", static: false, private: false, access: { has: function (obj) { return "openerService" in obj; }, get: function (obj) { return obj.openerService; }, set: function (obj, value) { obj.openerService = value; } }, metadata: _metadata }, _openerService_initializers, _openerService_extraInitializers);
         __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
         FlowWidget = _classThis = _classDescriptor.value;
@@ -2620,17 +3195,127 @@ function AgentLibrary(props) {
                     <i className='codicon codicon-file-code'/>
                     <span>{agent.relativePath}</span>
                 </button>
-                <time dateTime={agent.updatedAt}>{formatTimestamp(agent.updatedAt)}</time>
+                <span className='flow__agent-library-source'>{agent.source === 'catalog' ? 'Catalog' : 'Workspace'}</span>
                 <div>
                     <button title='Duplicate agent Markdown' onClick={function () { return props.onDuplicate(agent.relativePath); }} disabled={props.busy}>
                         <i className='codicon codicon-copy'/>
                     </button>
-                    <button title='Rename agent Markdown' onClick={function () { return props.onRename(agent.relativePath); }} disabled={props.busy}>
+                    <button title='Rename agent Markdown' onClick={function () { return props.onRename(agent.relativePath); }} disabled={props.busy || agent.source === 'catalog'}>
                         <i className='codicon codicon-edit'/>
                     </button>
                 </div>
+                <time dateTime={agent.updatedAt}>{formatTimestamp(agent.updatedAt)}</time>
             </article>; })}
         </div>
+    </section>;
+}
+function ModelProfileLibrary(props) {
+    var _a, _b, _c;
+    var draft = props.draft;
+    var execution = (draft === null || draft === void 0 ? void 0 : draft.execution) || {};
+    var currentModelId = ((_a = draft === null || draft === void 0 ? void 0 : draft.provider) === null || _a === void 0 ? void 0 : _a.modelId) || '';
+    var modelOptions = uniqueStrings(__spreadArray(__spreadArray(__spreadArray([
+        ''
+    ], props.languageModels.map(function (model) { return model.id; }), true), props.profiles.map(function (profile) { var _a; return (_a = profile.provider) === null || _a === void 0 ? void 0 : _a.modelId; }).filter(function (value) { return Boolean(value); }), true), [
+        currentModelId
+    ], false));
+    var updateExecution = function (patch) {
+        if (!draft) {
+            return;
+        }
+        props.onUpdate({
+            execution: __assign(__assign(__assign({}, execution), patch), { profileId: draft.id })
+        });
+    };
+    return <section className='flow__model-profile-library' aria-label='Model profile presets'>
+        <div className='flow__agent-library-header'>
+            <div>
+                <h3>Model presets</h3>
+                <span>Defaults globais para blocos do Flow</span>
+            </div>
+            <button title='Save model preset override' onClick={props.onSave} disabled={props.busy || !draft}>
+                <i className='codicon codicon-save'/> Salvar
+            </button>
+        </div>
+        <label className='flow__factory-field'>
+            <span>Preset</span>
+            <select value={props.selectedId || ''} disabled={props.busy || props.profiles.length === 0} onChange={function (event) { return props.onSelect(event.currentTarget.value); }} aria-label='Model preset'>
+                {props.profiles.map(function (profile) { return <option key={profile.id} value={profile.id}>{profile.name} ({profile.id})</option>; })}
+            </select>
+        </label>
+        {!draft && <p className='flow__menu-note'>Nenhum preset disponivel.</p>}
+        {draft && <>
+        <div className='flow__model-profile-grid'>
+            <label>
+                <span>ID</span>
+                <input value={draft.id} disabled title='IDs sao estaveis porque workflows podem referenciar este preset.'/>
+            </label>
+            <label>
+                <span>Nome</span>
+                <input value={draft.name} disabled={props.busy} onChange={function (event) { return props.onUpdate({ name: event.currentTarget.value }); }}/>
+            </label>
+        </div>
+        <label className='flow__model-profile-field'>
+            <span>Descricao</span>
+            <textarea rows={2} value={draft.description} disabled={props.busy} onChange={function (event) { return props.onUpdate({ description: event.currentTarget.value }); }} placeholder='Quando este preset deve ser usado.'/>
+        </label>
+        <div className='flow__model-profile-grid'>
+            <label>
+                <span>Tags</span>
+                <input value={(draft.tags || []).join(', ')} disabled={props.busy} onChange={function (event) { return props.onUpdate({ tags: textToList(event.currentTarget.value) }); }} placeholder='cost, review, coding'/>
+            </label>
+            <div className='flow__token-limit-control'>
+                <label>
+                    <span>Output tokens</span>
+                    <select value={execution.maxTokens === undefined ? 'unlimited' : 'limited'} disabled={props.busy} onChange={function (event) {
+                var _a;
+                return updateExecution({
+                    maxTokens: event.currentTarget.value === 'limited'
+                        ? (_a = execution.maxTokens) !== null && _a !== void 0 ? _a : DEFAULT_MAX_TOKEN_LIMIT
+                        : undefined
+                });
+            }}>
+                        <option value='unlimited'>Ilimitado</option>
+                        <option value='limited'>Limitar</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Max output tokens</span>
+                    <input type='number' min='1' value={(_b = execution.maxTokens) !== null && _b !== void 0 ? _b : ''} disabled={props.busy || execution.maxTokens === undefined} placeholder='Sem limite' onChange={function (event) { return updateExecution({ maxTokens: numberOrUndefined(event.currentTarget.value) }); }}/>
+                </label>
+            </div>
+        </div>
+        {props.aiRuntime ? <div className='flow__model-profile-picker'>
+            <browser_2.CyberVinciAiExecutionPicker service={props.aiRuntime} value={flowModelProfileToAiExecutionSelection(draft)} disabled={props.busy} onConfigureProvider={props.onConfigureProvider} onChange={props.onUpdateExecution}/>
+        </div> : <div className='flow__model-profile-grid'>
+            <label>
+                <span>Provider</span>
+                <select value={((_c = draft.provider) === null || _c === void 0 ? void 0 : _c.providerId) || 'inherit'} disabled={props.busy} onChange={function (event) {
+                    var _a, _b;
+                    return props.onUpdate({
+                        provider: providerSelectionOrUndefined(event.currentTarget.value === 'inherit' ? undefined : event.currentTarget.value, (_a = draft.provider) === null || _a === void 0 ? void 0 : _a.modelId, (_b = draft.provider) === null || _b === void 0 ? void 0 : _b.options)
+                    });
+                }}>
+                    <option value='inherit'>Use chat/default</option>
+                    {flowProviderOptions().map(function (option) { return <option key={option.value} value={option.value}>{option.label}</option>; })}
+                </select>
+            </label>
+            <label>
+                <span>Model</span>
+                <select value={currentModelId} disabled={props.busy} onChange={function (event) {
+                    var _a, _b;
+                    return props.onUpdate({
+                        provider: providerSelectionOrUndefined((_a = draft.provider) === null || _a === void 0 ? void 0 : _a.providerId, event.currentTarget.value, (_b = draft.provider) === null || _b === void 0 ? void 0 : _b.options)
+                    });
+                }}>
+                    {modelOptions.map(function (modelId) { return <option key={modelId || 'default'} value={modelId}>{modelOptionLabel(props.languageModels, modelId, 'Provider default / selected chat model')}</option>; })}
+                </select>
+            </label>
+        </div>}
+        <p className='flow__menu-note'>
+            Salvar cria ou substitui um override em <code>.theia/flow/model-profiles/{draft.id}.json</code>. Blocos que usam este preset passam a herdar a nova configuracao.
+        </p>
+        </>}
     </section>;
 }
 function PatternFactory(props) {
@@ -2653,12 +3338,12 @@ function PatternFactory(props) {
                 return <PatternParameterControl key={parameter.id} parameter={parameter} value={(_b = (_a = props.parameters[parameter.id]) !== null && _a !== void 0 ? _a : parameter.defaultValue) !== null && _b !== void 0 ? _b : ''} modelProfiles={props.modelProfiles} disabled={props.busy} onUpdate={function (value) { return props.onUpdateParameter(parameter.id, value); }}/>;
             })}
         </div>}
-        {(pattern === null || pattern === void 0 ? void 0 : pattern.agenticStages) && pattern.agenticStages.length > 0 && <PatternRoleOverridesEditor pattern={pattern} parameters={props.parameters} roleOverrides={props.roleOverrides} modelProfiles={props.modelProfiles} disabled={props.busy} onUpdateRoleOverride={props.onUpdateRoleOverride}/>}
+        {(pattern === null || pattern === void 0 ? void 0 : pattern.agenticStages) && pattern.agenticStages.length > 0 && <PatternRoleOverridesEditor pattern={pattern} parameters={props.parameters} roleOverrides={props.roleOverrides} modelProfiles={props.modelProfiles} languageModels={props.languageModels} disabled={props.busy} onUpdateRoleOverride={props.onUpdateRoleOverride}/>}
         <div className='flow__menu-row'>
             <button title='Create editable workflow from pattern' onClick={props.onCreate} disabled={props.busy || !pattern}>
                 <i className='codicon codicon-add'/> Criar flow
             </button>
-            <button title='Create and start workflow from the current prompt' onClick={props.onRun} disabled={props.busy || !pattern}>
+            <button title={props.promptReady ? 'Create and start workflow from the current prompt' : props.missingPromptTitle} onClick={props.onRun} disabled={props.busy || !pattern || !props.promptReady}>
                 <i className='codicon codicon-run'/> Rodar agora
             </button>
         </div>
@@ -2723,7 +3408,7 @@ function PatternRoleOverridesEditor(props) {
             <div className='flow__pattern-stage-header'>Policy</div>
             <div className='flow__pattern-stage-header'>Native</div>
             <div className='flow__pattern-stage-header'>Virtual</div>
-            {stages.map(function (stage) { return <PatternRoleOverrideRow key={stage.id} stage={stage} defaultProfileId={patternStageDefaultProfileId(props.pattern, props.parameters, stage)} override={props.roleOverrides[stage.id]} modelProfiles={props.modelProfiles} disabled={props.disabled} onUpdate={function (override) { return props.onUpdateRoleOverride(stage.id, override); }}/>; })}
+            {stages.map(function (stage) { return <PatternRoleOverrideRow key={stage.id} stage={stage} defaultProfileId={patternStageDefaultProfileId(props.pattern, props.parameters, stage)} override={props.roleOverrides[stage.id]} modelProfiles={props.modelProfiles} languageModels={props.languageModels} disabled={props.disabled} onUpdate={function (override) { return props.onUpdateRoleOverride(stage.id, override); }}/>; })}
         </div>
     </section>;
 }
@@ -2734,9 +3419,9 @@ function PatternRoleOverrideRow(props) {
     var profileOptions = props.modelProfiles.length ? props.modelProfiles : [];
     var currentProfileId = override.profileId || execution.profileId || '';
     var currentModelId = ((_a = override.provider) === null || _a === void 0 ? void 0 : _a.modelId) || '';
-    var modelOptions = uniqueStrings(__spreadArray(__spreadArray([
+    var modelOptions = uniqueStrings(__spreadArray(__spreadArray(__spreadArray([
         ''
-    ], props.modelProfiles.map(function (profile) { var _a; return (_a = profile.provider) === null || _a === void 0 ? void 0 : _a.modelId; }).filter(function (value) { return Boolean(value); }), true), [
+    ], props.languageModels.map(function (model) { return model.id; }), true), props.modelProfiles.map(function (profile) { var _a; return (_a = profile.provider) === null || _a === void 0 ? void 0 : _a.modelId; }).filter(function (value) { return Boolean(value); }), true), [
         currentModelId
     ], false));
     var updateOverride = function (patch) {
@@ -2785,10 +3470,7 @@ function PatternRoleOverrideRow(props) {
             });
         }}>
             <option value=''>Default provider</option>
-            <option value='theia-language-model'>Theia language model</option>
-            <option value='codex-provider'>Codex provider</option>
-            <option value='command'>Command provider</option>
-            <option value='e2e-mock'>E2E mock</option>
+            {flowProviderOptions().map(function (option) { return <option key={option.value} value={option.value}>{option.label}</option>; })}
         </select>
         <select value={currentModelId} disabled={props.disabled} onChange={function (event) {
             var _a, _b;
@@ -2796,7 +3478,7 @@ function PatternRoleOverrideRow(props) {
                 provider: providerSelectionOrUndefined((_a = override.provider) === null || _a === void 0 ? void 0 : _a.providerId, event.currentTarget.value, (_b = override.provider) === null || _b === void 0 ? void 0 : _b.options)
             });
         }}>
-            {modelOptions.map(function (modelId) { return <option key={modelId || 'default'} value={modelId}>{modelId || 'Default model'}</option>; })}
+            {modelOptions.map(function (modelId) { return <option key={modelId || 'default'} value={modelId}>{modelOptionLabel(props.languageModels, modelId, 'Default model')}</option>; })}
         </select>
         <select value={execution.reasoningPolicy || 'inherit'} disabled={props.disabled} onChange={function (event) { return updateExecution({
             reasoningPolicy: event.currentTarget.value === 'inherit'
@@ -2825,6 +3507,8 @@ function PatternRoleOverrideRow(props) {
             <option value='balanced'>Balanced</option>
             <option value='deep'>Deep</option>
             <option value='coding'>Coding</option>
+            <option value='research'>Research</option>
+            <option value='lats'>LATS</option>
         </select>
     </>;
 }
@@ -3261,7 +3945,10 @@ function WorkflowCanvas(props) {
                     </defs>
                     {edges.map(function (edge) {
             var issueSeverity = validationIssueSeverity(canvasIssues.filter(function (issue) { var _a; return ((_a = validationIssueTarget(props.workflow, issue)) === null || _a === void 0 ? void 0 : _a.id) === edge.id; }));
-            return <g key={edge.id} className={"flow__flow-edge ".concat(props.selectedId === edge.id ? 'flow__flow-edge--selected' : '', " ").concat(issueSeverity ? "flow__flow-edge--".concat(issueSeverity) : '')} onClick={function () { return props.onSelectTransition(edge.id); }} onKeyDown={function (event) {
+            return <g key={edge.id} className={"flow__flow-edge ".concat(props.selectedId === edge.id ? 'flow__flow-edge--selected' : '', " ").concat(issueSeverity ? "flow__flow-edge--".concat(issueSeverity) : '')} onClick={function () { return props.onSelectTransition(edge.id); }} onDoubleClick={function (event) {
+                    event.stopPropagation();
+                    props.onOpenTransitionDetails(edge.id);
+                }} onKeyDown={function (event) {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
                         props.onSelectTransition(edge.id);
@@ -3286,7 +3973,10 @@ function WorkflowCanvas(props) {
                     ? "Cancel transition from ".concat(node.id)
                     : "Create transition from ".concat(connectionSource, " to ").concat(node.id)
                 : undefined;
-            return <div key={node.id} className={"flow__flow-node flow__flow-node--type-".concat(node.type, " flow__flow-node--").concat(node.status, " ").concat(props.selectedId === node.id ? 'flow__flow-node--selected' : '', " ").concat(connectionSource === node.id ? 'flow__flow-node--connecting' : '', " ").concat(isConnectionTarget ? 'flow__flow-node--connection-target' : '', " ").concat(issueSeverity ? "flow__flow-node--".concat(issueSeverity) : '')} style={{ left: node.x, top: node.y, width: node.width, height: node.height }} onPointerDown={function (event) { return startNodeDrag(event, node); }} onClick={function (event) { return void onNodeClick(event, node.id); }} onKeyDown={function (event) {
+            return <div key={node.id} className={"flow__flow-node flow__flow-node--type-".concat(node.type, " flow__flow-node--").concat(node.status, " ").concat(props.selectedId === node.id ? 'flow__flow-node--selected' : '', " ").concat(connectionSource === node.id ? 'flow__flow-node--connecting' : '', " ").concat(isConnectionTarget ? 'flow__flow-node--connection-target' : '', " ").concat(issueSeverity ? "flow__flow-node--".concat(issueSeverity) : '')} style={{ left: node.x, top: node.y, width: node.width, height: node.height }} onPointerDown={function (event) { return startNodeDrag(event, node); }} onClick={function (event) { return void onNodeClick(event, node.id); }} onDoubleClick={function (event) {
+                    event.stopPropagation();
+                    props.onOpenStateDetails(node.id);
+                }} onKeyDown={function (event) {
                     if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
                         if (connectionSource && props.editable) {
@@ -3322,15 +4012,13 @@ function WorkflowSourceEditor(props) {
     var _a, _b, _c;
     var issues = props.validation ? __spreadArray(__spreadArray([], props.validation.errors, true), props.validation.warnings, true) : [];
     var selectedPath = props.selectedId ? workflowSourcePathForSelection(props.workflow, props.selectedKind, props.selectedId) : undefined;
-    var sourceFormat = (0, common_2.workflowSourceFormatLabel)(props.workflow);
-    return <section className='flow__workflow-json' aria-label={"Workflow ".concat(sourceFormat, " editor")}>
+    var sourceFormat = (0, common_3.workflowSourceFormatLabel)(props.workflow);
+    return <section className='flow__workflow-json' aria-label={"Workflow ".concat(sourceFormat, " source preview")}>
         <div className='flow__workflow-json-header'>
-            <h3>Workflow {sourceFormat}</h3>
+            <h3>Workflow {sourceFormat} source</h3>
             <span>{((_a = props.validation) === null || _a === void 0 ? void 0 : _a.valid) ? 'valid' : "".concat(((_b = props.validation) === null || _b === void 0 ? void 0 : _b.errors.length) || 0, " errors / ").concat(((_c = props.validation) === null || _c === void 0 ? void 0 : _c.warnings.length) || 0, " warnings")}</span>
-            <button onClick={props.onApply} disabled={!props.editable || Boolean(props.parseError) || Boolean(props.validation && !props.validation.valid)} title={"Apply ".concat(sourceFormat, " to workflow")}>
-                <i className='codicon codicon-check'/> Apply
-            </button>
         </div>
+        <p className='flow__workflow-json-note'>Internal JSON/YAML preview. Configure workflows with the canvas, pattern controls, model selectors, and Markdown agent prompts.</p>
         {selectedPath && <div className='flow__workflow-json-selection'>
             <span>Selection</span>
             <code>{selectedPath}</code>
@@ -3348,7 +4036,7 @@ function WorkflowSourceEditor(props) {
                 </button>;
             })}
         </div>}
-        <textarea spellCheck={false} value={props.value} disabled={!props.editable} placeholder='Workflow schema' onChange={function (event) { return props.onChange(event.currentTarget.value); }} aria-label={"Workflow ".concat(sourceFormat, " source")}/>
+        <textarea spellCheck={false} value={props.value} readOnly={true} placeholder='Workflow source' aria-label={"Workflow ".concat(sourceFormat, " source")}/>
     </section>;
 }
 function WorkflowSavePreview(props) {
@@ -3393,7 +4081,7 @@ function Inspector(props) {
             <KeyValue label='Event' value={transition_1.on}/>
             <KeyValue label='Priority' value={((_c = transition_1.priority) === null || _c === void 0 ? void 0 : _c.toString()) || 'default'}/>
             <JsonBlock title='Guard' value={transition_1.guard || {}}/>
-            <TransitionEditor transitionId={transitionKey(transition_1)} transition={transition_1} stateIds={(0, common_2.flowWorkflowStateIds)(props.workflow)} editable={((_d = props.workflow.file) === null || _d === void 0 ? void 0 : _d.editable) !== false} issues={(props.validation ? __spreadArray(__spreadArray([], props.validation.errors, true), props.validation.warnings, true) : []).filter(function (issue) { var _a; return ((_a = issue.path) === null || _a === void 0 ? void 0 : _a.includes('transitions')) && (issue.message.includes(transition_1.from) || issue.message.includes(transition_1.to)); })} onUpdateTransition={props.onUpdateTransition} onDeleteTransition={props.onDeleteTransition} onSaveWorkflow={props.onSaveWorkflow}/>
+            {props.editing && <TransitionEditor transitionId={transitionKey(transition_1)} transition={transition_1} stateIds={(0, common_3.flowWorkflowStateIds)(props.workflow)} editable={((_d = props.workflow.file) === null || _d === void 0 ? void 0 : _d.editable) !== false} issues={(props.validation ? __spreadArray(__spreadArray([], props.validation.errors, true), props.validation.warnings, true) : []).filter(function (issue) { var _a; return ((_a = issue.path) === null || _a === void 0 ? void 0 : _a.includes('transitions')) && (issue.message.includes(transition_1.from) || issue.message.includes(transition_1.to)); })} onUpdateTransition={props.onUpdateTransition} onDeleteTransition={props.onDeleteTransition} onSaveWorkflow={props.onSaveWorkflow} onExitEdit={props.onExitEdit}/>}
             <EventSummary title='Last evaluation' event={evaluated}/>
             <EventSummary title='Last firing' event={fired}/>
             {((evaluated === null || evaluated === void 0 ? void 0 : evaluated.payload) || (fired === null || fired === void 0 ? void 0 : fired.payload)) && <JsonBlock title='Guard payload / reason' value={{
@@ -3414,21 +4102,25 @@ function Inspector(props) {
     var signals = ((_h = props.run) === null || _h === void 0 ? void 0 : _h.signals.filter(function (signal) { return signal.stateId === selectedStateId; })) || [];
     var events = relevantStateEvents(((_j = props.run) === null || _j === void 0 ? void 0 : _j.events) || [], selectedStateId, stateWorkloads.map(function (workload) { return workload.id; }), stateGates.map(function (gate) { return gate.id; }));
     var validationIssues = props.validation ? __spreadArray(__spreadArray([], props.validation.errors, true), props.validation.warnings, true).filter(function (issue) { var _a; return ((_a = issue.path) === null || _a === void 0 ? void 0 : _a.includes("states.".concat(selectedStateId))) || issue.message.includes(selectedStateId); }) : [];
+    if (props.editing) {
+        return <StateEditor workflow={props.workflow} stateId={selectedStateId} state={state} editable={((_k = props.workflow.file) === null || _k === void 0 ? void 0 : _k.editable) !== false} issues={validationIssues} agents={props.agents} modelProfiles={props.modelProfiles} languageModels={props.languageModels} aiRuntime={props.aiRuntime} onUpdateState={props.onUpdateState} onSelectAgent={props.onSelectStateAgent} onOpenAgent={props.onOpenAgent} onConfigureAiProvider={props.onConfigureAiProvider} onAddBranch={props.onAddBranch} onDeleteState={props.onDeleteState} onSaveWorkflow={props.onSaveWorkflow} onExitEdit={props.onExitEdit}/>;
+    }
     return <Panel title='State'>
         <KeyValue label='Id' value={selectedStateId}/>
         <KeyValue label='Type' value={state.type}/>
         <KeyValue label='Agent' value={state.agent || 'none'}/>
+        {state.type === 'input' && <KeyValue label='Run prompt' value='Prompt menu -> input/request.md at run start'/>}
+        {state.prompt && state.type !== 'input' && <KeyValue label='State prompt' value={state.prompt}/>}
         {state.type === 'agent' && <KeyValue label='Provider / model' value={providerSummary(state.provider)}/>}
-        {state.agent && <AgentMarkdownActions workflow={props.workflow} agentIdOrPath={state.agent} onOpenAgent={props.onOpenAgent}/>}
-        <KeyValue label='Inputs' value={(((_k = state.input) === null || _k === void 0 ? void 0 : _k.include) || []).join(', ') || 'none'}/>
+        <KeyValue label='Inputs' value={(((_l = state.input) === null || _l === void 0 ? void 0 : _l.include) || []).join(', ') || 'none'}/>
         <KeyValue label='Outputs' value={(state.outputs || []).join(', ') || 'none'}/>
-        <KeyValue label='Signals' value={(((_l = state.input) === null || _l === void 0 ? void 0 : _l.signals) || []).join(', ') || signals.map(function (signal) { return signal.key; }).join(', ') || 'none'}/>
+        <KeyValue label='Signals' value={(((_m = state.input) === null || _m === void 0 ? void 0 : _m.signals) || []).join(', ') || signals.map(function (signal) { return signal.key; }).join(', ') || 'none'}/>
         <KeyValue label='Timeout' value={state.timeoutMs ? "".concat(state.timeoutMs, " ms") : 'none'}/>
         <KeyValue label='Retry' value={state.retry ? "max ".concat(state.retry.max).concat(state.retry.counter ? " / ".concat(state.retry.counter) : '') : 'none'}/>
         <KeyValue label='Workloads' value={stateWorkloads.length.toString()}/>
         {state.waitFor && <KeyValue label='Wait for' value={state.waitFor.join(', ') || 'none'}/>}
         {state.branches && <KeyValue label='Branches' value={Object.keys(state.branches).join(', ') || 'none'}/>}
-        <StateEditor workflow={props.workflow} stateId={selectedStateId} state={state} editable={((_m = props.workflow.file) === null || _m === void 0 ? void 0 : _m.editable) !== false} issues={validationIssues} modelProfiles={props.modelProfiles} onUpdateState={props.onUpdateState} onOpenAgent={props.onOpenAgent} onAddBranch={props.onAddBranch} onDeleteState={props.onDeleteState} onSaveWorkflow={props.onSaveWorkflow}/>
+        {!props.editing && <StateReadOnlySummary workflow={props.workflow} state={state} onOpenAgent={props.onOpenAgent}/>}
         <RunList title='Artifacts' empty='No artifacts for this state.' items={artifacts.map(function (artifact) { return ({
             id: artifact.id,
             title: artifact.uri,
@@ -3458,16 +4150,7 @@ function Inspector(props) {
                 workload.issues.length ? "issues ".concat(workload.issues.join(', ')) : undefined
             ].filter(Boolean).join(' / ')
         }); })}/>
-        {stateGates.map(function (gate) { return <div className='flow__gate' key={gate.id}>
-            <strong>{gate.title}</strong>
-            <span>{gate.status}</span>
-            {gate.prompt && <small>{gate.prompt}</small>}
-            {gate.status === 'pending' && !props.readOnlyRun && <div className='flow__gate-actions'>
-                <button onClick={function () { return props.onApproveGate(gate.id, 'approved'); }}>Approve</button>
-                <button onClick={function () { return props.onApproveGate(gate.id, 'revision_requested'); }}>Review</button>
-                <button onClick={function () { return props.onApproveGate(gate.id, 'rejected'); }}>Reject</button>
-            </div>}
-        </div>; })}
+        {stateGates.map(function (gate) { return <GateDecisionCard key={gate.id} gate={gate} stateIds={props.workflow ? (0, common_3.flowWorkflowStateIds)(props.workflow) : []} readOnly={props.readOnlyRun} onApproveGate={props.onApproveGate}/>; })}
         <RunList title='Relevant events' empty='No events for this state.' items={events.map(function (event) { return ({
             id: event.id,
             title: "".concat(event.type, " / ").concat(new Date(event.timestamp).toLocaleTimeString()),
@@ -3475,37 +4158,284 @@ function Inspector(props) {
         }); })}/>
     </Panel>;
 }
+function GateDecisionCard(props) {
+    var _a;
+    var decisions = ((_a = props.gate.decisions) === null || _a === void 0 ? void 0 : _a.length) ? props.gate.decisions : defaultGateDecisionDefinitions();
+    var _b = React.useState({}), targets = _b[0], setTargets = _b[1];
+    var _c = React.useState({}), notes = _c[0], setNotes = _c[1];
+    return <div className='flow__gate' key={props.gate.id}>
+        <header className='flow__gate-header'>
+            <div>
+                <strong>{props.gate.title}</strong>
+                {props.gate.prompt && <small>{props.gate.prompt}</small>}
+            </div>
+            <span>{props.gate.status}</span>
+        </header>
+        {props.gate.status === 'pending' && !props.readOnly && <div className='flow__gate-decision-list'>
+            {decisions.map(function (decision) {
+                var status = gateDecisionStatus(decision);
+                var target = targets[decision.id] || decision.to || '';
+                var note = notes[decision.id] || '';
+                return <article key={decision.id} className='flow__gate-decision'>
+                    <div>
+                        <strong>{decision.label}</strong>
+                        <span>{decision.outcome || status}{decision.action ? " / ".concat(decision.action) : ''}</span>
+                    </div>
+                    {decision.allowTargetSelection && <select value={target} onChange={function (event) { return setTargets(function (current) {
+                        var _a;
+                        return (__assign(__assign({}, current), (_a = {}, _a[decision.id] = event.currentTarget.value, _a)));
+                    }); }}>
+                        <option value=''>Configured route</option>
+                        {props.stateIds.map(function (stateId) { return <option key={stateId} value={stateId}>{stateId}</option>; })}
+                    </select>}
+                    {decision.requireNote && <textarea rows={2} value={note} placeholder='Decision note' onChange={function (event) { return setNotes(function (current) {
+                        var _a;
+                        return (__assign(__assign({}, current), (_a = {}, _a[decision.id] = event.currentTarget.value, _a)));
+                    }); }}/>}
+                    <button type='button' disabled={decision.requireNote && !note.trim()} onClick={function () { return props.onApproveGate(props.gate.id, status, decision.id, target || undefined, note || undefined); }}>
+                        {decision.label}
+                    </button>
+                </article>;
+            })}
+        </div>}
+    </div>;
+}
+function gateDecisionStatus(decision) {
+    var value = "".concat(decision.outcome || decision.id).toLowerCase();
+    if (value.includes('reject') || value.includes('fail')) {
+        return 'rejected';
+    }
+    if (value.includes('revision') || value.includes('change') || value.includes('repair')) {
+        return 'revision_requested';
+    }
+    return 'approved';
+}
+function StateReadOnlySummary(props) {
+    var _a, _b, _c, _d, _e;
+    var agentMarkdownPath = props.state.agent ? resolveWorkflowAgentRelativePath(props.workflow, props.state.agent) : undefined;
+    var execution = props.state.modelExecution;
+    return <section className='flow__state-readonly' aria-label='State summary'>
+        {props.state.type === 'input' && <article className='flow__summary-card'>
+            <h4>Prompt da run</h4>
+            <p>O texto usado na execucao vem do menu <strong>Prompt</strong> do topo e e salvo como <code>input/request.md</code>. Ao rodar este Flow salvo pelo AI Chat, o input do chat substitui esse prompt na run.</p>
+        </article>}
+        {props.state.type === 'agent' && <article className='flow__summary-card'>
+            <div className='flow__summary-card-heading'>
+                <h4>Library agent</h4>
+                <button type='button' disabled={!props.state.agent} title='Open the shared agent Markdown file' onClick={function () { return props.state.agent && props.onOpenAgent(props.state.agent); }}>
+                    <i className='codicon codicon-go-to-file'/> Open library
+                </button>
+            </div>
+            <p>
+                Este botao abre o markdown original do agente. Alteracoes nesse arquivo afetam a biblioteca/agente salvo; ajustes exclusivos deste bloco ficam nos overrides do workflow.
+            </p>
+            <dl className='flow__summary-grid'>
+                <div>
+                    <dt>Agent</dt>
+                    <dd>{props.state.agent || 'none'}</dd>
+                </div>
+                <div>
+                    <dt>Markdown</dt>
+                    <dd>{agentMarkdownPath || 'none'}</dd>
+                </div>
+            </dl>
+        </article>}
+        {props.state.type === 'agent' && <article className='flow__summary-card'>
+            <h4>Model execution</h4>
+            <dl className='flow__summary-grid'>
+                <div>
+                    <dt>Profile</dt>
+                    <dd>{(execution === null || execution === void 0 ? void 0 : execution.profileId) || 'inherit'}</dd>
+                </div>
+                <div>
+                    <dt>Provider/model</dt>
+                    <dd>{providerSummary(props.state.provider)}</dd>
+                </div>
+                <div>
+                    <dt>Reasoning</dt>
+                    <dd>{[
+                (execution === null || execution === void 0 ? void 0 : execution.reasoningPolicy) || 'auto',
+                (_a = execution === null || execution === void 0 ? void 0 : execution.nativeReasoning) === null || _a === void 0 ? void 0 : _a.effort,
+                (_b = execution === null || execution === void 0 ? void 0 : execution.virtualReasoning) === null || _b === void 0 ? void 0 : _b.mode,
+                execution === null || execution === void 0 ? void 0 : execution.reasoningVariant,
+                execution === null || execution === void 0 ? void 0 : execution.serviceTier
+            ].filter(Boolean).join(' / ') || 'default'}</dd>
+                </div>
+                <div>
+                    <dt>Max tokens</dt>
+                    <dd>{(_c = execution === null || execution === void 0 ? void 0 : execution.maxTokens) !== null && _c !== void 0 ? _c : 'provider default'}</dd>
+                </div>
+            </dl>
+        </article>}
+        {(props.state.systemPrompt || props.state.taskPrompt || ((_d = props.state.deliverables) === null || _d === void 0 ? void 0 : _d.length)) && <article className='flow__summary-card'>
+            <h4>Block overrides</h4>
+            <p>Estes valores pertencem a esta instancia do bloco no workflow. Clique em <strong>Edit</strong> para altera-los.</p>
+            {props.state.systemPrompt && <ReadonlyText title='System prompt' value={props.state.systemPrompt}/>}
+            {props.state.taskPrompt && <ReadonlyText title='Task prompt' value={props.state.taskPrompt}/>}
+            {((_e = props.state.deliverables) === null || _e === void 0 ? void 0 : _e.length) ? <div className='flow__readonly-deliverables'>
+                <span>Deliverables</span>
+                {props.state.deliverables.map(function (deliverable) { return <code key={deliverable.path}>{deliverable.path}</code>; })}
+            </div> : undefined}
+        </article>}
+    </section>;
+}
+function ReadonlyText(props) {
+    return <div className='flow__readonly-text'>
+        <span>{props.title}</span>
+        <p>{props.value}</p>
+    </div>;
+}
+function FlowAgentGroupedPicker(props) {
+    var _this = this;
+    var _a = React.useState(false), open = _a[0], setOpen = _a[1];
+    var _b = React.useState('below'), menuDirection = _b[0], setMenuDirection = _b[1];
+    var buttonRef = React.useRef(null);
+    var _c = React.useState(function () { return ({
+        workflow: props.model.workflow.some(function (option) { return option.value === props.value; }) || !props.value,
+        workspace: props.model.workspace.some(function (option) { return option.value === props.value; }),
+        catalog: props.model.catalog.some(function (option) { return option.value === props.value; })
+    }); }), expanded = _c[0], setExpanded = _c[1];
+    React.useEffect(function () {
+        var close = function (event) {
+            if (!event.target.closest('.flow__agent-picker')) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', close, true);
+        return function () { return document.removeEventListener('mousedown', close, true); };
+    }, []);
+    var groups = [
+        { id: 'workflow', label: 'Workflow agents', options: props.model.workflow },
+        { id: 'workspace', label: 'Workspace agents', options: props.model.workspace },
+        { id: 'catalog', label: 'Agents library', options: props.model.catalog }
+    ].filter(function (group) { return group.options.length > 0; });
+    var selectedLabel = flowAgentSelectLabel(props.model, props.value);
+    var choose = function (selection) { return __awaiter(_this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    setOpen(false);
+                    return [4 /*yield*/, props.onSelect(selection)];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    }); };
+    var toggleOpen = function () {
+        var _a, _b;
+        if (!open) {
+            var rect = (_a = buttonRef.current) === null || _a === void 0 ? void 0 : _a.getBoundingClientRect();
+            var spaceBelow = rect ? window.innerHeight - rect.bottom : window.innerHeight;
+            var spaceAbove = (_b = rect === null || rect === void 0 ? void 0 : rect.top) !== null && _b !== void 0 ? _b : 0;
+            setMenuDirection(spaceBelow < 300 && spaceAbove > spaceBelow ? 'above' : 'below');
+        }
+        setOpen(function (current) { return !current; });
+    };
+    return <div className='flow__agent-picker'>
+        <button type='button' ref={buttonRef} className='flow__agent-picker-button' disabled={props.disabled} aria-haspopup='menu' aria-expanded={open} title={selectedLabel} onClick={toggleOpen}>
+            <span>{selectedLabel}</span>
+            <i className='codicon codicon-chevron-down'/>
+        </button>
+        {open && <div className={"flow__agent-picker-menu flow__agent-picker-menu--".concat(menuDirection)} role='menu'>
+            <button type='button' className={"flow__agent-picker-option".concat(!props.value ? ' flow__agent-picker-option--selected' : '')} onClick={function () { return choose(''); }}>
+                <span>Sem agente</span>
+            </button>
+            {groups.map(function (group) { return <section className='flow__agent-picker-group' key={group.id}>
+                <button type='button' className='flow__agent-picker-group-header' onClick={function () { return setExpanded(function (current) {
+                var _a;
+                return (__assign(__assign({}, current), (_a = {}, _a[group.id] = !current[group.id], _a)));
+            }); }}>
+                    <i className={"codicon ".concat(expanded[group.id] ? 'codicon-chevron-down' : 'codicon-chevron-right')}/>
+                    <span>{group.label}</span>
+                    <small>{group.options.length}</small>
+                </button>
+                {expanded[group.id] && <div className='flow__agent-picker-options'>
+                    {group.options.map(function (option) { return <button type='button' key={option.value} className={"flow__agent-picker-option".concat(option.value === props.value ? ' flow__agent-picker-option--selected' : '')} title={option.label} onClick={function () { return choose(option.value); }}>
+                        <span>{option.label}</span>
+                    </button>; })}
+                </div>}
+            </section>; })}
+        </div>}
+    </div>;
+}
 function StateEditor(props) {
     var _a, _b, _c, _d, _e, _f;
     var updateInput = function (patch) {
         return props.onUpdateState(props.stateId, { input: compactObject(__assign(__assign({}, (props.state.input || {})), patch)) });
     };
+    var agentSelect = createFlowAgentSelectModel(props.workflow, props.agents, props.state.agent);
+    var agentMarkdownPath = props.state.agent ? resolveWorkflowAgentRelativePath(props.workflow, props.state.agent) : undefined;
+    var stateIds = (0, common_3.flowWorkflowStateIds)(props.workflow).filter(function (stateId) { return stateId !== props.stateId; });
     return <section className='flow__state-editor' aria-label='State editor'>
-        <div className='flow__section-heading'>
+        <div className='flow__section-heading flow__section-heading--actions'>
             <h4>Workflow fields</h4>
-            <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Save workflow file'>
-                <i className='codicon codicon-save'/> Save
-            </button>
-            <button onClick={function () { return props.onDeleteState(props.stateId); }} disabled={!props.editable} title='Delete state'>
-                <i className='codicon codicon-trash'/> Delete
-            </button>
+            <div className='flow__section-actions'>
+                <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Salvar o workflow e voltar para o resumo'>
+                    <i className='codicon codicon-check'/> Aplicar e voltar
+                </button>
+                <button type='button' onClick={props.onExitEdit} title='Voltar para exibicao com as configuracoes atuais'>
+                    <i className='codicon codicon-eye'/> Voltar ao resumo
+                </button>
+                <button onClick={function () { return props.onDeleteState(props.stateId); }} disabled={!props.editable} title='Delete state'>
+                    <i className='codicon codicon-trash'/> Delete
+                </button>
+            </div>
         </div>
         {props.issues.length > 0 && <div className='flow__inline-validation'>
             {props.issues.map(function (issue) { return <span key={"".concat(issue.code, "-").concat(issue.path || issue.message)}>{issue.message}</span>; })}
         </div>}
-        <div className='flow__form-section'>
-            <h5>Agente</h5>
+        {props.state.type === 'input' && <div className='flow__form-section flow__form-section--note'>
+            <h5>Prompt da run</h5>
+            <p className='flow__field-help'>
+                O texto que entra no workflow vem do menu <strong>Prompt</strong> no topo do Flow. Ao iniciar a run, esse texto e salvo como <code>input/request.md</code> e passa para os proximos blocos. Se este Flow salvo for chamado pelo AI Chat, o input do chat substitui esse prompt nesta run.
+            </p>
+        </div>}
+        {props.state.type !== 'agent' && props.state.type !== 'input' && <div className='flow__form-section'>
+            <h5>Prompt do bloco</h5>
             <label>
-                <span>Agent</span>
-                <div className='flow__agent-field'>
-                    <input value={props.state.agent || ''} disabled={!props.editable} placeholder='ex: frontend ou agents/frontend.md' onChange={function (event) { return props.onUpdateState(props.stateId, { agent: emptyToUndefined(event.currentTarget.value) }); }}/>
-                    <button disabled={!props.state.agent} title='Open agent Markdown in Theia editor' onClick={function () { return props.state.agent && props.onOpenAgent(props.state.agent); }}>
-                        <i className='codicon codicon-edit'/>
-                    </button>
-                </div>
+                <span>Prompt / intent</span>
+                <textarea rows={3} value={props.state.prompt || ''} disabled={!props.editable} placeholder='Explique o objetivo deste bloco no workflow.' onChange={function (event) { return props.onUpdateState(props.stateId, { prompt: emptyToUndefined(event.currentTarget.value) }); }}/>
             </label>
-            {props.state.type === 'agent' && <>
-            <ModelExecutionEditor state={props.state} modelProfiles={props.modelProfiles} editable={props.editable} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>
+            <label>
+                <span>Task prompt</span>
+                <textarea rows={3} value={props.state.taskPrompt || ''} disabled={!props.editable} placeholder='Instrucao especifica que este bloco deve cumprir.' onChange={function (event) { return props.onUpdateState(props.stateId, { taskPrompt: emptyToUndefined(event.currentTarget.value) }); }}/>
+            </label>
+        </div>}
+        {props.state.type === 'agent' && <div className='flow__form-section flow__agent-editor'>
+            <div className='flow__form-section-title'>
+                <h5>Agente do bloco</h5>
+                <button disabled={!props.state.agent} title='Open agent Markdown in Theia editor' onClick={function () { return props.state.agent && props.onOpenAgent(props.state.agent); }}>
+                    <i className='codicon codicon-edit'/> Open
+                </button>
+            </div>
+            <p className='flow__field-help'>
+                O markdown escolhido vem da biblioteca de agentes. Os prompts e deliverables abaixo sao ajustes deste bloco e ficam salvos apenas neste workflow.
+            </p>
+            <div className='flow__editor-grid flow__editor-grid--two'>
+                <label>
+                    <span>Perfil da biblioteca</span>
+                    <FlowAgentGroupedPicker model={agentSelect} value={agentSelect.value} disabled={!props.editable} onSelect={function (selection) { return props.onSelectAgent(props.stateId, selection); }}/>
+                </label>
+                <label>
+                    <span>ID ou caminho salvo no bloco</span>
+                    <div className='flow__agent-field'>
+                        <input value={props.state.agent || ''} disabled={!props.editable} placeholder='ex: frontend ou agents/frontend.md' onChange={function (event) { return props.onUpdateState(props.stateId, { agent: emptyToUndefined(event.currentTarget.value) }); }}/>
+                        <button disabled={!props.state.agent} title='Open agent Markdown in Theia editor' onClick={function () { return props.state.agent && props.onOpenAgent(props.state.agent); }}>
+                            <i className='codicon codicon-edit'/>
+                        </button>
+                    </div>
+                </label>
+            </div>
+            {agentMarkdownPath && <p className='flow__agent-path'>Markdown da biblioteca: <code>{agentMarkdownPath}</code></p>}
+        </div>}
+        {props.state.type === 'agent' && <>
+        <ModelExecutionEditor state={props.state} modelProfiles={props.modelProfiles} languageModels={props.languageModels} aiRuntime={props.aiRuntime} editable={props.editable} onConfigureProvider={props.onConfigureAiProvider} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>
+        <div className='flow__form-section flow__prompt-overrides'>
+            <h5>Instrucoes deste bloco</h5>
+            <p className='flow__field-help'>
+                Estes campos complementam ou especializam o agente para este passo do Flow. Editar aqui nao altera o markdown generico da biblioteca.
+            </p>
             <label>
                 <span>System prompt</span>
                 <textarea rows={4} value={props.state.systemPrompt || ''} disabled={!props.editable} placeholder='Papel, limites e criterios do agente' onChange={function (event) { return props.onUpdateState(props.stateId, { systemPrompt: emptyToUndefined(event.currentTarget.value) }); }}/>
@@ -3514,12 +4444,9 @@ function StateEditor(props) {
                 <span>Task prompt</span>
                 <textarea rows={4} value={props.state.taskPrompt || ''} disabled={!props.editable} placeholder='Tarefa especifica deste bloco' onChange={function (event) { return props.onUpdateState(props.stateId, { taskPrompt: emptyToUndefined(event.currentTarget.value) }); }}/>
             </label>
-            <label>
-                <span>Deliverables</span>
-                <textarea rows={4} value={deliverablesToText(props.state.deliverables)} disabled={!props.editable} placeholder='path | description | kind | required' onChange={function (event) { return props.onUpdateState(props.stateId, { deliverables: textToDeliverables(event.currentTarget.value) }); }}/>
-            </label>
-            </>}
+            <DeliverablesEditor value={props.state.deliverables} editable={props.editable} onChange={function (deliverables) { return props.onUpdateState(props.stateId, { deliverables: deliverables }); }}/>
         </div>
+        </>}
         <div className='flow__form-section'>
             <h5>Entrada e saida</h5>
             <label>
@@ -3562,6 +4489,9 @@ function StateEditor(props) {
                 </label>
             </div>
         </div>
+        {props.state.type === 'gate' && <GateConfigEditor stateId={props.stateId} state={props.state} stateIds={stateIds} editable={props.editable} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>}
+        {props.state.type === 'loop' && <LoopEditor state={props.state} stateIds={stateIds} editable={props.editable} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>}
+        <OutcomesEditor state={props.state} stateIds={stateIds} editable={props.editable} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>
         {props.state.type === 'parallel' && <section className='flow__branch-editor' aria-label='Parallel branches'>
             <div className='flow__section-heading'>
                 <h4>Branches</h4>
@@ -3586,6 +4516,201 @@ function StateEditor(props) {
         {props.state.type === 'dynamic_parallel' && <DynamicParallelEditor workflow={props.workflow} state={props.state} editable={props.editable} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>}
         {props.state.type === 'tournament' && <TournamentEditor workflow={props.workflow} state={props.state} editable={props.editable} onUpdate={function (patch) { return props.onUpdateState(props.stateId, patch); }}/>}
     </section>;
+}
+function GateConfigEditor(props) {
+    var _a, _b;
+    var gate = ((_a = props.state.gates) === null || _a === void 0 ? void 0 : _a[0]) || {
+        id: "".concat(props.stateId, "_approval"),
+        title: 'Approve next step',
+        stateId: props.stateId,
+        decisions: defaultGateDecisionDefinitions()
+    };
+    var decisions = ((_b = gate.decisions) === null || _b === void 0 ? void 0 : _b.length) ? gate.decisions : defaultGateDecisionDefinitions();
+    var updateGate = function (patch) {
+        return props.onUpdate({ gates: [compactObject(__assign(__assign(__assign({}, gate), patch), { stateId: props.stateId }))] });
+    };
+    var updateDecision = function (index, patch) {
+        var next = decisions.map(function (decision, candidateIndex) { return candidateIndex === index ? compactObject(__assign(__assign({}, decision), patch)) : decision; });
+        return updateGate({ decisions: next });
+    };
+    return <div className='flow__form-section flow__gate-config-editor'>
+        <h5>Human approval</h5>
+        <div className='flow__editor-grid flow__editor-grid--two'>
+            <label>
+                <span>Gate id</span>
+                <input value={gate.id} disabled={!props.editable} onChange={function (event) { return updateGate({ id: event.currentTarget.value }); }}/>
+            </label>
+            <label>
+                <span>Title</span>
+                <input value={gate.title} disabled={!props.editable} onChange={function (event) { return updateGate({ title: event.currentTarget.value }); }}/>
+            </label>
+        </div>
+        <label>
+            <span>Prompt shown to the user</span>
+            <textarea rows={3} value={gate.prompt || ''} disabled={!props.editable} onChange={function (event) { return updateGate({ prompt: emptyToUndefined(event.currentTarget.value) }); }}/>
+        </label>
+        <div className='flow__decision-editor-list'>
+            {decisions.map(function (decision, index) { return <article key={"".concat(decision.id, "-").concat(index)} className='flow__decision-editor-row'>
+                <input value={decision.id} disabled={!props.editable} placeholder='approved' onChange={function (event) { return updateDecision(index, { id: event.currentTarget.value }); }}/>
+                <input value={decision.label} disabled={!props.editable} placeholder='Approve' onChange={function (event) { return updateDecision(index, { label: event.currentTarget.value }); }}/>
+                <select value={decision.outcome || ''} disabled={!props.editable} onChange={function (event) { return updateDecision(index, { outcome: emptyToUndefined(event.currentTarget.value) }); }}>
+                    <option value=''>Outcome follows id</option>
+                    {['approved', 'rejected', 'revision_requested', 'success', 'failed', 'cancelled'].map(function (outcome) { return <option key={outcome} value={outcome}>{outcome}</option>; })}
+                </select>
+                <select value={decision.to || ''} disabled={!props.editable} onChange={function (event) { return updateDecision(index, { to: emptyToUndefined(event.currentTarget.value) }); }}>
+                    <option value=''>No fixed target</option>
+                    {props.stateIds.map(function (stateId) { return <option key={stateId} value={stateId}>{stateId}</option>; })}
+                </select>
+                <select value={decision.action || ''} disabled={!props.editable} onChange={function (event) { return updateDecision(index, { action: emptyToUndefined(event.currentTarget.value) }); }}>
+                    <option value=''>No terminal action</option>
+                    {OUTCOME_ACTIONS.map(function (action) { return <option key={action} value={action}>{action}</option>; })}
+                </select>
+                <label className='flow__inline-check'>
+                    <input type='checkbox' checked={decision.allowTargetSelection === true} disabled={!props.editable} onChange={function (event) { return updateDecision(index, { allowTargetSelection: event.currentTarget.checked || undefined }); }}/>
+                    <span>choose target</span>
+                </label>
+                <label className='flow__inline-check'>
+                    <input type='checkbox' checked={decision.requireNote === true} disabled={!props.editable} onChange={function (event) { return updateDecision(index, { requireNote: event.currentTarget.checked || undefined }); }}/>
+                    <span>note</span>
+                </label>
+                <button type='button' disabled={!props.editable} title='Remove decision' onClick={function () { return updateGate({ decisions: decisions.filter(function (_, candidateIndex) { return candidateIndex !== index; }) }); }}>
+                    <i className='codicon codicon-trash'/>
+                </button>
+            </article>; })}
+        </div>
+        <button type='button' disabled={!props.editable} onClick={function () { return updateGate({ decisions: __spreadArray(__spreadArray([], decisions, true), [{ id: 'custom', label: 'Custom decision', outcome: 'success' }], false) }); }}>
+            <i className='codicon codicon-add'/> Add decision
+        </button>
+    </div>;
+}
+function LoopEditor(props) {
+    var _a;
+    var loop = props.state.loop || { body: '', maxIterations: 3 };
+    var updateLoop = function (patch) {
+        return props.onUpdate({ loop: compactObject(__assign(__assign({}, loop), patch)) });
+    };
+    return <div className='flow__form-section flow__loop-editor'>
+        <h5>Loop controller</h5>
+        <div className='flow__editor-grid flow__editor-grid--two'>
+            <label>
+                <span>Body state</span>
+                <select value={loop.body || ''} disabled={!props.editable} onChange={function (event) { return updateLoop({ body: event.currentTarget.value }); }}>
+                    <option value=''>Choose body state</option>
+                    {props.stateIds.map(function (stateId) { return <option key={stateId} value={stateId}>{stateId}</option>; })}
+                </select>
+            </label>
+            <label>
+                <span>Repair state</span>
+                <select value={loop.repair || ''} disabled={!props.editable} onChange={function (event) { return updateLoop({ repair: emptyToUndefined(event.currentTarget.value) }); }}>
+                    <option value=''>No automatic repair target</option>
+                    {props.stateIds.map(function (stateId) { return <option key={stateId} value={stateId}>{stateId}</option>; })}
+                </select>
+            </label>
+            <label>
+                <span>Max iterations</span>
+                <input type='number' min='1' value={(_a = loop.maxIterations) !== null && _a !== void 0 ? _a : ''} disabled={!props.editable} onChange={function (event) { return updateLoop({ maxIterations: numberOrUndefined(event.currentTarget.value) }); }}/>
+            </label>
+            <label>
+                <span>Counter key</span>
+                <input value={loop.counter || ''} disabled={!props.editable} placeholder='review_loop.iteration' onChange={function (event) { return updateLoop({ counter: emptyToUndefined(event.currentTarget.value) }); }}/>
+            </label>
+        </div>
+        <label>
+            <span>Until guard JSON</span>
+            <textarea rows={3} value={loop.until ? JSON.stringify(loop.until, undefined, 2) : ''} disabled={!props.editable} placeholder='{"signal.equals":{"key":"review.status","value":"approved"}}' onChange={function (event) { return updateLoop({ until: parseJsonObjectOrUndefined(event.currentTarget.value) }); }}/>
+        </label>
+    </div>;
+}
+function OutcomesEditor(props) {
+    var outcomes = props.state.outcomes || {};
+    var entries = Object.entries(outcomes);
+    var updateOutcome = function (outcomeId, patch) {
+        var next = __assign({}, outcomes);
+        var current = outcomeRouteFields(next[outcomeId]);
+        var nextId = patch.id || outcomeId;
+        delete next[outcomeId];
+        var route = compactObject({
+            to: patch.to !== undefined ? emptyToUndefined(patch.to) : current.to,
+            action: patch.action !== undefined ? emptyToUndefined(patch.action) : current.action,
+            label: patch.label !== undefined ? emptyToUndefined(patch.label) : current.label
+        });
+        next[nextId] = route.to && !route.action && !route.label ? route.to : route;
+        return props.onUpdate({ outcomes: Object.keys(next).length ? next : undefined });
+    };
+    var removeOutcome = function (outcomeId) {
+        var next = __assign({}, outcomes);
+        delete next[outcomeId];
+        return props.onUpdate({ outcomes: Object.keys(next).length ? next : undefined });
+    };
+    return <div className='flow__form-section flow__outcomes-editor'>
+        <h5>Outcome routes</h5>
+        <p className='flow__field-help'>Cada outcome define para onde a run vai depois deste bloco. Use uma etapa de destino ou uma acao terminal.</p>
+        {entries.length === 0 && <p className='flow__field-help'>Nenhum outcome configurado. O motor usa transicoes antigas ou encerra a run.</p>}
+        {entries.map(function (_a) {
+            var outcomeId = _a[0], route = _a[1];
+            var fields = outcomeRouteFields(route);
+            return <article key={outcomeId} className='flow__outcome-row'>
+                <input value={outcomeId} disabled={!props.editable} placeholder='success' onChange={function (event) { return updateOutcome(outcomeId, { id: event.currentTarget.value }); }}/>
+                <select value={fields.to || ''} disabled={!props.editable} onChange={function (event) { return updateOutcome(outcomeId, { to: event.currentTarget.value }); }}>
+                    <option value=''>No target</option>
+                    {props.stateIds.map(function (stateId) { return <option key={stateId} value={stateId}>{stateId}</option>; })}
+                </select>
+                <select value={fields.action || ''} disabled={!props.editable} onChange={function (event) { return updateOutcome(outcomeId, { action: event.currentTarget.value }); }}>
+                    <option value=''>No action</option>
+                    {OUTCOME_ACTIONS.map(function (action) { return <option key={action} value={action}>{action}</option>; })}
+                </select>
+                <input value={fields.label || ''} disabled={!props.editable} placeholder='Label' onChange={function (event) { return updateOutcome(outcomeId, { label: event.currentTarget.value }); }}/>
+                <button type='button' disabled={!props.editable} title='Remove outcome' onClick={function () { return removeOutcome(outcomeId); }}>
+                    <i className='codicon codicon-trash'/>
+                </button>
+            </article>;
+        })}
+        <div className='flow__outcome-actions'>
+            <button type='button' disabled={!props.editable} onClick={function () { return props.onUpdate({ outcomes: __assign(__assign({}, outcomes), { success: { action: 'complete' } }) }); }}>
+                <i className='codicon codicon-add'/> Add success route
+            </button>
+            <button type='button' disabled={!props.editable} onClick={function () { return props.onUpdate({ outcomes: __assign(__assign({}, outcomes), { failed: { action: 'fail' } }) }); }}>
+                <i className='codicon codicon-error'/> Add failed route
+            </button>
+            <button type='button' disabled={!props.editable} onClick={function () { return props.onUpdate({ outcomes: __assign(__assign({}, outcomes), { revision_requested: { action: 'wait' } }) }); }}>
+                <i className='codicon codicon-git-pull-request'/> Add rework route
+            </button>
+        </div>
+    </div>;
+}
+var OUTCOME_ACTIONS = ['continue', 'complete', 'fail', 'pause', 'wait', 'cancel', 'stop'];
+function defaultGateDecisionDefinitions() {
+    return [
+        { id: 'approved', label: 'Approve', outcome: 'approved' },
+        { id: 'revision_requested', label: 'Request changes', outcome: 'revision_requested', allowTargetSelection: true },
+        { id: 'rejected', label: 'Reject', outcome: 'rejected', action: 'fail' }
+    ];
+}
+function outcomeRouteFields(route) {
+    if (typeof route === 'string') {
+        return { to: route };
+    }
+    if (!route || typeof route !== 'object' || Array.isArray(route)) {
+        return {};
+    }
+    return {
+        to: typeof route.to === 'string' ? route.to : undefined,
+        action: typeof route.action === 'string' ? route.action : undefined,
+        label: typeof route.label === 'string' ? route.label : undefined
+    };
+}
+function parseJsonObjectOrUndefined(value) {
+    var trimmed = value.trim();
+    if (!trimmed) {
+        return undefined;
+    }
+    try {
+        var parsed = JSON.parse(trimmed);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : undefined;
+    }
+    catch (_a) {
+        return undefined;
+    }
 }
 function DynamicParallelEditor(props) {
     var _a, _b;
@@ -3685,13 +4810,13 @@ function OutputSourceSelect(props) {
     </select>;
 }
 function ModelExecutionEditor(props) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     var execution = props.state.modelExecution || {};
     var profileId = execution.profileId || 'inherit';
     var currentModelId = ((_a = props.state.provider) === null || _a === void 0 ? void 0 : _a.modelId) || '';
-    var modelOptions = uniqueStrings(__spreadArray(__spreadArray([
+    var modelOptions = uniqueStrings(__spreadArray(__spreadArray(__spreadArray([
         ''
-    ], props.modelProfiles.map(function (profile) { var _a; return (_a = profile.provider) === null || _a === void 0 ? void 0 : _a.modelId; }).filter(function (value) { return Boolean(value); }), true), [
+    ], props.languageModels.map(function (model) { return model.id; }), true), props.modelProfiles.map(function (profile) { var _a; return (_a = profile.provider) === null || _a === void 0 ? void 0 : _a.modelId; }).filter(function (value) { return Boolean(value); }), true), [
         currentModelId
     ], false));
     var updateExecution = function (patch) {
@@ -3708,37 +4833,57 @@ function ModelExecutionEditor(props) {
                 <select value={profileId} disabled={!props.editable} onChange={function (event) {
             var profile = props.modelProfiles.find(function (candidate) { return candidate.id === event.currentTarget.value; });
             void props.onUpdate({
-                provider: profile === null || profile === void 0 ? void 0 : profile.provider,
-                modelExecution: profile ? __assign(__assign({}, profile.execution), { profileId: profile.id }) : undefined
+                provider: undefined,
+                modelExecution: profile ? { profileId: profile.id } : undefined
             });
         }}>
                     {props.modelProfiles.map(function (profile) { return <option key={profile.id} value={profile.id}>{profile.name}</option>; })}
                 </select>
             </label>
-            <label>
-                <span>Provider</span>
-                <select value={((_b = props.state.provider) === null || _b === void 0 ? void 0 : _b.providerId) || 'inherit'} disabled={!props.editable} onChange={function (event) {
-            var _a, _b;
-            return props.onUpdate({
-                provider: providerSelectionOrUndefined(event.currentTarget.value === 'inherit' ? undefined : event.currentTarget.value, (_a = props.state.provider) === null || _a === void 0 ? void 0 : _a.modelId, (_b = props.state.provider) === null || _b === void 0 ? void 0 : _b.options)
+            <div className='flow__token-limit-control'>
+                <label>
+                    <span>Output tokens</span>
+                    <select value={execution.maxTokens === undefined ? 'unlimited' : 'limited'} disabled={!props.editable} onChange={function (event) {
+            var _a;
+            return updateExecution({
+                maxTokens: event.currentTarget.value === 'limited'
+                    ? (_a = execution.maxTokens) !== null && _a !== void 0 ? _a : DEFAULT_MAX_TOKEN_LIMIT
+                    : undefined
             });
         }}>
+                        <option value='unlimited'>Ilimitado</option>
+                        <option value='limited'>Limitar</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Max output tokens</span>
+                    <input type='number' min='1' value={(_b = execution.maxTokens) !== null && _b !== void 0 ? _b : ''} disabled={!props.editable || execution.maxTokens === undefined} placeholder='Sem limite' onChange={function (event) { return updateExecution({ maxTokens: numberOrUndefined(event.currentTarget.value) }); }}/>
+                </label>
+            </div>
+            {props.aiRuntime ? <div className='flow__model-execution-picker'>
+                <browser_2.CyberVinciAiExecutionPicker service={props.aiRuntime} value={flowStateToAiExecutionSelection(props.state)} disabled={!props.editable} onConfigureProvider={props.onConfigureProvider} onChange={function (selection) { return props.onUpdate(aiExecutionSelectionToFlowStatePatch(selection, execution)); }}/>
+            </div> : <>
+            <label>
+                <span>Provider</span>
+                <select value={((_c = props.state.provider) === null || _c === void 0 ? void 0 : _c.providerId) || 'inherit'} disabled={!props.editable} onChange={function (event) {
+                var _a, _b;
+                return props.onUpdate({
+                    provider: providerSelectionOrUndefined(event.currentTarget.value === 'inherit' ? undefined : event.currentTarget.value, (_a = props.state.provider) === null || _a === void 0 ? void 0 : _a.modelId, (_b = props.state.provider) === null || _b === void 0 ? void 0 : _b.options)
+                });
+            }}>
                     <option value='inherit'>Use profile/default</option>
-                    <option value='theia-language-model'>Theia language model</option>
-                    <option value='codex-provider'>Codex provider</option>
-                    <option value='command'>Command provider</option>
-                    <option value='e2e-mock'>E2E mock</option>
+                    {flowProviderOptions().map(function (option) { return <option key={option.value} value={option.value}>{option.label}</option>; })}
                 </select>
             </label>
             <label>
                 <span>Model</span>
                 <select value={currentModelId} disabled={!props.editable} onChange={function (event) {
-            var _a, _b;
-            return props.onUpdate({
-                provider: providerSelectionOrUndefined((_a = props.state.provider) === null || _a === void 0 ? void 0 : _a.providerId, event.currentTarget.value, (_b = props.state.provider) === null || _b === void 0 ? void 0 : _b.options)
-            });
-        }}>
-                    {modelOptions.map(function (modelId) { return <option key={modelId || 'default'} value={modelId}>{modelId || 'Provider default / selected chat model'}</option>; })}
+                var _a, _b;
+                return props.onUpdate({
+                    provider: providerSelectionOrUndefined((_a = props.state.provider) === null || _a === void 0 ? void 0 : _a.providerId, event.currentTarget.value, (_b = props.state.provider) === null || _b === void 0 ? void 0 : _b.options)
+                });
+            }}>
+                    {modelOptions.map(function (modelId) { return <option key={modelId || 'default'} value={modelId}>{modelOptionLabel(props.languageModels, modelId, 'Provider default / selected chat model')}</option>; })}
                 </select>
             </label>
             <label>
@@ -3753,51 +4898,100 @@ function ModelExecutionEditor(props) {
             </label>
             <label>
                 <span>Native effort</span>
-                <select value={((_c = execution.nativeReasoning) === null || _c === void 0 ? void 0 : _c.effort) || 'none'} disabled={!props.editable} onChange={function (event) { return updateExecution({
-            nativeReasoning: __assign(__assign({}, (execution.nativeReasoning || {})), { enabled: event.currentTarget.value !== 'none', effort: event.currentTarget.value })
-        }); }}>
+                <select value={((_d = execution.nativeReasoning) === null || _d === void 0 ? void 0 : _d.effort) || 'none'} disabled={!props.editable} onChange={function (event) { return updateExecution({
+                nativeReasoning: __assign(__assign({}, (execution.nativeReasoning || {})), { enabled: event.currentTarget.value !== 'none', effort: event.currentTarget.value })
+            }); }}>
                     <option value='none'>None</option>
                     <option value='low'>Low</option>
                     <option value='medium'>Medium</option>
                     <option value='high'>High</option>
+                    <option value='xhigh'>X High</option>
                 </select>
             </label>
             <label>
                 <span>Virtual reasoning</span>
-                <select value={((_d = execution.virtualReasoning) === null || _d === void 0 ? void 0 : _d.mode) || 'off'} disabled={!props.editable} onChange={function (event) { return updateExecution({
-            virtualReasoning: __assign(__assign({}, (execution.virtualReasoning || {})), { enabled: event.currentTarget.value !== 'off', mode: event.currentTarget.value })
-        }); }}>
+                <select value={((_e = execution.virtualReasoning) === null || _e === void 0 ? void 0 : _e.mode) || 'off'} disabled={!props.editable} onChange={function (event) { return updateExecution({
+                virtualReasoning: __assign(__assign({}, (execution.virtualReasoning || {})), { enabled: event.currentTarget.value !== 'off', mode: event.currentTarget.value })
+            }); }}>
                     <option value='off'>Off</option>
                     <option value='auto'>Auto</option>
                     <option value='fast'>Fast</option>
                     <option value='balanced'>Balanced</option>
                     <option value='deep'>Deep</option>
                     <option value='coding'>Coding</option>
+                    <option value='research'>Research</option>
+                    <option value='lats'>LATS</option>
                 </select>
             </label>
             <label>
-                <span>Temperature</span>
-                <input type='range' min='0' max='1' step='0.05' value={(_e = execution.temperature) !== null && _e !== void 0 ? _e : 0.2} disabled={!props.editable} onChange={function (event) { return updateExecution({ temperature: numberOrUndefined(event.currentTarget.value) }); }}/>
+                <span>Service tier</span>
+                <select value={execution.serviceTier || 'default'} disabled={!props.editable} onChange={function (event) { return updateExecution({
+                serviceTier: event.currentTarget.value === 'default'
+                    ? undefined
+                    : event.currentTarget.value
+            }); }}>
+                    <option value='default'>Default</option>
+                    <option value='fast'>Fast</option>
+                    <option value='flex'>Flex</option>
+                </select>
             </label>
             <label>
-                <span>Max output tokens</span>
-                <input type='number' min='0' value={(_f = execution.maxTokens) !== null && _f !== void 0 ? _f : ''} disabled={!props.editable} placeholder='default' onChange={function (event) { return updateExecution({ maxTokens: numberOrUndefined(event.currentTarget.value) }); }}/>
+                <span>Reasoning variant</span>
+                <input value={execution.reasoningVariant || ''} disabled={!props.editable} placeholder='Provider default' onChange={function (event) { return updateExecution({ reasoningVariant: emptyToUndefined(event.currentTarget.value) }); }}/>
             </label>
+            </>}
         </div>
     </section>;
 }
-function AgentMarkdownActions(props) {
-    var _a;
-    var relativePath = ((_a = props.workflow.agents) === null || _a === void 0 ? void 0 : _a[props.agentIdOrPath]) || props.agentIdOrPath;
-    return <section className='flow__agent-markdown' aria-label='Agent Markdown'>
-        <div className='flow__section-heading'>
-            <h4>Agent Markdown</h4>
-            <button onClick={function () { return props.onOpenAgent(props.agentIdOrPath); }} title='Open agent Markdown in Theia editor'>
-                <i className='codicon codicon-edit'/> Open
+function DeliverablesEditor(props) {
+    var deliverables = props.value || [];
+    var updateDeliverable = function (index, patch) {
+        var next = deliverables.map(function (deliverable, candidateIndex) {
+            return candidateIndex === index ? normalizeDeliverable(__assign(__assign({}, deliverable), patch)) : deliverable;
+        });
+        void props.onChange(deliverablesOrUndefined(next));
+    };
+    var removeDeliverable = function (index) {
+        void props.onChange(deliverablesOrUndefined(deliverables.filter(function (_, candidateIndex) { return candidateIndex !== index; })));
+    };
+    var addDeliverable = function () {
+        void props.onChange(__spreadArray(__spreadArray([], (props.value || []), true), [{ path: '', kind: 'markdown', required: true }], false));
+    };
+    return <section className='flow__deliverables-editor' aria-label='Deliverables'>
+        <div className='flow__section-heading flow__section-heading--actions'>
+            <h4>Deliverables</h4>
+            <button type='button' disabled={!props.editable} onClick={addDeliverable}>
+                <i className='codicon codicon-add'/> Add
             </button>
         </div>
-        <code>{relativePath}</code>
-        <p>Agents describe role, instructions, inputs, and output format only. Workflow flow control remains in the workflow file and kernel.</p>
+        {deliverables.length === 0 && <p className='flow__field-help'>Nenhum arquivo esperado para este bloco.</p>}
+        {deliverables.map(function (deliverable, index) {
+            var kindOptions = uniqueStrings(['markdown', 'json', 'text', 'patch', 'image', deliverable.kind || '']).filter(Boolean);
+            return <div className='flow__deliverable-row' key={"".concat(index, "-").concat(deliverable.path || 'new')}>
+                <label className='flow__deliverable-path'>
+                    <span>Path</span>
+                    <input value={deliverable.path || ''} disabled={!props.editable} placeholder='review/adversarial-review.md' onChange={function (event) { return updateDeliverable(index, { path: event.currentTarget.value }); }}/>
+                </label>
+                <label className='flow__deliverable-description'>
+                    <span>Description</span>
+                    <input value={deliverable.description || ''} disabled={!props.editable} placeholder='O que este bloco deve entregar' onChange={function (event) { return updateDeliverable(index, { description: emptyToUndefined(event.currentTarget.value) }); }}/>
+                </label>
+                <label>
+                    <span>Kind</span>
+                    <select value={deliverable.kind || ''} disabled={!props.editable} onChange={function (event) { return updateDeliverable(index, { kind: emptyToUndefined(event.currentTarget.value) }); }}>
+                        <option value=''>Default</option>
+                        {kindOptions.map(function (kind) { return <option key={kind} value={kind}>{kind}</option>; })}
+                    </select>
+                </label>
+                <label className='flow__deliverable-required'>
+                    <span>Required</span>
+                    <input type='checkbox' checked={deliverable.required !== false} disabled={!props.editable} onChange={function (event) { return updateDeliverable(index, { required: event.currentTarget.checked }); }}/>
+                </label>
+                <button type='button' className='flow__icon-button' disabled={!props.editable} title='Remove deliverable' onClick={function () { return removeDeliverable(index); }}>
+                    <i className='codicon codicon-trash'/>
+                </button>
+            </div>;
+        })}
     </section>;
 }
 function TransitionEditor(props) {
@@ -3832,8 +5026,11 @@ function TransitionEditor(props) {
     return <section className='flow__transition-editor' aria-label='Transition editor'>
         <div className='flow__section-heading'>
             <h4>Transition fields</h4>
-            <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Save workflow file'>
-                <i className='codicon codicon-save'/> Save
+            <button onClick={props.onSaveWorkflow} disabled={!props.editable} title='Salvar o workflow e voltar para o resumo'>
+                <i className='codicon codicon-check'/> Aplicar e voltar
+            </button>
+            <button type='button' onClick={props.onExitEdit} title='Voltar para exibicao com as configuracoes atuais'>
+                <i className='codicon codicon-eye'/> Voltar ao resumo
             </button>
             <button onClick={function () { return props.onDeleteTransition(props.transitionId); }} disabled={!props.editable} title='Delete transition'>
                 <i className='codicon codicon-trash'/> Delete
@@ -3881,7 +5078,7 @@ function TransitionEditor(props) {
 }
 function Kanban(props) {
     var _a;
-    var columns = (0, common_2.deriveFlowKanbanColumns)(((_a = props.run) === null || _a === void 0 ? void 0 : _a.workloads) || []);
+    var columns = (0, common_3.deriveFlowKanbanColumns)(((_a = props.run) === null || _a === void 0 ? void 0 : _a.workloads) || []);
     return <section className='flow__kanban' aria-label='Workloads'>
         {columns.map(function (column) { return <div className='flow__kanban-column' key={column.id}>
             <h3>{column.label}</h3>
@@ -4064,8 +5261,8 @@ function normalizeFlowSnapshotEvents(snapshot) {
         ? __assign(__assign({}, snapshot), { activeRun: normalizeFlowRunEvents(snapshot.activeRun) }) : snapshot;
 }
 function normalizeFlowRunEvents(run) {
-    var redacted = (0, common_2.redactFlowRunForDisplay)(run);
-    return __assign(__assign({}, redacted), { events: (0, common_2.normalizeFlowEvents)(redacted.events || []) });
+    var redacted = (0, common_3.redactFlowRunForDisplay)(run);
+    return __assign(__assign({}, redacted), { events: (0, common_3.normalizeFlowEvents)(redacted.events || []) });
 }
 function resolveSelectedArtifactId(run, selectedArtifactId) {
     var _a;
@@ -4107,7 +5304,7 @@ function collectRunIssues(run) {
     return mergeIssueLists(issues, []);
 }
 function issueToRunListItem(issue, index) {
-    return (0, common_2.redactFlowSecretsValue)({
+    return (0, common_3.redactFlowSecretsValue)({
         id: "".concat(issue.severity, "-").concat(issue.type, "-").concat(issue.summary, "-").concat(index),
         title: "".concat(issue.severity || 'issue', " / ").concat(issue.type || 'general'),
         meta: issue.suggestedFollowup ? "".concat(issue.summary, " / ").concat(issue.suggestedFollowup) : issue.summary
@@ -4157,8 +5354,8 @@ function firstParagraph(value) {
 }
 function EventLog(props) {
     var _a = React.useState({}), filter = _a[0], setFilter = _a[1];
-    var filteredEvents = (0, common_2.filterFlowEvents)(props.events, filter);
-    var hasFilter = (0, common_2.hasFlowEventLogFilter)(filter);
+    var filteredEvents = (0, common_3.filterFlowEvents)(props.events, filter);
+    var hasFilter = (0, common_3.hasFlowEventLogFilter)(filter);
     var setFilterValue = function (key, value) {
         setFilter(function (current) {
             var _a;
@@ -4196,7 +5393,7 @@ function EventLog(props) {
             {filteredEvents.slice().reverse().map(function (event) { return <article key={event.id}>
                 <time>{new Date(event.timestamp).toLocaleTimeString()}</time>
                 <strong>{event.type}</strong>
-                <span>{(0, common_2.redactFlowSecretsText)(event.message)}</span>
+                <span>{(0, common_3.redactFlowSecretsText)(event.message)}</span>
             </article>; })}
         </div>
     </section>;
@@ -4229,7 +5426,7 @@ function SecondRunSuggestion(props) {
         }); })}/>
         <details>
             <summary>Prompt sugerido</summary>
-            <pre>{(0, common_2.redactFlowSecretsText)(suggestion.prompt)}</pre>
+            <pre>{(0, common_3.redactFlowSecretsText)(suggestion.prompt)}</pre>
         </details>
     </section>;
 }
@@ -4352,10 +5549,10 @@ function RunList(props) {
             {item.onOpen
                 ? <button type='button' className='flow__link-button' title={"Open ".concat(item.title)} onClick={item.onOpen}>
                     <i className='codicon codicon-go-to-file'/>
-                    <strong>{(0, common_2.redactFlowSecretsText)(item.title)}</strong>
+                    <strong>{(0, common_3.redactFlowSecretsText)(item.title)}</strong>
                 </button>
-                : <strong>{(0, common_2.redactFlowSecretsText)(item.title)}</strong>}
-            {item.meta && <span>{(0, common_2.redactFlowSecretsText)(item.meta)}</span>}
+                : <strong>{(0, common_3.redactFlowSecretsText)(item.title)}</strong>}
+            {item.meta && <span>{(0, common_3.redactFlowSecretsText)(item.meta)}</span>}
         </article>; })}
     </section>;
 }
@@ -4404,7 +5601,7 @@ function ArtifactViewer(props) {
 function JsonBlock(props) {
     return <section className='flow__json-block'>
         <h4>{props.title}</h4>
-        <pre>{JSON.stringify((0, common_2.redactFlowSecretsValue)(props.value), undefined, 2)}</pre>
+        <pre>{JSON.stringify((0, common_3.redactFlowSecretsValue)(props.value), undefined, 2)}</pre>
     </section>;
 }
 function EventSummary(props) {
@@ -4425,7 +5622,7 @@ function Panel(props) {
 function KeyValue(props) {
     return <div className='flow__kv'>
         <span>{props.label}</span>
-        <strong>{(0, common_2.redactFlowSecretsText)(props.value)}</strong>
+        <strong>{(0, common_3.redactFlowSecretsText)(props.value)}</strong>
     </div>;
 }
 function ValidationIssues(props) {
@@ -4465,6 +5662,12 @@ function edgeMidpoint(edge, axis) {
 function edgePath(edge) {
     var from = edge.points[0] || { x: 0, y: 0 };
     var to = edge.points[1] || from;
+    if (to.x <= from.x) {
+        var returnLoop = Math.max(96, Math.abs(to.x - from.x) * 0.35 + 96);
+        var reverseOffset = from.y > to.y ? 72 : 0;
+        var controlX = Math.max(from.x, to.x) + returnLoop + reverseOffset;
+        return "M ".concat(from.x, " ").concat(from.y, " C ").concat(controlX, " ").concat(from.y, ", ").concat(controlX, " ").concat(to.y, ", ").concat(to.x, " ").concat(to.y);
+    }
     var curve = Math.max(48, Math.abs(to.x - from.x) * 0.45);
     return "M ".concat(from.x, " ").concat(from.y, " C ").concat(from.x + curve, " ").concat(from.y, ", ").concat(to.x - curve, " ").concat(to.y, ", ").concat(to.x, " ").concat(to.y);
 }
@@ -4478,6 +5681,7 @@ var AGENCY_CANVAS_STATE_TYPES = [
     'join',
     'condition',
     'gate',
+    'loop',
     'command',
     'memory_write',
     'report'
@@ -4485,11 +5689,13 @@ var AGENCY_CANVAS_STATE_TYPES = [
 var AGENCY_CANVAS_BRANCH_TYPES = [
     'agent',
     'condition',
+    'loop',
     'command',
     'memory_write',
     'report'
 ];
 var WORKFLOW_HISTORY_LIMIT = 50;
+var DEFAULT_MAX_TOKEN_LIMIT = 10000;
 function pushWorkflowHistory(stack, entry) {
     return __spreadArray(__spreadArray([], stack, true), [entry], false).slice(-WORKFLOW_HISTORY_LIMIT);
 }
@@ -4519,8 +5725,54 @@ function profileLabel(profiles, profileId) {
     var _a;
     return ((_a = profiles.find(function (profile) { return profile.id === profileId; })) === null || _a === void 0 ? void 0 : _a.name) || profileId || 'inherit';
 }
+function toFlowLanguageModelOptions(models) {
+    return models
+        .map(function (model) { return ({
+        id: model.id,
+        label: languageModelLabel(model),
+        status: model.status.status
+    }); })
+        .sort(function (left, right) {
+        if (left.status !== right.status) {
+            return left.status === 'ready' ? -1 : 1;
+        }
+        return left.label.localeCompare(right.label);
+    });
+}
+function languageModelLabel(model) {
+    var _a, _b, _c;
+    var label = ((_a = model.name) === null || _a === void 0 ? void 0 : _a.trim()) || model.id;
+    var vendor = (_b = model.vendor) === null || _b === void 0 ? void 0 : _b.trim();
+    var family = (_c = model.family) === null || _c === void 0 ? void 0 : _c.trim();
+    var details = uniqueStrings([vendor, family].filter(function (detail) { return Boolean(detail); }))
+        .filter(function (detail) { return !label.toLowerCase().includes(detail.toLowerCase()); });
+    var status = model.status.status === 'ready' ? '' : " (".concat(model.status.message || 'unavailable', ")");
+    return "".concat(label).concat(details.length ? " - ".concat(details.join(' / ')) : '').concat(status);
+}
+function modelOptionLabel(models, modelId, emptyLabel) {
+    if (!modelId) {
+        return emptyLabel;
+    }
+    var model = models.find(function (candidate) { return candidate.id === modelId; });
+    return model ? model.label : modelId;
+}
+function flowProviderOptions() {
+    return [
+        { value: 'theia-language-model', label: 'Theia language model' },
+        { value: 'codex-provider', label: 'Codex provider' },
+        { value: 'codex-app-server:codex', label: 'Codex app server' },
+        { value: 'direct-http:openrouter', label: 'OpenRouter' },
+        { value: 'direct-http:opencode-go', label: 'OpenCode Go' },
+        { value: 'direct-http:opencode', label: 'OpenCode Zen' },
+        { value: 'gemini-cli:gemini', label: 'Gemini CLI' },
+        { value: 'claude-code-cli:claude-code', label: 'Claude Code' },
+        { value: 'cursor-cli:cursor', label: 'Cursor CLI' },
+        { value: 'command', label: 'Command provider' },
+        { value: 'e2e-mock', label: 'E2E mock' }
+    ];
+}
 function MarkdownReportViewer(props) {
-    var blocks = parseMarkdownBlocks((0, common_2.redactFlowSecretsText)(props.report) || 'No report content available in the workload envelope.');
+    var blocks = parseMarkdownBlocks((0, common_3.redactFlowSecretsText)(props.report) || 'No report content available in the workload envelope.');
     return <div className='flow__artifact-markdown'>
         {blocks.map(function (block, index) {
             if (block.kind === 'heading') {
@@ -4538,11 +5790,11 @@ function MarkdownReportViewer(props) {
 }
 function JsonResultViewer(props) {
     return <div className='flow__artifact-json'>
-        <pre>{JSON.stringify((0, common_2.redactFlowSecretsValue)(props.value), undefined, 2)}</pre>
+        <pre>{JSON.stringify((0, common_3.redactFlowSecretsValue)(props.value), undefined, 2)}</pre>
     </div>;
 }
 function JsonlIssuesViewer(props) {
-    var issues = (0, common_2.redactFlowSecretsValue)(props.issues);
+    var issues = (0, common_3.redactFlowSecretsValue)(props.issues);
     return <div className='flow__artifact-issues'>
         {issues.length === 0 && <p>No issues recorded.</p>}
         {issues.map(function (issue, index) { return <article key={"".concat(issue.type, "-").concat(index)}>
@@ -4553,22 +5805,22 @@ function JsonlIssuesViewer(props) {
     </div>;
 }
 function PatchViewer(props) {
-    var lines = ((0, common_2.redactFlowSecretsText)(props.patch) || 'No patch content available in the run data.').split(/\r?\n/);
+    var lines = ((0, common_3.redactFlowSecretsText)(props.patch) || 'No patch content available in the run data.').split(/\r?\n/);
     return <pre className='flow__artifact-patch'>
         {lines.map(function (line, index) { return <span key={index} className={patchLineClass(line)}>{line || ' '}</span>; })}
     </pre>;
 }
 function LogViewer(props) {
-    var effect = (0, common_2.redactFlowSecretsValue)(props.effect);
+    var effect = (0, common_3.redactFlowSecretsValue)(props.effect);
     var stdout = (effect === null || effect === void 0 ? void 0 : effect.stdout) || '';
     var stderr = (effect === null || effect === void 0 ? void 0 : effect.stderr) || '';
     var text = [
-        (0, common_2.redactFlowSecretsText)(props.summary),
+        (0, common_3.redactFlowSecretsText)(props.summary),
         (effect === null || effect === void 0 ? void 0 : effect.command) ? "$ ".concat(effect.command) : undefined,
         stdout ? "stdout:\n".concat(stdout) : undefined,
         stderr ? "stderr:\n".concat(stderr) : undefined
     ].filter(Boolean).join('\n\n') || 'No log output available in the run data.';
-    return <pre className='flow__artifact-log'>{(0, common_2.redactFlowSecretsText)(text)}</pre>;
+    return <pre className='flow__artifact-log'>{(0, common_3.redactFlowSecretsText)(text)}</pre>;
 }
 function ImageArtifactViewer(props) {
     var _a, _b;
@@ -4584,7 +5836,7 @@ function ImageArtifactViewer(props) {
             <KeyValue label='MIME' value={props.effect.mimeType || 'unknown'}/>
             <KeyValue label='Bytes' value={typeof props.effect.bytes === 'number' ? props.effect.bytes.toString() : 'unknown'}/>
         </div>}
-        {props.artifact.summary && <span>{(0, common_2.redactFlowSecretsText)(props.artifact.summary)}</span>}
+        {props.artifact.summary && <span>{(0, common_3.redactFlowSecretsText)(props.artifact.summary)}</span>}
     </div>;
 }
 function ContractViewer(props) {
@@ -4700,6 +5952,8 @@ function stateTypeIcon(stateType) {
             return 'codicon-symbol-boolean';
         case 'gate':
             return 'codicon-pass';
+        case 'loop':
+            return 'codicon-sync';
         case 'command':
             return 'codicon-terminal';
         case 'memory_write':
@@ -4719,6 +5973,10 @@ function providerSummary(provider) {
     }
     return "".concat(provider.providerId, " / ").concat(provider.modelId || 'default model');
 }
+function resolveWorkflowAgentRelativePath(workflow, agentIdOrPath) {
+    var _a;
+    return ((_a = workflow.agents) === null || _a === void 0 ? void 0 : _a[agentIdOrPath]) || agentIdOrPath;
+}
 function providerSelectionOrUndefined(providerId, modelId, options) {
     var trimmedProviderId = providerId === null || providerId === void 0 ? void 0 : providerId.trim();
     var trimmedModelId = modelId === null || modelId === void 0 ? void 0 : modelId.trim();
@@ -4730,6 +5988,68 @@ function providerSelectionOrUndefined(providerId, modelId, options) {
         modelId: trimmedModelId,
         options: options
     });
+}
+function flowStateToAiExecutionSelection(state) {
+    var _a, _b, _c, _d, _e;
+    var execution = state.modelExecution || {};
+    return __assign(__assign({ providerId: (_a = state.provider) === null || _a === void 0 ? void 0 : _a.providerId, model: (_b = state.provider) === null || _b === void 0 ? void 0 : _b.modelId }, flowProviderOptionsToAiSelection((_c = state.provider) === null || _c === void 0 ? void 0 : _c.options)), { reasoningPolicy: execution.reasoningPolicy, reasoningEffort: (_d = execution.nativeReasoning) === null || _d === void 0 ? void 0 : _d.effort, reasoningVariant: execution.reasoningVariant, reasoningVariantOptions: execution.reasoningVariantOptions, virtualReasoningMode: (_e = execution.virtualReasoning) === null || _e === void 0 ? void 0 : _e.mode, serviceTier: execution.serviceTier === 'default' ? undefined : execution.serviceTier });
+}
+function flowModelProfileToAiExecutionSelection(profile) {
+    var _a, _b, _c, _d, _e;
+    var execution = profile.execution || {};
+    return __assign(__assign({ providerId: (_a = profile.provider) === null || _a === void 0 ? void 0 : _a.providerId, model: (_b = profile.provider) === null || _b === void 0 ? void 0 : _b.modelId }, flowProviderOptionsToAiSelection((_c = profile.provider) === null || _c === void 0 ? void 0 : _c.options)), { reasoningPolicy: execution.reasoningPolicy, reasoningEffort: (_d = execution.nativeReasoning) === null || _d === void 0 ? void 0 : _d.effort, reasoningVariant: execution.reasoningVariant, reasoningVariantOptions: execution.reasoningVariantOptions, virtualReasoningMode: (_e = execution.virtualReasoning) === null || _e === void 0 ? void 0 : _e.mode, serviceTier: execution.serviceTier === 'default' ? undefined : execution.serviceTier });
+}
+function aiExecutionSelectionToFlowStatePatch(selection, currentExecution) {
+    var reasoningEffort = selection.reasoningEffort;
+    var virtualReasoningMode = selection.virtualReasoningMode;
+    var modelExecution = modelExecutionOrUndefined(__assign(__assign({}, currentExecution), { reasoningPolicy: selection.reasoningPolicy, reasoningVariant: selection.reasoningVariant, reasoningVariantOptions: selection.reasoningVariantOptions, serviceTier: selection.serviceTier, nativeReasoning: reasoningEffort
+            ? compactObject(__assign(__assign({}, (currentExecution.nativeReasoning || {})), { enabled: reasoningEffort !== 'none', effort: reasoningEffort }))
+            : currentExecution.nativeReasoning, virtualReasoning: virtualReasoningMode
+            ? compactObject(__assign(__assign({}, (currentExecution.virtualReasoning || {})), { enabled: virtualReasoningMode !== 'off', mode: virtualReasoningMode }))
+            : currentExecution.virtualReasoning }));
+    return {
+        provider: providerSelectionOrUndefined(selection.providerId, selection.model, flowProviderOptionsFromAiSelection(selection)),
+        modelExecution: modelExecution
+    };
+}
+function flowProviderOptionsToAiSelection(options) {
+    if (!options) {
+        return {};
+    }
+    var option = function (key) {
+        return options[key];
+    };
+    return compactObject({
+        runtime: option('runtime'),
+        modelProvider: option('modelProvider'),
+        executablePath: option('executablePath'),
+        profile: option('profile'),
+        openCodeExecutablePath: option('openCodeExecutablePath'),
+        openCodeAgent: option('openCodeAgent'),
+        openCodeVariant: option('openCodeVariant'),
+        geminiExecutablePath: option('geminiExecutablePath'),
+        claudeExecutablePath: option('claudeExecutablePath'),
+        claudeAgent: option('claudeAgent'),
+        cursorExecutablePath: option('cursorExecutablePath'),
+        cursorMode: option('cursorMode')
+    });
+}
+function flowProviderOptionsFromAiSelection(selection) {
+    var options = compactObject({
+        runtime: selection.runtime,
+        modelProvider: selection.modelProvider,
+        executablePath: selection.executablePath,
+        profile: selection.profile,
+        openCodeExecutablePath: selection.openCodeExecutablePath,
+        openCodeAgent: selection.openCodeAgent,
+        openCodeVariant: selection.openCodeVariant,
+        geminiExecutablePath: selection.geminiExecutablePath,
+        claudeExecutablePath: selection.claudeExecutablePath,
+        claudeAgent: selection.claudeAgent,
+        cursorExecutablePath: selection.cursorExecutablePath,
+        cursorMode: selection.cursorMode
+    });
+    return Object.keys(options).length > 0 ? options : undefined;
 }
 function externalPromptText(options) {
     for (var _i = 0, _a = [options.prompt, options.message, options.input]; _i < _a.length; _i++) {
@@ -4743,6 +6063,9 @@ function externalPromptText(options) {
 function modelExecutionOrUndefined(modelExecution) {
     var compacted = compactObject(modelExecution);
     return Object.keys(compacted).length > 0 ? compacted : undefined;
+}
+function cloneFlowModelProfile(profile) {
+    return JSON.parse(JSON.stringify(profile));
 }
 function patternRoleOverrideOrUndefined(override) {
     var compacted = compactObject(override);
@@ -4807,6 +6130,21 @@ function deliverablesToText(value) {
         deliverable.kind,
         deliverable.required === undefined ? undefined : String(deliverable.required)
     ].filter(function (entry) { return entry !== undefined && entry !== ''; }).join(' | '); }).join('\n');
+}
+function normalizeDeliverable(deliverable) {
+    var _a, _b, _c;
+    return compactObject({
+        path: ((_a = deliverable.path) === null || _a === void 0 ? void 0 : _a.trim()) || '',
+        description: ((_b = deliverable.description) === null || _b === void 0 ? void 0 : _b.trim()) || undefined,
+        kind: ((_c = deliverable.kind) === null || _c === void 0 ? void 0 : _c.trim()) || undefined,
+        required: deliverable.required === false ? false : deliverable.required === true ? true : undefined
+    });
+}
+function deliverablesOrUndefined(deliverables) {
+    var normalized = deliverables
+        .map(normalizeDeliverable)
+        .filter(function (deliverable) { return Boolean(deliverable.path || deliverable.description || deliverable.kind || deliverable.required !== undefined); });
+    return normalized.length > 0 ? normalized : undefined;
 }
 function requiredToBoolean(value) {
     if (!value) {
@@ -5079,6 +6417,102 @@ function renderWorkflowVersions(versions) {
         ].filter(Boolean).join('\n');
     }).join('\n\n');
 }
+function createFlowAgentSelectModel(workflow, agents, currentAgent) {
+    var _a;
+    var workflowOptions = Object.entries(workflow.agents || {})
+        .sort(function (_a, _b) {
+        var left = _a[0];
+        var right = _b[0];
+        return left.localeCompare(right);
+    })
+        .map(function (_a) {
+        var agentId = _a[0], relativePath = _a[1];
+        return ({
+            value: "id:".concat(agentId),
+            label: "".concat(agentId, " - ").concat(relativePath)
+        });
+    });
+    var workflowPaths = new Set(Object.values(workflow.agents || {}));
+    var workspaceOptions = agents
+        .filter(function (agent) { return agent.source !== 'catalog' && !workflowPaths.has(agent.relativePath); })
+        .map(function (agent) { return ({
+        value: "path:".concat(agent.relativePath),
+        label: flowAgentOptionLabel(agent)
+    }); });
+    var catalogOptions = agents
+        .filter(function (agent) { return agent.source === 'catalog' && !workflowPaths.has(agent.relativePath); })
+        .map(function (agent) { return ({
+        value: "path:".concat(agent.relativePath),
+        label: flowAgentOptionLabel(agent)
+    }); });
+    var value = '';
+    if (currentAgent) {
+        var mappedPath = (_a = workflow.agents) === null || _a === void 0 ? void 0 : _a[currentAgent];
+        if (mappedPath !== undefined) {
+            value = "id:".concat(currentAgent);
+        }
+        else if (agents.some(function (agent) { return agent.relativePath === currentAgent; })) {
+            value = "path:".concat(currentAgent);
+        }
+    }
+    return {
+        value: value,
+        workflow: workflowOptions,
+        workspace: workspaceOptions,
+        catalog: catalogOptions
+    };
+}
+function flowAgentSelectLabel(model, value) {
+    var _a;
+    if (!value) {
+        return 'Sem agente';
+    }
+    return ((_a = __spreadArray(__spreadArray(__spreadArray([], model.workflow, true), model.workspace, true), model.catalog, true).find(function (option) { return option.value === value; })) === null || _a === void 0 ? void 0 : _a.label) || value;
+}
+function flowAgentOptionLabel(agent) {
+    return "".concat(flowAgentDisplayName(agent.relativePath), " - ").concat(agent.relativePath);
+}
+function flowAgentDisplayName(relativePath) {
+    var filename = relativePath.split('/').pop() || relativePath;
+    return filename.replace(/\.(md|markdown)$/i, '').replace(/[-_]+/g, ' ');
+}
+function uniqueWorkflowAgentId(workflow, relativePath) {
+    var _a, _b;
+    var base = agentIdFromRelativePath(relativePath);
+    if (!((_a = workflow.agents) === null || _a === void 0 ? void 0 : _a[base])) {
+        return base;
+    }
+    for (var index = 2; index < 1000; index++) {
+        var candidate = "".concat(base, "_").concat(index);
+        if (!((_b = workflow.agents) === null || _b === void 0 ? void 0 : _b[candidate])) {
+            return candidate;
+        }
+    }
+    return "".concat(base, "_").concat(Date.now());
+}
+function agentIdFromRelativePath(relativePath) {
+    var filename = relativePath.split('/').pop() || relativePath;
+    var base = filename.replace(/\.(md|markdown)$/i, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
+    return base || 'agent';
+}
+function flowAiModeLabel(mode) {
+    if (mode === 'chat') {
+        return 'Chat';
+    }
+    if (mode === 'saved-flow') {
+        return 'Saved Flow';
+    }
+    return 'Dynamic Flow';
+}
+function flowAiRunLabel(mode) {
+    if (mode === 'chat') {
+        return 'Enviar chat';
+    }
+    if (mode === 'saved-flow') {
+        return 'Rodar saved flow';
+    }
+    return 'Rodar dynamic flow';
+}
 function resolveExecutionMode(runMode, hintMode, kernelBridge) {
     return runMode || hintMode || (kernelBridge === 'external' ? 'kernel_external' : 'kernel_simulated');
 }
@@ -5114,7 +6548,7 @@ function CapabilityStatus(props) {
     var capabilities = props.capabilities, workflow = props.workflow, executionMode = props.executionMode, executionModeMessage = props.executionModeMessage;
     var capabilityRows = capabilityStatusRows(capabilities);
     var missingRequiredCapabilities = workflow
-        ? (0, common_2.resolveFlowWorkflowCapabilities)(workflow, capabilities).missing
+        ? (0, common_3.resolveFlowWorkflowCapabilities)(workflow, capabilities).missing
         : [];
     var modeRows = [
         {
@@ -5272,6 +6706,29 @@ function capabilityAndPolicyTone(capability, policy) {
         return 'blocked';
     }
     return 'missing';
+}
+function toFlowWorkflowSummaryForAi(workflow) {
+    var _a;
+    return {
+        id: workflow.id,
+        name: workflow.name,
+        description: workflow.description,
+        stateCount: Object.keys(workflow.states || {}).length,
+        transitionCount: workflow.transitions.length,
+        editable: ((_a = workflow.file) === null || _a === void 0 ? void 0 : _a.editable) !== false
+    };
+}
+function coerceFlowAiAuthoringDraft(value) {
+    if (!isRecord(value) || typeof value.version !== 'string' || typeof value.action !== 'string') {
+        throw new Error('Flow AI response must be a FlowAiAuthoringDraft object with version and action.');
+    }
+    if (!['run_saved_workflow', 'instantiate_pattern', 'create_workflow', 'ask_user'].includes(value.action)) {
+        throw new Error("Flow AI returned unsupported authoring action: ".concat(value.action));
+    }
+    return value;
+}
+function isRecord(value) {
+    return typeof value === 'object' && value !== null;
 }
 function classifyExecutionModeFromError(error) {
     var message = error instanceof Error ? error.message : String(error);

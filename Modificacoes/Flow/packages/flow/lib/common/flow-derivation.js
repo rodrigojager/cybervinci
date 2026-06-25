@@ -40,6 +40,8 @@ var KANBAN_ORDER = [
 ];
 function deriveFlowCanvasModel(workflow, run) {
     var states = flattenWorkflowStates(workflow);
+    var stateRoutes = deriveStateRoutes(workflow);
+    var transitionRouteKeys = new Set((workflow.transitions || []).map(function (transition) { return routeKey(transition.from, transition.to); }));
     var incoming = new Map();
     var outgoing = new Map();
     for (var _i = 0, _a = workflow.transitions || []; _i < _a.length; _i++) {
@@ -49,15 +51,27 @@ function deriveFlowCanvasModel(workflow, run) {
         next.push(transition.to);
         outgoing.set(transition.from, next);
     }
-    for (var _b = 0, _c = Object.entries(workflow.states || {}); _b < _c.length; _b++) {
-        var _d = _c[_b], stateId = _d[0], state = _d[1];
+    for (var _b = 0, stateRoutes_1 = stateRoutes; _b < stateRoutes_1.length; _b++) {
+        var route = stateRoutes_1[_b];
+        if (transitionRouteKeys.has(routeKey(route.from, route.to))) {
+            continue;
+        }
+        incoming.set(route.to, (incoming.get(route.to) || 0) + 1);
+        var next = outgoing.get(route.from) || [];
+        if (!next.includes(route.to)) {
+            next.push(route.to);
+        }
+        outgoing.set(route.from, next);
+    }
+    for (var _c = 0, _d = Object.entries(workflow.states || {}); _c < _d.length; _c++) {
+        var _e = _d[_c], stateId = _e[0], state = _e[1];
         var branchIds = Object.keys(state.branches || {});
         if (branchIds.length === 0) {
             continue;
         }
         var next = outgoing.get(stateId) || [];
-        for (var _e = 0, branchIds_1 = branchIds; _e < branchIds_1.length; _e++) {
-            var branchId = branchIds_1[_e];
+        for (var _f = 0, branchIds_1 = branchIds; _f < branchIds_1.length; _f++) {
+            var branchId = branchIds_1[_f];
             incoming.set(branchId, (incoming.get(branchId) || 0) + 1);
             if (!next.includes(branchId)) {
                 next.push(branchId);
@@ -103,9 +117,78 @@ function deriveFlowCanvasModel(workflow, run) {
             ] : []
         };
     });
+    for (var _g = 0, _h = stateRoutes.entries(); _g < _h.length; _g++) {
+        var _j = _h[_g], index = _j[0], route = _j[1];
+        if (transitionRouteKeys.has(routeKey(route.from, route.to))) {
+            continue;
+        }
+        var from = nodeById.get(route.from);
+        var to = nodeById.get(route.to);
+        edges.push({
+            id: route.id || "".concat(route.from, "-").concat(route.to, "-").concat(route.event, "-").concat(index),
+            from: route.from,
+            to: route.to,
+            event: route.event,
+            guardSummary: route.summary,
+            points: from && to ? [
+                { x: from.x + from.width, y: from.y + from.height / 2 },
+                { x: to.x, y: to.y + to.height / 2 }
+            ] : []
+        });
+    }
     var width = Math.max.apply(Math, __spreadArray([640], nodes.map(function (node) { return node.x + node.width + 32; }), false));
     var height = Math.max.apply(Math, __spreadArray([361], nodes.map(function (node) { return node.y + node.height + 32; }), false));
     return { nodes: nodes, edges: edges, width: width, height: height };
+}
+function routeKey(from, to) {
+    return "".concat(from, "\0").concat(to);
+}
+function deriveStateRoutes(workflow) {
+    var knownStates = new Set(flattenWorkflowStates(workflow).map(function (state) { return state.id; }));
+    var routes = [];
+    var visit = function (stateId, state) {
+        var _a, _b;
+        for (var _i = 0, _c = Object.entries(state.outcomes || {}); _i < _c.length; _i++) {
+            var _d = _c[_i], outcomeId = _d[0], route = _d[1];
+            var target = typeof route === 'string' ? route : route === null || route === void 0 ? void 0 : route.to;
+            if (target && knownStates.has(target)) {
+                routes.push({
+                    id: "".concat(stateId, "_outcome_").concat(outcomeId, "_to_").concat(target),
+                    from: stateId,
+                    to: target,
+                    event: "outcome.".concat(outcomeId),
+                    summary: typeof route === 'string' ? undefined : route.action || route.label
+                });
+            }
+        }
+        if (((_a = state.loop) === null || _a === void 0 ? void 0 : _a.body) && knownStates.has(state.loop.body)) {
+            routes.push({
+                id: "".concat(stateId, "_loop_body_").concat(state.loop.body),
+                from: stateId,
+                to: state.loop.body,
+                event: 'loop.body',
+                summary: state.loop.counter
+            });
+        }
+        if (((_b = state.loop) === null || _b === void 0 ? void 0 : _b.repair) && knownStates.has(state.loop.repair)) {
+            routes.push({
+                id: "".concat(stateId, "_loop_repair_").concat(state.loop.repair),
+                from: stateId,
+                to: state.loop.repair,
+                event: 'loop.repair',
+                summary: state.loop.counter
+            });
+        }
+    };
+    for (var _i = 0, _a = Object.entries(workflow.states || {}); _i < _a.length; _i++) {
+        var _b = _a[_i], stateId = _b[0], state = _b[1];
+        visit(stateId, state);
+        for (var _c = 0, _d = Object.entries(state.branches || {}); _c < _d.length; _c++) {
+            var _e = _d[_c], branchId = _e[0], branch = _e[1];
+            visit(branchId, branch);
+        }
+    }
+    return routes;
 }
 function deriveFlowFlowDraft(workflow, run) {
     var canvas = deriveFlowCanvasModel(workflow, run);

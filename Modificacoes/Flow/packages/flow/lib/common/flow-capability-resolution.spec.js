@@ -82,6 +82,29 @@ describe('Flow capability resolution', function () {
         (0, chai_1.expect)(resolution.provided).to.deep.equal(['command.execute']);
         (0, chai_1.expect)(resolution.missing).to.deep.equal([]);
     });
+    it('accepts playbook.run only when the host binds a Playbook runner', function () {
+        var workflow = workflowWithCapabilities('playbook.run');
+        workflow.states.design_qa = {
+            type: 'playbook',
+            playbookId: 'canvas-design-qa'
+        };
+        var unavailable = (0, flow_capability_resolution_1.resolveFlowWorkflowCapabilities)(workflow, flow_capabilities_1.FLOW_CAPABILITIES);
+        var available = (0, flow_capability_resolution_1.resolveFlowWorkflowCapabilities)(workflow, __assign(__assign({}, flow_capabilities_1.FLOW_CAPABILITIES), { playbookExecution: 'available' }));
+        (0, chai_1.expect)(unavailable.provided).to.deep.equal([]);
+        (0, chai_1.expect)(unavailable.missing).to.deep.equal(['playbook.run']);
+        (0, chai_1.expect)(available.provided).to.deep.equal(['playbook.run']);
+        (0, chai_1.expect)(available.missing).to.deep.equal([]);
+        (0, chai_1.expect)((0, flow_capability_resolution_1.formatMissingCapabilities)(['playbook.run'], { workflow: workflow }))
+            .to.equal('Missing Flow host capability: playbook.run (states: design_qa; host: current host; execution mode: unknown; action: bind a FlowPlaybookRunner host adapter before advertising playbook.run).');
+    });
+    it('identifies playbook states affected by playbook.run', function () {
+        var workflow = workflowWithCapabilities('playbook.run');
+        workflow.states.playbook_step = {
+            type: 'playbook',
+            playbookId: 'direct-chat'
+        };
+        (0, chai_1.expect)((0, flow_capability_resolution_1.affectedWorkflowStatesForCapability)(workflow, 'playbook.run')).to.deep.equal(['playbook_step']);
+    });
     it('does not advertise command.execute as a real capability without a complete command policy path', function () {
         var resolution = (0, flow_capability_resolution_1.resolveFlowWorkflowCapabilities)(workflowWithCapabilities('command.execute'), __assign(__assign({}, flow_capabilities_1.FLOW_CAPABILITIES), { commandExecution: true }));
         (0, chai_1.expect)(resolution.provided).to.deep.equal([]);

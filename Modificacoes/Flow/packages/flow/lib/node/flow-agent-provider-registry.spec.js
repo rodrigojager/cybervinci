@@ -167,6 +167,60 @@ describe('FlowAgentProviderRegistry', function () {
             }
         });
     }); });
+    it('preserves the selected model for the Codex provider', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var registry, provider;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    registry = new flow_agent_provider_registry_1.FlowAgentProviderRegistry(undefined, undefined, codexProviderService(true));
+                    return [4 /*yield*/, registry.resolveProvider(createResolutionContext({
+                            provider: {
+                                providerId: 'codex-provider',
+                                modelId: 'gpt-5-codex'
+                            }
+                        }))];
+                case 1:
+                    provider = _a.sent();
+                    (0, chai_1.expect)('codexProvider' in provider).to.equal(true);
+                    (0, chai_1.expect)('codexProvider' in provider && provider.modelId).to.equal('gpt-5-codex');
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('preserves picker runtime and model provider options for generic Codex provider states', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var statusRequests, registry, provider;
+        var _a, _b, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    statusRequests = [];
+                    registry = new flow_agent_provider_registry_1.FlowAgentProviderRegistry(undefined, undefined, codexProviderService(true, statusRequests));
+                    return [4 /*yield*/, registry.resolveProvider(createResolutionContext({
+                            provider: {
+                                providerId: 'codex-provider',
+                                modelId: 'opencode/gpt-5.5',
+                                options: {
+                                    runtime: 'direct-http',
+                                    modelProvider: 'opencode',
+                                    openCodeVariant: 'zen'
+                                }
+                            }
+                        }))];
+                case 1:
+                    provider = _d.sent();
+                    (0, chai_1.expect)('codexProvider' in provider).to.equal(true);
+                    (0, chai_1.expect)('codexProvider' in provider && ((_a = provider.request) === null || _a === void 0 ? void 0 : _a.runtime)).to.equal('direct-http');
+                    (0, chai_1.expect)('codexProvider' in provider && ((_b = provider.request) === null || _b === void 0 ? void 0 : _b.modelProvider)).to.equal('opencode');
+                    (0, chai_1.expect)('codexProvider' in provider && ((_c = provider.request) === null || _c === void 0 ? void 0 : _c.openCodeVariant)).to.equal('zen');
+                    (0, chai_1.expect)(statusRequests[0]).to.deep.include({
+                        runtime: 'direct-http',
+                        modelProvider: 'opencode',
+                        model: 'opencode/gpt-5.5'
+                    });
+                    return [2 /*return*/];
+            }
+        });
+    }); });
     it('allows e2e mock only when explicitly configured through FLOW_AGENT_PROVIDER', function () { return __awaiter(void 0, void 0, void 0, function () {
         var registry, provider;
         return __generator(this, function (_a) {
@@ -320,16 +374,18 @@ function readyLanguageModel(id) {
         status: { status: 'ready' }
     };
 }
-function codexProviderService(available) {
+function codexProviderService(available, statusRequests) {
     var _this = this;
+    if (statusRequests === void 0) { statusRequests = []; }
     return {
-        getStatus: function () { return __awaiter(_this, void 0, void 0, function () {
+        getStatus: function (request) { return __awaiter(_this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                return [2 /*return*/, ({
+                statusRequests.push(request);
+                return [2 /*return*/, {
                         available: available,
                         authenticated: available,
                         capabilities: { imageGeneration: available }
-                    })];
+                    }];
             });
         }); }
     };

@@ -13,6 +13,7 @@ export interface EditorToolbarProps {
     aiOpen: boolean;
     onSave(): void;
     onSaveAs(): void;
+    onOpenCodeEditor(): void;
     onReload(): void;
     onShowDiff(): void;
     onShowTokens(): void;
@@ -39,6 +40,9 @@ export function EditorToolbar(props: EditorToolbarProps): React.ReactElement {
                 onClick={() => props.onModeChange(props.mode === 'source' ? 'editor' : 'source')}
             >
                 <i className='fa fa-code' /> Code
+            </button>
+            <button type='button' title='Open this file in the code editor' onClick={props.onOpenCodeEditor}>
+                <i className='fa fa-file-code-o' /> Open HTML
             </button>
             <button
                 type='button'

@@ -69,6 +69,59 @@ describe('OpenPencilDesignCommandService', () => {
         expect(reactSelection).not.to.contain('Persisted acceptance title');
     });
 
+    it('stabilizes AI operations by retrying missing node references after later create operations', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('AI operation stabilization test');
+        const operations: OpenPencilDesignOperation[] = [
+            {
+                operation: 'updateNode',
+                nodeId: 'ai-late-copy',
+                changes: {
+                    content: 'Late copy was updated after creation'
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'ai-late-copy',
+                    type: 'text',
+                    name: 'AI late copy',
+                    content: 'Initial late copy',
+                    x: 80,
+                    y: 96,
+                    width: 320,
+                    height: 32
+                }
+            }
+        ];
+
+        const stabilized = service.stabilizeAiOperationsForDocument(document, [], operations);
+        const result = service.applyOperationsToDocument(document, [], stabilized.operations);
+        const node = documents.findNode(result.document, 'ai-late-copy');
+
+        expect(stabilized.skipped).to.equal(0);
+        expect(stabilized.reordered).to.equal(true);
+        expect(stabilized.operations.map(operation => operation.operation)).to.deep.equal(['addNode', 'updateNode']);
+        expect(node?.content).to.equal('Late copy was updated after creation');
+    });
+
+    it('skips unresolved AI operations whose missing targets never become available', () => {
+        const document = service.createDesign('AI operation skip test');
+        const stabilized = service.stabilizeAiOperationsForDocument(document, [], [
+            {
+                operation: 'updateNode',
+                nodeId: 'ai-never-created-copy',
+                changes: {
+                    content: 'This target never exists'
+                }
+            }
+        ]);
+
+        expect(stabilized.operations).to.deep.equal([]);
+        expect(stabilized.skipped).to.equal(1);
+        expect(stabilized.diagnostics.join('\n')).to.contain("Node 'ai-never-created-copy' was not found.");
+    });
+
     it('exports front-first top-level nodes in back-to-front paint order for HTML and SVG', () => {
         const document = service.createDesign('Export paint order test');
         const page = document.pages![0];
@@ -427,6 +480,67 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.diagnostics?.join('\n')).to.contain('continuation mode must preserve existing nodes and layout');
     });
 
+    it('accepts continuation providers that only expand an existing container before appending content', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-card',
+                        changes: {
+                            height: 340,
+                            clipContent: false
+                        }
+                    },
+                    {
+                        operation: 'createNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'continuation-safe-card',
+                            type: 'frame',
+                            name: 'Continuation safe card',
+                            role: 'section',
+                            x: 40,
+                            y: 230,
+                            width: 560,
+                            height: 80,
+                            children: [
+                                {
+                                    id: 'continuation-safe-card-copy',
+                                    type: 'text',
+                                    name: 'Continuation copy',
+                                    content: 'Continuation content appended below existing material.',
+                                    x: 18,
+                                    y: 18,
+                                    width: 420,
+                                    height: 28
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['continuation-safe-card']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI continuation safe expansion test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Continue the current design with another section',
+            document,
+            selection: [],
+            mode: 'continuation'
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations, { mode: 'continuation', normalizeVisibleBounds: true });
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.diagnostics?.join('\n') ?? '').not.to.contain('continuation mode must preserve existing nodes and layout');
+        expect(result.selection).to.deep.equal(['continuation-safe-card']);
+        expect(new OpenPencilDocumentService().findNode(result.document, 'continuation-safe-card')).to.not.equal(undefined);
+    });
+
     it('uses the deterministic in-process AI adapter for selected node maintenance edits', async () => {
         const document = service.createDesign('AI maintenance test');
         const generated = await service.generateAiOperations({
@@ -750,6 +864,70 @@ describe('OpenPencilDesignCommandService', () => {
         ]);
     });
 
+    it('does not treat manual overlay role as foreground z-order by itself', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'manual-overlay-z-order-provider',
+            label: 'Manual overlay z order provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-overlay-manual-frame',
+                            type: 'frame',
+                            role: 'overlay',
+                            name: 'AI manual positioned frame',
+                            width: 260,
+                            height: 120,
+                            fill: [{ type: 'solid', color: '#e5e7eb' }]
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-overlay-title-layer',
+                            type: 'text',
+                            role: 'overlay',
+                            name: 'AI overlay title',
+                            content: 'Visible title',
+                            width: 220,
+                            height: 32
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-overlay-background-layer',
+                            type: 'rectangle',
+                            name: 'AI background base',
+                            width: 280,
+                            height: 160
+                        }
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI manual overlay z order test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Add a manually positioned card with a text label',
+            document,
+            selection: ['hero-card']
+        });
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.node.id)).to.deep.equal([
+            'ai-overlay-title-layer',
+            'ai-overlay-manual-frame',
+            'ai-overlay-background-layer'
+        ]);
+    });
+
     it('inserts streamed provider siblings by z-order as each operation is applied', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'stream-z-order-provider',
@@ -866,7 +1044,7 @@ describe('OpenPencilDesignCommandService', () => {
 
         expect(generated.source).to.equal('deterministic-fallback');
         expect(generated.operations).to.deep.equal([]);
-        expect(generated.diagnostics?.join(' ')).to.contain('Hanging stream provider streaming did not produce an OpenPencil operation');
+        expect(generated.diagnostics?.join(' ')).to.contain('Hanging stream provider streaming did not produce a usable OpenPencil operation');
     });
 
     it('does not let diagnostic-only stream events extend the first operation timeout', async () => {
@@ -896,10 +1074,106 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Date.now() - startedAt).to.be.lessThan(120);
         expect(generated.source).to.equal('deterministic-fallback');
         expect(generated.operations).to.deep.equal([]);
-        expect(generated.diagnostics?.join(' ')).to.contain('Diagnostic-only stream provider streaming did not produce an OpenPencil operation');
+        expect(generated.diagnostics?.join(' ')).to.contain('Diagnostic-only stream provider streaming did not produce a usable OpenPencil operation');
     });
 
-    it('times out a hanging batch provider instead of leaving the skeleton stage pending', async () => {
+    it('recovers a stream with no usable operations by asking the same provider for one structured batch result', async () => {
+        let recoveryPrompt = '';
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'empty-stream-recovery-provider',
+            label: 'Empty stream recovery provider',
+            priority: 10,
+            generateOperations: request => {
+                recoveryPrompt = request.prompt;
+                return {
+                    operations: [
+                        {
+                            operation: 'createNode',
+                            parentId: null,
+                            node: {
+                                id: 'ai-recovered-screen',
+                                type: 'frame',
+                                name: 'AI recovered screen',
+                                role: 'screen',
+                                x: 0,
+                                y: 0,
+                                width: 360,
+                                height: 640,
+                                children: [
+                                    {
+                                        id: 'ai-recovered-title',
+                                        type: 'text',
+                                        name: 'AI recovered title',
+                                        content: 'Recovered structured screen',
+                                        x: 32,
+                                        y: 48,
+                                        width: 240,
+                                        height: 32
+                                    }
+                                ]
+                            }
+                        },
+                        { operation: 'setSelection', nodeIds: ['ai-recovered-screen'] }
+                    ]
+                };
+            },
+            async *streamOperations() {
+                yield { type: 'diagnostic', message: 'model produced reasoning only' };
+                yield { type: 'complete' };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        let currentDocument = providerService.createDesign('AI empty stream recovery test');
+        let currentSelection: string[] = [];
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Create a compact app screen',
+            document: currentDocument,
+            selection: currentSelection
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, {
+                mode: 'generation',
+                normalizeVisibleBounds: true,
+                requireVisibleContent: true
+            });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+
+        expect(generated.source).to.equal('provider');
+        expect(recoveryPrompt).to.contain('Canvas streaming recovery retry');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
+        expect(currentDocument.pages![0].children.some(node => node.id === 'ai-recovered-screen')).to.equal(true);
+    });
+
+    it('uses longer operation timeouts for direct HTTP router models that can queue or reason before emitting Canvas operations', () => {
+        const providerService = new InspectableTimeoutOpenPencilDesignCommandService();
+        const document = providerService.createDesign('AI OpenCode router timeout profile test');
+        const request: OpenPencilAiDesignRequest = {
+            prompt: 'Create a streamed design',
+            document,
+            selection: [],
+            execution: {
+                providerId: 'direct-http:opencode',
+                runtime: 'direct-http',
+                modelProvider: 'opencode',
+                model: 'opencode/deepseek-v4-flash'
+            }
+        };
+
+        expect(providerService.generateTimeout(request)).to.equal(120000);
+        expect(providerService.streamTimeouts(request)).to.deep.equal({
+            firstOperationMs: 45000,
+            idleMs: 45000,
+            totalMs: 180000
+        });
+    });
+
+    it('does not materialize a local skeleton when the batch provider hangs', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'hanging-generate-provider',
             label: 'Hanging generate provider',
@@ -919,9 +1193,50 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.source).to.equal('deterministic-fallback');
         expect(generated.operations).to.deep.equal([]);
         expect(generated.diagnostics?.join(' ')).to.contain('Hanging generate provider generation did not return OpenPencil operations');
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
     });
 
-    it('materializes a local marketplace skeleton when the incremental skeleton batch stage times out', async () => {
+    it('does not force the commerce skeleton for generic known-site homepage clone prompts', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-generic-homepage-provider',
+            label: 'Hanging generic homepage provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI generic homepage clone fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma copia da pagina inicial do Studio Aurora com o nome Studio Aurora.',
+            document,
+            selection: []
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
+    });
+
+    it('does not treat a reference brand name as commerce intent by itself', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-reference-brand-provider',
+            label: 'Hanging reference brand provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI reference brand fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma copia da pagina inicial do Portal Aurora com o nome Portal Controlado.',
+            document,
+            selection: []
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
+    });
+
+    it('does not materialize a local generic page starter when the incremental foundation batch stage times out', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'hanging-incremental-skeleton-provider',
             label: 'Hanging incremental skeleton provider',
@@ -932,42 +1247,21 @@ describe('OpenPencilDesignCommandService', () => {
         const document = providerService.createDesign('AI incremental skeleton fallback test');
         const generated = await providerService.generateAiOperations({
             prompt: [
-                'Faca uma copia da pagina inicial do Mercado Livre com o nome Mercado Controlado.',
-                'Incremental stage 1/3: create only the root view frame and major visible section/container skeleton.',
-                'Do not wait for the full page. The canvas should show the intended structure after this stage.'
+                'Crie uma homepage completa de loja online com o nome Nova Market.',
+                'Incremental stage 1/3: create the root view frame and the first meaningful populated regions of the requested artifact.',
+                'Do not return a bare skeleton. The canvas should immediately show the intended artifact type.'
             ].join('\n'),
             document,
             selection: [],
             mode: 'generation'
         });
-        const result = providerService.applyOperationsToDocument(document, [], generated.operations, {
-            mode: 'generation',
-            normalizeVisibleBounds: true,
-            preservePageWidth: true,
-            targetPageWidth: 1200,
-            requireVisibleContent: true
-        });
-        const page = result.document.pages![0];
-        const root = page.children[0];
-        const header = root?.children?.find(node => node.name === 'Marketplace header');
-        const brand = header?.children?.find(node => node.name === 'Marketplace brand');
-        const quality = providerService.validateAiLayoutQuality(result.document, {
-            requireVisibleContent: true,
-            preservePageWidth: true,
-            targetPageWidth: 1200
-        });
 
         expect(generated.source).to.equal('deterministic-fallback');
-        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['updatePage', 'setSelection']);
-        expect(generated.diagnostics?.join(' ')).to.contain('generated a local visible skeleton');
-        expect(page.width).to.equal(1200);
-        expect(root?.name).to.equal('Marketplace homepage skeleton');
-        expect(header).to.exist;
-        expect(brand?.content).to.equal('Mercado Controlado');
-        expect(quality.valid).to.equal(true);
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
     });
 
-    it('applies a local marketplace skeleton when the incremental skeleton stream stage times out', async () => {
+    it('does not apply a local generic page starter when the incremental foundation stream stage times out', async () => {
         const provider: OpenPencilAiDesignProvider = {
             id: 'hanging-incremental-skeleton-stream-provider',
             label: 'Hanging incremental skeleton stream provider',
@@ -983,9 +1277,9 @@ describe('OpenPencilDesignCommandService', () => {
         let appliedTotal = 0;
         const generated = await providerService.streamAiOperations({
             prompt: [
-                'Faca uma copia da pagina inicial do Mercado Livre com o nome Mercado Controlado.',
-                'Incremental stage 1/3: create only the root view frame and major visible section/container skeleton.',
-                'Do not wait for the full page. The canvas should show the intended structure after this stage.'
+                'Crie uma homepage completa de loja online com o nome Nova Market.',
+                'Incremental stage 1/3: create the root view frame and the first meaningful populated regions of the requested artifact.',
+                'Do not return a bare skeleton. The canvas should immediately show the intended artifact type.'
             ].join('\n'),
             document: currentDocument,
             selection: currentSelection,
@@ -1007,18 +1301,11 @@ describe('OpenPencilDesignCommandService', () => {
                 applied: result.changed ? streamed.operations.length : 0
             };
         });
-        const page = currentDocument.pages![0];
-        const quality = providerService.validateAiLayoutQuality(currentDocument, {
-            requireVisibleContent: true,
-            preservePageWidth: true,
-            targetPageWidth: 1200
-        });
 
         expect(generated.source).to.equal('deterministic-fallback');
-        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['updatePage', 'setSelection']);
-        expect(appliedTotal).to.be.greaterThan(0);
-        expect(page.children[0]?.name).to.equal('Marketplace homepage skeleton');
-        expect(quality.valid).to.equal(true);
+        expect(generated.operations).to.deep.equal([]);
+        expect(appliedTotal).to.equal(0);
+        expect(generated.diagnostics?.join(' ')).to.contain('streaming recovery returned no OpenPencil operations');
     });
 
     it('expands streamed provider containers so later children remain visible', async () => {
@@ -1159,13 +1446,389 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Math.max(...sections.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
     });
 
+    it('stacks page-like auto-layout containers with lateralized section children', () => {
+        const document = service.createDesign('Generic page-like auto-layout flow test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 800;
+        page.children = [
+            {
+                id: 'reference-page-root',
+                type: 'frame',
+                name: 'Website reference composition',
+                role: 'main',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 520,
+                layout: 'horizontal',
+                children: [
+                    createHomepageSection('reference-header', 'Reference header section', 0, 0, 1200, 110),
+                    createHomepageSection('reference-hero', 'Reference hero section', 1240, 0, 980, 220),
+                    createHomepageSection('reference-body', 'Reference content section', 0, 80, 980, 260)
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const root = result.document.pages![0].children[0];
+        const sections = root.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(root.layout).to.equal('none');
+        expect(sections.map(node => node.x)).to.deep.equal([0, 110, 110]);
+        expect(Number(sections[1].y)).to.be.greaterThan(Number(sections[0].y) + Number(sections[0].height));
+        expect(Number(sections[2].y)).to.be.greaterThan(Number(sections[1].y) + Number(sections[1].height));
+        expect(Math.max(...sections.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(root.width));
+    });
+
+    it('repairs overlapping foreground text inside compact cards before final AI layout validation', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Compact card overlap repair test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 360;
+        page.children = [
+            {
+                id: 'compact-page-root',
+                type: 'frame',
+                name: 'Generic page composition',
+                role: 'page',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 260,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'compact-feature-card',
+                        type: 'frame',
+                        name: 'Feature card',
+                        role: 'card',
+                        x: 82,
+                        y: 40,
+                        width: 180,
+                        height: 96,
+                        layout: 'none',
+                        children: [
+                            {
+                                id: 'compact-title',
+                                type: 'text',
+                                name: 'Primary value',
+                                role: 'overlay',
+                                x: 18,
+                                y: 18,
+                                width: 140,
+                                height: 42,
+                                content: 'Primary value',
+                                fontSize: 16
+                            },
+                            {
+                                id: 'compact-copy',
+                                type: 'text',
+                                name: 'Supporting copy',
+                                role: 'overlay',
+                                x: 18,
+                                y: 24,
+                                width: 140,
+                                height: 56,
+                                content: 'Short supporting copy for this visual block.',
+                                fontSize: 13
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const validation = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const title = documents.findNode(result.document, 'compact-title');
+        const copy = documents.findNode(result.document, 'compact-copy');
+        const card = documents.findNode(result.document, 'compact-feature-card');
+
+        expect(result.changed).to.equal(true);
+        expect(validation.valid).to.equal(true);
+        expect(Number(copy?.y)).to.be.greaterThan(Number(title?.y) + Number(title?.height) - 1);
+        expect(Number(card?.height)).to.be.greaterThan(96);
+    });
+
+    it('does not reflow visual, title, and copy inside a manually positioned feature card as one row', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Feature card row isolation test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 360;
+        page.children = [
+            {
+                id: 'feature-card-root',
+                type: 'frame',
+                name: 'Generic page composition',
+                role: 'page',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 320,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'feature-card-row',
+                        type: 'frame',
+                        name: 'Feature card row',
+                        role: 'section',
+                        x: 82,
+                        y: 40,
+                        width: 1036,
+                        height: 230,
+                        layout: 'none',
+                        children: [
+                            {
+                                id: 'feature-card-a',
+                                type: 'frame',
+                                name: 'Feature card',
+                                role: 'card',
+                                x: 0,
+                                y: 0,
+                                width: 389,
+                                height: 230,
+                                layout: 'none',
+                                children: [
+                                    {
+                                        id: 'feature-card-a-visual',
+                                        type: 'image',
+                                        name: 'Feature visual',
+                                        role: 'overlay',
+                                        x: 22,
+                                        y: 34,
+                                        width: 46,
+                                        height: 46
+                                    },
+                                    {
+                                        id: 'feature-card-a-title',
+                                        type: 'text',
+                                        name: 'Feature title',
+                                        role: 'overlay',
+                                        x: 88,
+                                        y: 28,
+                                        width: 224,
+                                        height: 52,
+                                        content: 'Feature title',
+                                        fontSize: 17
+                                    },
+                                    {
+                                        id: 'feature-card-a-copy',
+                                        type: 'text',
+                                        name: 'Feature copy',
+                                        role: 'overlay',
+                                        x: 88,
+                                        y: 96,
+                                        width: 224,
+                                        height: 86,
+                                        content: 'Supporting copy should stay below the feature title.',
+                                        fontSize: 13
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const validation = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const title = documents.findNode(result.document, 'feature-card-a-title');
+        const copy = documents.findNode(result.document, 'feature-card-a-copy');
+
+        expect(validation.valid).to.equal(true);
+        expect(Number(title?.y)).to.be.greaterThan(0);
+        expect(Number(copy?.y)).to.be.greaterThan(Number(title?.y) + Number(title?.height));
+    });
+
+    it('does not collapse repaired card internals when parent rows are normalized repeatedly', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Repeated parent card normalization test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 760;
+        page.children = [
+            {
+                id: 'repair-page-root',
+                type: 'frame',
+                name: 'Generic page composition',
+                role: 'page',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 700,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'repair-feature-row',
+                        type: 'frame',
+                        name: 'Feature card row',
+                        role: 'section',
+                        x: 0,
+                        y: 0,
+                        width: 1200,
+                        height: 132,
+                        layout: 'none',
+                        children: [0, 1, 2].map(index => ({
+                            id: `repair-feature-card-${index + 1}`,
+                            type: 'frame',
+                            name: `Feature card ${index + 1}`,
+                            role: 'card',
+                            x: index * 405,
+                            y: 0,
+                            width: 389,
+                            height: 132,
+                            layout: 'none',
+                            children: [
+                                {
+                                    id: `repair-feature-card-${index + 1}-visual`,
+                                    type: 'image',
+                                    name: 'Feature visual',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 0,
+                                    width: 46,
+                                    height: 46
+                                },
+                                {
+                                    id: `repair-feature-card-${index + 1}-title`,
+                                    type: 'text',
+                                    name: 'Feature title',
+                                    role: 'overlay',
+                                    x: 67,
+                                    y: 0,
+                                    width: 224,
+                                    height: 22,
+                                    content: 'Feature title'
+                                },
+                                {
+                                    id: `repair-feature-card-${index + 1}-copy`,
+                                    type: 'text',
+                                    name: 'Feature copy',
+                                    role: 'overlay',
+                                    x: 67,
+                                    y: 0,
+                                    width: 224,
+                                    height: 33,
+                                    content: 'Feature supporting copy.'
+                                }
+                            ]
+                        }))
+                    },
+                    {
+                        id: 'repair-product-grid-row',
+                        type: 'frame',
+                        name: 'Product offers grid row',
+                        role: 'section',
+                        x: 0,
+                        y: 170,
+                        width: 1200,
+                        height: 181,
+                        layout: 'none',
+                        children: [0, 1, 2].map(index => ({
+                            id: `repair-product-card-${index + 1}`,
+                            type: 'frame',
+                            name: `Product offer card ${index + 1}`,
+                            role: 'card',
+                            x: index * 303,
+                            y: 0,
+                            width: 291,
+                            height: 82,
+                            layout: 'none',
+                            children: [
+                                {
+                                    id: `repair-product-card-${index + 1}-visual`,
+                                    type: 'image',
+                                    name: 'Product image',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 0,
+                                    width: 291,
+                                    height: 82
+                                },
+                                {
+                                    id: `repair-product-card-${index + 1}-title`,
+                                    type: 'text',
+                                    name: 'Product title',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 56,
+                                    width: 291,
+                                    height: 26,
+                                    content: 'Product title'
+                                },
+                                {
+                                    id: `repair-product-card-${index + 1}-copy`,
+                                    type: 'text',
+                                    name: 'Product copy',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 65,
+                                    width: 291,
+                                    height: 17,
+                                    content: 'Product supporting copy.'
+                                }
+                            ]
+                        }))
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const validation = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const featureCard = documents.findNode(result.document, 'repair-feature-card-1');
+        const productCard = documents.findNode(result.document, 'repair-product-card-1');
+        const productRow = documents.findNode(result.document, 'repair-product-grid-row');
+
+        expect(result.changed).to.equal(true);
+        expect(validation.valid).to.equal(true);
+        expect(childrenOverlap(featureCard?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(productCard?.children ?? [])).to.equal(false);
+        expect(Number(featureCard?.height)).to.be.greaterThan(132);
+        expect(Number(productCard?.height)).to.be.greaterThan(82);
+        expect(maxRight(productRow?.children ?? [])).to.be.at.most(Number(productRow?.width));
+    });
+
     it('wraps overflowing horizontal homepage shelves inside the preserved page width', () => {
         const document = service.createDesign('Homepage shelf wrap test');
         const page = document.pages![0];
         page.width = 1200;
         page.height = 600;
         page.children = [
-            createHomepageSection('mercado-homepage', 'Mercado Homepage', 0, 0, 1200, 260)
+            createHomepageSection('commerce-homepage', 'Commerce Homepage', 0, 0, 1200, 260)
         ];
         page.children[0].children = [
             {
@@ -1199,7 +1862,7 @@ describe('OpenPencilDesignCommandService', () => {
             preservePageWidth: true,
             targetPageWidth: 1200
         });
-        const homepage = result.document.pages![0].children.find(node => node.id === 'mercado-homepage');
+        const homepage = result.document.pages![0].children.find(node => node.id === 'commerce-homepage');
         const shelf = homepage?.children?.find(node => node.id === 'ultimas-ofertas-shelf');
         const cards = shelf?.children ?? [];
 
@@ -1218,7 +1881,7 @@ describe('OpenPencilDesignCommandService', () => {
         page.width = 1200;
         page.height = 640;
         page.children = [
-            createHomepageSection('mercado-offers-section', 'Mercado ofertas do dia shelf', 0, 0, 971, 260)
+            createHomepageSection('commerce-offers-section', 'Commerce ofertas do dia shelf', 0, 0, 971, 260)
         ];
         page.children[0].children = Array.from({ length: 5 }, (_, index) => ({
             id: `wide-offer-card-${index + 1}`,
@@ -1238,7 +1901,7 @@ describe('OpenPencilDesignCommandService', () => {
             preservePageWidth: true,
             targetPageWidth: 1200
         });
-        const shelf = result.document.pages![0].children.find(node => node.id === 'mercado-offers-section');
+        const shelf = result.document.pages![0].children.find(node => node.id === 'commerce-offers-section');
         const cards = shelf?.children ?? [];
 
         expect(result.changed).to.equal(true);
@@ -1304,6 +1967,74 @@ describe('OpenPencilDesignCommandService', () => {
         expect(Math.max(...children.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(card?.width));
         expect(children.find(node => node.id === 'escaping-offer-title')?.x).to.equal(120);
         expect(children.find(node => node.id === 'escaping-offer-shape')?.x).to.equal(180);
+    });
+
+    it('repairs generic overlapping text children before AI layout quality validation', () => {
+        const document = service.createDesign('Generic text overlap repair test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [{
+            id: 'feature-summary-panel',
+            type: 'frame',
+            name: 'Feature summary panel',
+            role: 'section',
+            x: 120,
+            y: 80,
+            width: 360,
+            height: 120,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            children: [{
+                id: 'feature-value',
+                type: 'text',
+                name: 'Valor claro',
+                x: 18,
+                y: 18,
+                width: 260,
+                height: 24,
+                content: 'Valor claro',
+                fontSize: 16
+            }, {
+                id: 'feature-copy',
+                type: 'text',
+                name: 'Texto curto para completar a narrativa visual',
+                x: 18,
+                y: 18,
+                width: 300,
+                height: 24,
+                content: 'Texto curto para completar a narrativa visual',
+                fontSize: 14
+            }, {
+                id: 'feature-support',
+                type: 'text',
+                name: 'Suporte visivel',
+                x: 18,
+                y: 18,
+                width: 280,
+                height: 24,
+                content: 'Suporte visivel',
+                fontSize: 14
+            }]
+        }];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const panel = result.document.pages![0].children.find(node => node.id === 'feature-summary-panel');
+        const children = panel?.children ?? [];
+        const quality = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(result.changed).to.equal(true);
+        expect(children.map(node => node.x)).to.deep.equal([16, 16, 16]);
+        expect(Number(children[1].y)).to.be.greaterThan(Number(children[0].y));
+        expect(Number(children[2].y)).to.be.greaterThan(Number(children[1].y));
+        expect(quality.valid).to.equal(true);
     });
 
     it('normalizes oversized media overlays inside streamed marketplace cards', () => {
@@ -1392,7 +2123,7 @@ describe('OpenPencilDesignCommandService', () => {
             {
                 id: 'benefits-strip',
                 type: 'frame',
-                name: 'Benefícios Mercado Privado',
+                name: 'Beneficios Nova Market',
                 role: 'section',
                 x: 40,
                 y: 80,
@@ -1444,6 +2175,26 @@ describe('OpenPencilDesignCommandService', () => {
                 height: 48,
                 content: 'Edit this embedded .op design inside Theia.'
             },
+            {
+                id: 'hero-card',
+                type: 'rectangle',
+                name: 'Hero card',
+                x: 340,
+                y: 564,
+                width: 520,
+                height: 260,
+                fill: [{ type: 'solid', color: '#f8fafc' }]
+            },
+            {
+                id: 'hero-title',
+                type: 'text',
+                name: 'Hero title',
+                x: 380,
+                y: 848,
+                width: 440,
+                height: 64,
+                content: 'OpenPencil Design'
+            },
             createHomepageSection('marketplace-homepage-root', 'Marketplace homepage root', 0, 304, 1120, 620)
         ];
 
@@ -1457,6 +2208,42 @@ describe('OpenPencilDesignCommandService', () => {
         expect(result.changed).to.equal(true);
         expect(pageNodes.map(node => node.id)).to.deep.equal(['marketplace-homepage-root']);
         expect(JSON.stringify(result.document)).not.to.contain('Edit this embedded .op design inside Theia.');
+        expect(JSON.stringify(result.document)).not.to.contain('OpenPencil Design');
+    });
+
+    it('does not shrink long page roots to fit the current viewport height', () => {
+        const document = service.createDesign('Long homepage root test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+
+        const result = service.applyOperationsToDocument(document, [], [{
+            operation: 'createNode',
+            node: {
+                id: 'marketplace-homepage-root',
+                type: 'frame',
+                name: 'Marketplace homepage root',
+                role: 'section',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 2400,
+                children: [
+                    createHomepageSection('marketplace-header', 'Marketplace header', 0, 0, 1200, 140),
+                    createHomepageSection('marketplace-products', 'Marketplace products', 0, 180, 1200, 520)
+                ]
+            }
+        }], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const root = result.document.pages![0].children.find(node => node.id === 'marketplace-homepage-root');
+
+        expect(result.changed).to.equal(true);
+        expect(root?.width).to.equal(1200);
+        expect(root?.height).to.equal(2400);
+        expect(root?.x).to.equal(0);
     });
 
     it('normalizes overflowing marketplace header rows without overlapping search and navigation text', () => {
@@ -1497,7 +2284,7 @@ describe('OpenPencilDesignCommandService', () => {
                                 y: 8,
                                 width: 976,
                                 height: 32,
-                                content: 'Mercado Privado',
+                                content: 'Nova Market',
                                 fontSize: 28
                             },
                             {
@@ -1520,7 +2307,7 @@ describe('OpenPencilDesignCommandService', () => {
                                 y: 15,
                                 width: 976,
                                 height: 14,
-                                content: 'Assine o Meli+ com beneficios exclusivos',
+                                content: 'Assine o Clube Plus com beneficios exclusivos',
                                 fontSize: 14
                             }
                         ]
@@ -1721,7 +2508,7 @@ describe('OpenPencilDesignCommandService', () => {
                 height: 40,
                 layout: 'none',
                 children: [
-                    createHomepageSection('header-logo', 'Marca Mercado Privado', 0, 0, 260, 40),
+                    createHomepageSection('header-logo', 'Marca Nova Market', 0, 0, 260, 40),
                     createHomepageSection('header-search', 'Busca', 276, 0, 520, 40),
                     createHomepageSection('header-location', 'Localização', 0, 0, 170, 40),
                     createHomepageSection('header-actions', 'Ações da conta', 0, 0, 200, 40)
@@ -1905,7 +2692,7 @@ describe('OpenPencilDesignCommandService', () => {
                         id: 'quality-title',
                         type: 'text',
                         name: 'Quality title',
-                        content: 'Mercado Privado',
+                        content: 'Nova Market',
                         x: 16,
                         y: 20,
                         width: 180,
@@ -1945,6 +2732,39 @@ describe('OpenPencilDesignCommandService', () => {
         expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('escapes its parent width');
     });
 
+    it('reports AI layout quality errors for page-like auto-layout sections that still use broken coordinates', () => {
+        const document = service.createDesign('AI layout quality page-like auto-layout test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 900;
+        page.children = [
+            {
+                id: 'reference-page-root',
+                type: 'frame',
+                name: 'Website reference page',
+                role: 'main',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 520,
+                layout: 'horizontal',
+                children: [
+                    createHomepageSection('reference-header', 'Reference header section', 0, 0, 1200, 110),
+                    createHomepageSection('reference-hero', 'Reference hero section', 1240, 0, 980, 220)
+                ]
+            }
+        ];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(quality.valid).to.equal(false);
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('escapes its parent width');
+    });
+
     it('allows intentional card surfaces behind foreground text in AI layout quality', () => {
         const document = service.createDesign('AI layout quality surface allowance test');
         const quality = service.validateAiLayoutQuality(document, {
@@ -1976,7 +2796,7 @@ describe('OpenPencilDesignCommandService', () => {
                         id: 'auto-layout-title',
                         type: 'text',
                         name: 'Auto layout title',
-                        content: 'Mercado Controlado',
+                        content: 'Nova Market',
                         x: 0,
                         y: 0,
                         width: 320,
@@ -2332,6 +3152,65 @@ describe('OpenPencilDesignCommandService', () => {
         expect(generated.source).to.equal('deterministic-fallback');
         expect(generated.diagnostics?.join('\n')).to.contain('Missing node provider: model returned a syntactically valid edit');
         expect(generated.diagnostics?.join('\n')).to.contain('operations were rejected because they did not change the preview');
+    });
+
+    it('repairs page-level provider operations that update generated IDs before creating them', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'missing-generated-id-provider',
+            label: 'Missing generated ID provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-card',
+                        changes: {
+                            width: 760,
+                            height: 320,
+                            fill: [{ type: 'solid', color: '#ffffff' }]
+                        }
+                    },
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-title',
+                        changes: {
+                            content: 'Nova Market',
+                            fontSize: 44,
+                            fontWeight: 700
+                        }
+                    },
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-copy',
+                        changes: {
+                            content: 'Ofertas claras em uma pagina organizada.',
+                            fontSize: 18
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['hero-card']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI generated ID repair test');
+        document.pages![0].children = [];
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma landing page com um hero para Nova Market',
+            document,
+            selection: []
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations);
+        const documents = new OpenPencilDocumentService();
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.operations.map(operation => operation.operation)).to.include.members(['createNode', 'setSelection']);
+        expect(documents.findNode(result.document, 'hero-card')?.type).to.equal('frame');
+        expect(documents.findNode(result.document, 'hero-title')?.content).to.equal('Nova Market');
+        expect(documents.findNode(result.document, 'hero-copy')?.content).to.equal('Ofertas claras em uma pagina organizada.');
+        expect(result.message).to.equal(undefined);
     });
 
     it('uses a prompt-specific local screen when page-level provider operations are rejected', async () => {
@@ -3674,7 +4553,7 @@ function createFeatureCard(id: string, name: string, x: number, y: number, width
                 id: `${id}-desc`,
                 type: 'text',
                 name: 'Descrição benefício',
-                content: name === 'Parcelamento' ? 'Use cartão ou saldo do Mercado Pago Privado.' : 'Receba vantagens da assinatura no marketplace.',
+                content: name === 'Parcelamento' ? 'Use cartão ou saldo da carteira digital.' : 'Receba vantagens da assinatura no marketplace.',
                 x: 20,
                 y: 103,
                 width: textWidth,
@@ -3720,4 +4599,14 @@ class FastStreamTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCo
 
 class FastGenerateTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
     protected override readonly providerGenerateTimeoutMs = 10;
+}
+
+class InspectableTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
+    generateTimeout(request: OpenPencilAiDesignRequest): number {
+        return this.resolveProviderGenerateTimeoutMs(request);
+    }
+
+    streamTimeouts(request: OpenPencilAiDesignRequest): { firstOperationMs: number; idleMs: number; totalMs: number } {
+        return this.resolveProviderStreamTimeouts(request);
+    }
 }

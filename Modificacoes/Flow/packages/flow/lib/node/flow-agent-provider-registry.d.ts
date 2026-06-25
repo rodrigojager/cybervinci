@@ -1,4 +1,4 @@
-import { CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { CodexProviderBackendRequest, CodexProviderRuntime, CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import { LanguageModel, LanguageModelRegistry, LanguageModelService } from '@theia/ai-core';
 import { FlowWorkflowState, FlowWorkload } from '../common';
 export declare const FlowAgentProviderResolver: any;
@@ -26,6 +26,8 @@ export interface LlmE2eMockProviderConfig {
 export interface LlmCodexProviderProviderConfig {
     codexProvider: CodexProviderService;
     providerId: string;
+    modelId?: string;
+    request?: Partial<CodexProviderBackendRequest>;
 }
 export type FlowLlmProviderConfig = LlmCommandProviderConfig | LlmChatProviderConfig | LlmE2eMockProviderConfig | LlmCodexProviderProviderConfig;
 export declare class FlowAgentProviderRegistry implements FlowAgentProviderResolver {
@@ -47,7 +49,10 @@ export declare class FlowAgentProviderRegistry implements FlowAgentProviderResol
         agentId: string;
         purpose: string;
     } | undefined>;
-    protected resolveCodexProvider(context: FlowAgentProviderResolutionContext, providerId: string): Promise<LlmCodexProviderProviderConfig>;
+    protected resolveCodexProvider(context: FlowAgentProviderResolutionContext, providerId: string, runtimeProvider?: {
+        runtime: CodexProviderRuntime;
+        modelProvider: string;
+    }): Promise<LlmCodexProviderProviderConfig>;
     protected unsupportedProviderMessage(context: FlowAgentProviderResolutionContext, providerId: string, hint: string): string;
 }
 export declare function customProviderCommandEnvName(providerId: string): string;

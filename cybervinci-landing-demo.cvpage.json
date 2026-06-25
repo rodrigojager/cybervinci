@@ -1,0 +1,2519 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "cybervinci-landing-demo",
+    "name": "CyberVinci Launch Studio",
+    "createdBy": "CyberVinci UI Builder",
+    "createdAt": "2026-06-18T02:43:10.560Z",
+    "updatedAt": "2026-06-18T02:43:10.560Z",
+    "description": "Polished sample landing page loaded by default in the CyberVinci Builder.",
+    "builderDemoVersion": "2026-06-04-spacing-2",
+    "tags": [
+      "demo",
+      "landing-page",
+      "builder"
+    ]
+  },
+  "page": {
+    "id": "cybervinci-landing-demo",
+    "title": "CyberVinci Launch Studio",
+    "route": "/launch-studio",
+    "layout": "marketing",
+    "description": "A complete sample landing page to exercise Builder editing, preview, properties, data, actions and export."
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "teal",
+    "radius": "md",
+    "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+    "spacing": {
+      "xs": 6,
+      "sm": 10,
+      "md": 18,
+      "lg": 28,
+      "xl": 42
+    },
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#f3faf8",
+      "surfaceWarm": "#fff7ed",
+      "ink": "#12201f",
+      "muted": "#5c6f6c",
+      "brand": "#0f766e",
+      "accent": "#ff7a59",
+      "highlight": "#d9f99d"
+    }
+  },
+  "dataSources": {
+    "launchMetrics": {
+      "type": "static",
+      "description": "Static metrics used by the sample page.",
+      "config": {
+        "data": [
+          {
+            "label": "Qualified leads",
+            "value": "+48%",
+            "trend": "up"
+          },
+          {
+            "label": "Build time saved",
+            "value": "32h",
+            "trend": "up"
+          },
+          {
+            "label": "Launch score",
+            "value": "96",
+            "trend": "neutral"
+          }
+        ]
+      }
+    }
+  },
+  "actions": {
+    "startTrial": {
+      "type": "navigate",
+      "description": "Jump to the sign-up CTA section.",
+      "params": {
+        "to": "#signup",
+        "target": "self"
+      }
+    },
+    "viewFeatures": {
+      "type": "navigate",
+      "description": "Jump to the feature section.",
+      "params": {
+        "to": "#features",
+        "target": "self"
+      }
+    }
+  },
+  "states": {
+    "selectedPlan": {
+      "description": "Example local state for future pricing interactions.",
+      "initialValue": "growth",
+      "persistent": false
+    }
+  },
+  "permissions": {},
+  "tree": {
+    "id": "cybervinci-landing-demo-root",
+    "type": "Page",
+    "props": {
+      "title": "CyberVinci Launch Studio",
+      "description": "Sample landing page",
+      "fullWidth": true,
+      "background": "#f7fbfa"
+    },
+    "children": [
+      {
+        "id": "demo-header",
+        "type": "Section",
+        "props": {
+          "component": "header",
+          "paddingY": "sm",
+          "fullWidth": true,
+          "background": "rgba(255, 255, 255, 0.88)"
+        },
+        "style": {
+          "css": {
+            "position": "sticky",
+            "top": 0,
+            "zIndex": 10,
+            "padding": "10px 0",
+            "backdropFilter": "blur(18px)",
+            "borderBottom": "1px solid rgba(15, 118, 110, 0.16)"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-header-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-header-layout",
+                "type": "Group",
+                "props": {
+                  "justify": "space-between",
+                  "align": "center",
+                  "gap": "md",
+                  "wrap": true
+                },
+                "children": [
+                  {
+                    "id": "demo-brand",
+                    "type": "Group",
+                    "props": {
+                      "gap": "sm",
+                      "align": "center",
+                      "wrap": false
+                    },
+                    "children": [
+                      {
+                        "id": "demo-brand-mark",
+                        "type": "Box",
+                        "props": {
+                          "component": "span",
+                          "radius": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "width": 36,
+                            "height": 36,
+                            "display": "inline-flex",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "background": "linear-gradient(135deg, #0f766e 0%, #ff7a59 100%)",
+                            "color": "#ffffff",
+                            "fontWeight": 800,
+                            "boxShadow": "0 12px 30px rgba(15, 118, 110, 0.25)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-brand-mark-text",
+                            "type": "Text",
+                            "props": {
+                              "children": "CV",
+                              "component": "span",
+                              "size": "sm",
+                              "weight": 800
+                            },
+                            "style": {
+                              "css": {
+                                "margin": 0,
+                                "color": "#ffffff"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-brand-name",
+                        "type": "Text",
+                        "props": {
+                          "children": "Launch Studio",
+                          "component": "span",
+                          "size": "lg",
+                          "weight": 800
+                        },
+                        "style": {
+                          "css": {
+                            "color": "#12201f",
+                            "letterSpacing": 0
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-nav",
+                    "type": "Group",
+                    "props": {
+                      "gap": "lg",
+                      "align": "center",
+                      "wrap": true
+                    },
+                    "children": [
+                      {
+                        "id": "demo-nav-features",
+                        "type": "Anchor",
+                        "props": {
+                          "children": "Features",
+                          "href": "#features",
+                          "underline": "never",
+                          "color": "#12201f"
+                        },
+                        "style": {
+                          "css": {
+                            "fontWeight": 700
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-nav-workflow",
+                        "type": "Anchor",
+                        "props": {
+                          "children": "Workflow",
+                          "href": "#workflow",
+                          "underline": "never",
+                          "color": "#12201f"
+                        },
+                        "style": {
+                          "css": {
+                            "fontWeight": 700
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-nav-pricing",
+                        "type": "Anchor",
+                        "props": {
+                          "children": "Pricing",
+                          "href": "#pricing",
+                          "underline": "never",
+                          "color": "#12201f"
+                        },
+                        "style": {
+                          "css": {
+                            "fontWeight": 700
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-nav-cta",
+                        "type": "Button",
+                        "props": {
+                          "children": "Open CTA",
+                          "variant": "filled",
+                          "color": "teal",
+                          "radius": "xl",
+                          "size": "sm"
+                        },
+                        "events": {
+                          "onClick": {
+                            "actionId": "startTrial"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "demo-hero",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "linear-gradient(135deg, #062a2f 0%, #0f766e 50%, #ff7a59 145%)"
+        },
+        "style": {
+          "css": {
+            "padding": "84px 0 92px",
+            "minHeight": 680,
+            "overflow": "hidden"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-hero-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-hero-layout",
+                "type": "Group",
+                "props": {
+                  "justify": "space-between",
+                  "align": "center",
+                  "gap": "xl",
+                  "wrap": true
+                },
+                "style": {
+                  "css": {
+                    "minHeight": 560
+                  }
+                },
+                "children": [
+                  {
+                    "id": "demo-hero-copy",
+                    "type": "Stack",
+                    "props": {
+                      "gap": "lg",
+                      "align": "flex-start"
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 620,
+                        "flex": "1 1 420px"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-hero-badge",
+                        "type": "Badge",
+                        "props": {
+                          "children": "New Builder demo",
+                          "color": "lime",
+                          "variant": "light",
+                          "radius": "xl",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "color": "#12201f",
+                            "background": "#d9f99d"
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-hero-title",
+                        "type": "Title",
+                        "props": {
+                          "children": "Launch pages faster with a visual builder that stays structured.",
+                          "order": 1,
+                          "weight": 900
+                        },
+                        "style": {
+                          "css": {
+                            "color": "#ffffff",
+                            "fontSize": 58,
+                            "lineHeight": 1.02,
+                            "maxWidth": 760,
+                            "margin": 0
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-hero-subtitle",
+                        "type": "Text",
+                        "props": {
+                          "children": "This sample page shows nested sections, editable props, theme tokens, data records, actions, responsive grids and export-ready Builder JSON in one polished canvas.",
+                          "size": "xl"
+                        },
+                        "style": {
+                          "css": {
+                            "color": "rgba(255, 255, 255, 0.84)",
+                            "lineHeight": 1.65,
+                            "maxWidth": 650,
+                            "margin": 0
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-hero-actions",
+                        "type": "Group",
+                        "props": {
+                          "gap": "md",
+                          "align": "center",
+                          "wrap": true
+                        },
+                        "children": [
+                          {
+                            "id": "demo-primary-action",
+                            "type": "Button",
+                            "props": {
+                              "children": "Start from this page",
+                              "variant": "filled",
+                              "color": "orange",
+                              "size": "lg",
+                              "radius": "xl"
+                            },
+                            "style": {
+                              "css": {
+                                "boxShadow": "0 18px 42px rgba(249, 115, 22, 0.28)"
+                              }
+                            },
+                            "events": {
+                              "onClick": {
+                                "actionId": "startTrial"
+                              }
+                            }
+                          },
+                          {
+                            "id": "demo-secondary-action",
+                            "type": "Button",
+                            "props": {
+                              "children": "Explore features",
+                              "variant": "white",
+                              "color": "dark",
+                              "size": "lg",
+                              "radius": "xl"
+                            },
+                            "events": {
+                              "onClick": {
+                                "actionId": "viewFeatures"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-hero-visual",
+                    "type": "Card",
+                    "props": {
+                      "padding": "sm",
+                      "radius": "xl",
+                      "shadow": "xl",
+                      "background": "rgba(255, 255, 255, 0.94)"
+                    },
+                    "style": {
+                      "css": {
+                        "flex": "1 1 360px",
+                        "maxWidth": 520,
+                        "overflow": "hidden",
+                        "boxShadow": "0 34px 90px rgba(6, 42, 47, 0.36)"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-hero-image",
+                        "type": "Image",
+                        "props": {
+                          "src": "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1200&q=80",
+                          "alt": "Team working on a launch dashboard",
+                          "fit": "cover",
+                          "radius": "lg",
+                          "height": 330
+                        },
+                        "style": {
+                          "css": {
+                            "width": "100%",
+                            "display": "block"
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-hero-visual-content",
+                        "type": "Stack",
+                        "props": {
+                          "gap": "md",
+                          "align": "stretch"
+                        },
+                        "style": {
+                          "css": {
+                            "padding": "22px 20px 18px"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-hero-card-label",
+                            "type": "Badge",
+                            "props": {
+                              "children": "Live page health",
+                              "color": "teal",
+                              "variant": "light",
+                              "radius": "xl"
+                            }
+                          },
+                          {
+                            "id": "demo-hero-card-title",
+                            "type": "Title",
+                            "props": {
+                              "children": "Everything remains editable.",
+                              "order": 3,
+                              "weight": 800
+                            },
+                            "style": {
+                              "css": {
+                                "margin": 0,
+                                "color": "#12201f"
+                              }
+                            }
+                          },
+                          {
+                            "id": "demo-hero-card-copy",
+                            "type": "Text",
+                            "props": {
+                              "children": "Select any layer, inspect its props, change theme tokens or switch to JSON to see the canonical page contract.",
+                              "size": "md"
+                            },
+                            "style": {
+                              "css": {
+                                "color": "#5c6f6c",
+                                "lineHeight": 1.55,
+                                "margin": 0
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "demo-metrics",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "lg",
+          "fullWidth": true,
+          "background": "#f7fbfa"
+        },
+        "children": [
+          {
+            "id": "demo-metrics-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "style": {
+              "css": {
+                "paddingTop": 48,
+                "paddingBottom": 48
+              }
+            },
+            "children": [
+              {
+                "id": "demo-metric-grid",
+                "type": "MetricGrid",
+                "props": {
+                  "columns": 3,
+                  "spacing": "md"
+                },
+                "style": {
+                  "css": {
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(240px, 1fr))"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "demo-metric-one",
+                    "type": "MetricCard",
+                    "props": {
+                      "label": "Conversion lift",
+                      "value": "+42%",
+                      "description": "After replacing static mockups with editable Builder pages.",
+                      "trend": "up",
+                      "trendLabel": "+12 pts",
+                      "color": "teal"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid rgba(15, 118, 110, 0.12)",
+                        "boxShadow": "0 18px 45px rgba(18, 32, 31, 0.08)",
+                        "background": "#ffffff"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-metric-two",
+                    "type": "MetricCard",
+                    "props": {
+                      "label": "Sections edited",
+                      "value": "9",
+                      "description": "Hero, feature, workflow, pricing, proof, CTA and footer.",
+                      "trend": "neutral",
+                      "trendLabel": "ready",
+                      "color": "orange"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid rgba(15, 118, 110, 0.12)",
+                        "boxShadow": "0 18px 45px rgba(18, 32, 31, 0.08)",
+                        "background": "#ffffff"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-metric-three",
+                    "type": "MetricCard",
+                    "props": {
+                      "label": "Schema errors",
+                      "value": "0",
+                      "description": "The demo page is generated from valid Builder components.",
+                      "trend": "neutral",
+                      "trendLabel": "validated",
+                      "color": "lime"
+                    },
+                    "style": {
+                      "css": {
+                        "border": "1px solid rgba(15, 118, 110, 0.12)",
+                        "boxShadow": "0 18px 45px rgba(18, 32, 31, 0.08)",
+                        "background": "#ffffff"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "features",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#ffffff"
+        },
+        "style": {
+          "css": {
+            "padding": "88px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-features-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-features",
+                "type": "FeatureGrid",
+                "props": {
+                  "title": "Built to show the Builder workflow at a glance",
+                  "description": "The page combines visual blocks with real schema-backed components so every part can be selected, edited, validated and exported.",
+                  "columns": 3,
+                  "features": [
+                    {
+                      "title": "Visual composition",
+                      "description": "Nested sections, cards, grids and typography make the layer tree useful immediately."
+                    },
+                    {
+                      "title": "Inspectable props",
+                      "description": "Headlines, badges, actions, images and pricing content are all editable in the property panel."
+                    },
+                    {
+                      "title": "Portable schema",
+                      "description": "The same document powers preview, JSON editing, AI patches and static export."
+                    }
+                  ]
+                },
+                "style": {
+                  "css": {
+                    "display": "grid",
+                    "gap": 34,
+                    "padding": "18px 0"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "demo-features-title",
+                    "type": "Title",
+                    "props": {
+                      "children": "Built to show the Builder workflow at a glance",
+                      "order": 2,
+                      "weight": 900
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "color": "#12201f",
+                        "fontSize": 40,
+                        "lineHeight": 1.12,
+                        "textAlign": "center"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-features-copy",
+                    "type": "Text",
+                    "props": {
+                      "children": "The page combines visual blocks with real schema-backed components so every part can be selected, edited, validated and exported.",
+                      "size": "lg"
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "color": "#5c6f6c",
+                        "lineHeight": 1.7,
+                        "textAlign": "center"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-features-grid",
+                    "type": "SimpleGrid",
+                    "props": {
+                      "cols": 3,
+                      "spacing": "lg",
+                      "verticalSpacing": "lg"
+                    },
+                    "style": {
+                      "css": {
+                        "marginTop": 8,
+                        "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-feature-compose",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#f7fbfa"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 240,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 20px 52px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-feature-compose-content",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "md",
+                              "align": "flex-start"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-feature-compose-icon",
+                                "type": "Badge",
+                                "props": {
+                                  "children": "Builder",
+                                  "color": "teal",
+                                  "variant": "light",
+                                  "radius": "xl"
+                                }
+                              },
+                              {
+                                "id": "demo-feature-compose-title",
+                                "type": "Title",
+                                "props": {
+                                  "children": "Visual composition",
+                                  "order": 3,
+                                  "weight": 800
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f",
+                                    "lineHeight": 1.2
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-feature-compose-description",
+                                "type": "Text",
+                                "props": {
+                                  "children": "Nested sections, cards, grids and typography make the layer tree useful immediately.",
+                                  "size": "md"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#5c6f6c",
+                                    "lineHeight": 1.65
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-feature-inspect",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#f7fbfa"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 240,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 20px 52px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-feature-inspect-content",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "md",
+                              "align": "flex-start"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-feature-inspect-icon",
+                                "type": "Badge",
+                                "props": {
+                                  "children": "Builder",
+                                  "color": "teal",
+                                  "variant": "light",
+                                  "radius": "xl"
+                                }
+                              },
+                              {
+                                "id": "demo-feature-inspect-title",
+                                "type": "Title",
+                                "props": {
+                                  "children": "Inspectable props",
+                                  "order": 3,
+                                  "weight": 800
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f",
+                                    "lineHeight": 1.2
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-feature-inspect-description",
+                                "type": "Text",
+                                "props": {
+                                  "children": "Headlines, badges, actions, images and pricing content are all editable in the property panel.",
+                                  "size": "md"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#5c6f6c",
+                                    "lineHeight": 1.65
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-feature-portable",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#f7fbfa"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 240,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 20px 52px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-feature-portable-content",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "md",
+                              "align": "flex-start"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-feature-portable-icon",
+                                "type": "Badge",
+                                "props": {
+                                  "children": "Builder",
+                                  "color": "teal",
+                                  "variant": "light",
+                                  "radius": "xl"
+                                }
+                              },
+                              {
+                                "id": "demo-feature-portable-title",
+                                "type": "Title",
+                                "props": {
+                                  "children": "Portable schema",
+                                  "order": 3,
+                                  "weight": 800
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f",
+                                    "lineHeight": 1.2
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-feature-portable-description",
+                                "type": "Text",
+                                "props": {
+                                  "children": "The same document powers preview, JSON editing, AI patches and static export.",
+                                  "size": "md"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#5c6f6c",
+                                    "lineHeight": 1.65
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "workflow",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#f3faf8"
+        },
+        "style": {
+          "css": {
+            "padding": "92px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-workflow-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-workflow-stack",
+                "type": "Stack",
+                "props": {
+                  "gap": "xl",
+                  "align": "stretch"
+                },
+                "children": [
+                  {
+                    "id": "demo-workflow-heading",
+                    "type": "Stack",
+                    "props": {
+                      "gap": "md",
+                      "align": "center"
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "textAlign": "center"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-workflow-heading-title",
+                        "type": "Title",
+                        "props": {
+                          "children": "From idea to export without leaving Builder",
+                          "order": 2,
+                          "weight": 900
+                        },
+                        "style": {
+                          "css": {
+                            "margin": 0,
+                            "color": "#12201f",
+                            "fontSize": 38,
+                            "lineHeight": 1.12
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-workflow-heading-description",
+                        "type": "Text",
+                        "props": {
+                          "children": "Use this page to test the everyday loop: pick a layer, change props, preview responsive sizes, inspect JSON, then export.",
+                          "size": "lg"
+                        },
+                        "style": {
+                          "css": {
+                            "margin": 0,
+                            "color": "#5c6f6c",
+                            "lineHeight": 1.65
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-workflow-grid",
+                    "type": "SimpleGrid",
+                    "props": {
+                      "cols": 3,
+                      "spacing": "lg",
+                      "verticalSpacing": "lg"
+                    },
+                    "children": [
+                      {
+                        "id": "demo-workflow-plan",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#ffffff"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 250,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 22px 60px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-workflow-plan-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "md",
+                              "align": "flex-start"
+                            },
+                            "children": [
+                              {
+                                "id": "demo-workflow-plan-badge",
+                                "type": "Badge",
+                                "props": {
+                                  "children": "01",
+                                  "color": "orange",
+                                  "variant": "light",
+                                  "radius": "xl",
+                                  "size": "lg"
+                                }
+                              },
+                              {
+                                "id": "demo-workflow-plan-title",
+                                "type": "Title",
+                                "props": {
+                                  "children": "Select a polished block",
+                                  "order": 3,
+                                  "weight": 800
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f"
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-workflow-plan-description",
+                                "type": "Text",
+                                "props": {
+                                  "children": "Open Layers or Components and select sections, cards, buttons or text directly from the page tree.",
+                                  "size": "md"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#5c6f6c",
+                                    "lineHeight": 1.6
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-workflow-edit",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#ffffff"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 250,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 22px 60px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-workflow-edit-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "md",
+                              "align": "flex-start"
+                            },
+                            "children": [
+                              {
+                                "id": "demo-workflow-edit-badge",
+                                "type": "Badge",
+                                "props": {
+                                  "children": "02",
+                                  "color": "orange",
+                                  "variant": "light",
+                                  "radius": "xl",
+                                  "size": "lg"
+                                }
+                              },
+                              {
+                                "id": "demo-workflow-edit-title",
+                                "type": "Title",
+                                "props": {
+                                  "children": "Tune props and theme",
+                                  "order": 3,
+                                  "weight": 800
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f"
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-workflow-edit-description",
+                                "type": "Text",
+                                "props": {
+                                  "children": "Change colors, copy, spacing and data in the right panels while the live preview stays in sync.",
+                                  "size": "md"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#5c6f6c",
+                                    "lineHeight": 1.6
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-workflow-ship",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#ffffff"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 250,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 22px 60px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-workflow-ship-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "md",
+                              "align": "flex-start"
+                            },
+                            "children": [
+                              {
+                                "id": "demo-workflow-ship-badge",
+                                "type": "Badge",
+                                "props": {
+                                  "children": "03",
+                                  "color": "orange",
+                                  "variant": "light",
+                                  "radius": "xl",
+                                  "size": "lg"
+                                }
+                              },
+                              {
+                                "id": "demo-workflow-ship-title",
+                                "type": "Title",
+                                "props": {
+                                  "children": "Export clean output",
+                                  "order": 3,
+                                  "weight": 800
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f"
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-workflow-ship-description",
+                                "type": "Text",
+                                "props": {
+                                  "children": "The canonical JSON can be saved, validated, patched by AI and exported as static HTML.",
+                                  "size": "md"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#5c6f6c",
+                                    "lineHeight": 1.6
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "style": {
+                      "css": {
+                        "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pricing",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#ffffff"
+        },
+        "style": {
+          "css": {
+            "padding": "92px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-pricing-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-pricing",
+                "type": "PricingSection",
+                "props": {
+                  "title": "A realistic pricing block, ready to edit",
+                  "description": "Pricing plans are plain Builder props, so the property panel can update names, prices, feature lists and CTA labels.",
+                  "plans": [
+                    {
+                      "name": "Starter",
+                      "price": "$49",
+                      "description": "For quick prototype launches.",
+                      "features": [
+                        "Visual page assembly",
+                        "JSON preview",
+                        "Static HTML export"
+                      ],
+                      "ctaLabel": "Choose Starter"
+                    },
+                    {
+                      "name": "Growth",
+                      "price": "$149",
+                      "description": "For teams shipping pages weekly.",
+                      "features": [
+                        "Everything in Starter",
+                        "AI patch review",
+                        "Reusable Builder blocks"
+                      ],
+                      "ctaLabel": "Choose Growth",
+                      "highlighted": true
+                    },
+                    {
+                      "name": "Studio",
+                      "price": "Custom",
+                      "description": "For larger product surfaces.",
+                      "features": [
+                        "Design system mapping",
+                        "Governed publishing",
+                        "Team workflows"
+                      ],
+                      "ctaLabel": "Talk to us"
+                    }
+                  ]
+                },
+                "style": {
+                  "css": {
+                    "display": "grid",
+                    "gap": 34
+                  }
+                },
+                "children": [
+                  {
+                    "id": "demo-pricing-title",
+                    "type": "Title",
+                    "props": {
+                      "children": "A realistic pricing block, ready to edit",
+                      "order": 2,
+                      "weight": 900
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "color": "#12201f",
+                        "fontSize": 40,
+                        "lineHeight": 1.12,
+                        "textAlign": "center"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-pricing-copy",
+                    "type": "Text",
+                    "props": {
+                      "children": "Pricing plans are plain Builder props, so the property panel can update names, prices, feature lists and CTA labels.",
+                      "size": "lg"
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "color": "#5c6f6c",
+                        "lineHeight": 1.7,
+                        "textAlign": "center"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-pricing-grid",
+                    "type": "SimpleGrid",
+                    "props": {
+                      "cols": 3,
+                      "spacing": "lg",
+                      "verticalSpacing": "lg"
+                    },
+                    "style": {
+                      "css": {
+                        "marginTop": 8,
+                        "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-plan-starter",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#f7fbfa"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 420,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 18px 48px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-plan-starter-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "lg",
+                              "align": "stretch"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-plan-starter-heading",
+                                "type": "Stack",
+                                "props": {
+                                  "gap": "sm",
+                                  "align": "flex-start"
+                                },
+                                "children": [
+                                  {
+                                    "id": "demo-plan-starter-badge",
+                                    "type": "Badge",
+                                    "props": {
+                                      "children": "Plan",
+                                      "color": "teal",
+                                      "variant": "light",
+                                      "radius": "xl"
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-starter-name",
+                                    "type": "Title",
+                                    "props": {
+                                      "children": "Starter",
+                                      "order": 3,
+                                      "weight": 850
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#12201f"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-starter-price",
+                                    "type": "Text",
+                                    "props": {
+                                      "children": "$49",
+                                      "component": "div",
+                                      "weight": 900
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#0f766e",
+                                        "fontSize": 34,
+                                        "lineHeight": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-starter-description",
+                                    "type": "Text",
+                                    "props": {
+                                      "children": "For quick prototype launches.",
+                                      "size": "md"
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#5c6f6c",
+                                        "lineHeight": 1.6
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "demo-plan-starter-features",
+                                "type": "List",
+                                "props": {
+                                  "items": [
+                                    "Visual page assembly",
+                                    "JSON preview",
+                                    "Static HTML export"
+                                  ],
+                                  "spacing": "sm",
+                                  "size": "md",
+                                  "withPadding": true
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": "4px 0 0",
+                                    "color": "#33413f",
+                                    "lineHeight": 1.7
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-plan-starter-button",
+                                "type": "Button",
+                                "props": {
+                                  "children": "Choose Starter",
+                                  "variant": "outline",
+                                  "color": "teal",
+                                  "size": "md",
+                                  "radius": "xl",
+                                  "fullWidth": true
+                                },
+                                "style": {
+                                  "css": {
+                                    "marginTop": "auto"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-plan-growth",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "xl",
+                          "background": "#10201f"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 420,
+                            "border": "1px solid rgba(217, 249, 157, 0.36)",
+                            "boxShadow": "0 28px 72px rgba(16, 32, 31, 0.24)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-plan-growth-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "lg",
+                              "align": "stretch"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-plan-growth-heading",
+                                "type": "Stack",
+                                "props": {
+                                  "gap": "sm",
+                                  "align": "flex-start"
+                                },
+                                "children": [
+                                  {
+                                    "id": "demo-plan-growth-badge",
+                                    "type": "Badge",
+                                    "props": {
+                                      "children": "Most popular",
+                                      "color": "lime",
+                                      "variant": "light",
+                                      "radius": "xl"
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-growth-name",
+                                    "type": "Title",
+                                    "props": {
+                                      "children": "Growth",
+                                      "order": 3,
+                                      "weight": 850
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#ffffff"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-growth-price",
+                                    "type": "Text",
+                                    "props": {
+                                      "children": "$149",
+                                      "component": "div",
+                                      "weight": 900
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#d9f99d",
+                                        "fontSize": 34,
+                                        "lineHeight": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-growth-description",
+                                    "type": "Text",
+                                    "props": {
+                                      "children": "For teams shipping pages weekly.",
+                                      "size": "md"
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "rgba(255, 255, 255, 0.72)",
+                                        "lineHeight": 1.6
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "demo-plan-growth-features",
+                                "type": "List",
+                                "props": {
+                                  "items": [
+                                    "Everything in Starter",
+                                    "AI patch review",
+                                    "Reusable Builder blocks"
+                                  ],
+                                  "spacing": "sm",
+                                  "size": "md",
+                                  "withPadding": true
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": "4px 0 0",
+                                    "color": "rgba(255, 255, 255, 0.86)",
+                                    "lineHeight": 1.7
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-plan-growth-button",
+                                "type": "Button",
+                                "props": {
+                                  "children": "Choose Growth",
+                                  "variant": "filled",
+                                  "color": "lime",
+                                  "size": "md",
+                                  "radius": "xl",
+                                  "fullWidth": true
+                                },
+                                "style": {
+                                  "css": {
+                                    "marginTop": "auto"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-plan-studio",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#f7fbfa"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 420,
+                            "border": "1px solid rgba(15, 118, 110, 0.10)",
+                            "boxShadow": "0 18px 48px rgba(18, 32, 31, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-plan-studio-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "lg",
+                              "align": "stretch"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-plan-studio-heading",
+                                "type": "Stack",
+                                "props": {
+                                  "gap": "sm",
+                                  "align": "flex-start"
+                                },
+                                "children": [
+                                  {
+                                    "id": "demo-plan-studio-badge",
+                                    "type": "Badge",
+                                    "props": {
+                                      "children": "Plan",
+                                      "color": "teal",
+                                      "variant": "light",
+                                      "radius": "xl"
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-studio-name",
+                                    "type": "Title",
+                                    "props": {
+                                      "children": "Studio",
+                                      "order": 3,
+                                      "weight": 850
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#12201f"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-studio-price",
+                                    "type": "Text",
+                                    "props": {
+                                      "children": "Custom",
+                                      "component": "div",
+                                      "weight": 900
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#0f766e",
+                                        "fontSize": 34,
+                                        "lineHeight": 1
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-plan-studio-description",
+                                    "type": "Text",
+                                    "props": {
+                                      "children": "For larger product surfaces.",
+                                      "size": "md"
+                                    },
+                                    "style": {
+                                      "css": {
+                                        "margin": 0,
+                                        "color": "#5c6f6c",
+                                        "lineHeight": 1.6
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "demo-plan-studio-features",
+                                "type": "List",
+                                "props": {
+                                  "items": [
+                                    "Design system mapping",
+                                    "Governed publishing",
+                                    "Team workflows"
+                                  ],
+                                  "spacing": "sm",
+                                  "size": "md",
+                                  "withPadding": true
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": "4px 0 0",
+                                    "color": "#33413f",
+                                    "lineHeight": 1.7
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-plan-studio-button",
+                                "type": "Button",
+                                "props": {
+                                  "children": "Talk to us",
+                                  "variant": "outline",
+                                  "color": "teal",
+                                  "size": "md",
+                                  "radius": "xl",
+                                  "fullWidth": true
+                                },
+                                "style": {
+                                  "css": {
+                                    "marginTop": "auto"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "demo-proof",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "#fff7ed"
+        },
+        "style": {
+          "css": {
+            "padding": "92px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-proof-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-testimonials",
+                "type": "TestimonialSection",
+                "props": {
+                  "title": "Designed for product teams that need momentum",
+                  "testimonials": [
+                    {
+                      "quote": "We can now review the live page structure, JSON and export in one place.",
+                      "author": "Marina Costa",
+                      "role": "Product Lead"
+                    },
+                    {
+                      "quote": "The Builder page is useful immediately because every demo block is editable.",
+                      "author": "Rafael Mendes",
+                      "role": "Design Systems"
+                    },
+                    {
+                      "quote": "It finally makes the full workflow visible before connecting real project data.",
+                      "author": "Bianca Alves",
+                      "role": "Frontend Engineer"
+                    }
+                  ]
+                },
+                "style": {
+                  "css": {
+                    "display": "grid",
+                    "gap": 34
+                  }
+                },
+                "children": [
+                  {
+                    "id": "demo-proof-title",
+                    "type": "Text",
+                    "props": {
+                      "children": "Designed for product teams that need momentum",
+                      "component": "div",
+                      "weight": 900
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "color": "#12201f",
+                        "fontSize": 40,
+                        "lineHeight": 1.12,
+                        "textAlign": "center"
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-proof-grid",
+                    "type": "SimpleGrid",
+                    "props": {
+                      "cols": 3,
+                      "spacing": "lg",
+                      "verticalSpacing": "lg"
+                    },
+                    "style": {
+                      "css": {
+                        "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))"
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-testimonial-marina",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#ffffff"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 270,
+                            "border": "1px solid rgba(255, 122, 89, 0.16)",
+                            "boxShadow": "0 18px 48px rgba(117, 66, 28, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-testimonial-marina-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "lg",
+                              "align": "stretch"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-testimonial-marina-quote",
+                                "type": "Text",
+                                "props": {
+                                  "children": "We can now review the live page structure, JSON and export in one place.",
+                                  "size": "lg"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f",
+                                    "lineHeight": 1.65
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-testimonial-marina-author",
+                                "type": "Group",
+                                "props": {
+                                  "gap": "md",
+                                  "align": "center",
+                                  "wrap": false
+                                },
+                                "style": {
+                                  "css": {
+                                    "marginTop": "auto"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "id": "demo-testimonial-marina-avatar",
+                                    "type": "Avatar",
+                                    "props": {
+                                      "name": "Marina Costa",
+                                      "color": "orange",
+                                      "size": "md",
+                                      "radius": "round"
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-testimonial-marina-meta",
+                                    "type": "Stack",
+                                    "props": {
+                                      "gap": "xs",
+                                      "align": "flex-start"
+                                    },
+                                    "children": [
+                                      {
+                                        "id": "demo-testimonial-marina-name",
+                                        "type": "Text",
+                                        "props": {
+                                          "children": "Marina Costa",
+                                          "component": "span",
+                                          "weight": 800
+                                        },
+                                        "style": {
+                                          "css": {
+                                            "margin": 0,
+                                            "color": "#12201f"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "id": "demo-testimonial-marina-role",
+                                        "type": "Text",
+                                        "props": {
+                                          "children": "Product Lead",
+                                          "component": "span",
+                                          "size": "sm"
+                                        },
+                                        "style": {
+                                          "css": {
+                                            "margin": 0,
+                                            "color": "#5c6f6c"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-testimonial-rafael",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#ffffff"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 270,
+                            "border": "1px solid rgba(255, 122, 89, 0.16)",
+                            "boxShadow": "0 18px 48px rgba(117, 66, 28, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-testimonial-rafael-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "lg",
+                              "align": "stretch"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-testimonial-rafael-quote",
+                                "type": "Text",
+                                "props": {
+                                  "children": "The Builder page is useful immediately because every demo block is editable.",
+                                  "size": "lg"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f",
+                                    "lineHeight": 1.65
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-testimonial-rafael-author",
+                                "type": "Group",
+                                "props": {
+                                  "gap": "md",
+                                  "align": "center",
+                                  "wrap": false
+                                },
+                                "style": {
+                                  "css": {
+                                    "marginTop": "auto"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "id": "demo-testimonial-rafael-avatar",
+                                    "type": "Avatar",
+                                    "props": {
+                                      "name": "Rafael Mendes",
+                                      "color": "orange",
+                                      "size": "md",
+                                      "radius": "round"
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-testimonial-rafael-meta",
+                                    "type": "Stack",
+                                    "props": {
+                                      "gap": "xs",
+                                      "align": "flex-start"
+                                    },
+                                    "children": [
+                                      {
+                                        "id": "demo-testimonial-rafael-name",
+                                        "type": "Text",
+                                        "props": {
+                                          "children": "Rafael Mendes",
+                                          "component": "span",
+                                          "weight": 800
+                                        },
+                                        "style": {
+                                          "css": {
+                                            "margin": 0,
+                                            "color": "#12201f"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "id": "demo-testimonial-rafael-role",
+                                        "type": "Text",
+                                        "props": {
+                                          "children": "Design Systems",
+                                          "component": "span",
+                                          "size": "sm"
+                                        },
+                                        "style": {
+                                          "css": {
+                                            "margin": 0,
+                                            "color": "#5c6f6c"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "id": "demo-testimonial-bianca",
+                        "type": "Card",
+                        "props": {
+                          "padding": "lg",
+                          "radius": "lg",
+                          "shadow": "md",
+                          "background": "#ffffff"
+                        },
+                        "style": {
+                          "css": {
+                            "minHeight": 270,
+                            "border": "1px solid rgba(255, 122, 89, 0.16)",
+                            "boxShadow": "0 18px 48px rgba(117, 66, 28, 0.08)"
+                          }
+                        },
+                        "children": [
+                          {
+                            "id": "demo-testimonial-bianca-stack",
+                            "type": "Stack",
+                            "props": {
+                              "gap": "lg",
+                              "align": "stretch"
+                            },
+                            "style": {
+                              "css": {
+                                "height": "100%"
+                              }
+                            },
+                            "children": [
+                              {
+                                "id": "demo-testimonial-bianca-quote",
+                                "type": "Text",
+                                "props": {
+                                  "children": "It finally makes the full workflow visible before connecting real project data.",
+                                  "size": "lg"
+                                },
+                                "style": {
+                                  "css": {
+                                    "margin": 0,
+                                    "color": "#12201f",
+                                    "lineHeight": 1.65
+                                  }
+                                }
+                              },
+                              {
+                                "id": "demo-testimonial-bianca-author",
+                                "type": "Group",
+                                "props": {
+                                  "gap": "md",
+                                  "align": "center",
+                                  "wrap": false
+                                },
+                                "style": {
+                                  "css": {
+                                    "marginTop": "auto"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "id": "demo-testimonial-bianca-avatar",
+                                    "type": "Avatar",
+                                    "props": {
+                                      "name": "Bianca Alves",
+                                      "color": "orange",
+                                      "size": "md",
+                                      "radius": "round"
+                                    }
+                                  },
+                                  {
+                                    "id": "demo-testimonial-bianca-meta",
+                                    "type": "Stack",
+                                    "props": {
+                                      "gap": "xs",
+                                      "align": "flex-start"
+                                    },
+                                    "children": [
+                                      {
+                                        "id": "demo-testimonial-bianca-name",
+                                        "type": "Text",
+                                        "props": {
+                                          "children": "Bianca Alves",
+                                          "component": "span",
+                                          "weight": 800
+                                        },
+                                        "style": {
+                                          "css": {
+                                            "margin": 0,
+                                            "color": "#12201f"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "id": "demo-testimonial-bianca-role",
+                                        "type": "Text",
+                                        "props": {
+                                          "children": "Frontend Engineer",
+                                          "component": "span",
+                                          "size": "sm"
+                                        },
+                                        "style": {
+                                          "css": {
+                                            "margin": 0,
+                                            "color": "#5c6f6c"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "signup",
+        "type": "Section",
+        "props": {
+          "component": "section",
+          "paddingY": "xl",
+          "fullWidth": true,
+          "background": "linear-gradient(135deg, #10201f 0%, #0f766e 58%, #d9f99d 160%)"
+        },
+        "style": {
+          "css": {
+            "padding": "96px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-signup-container",
+            "type": "Container",
+            "props": {
+              "size": "lg",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-cta",
+                "type": "CTASection",
+                "props": {
+                  "title": "Edit this landing page and see Builder come alive.",
+                  "description": "Use the left panels to insert components, the right panels to inspect props and the preview mode to test the page before exporting.",
+                  "primaryActionLabel": "Duplicate the hero",
+                  "secondaryActionLabel": "Open JSON",
+                  "align": "center"
+                },
+                "style": {
+                  "css": {
+                    "display": "grid",
+                    "gap": 24,
+                    "color": "#ffffff",
+                    "padding": "64px 32px",
+                    "textAlign": "center"
+                  }
+                },
+                "children": [
+                  {
+                    "id": "demo-cta-title",
+                    "type": "Title",
+                    "props": {
+                      "children": "Edit this landing page and see Builder come alive.",
+                      "order": 2,
+                      "weight": 900
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 760,
+                        "margin": "0 auto",
+                        "color": "#ffffff",
+                        "fontSize": 42,
+                        "lineHeight": 1.12
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-cta-copy",
+                    "type": "Text",
+                    "props": {
+                      "children": "Use the left panels to insert components, the right panels to inspect props and the preview mode to test the page before exporting.",
+                      "size": "lg"
+                    },
+                    "style": {
+                      "css": {
+                        "maxWidth": 720,
+                        "margin": "0 auto",
+                        "color": "rgba(255, 255, 255, 0.82)",
+                        "lineHeight": 1.7
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-cta-actions",
+                    "type": "Group",
+                    "props": {
+                      "justify": "center",
+                      "gap": "md",
+                      "wrap": true
+                    },
+                    "style": {
+                      "css": {
+                        "marginTop": 8
+                      }
+                    },
+                    "children": [
+                      {
+                        "id": "demo-cta-primary",
+                        "type": "Button",
+                        "props": {
+                          "children": "Duplicate the hero",
+                          "variant": "filled",
+                          "color": "orange",
+                          "size": "lg",
+                          "radius": "xl"
+                        }
+                      },
+                      {
+                        "id": "demo-cta-secondary",
+                        "type": "Button",
+                        "props": {
+                          "children": "Open JSON",
+                          "variant": "white",
+                          "color": "dark",
+                          "size": "lg",
+                          "radius": "xl"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "demo-footer",
+        "type": "Section",
+        "props": {
+          "component": "footer",
+          "paddingY": "lg",
+          "fullWidth": true,
+          "background": "#10201f"
+        },
+        "style": {
+          "css": {
+            "padding": "34px 0"
+          }
+        },
+        "children": [
+          {
+            "id": "demo-footer-container",
+            "type": "Container",
+            "props": {
+              "size": "xl",
+              "padding": "md"
+            },
+            "children": [
+              {
+                "id": "demo-footer-layout",
+                "type": "Group",
+                "props": {
+                  "justify": "space-between",
+                  "align": "center",
+                  "gap": "md",
+                  "wrap": true
+                },
+                "children": [
+                  {
+                    "id": "demo-footer-copy",
+                    "type": "Text",
+                    "props": {
+                      "children": "CyberVinci Launch Studio - sample Builder landing page",
+                      "size": "sm"
+                    },
+                    "style": {
+                      "css": {
+                        "color": "rgba(255, 255, 255, 0.72)",
+                        "margin": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "demo-footer-links",
+                    "type": "Group",
+                    "props": {
+                      "gap": "lg",
+                      "wrap": true
+                    },
+                    "children": [
+                      {
+                        "id": "demo-footer-features",
+                        "type": "Anchor",
+                        "props": {
+                          "children": "Features",
+                          "href": "#features",
+                          "underline": "never",
+                          "color": "#d9f99d"
+                        },
+                        "style": {
+                          "css": {
+                            "fontWeight": 700
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-footer-pricing",
+                        "type": "Anchor",
+                        "props": {
+                          "children": "Pricing",
+                          "href": "#pricing",
+                          "underline": "never",
+                          "color": "#d9f99d"
+                        },
+                        "style": {
+                          "css": {
+                            "fontWeight": 700
+                          }
+                        }
+                      },
+                      {
+                        "id": "demo-footer-signup",
+                        "type": "Anchor",
+                        "props": {
+                          "children": "CTA",
+                          "href": "#signup",
+                          "underline": "never",
+                          "color": "#d9f99d"
+                        },
+                        "style": {
+                          "css": {
+                            "fontWeight": 700
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "style": {
+      "css": {
+        "display": "grid",
+        "gap": 0,
+        "background": "#f7fbfa",
+        "color": "#12201f"
+      }
+    }
+  }
+}

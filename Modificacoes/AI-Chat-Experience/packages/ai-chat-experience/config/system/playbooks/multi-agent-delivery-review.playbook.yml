@@ -1,0 +1,239 @@
+version: cybervinci.catalog/v1
+playbooks:
+  - version: cybervinci.playbook/v1
+    id: multi-agent-delivery-review
+    name: Multi-Agent Delivery Review
+    category: Agents
+    source: system
+    enabled: true
+    description: Planner/executor/critic/verifier/repairer workflow for tasks that need multi-agent decomposition, review, verification, and repair planning.
+    entry: plan-work
+    tags: [Agents, Multi-Agent, Planning, Review, Verification]
+    states:
+      - id: plan-work
+        type: ai
+        agent: planner
+        outputMode: json
+        outputSchema:
+          type: object
+          required: [objective, executorBrief, criticBrief, verifierBrief, repairCriteria]
+          properties:
+            objective:
+              type: string
+            executorBrief:
+              type: string
+            criticBrief:
+              type: string
+            verifierBrief:
+              type: string
+            repairCriteria:
+              type: array
+              items:
+                type: string
+        prompt: |
+          You are the planner in a CyberVinci multi-agent delivery workflow.
+
+          Break the user's request into a compact execution brief, a critic brief, a verifier brief, and objective repair criteria.
+
+          User request:
+          ${input.prompt}
+        saveAs: plan
+        transitions:
+          - to: run-agent-branches
+      - id: run-agent-branches
+        type: parallel
+        branches: [execute-work, critique-work, verify-work]
+        saveAs: agentBranches
+        transitions:
+          - to: route-review
+      - id: execute-work
+        type: ai
+        agent: executor
+        outputMode: json
+        outputSchema:
+          type: object
+          required: [summary, deliverables, validation, needsRepair]
+          properties:
+            summary:
+              type: string
+            deliverables:
+              type: array
+              items:
+                type: string
+            validation:
+              type: array
+              items:
+                type: string
+            needsRepair:
+              type: boolean
+        prompt: |
+          You are the executor in a CyberVinci multi-agent delivery workflow.
+
+          Execute the plan conceptually and report the concrete deliverables and validation gates. This AI state is preview-only, so do not claim file writes or command execution.
+
+          Objective:
+          ${state.plan.objective}
+
+          Executor brief:
+          ${state.plan.executorBrief}
+        saveAs: executorResult
+        transitions:
+          - to: execute-end
+      - id: execute-end
+        type: end
+      - id: critique-work
+        type: ai
+        agent: critic
+        outputMode: json
+        outputSchema:
+          type: object
+          required: [approved, findings, severity]
+          properties:
+            approved:
+              type: boolean
+            findings:
+              type: array
+              items:
+                type: string
+            severity:
+              type: string
+        prompt: |
+          You are the critic in a CyberVinci multi-agent delivery workflow.
+
+          Review the plan and expected execution for defects, missing tests, risky assumptions, and incomplete acceptance criteria.
+
+          Objective:
+          ${state.plan.objective}
+
+          Critic brief:
+          ${state.plan.criticBrief}
+        saveAs: criticReview
+        transitions:
+          - to: critique-end
+      - id: critique-end
+        type: end
+      - id: verify-work
+        type: ai
+        agent: verifier
+        outputMode: json
+        outputSchema:
+          type: object
+          required: [verified, evidence, missingEvidence]
+          properties:
+            verified:
+              type: boolean
+            evidence:
+              type: array
+              items:
+                type: string
+            missingEvidence:
+              type: array
+              items:
+                type: string
+        prompt: |
+          You are the verifier in a CyberVinci multi-agent delivery workflow.
+
+          Decide whether the available plan and expected execution evidence is enough to treat the task as delivered. Name missing evidence explicitly.
+
+          Objective:
+          ${state.plan.objective}
+
+          Verifier brief:
+          ${state.plan.verifierBrief}
+        saveAs: verification
+        transitions:
+          - to: verify-end
+      - id: verify-end
+        type: end
+      - id: route-review
+        type: condition
+        cases:
+          - if:
+              equals: ['${state.agentBranches.0.state.executorResult.needsRepair}', true]
+            next: repair-work
+          - if:
+              equals: ['${state.agentBranches.1.state.criticReview.approved}', false]
+            next: repair-work
+          - if:
+              equals: ['${state.agentBranches.2.state.verification.verified}', false]
+            next: repair-work
+        default: synthesize-final
+      - id: repair-work
+        type: ai
+        agent: repairer
+        outputMode: json
+        outputSchema:
+          type: object
+          required: [summary, repairs, nextValidation, residualRisks]
+          properties:
+            summary:
+              type: string
+            repairs:
+              type: array
+              items:
+                type: string
+            nextValidation:
+              type: array
+              items:
+                type: string
+            residualRisks:
+              type: array
+              items:
+                type: string
+        prompt: |
+          You are the repairer in a CyberVinci multi-agent delivery workflow.
+
+          Produce a concrete repair plan from the executor, critic, and verifier outputs.
+
+          Objective:
+          ${state.plan.objective}
+
+          Repair criteria:
+          ${state.plan.repairCriteria}
+
+          Executor:
+          ${state.agentBranches.0.state.executorResult.summary}
+
+          Critic approved:
+          ${state.agentBranches.1.state.criticReview.approved}
+
+          Verifier verified:
+          ${state.agentBranches.2.state.verification.verified}
+        saveAs: repairPlan
+        transitions:
+          - to: repair-response
+      - id: repair-response
+        type: response
+        text: |
+          Multi-agent delivery review found repair work.
+
+          Objective: ${state.plan.objective}
+          Repair summary: ${state.repairPlan.summary}
+          Repairs: ${state.repairPlan.repairs}
+          Next validation: ${state.repairPlan.nextValidation}
+          Residual risks: ${state.repairPlan.residualRisks}
+      - id: synthesize-final
+        type: ai
+        agent: verifier
+        prompt: |
+          You are the final verifier in a CyberVinci multi-agent delivery workflow.
+
+          Write a concise final delivery summary using the planner, executor, critic, and verifier outputs. Mention the validation evidence and any residual risk.
+
+          Objective:
+          ${state.plan.objective}
+
+          Executor summary:
+          ${state.agentBranches.0.state.executorResult.summary}
+
+          Critic findings:
+          ${state.agentBranches.1.state.criticReview.findings}
+
+          Verification evidence:
+          ${state.agentBranches.2.state.verification.evidence}
+        saveAs: finalAnswer
+        transitions:
+          - to: final-response
+      - id: final-response
+        type: response
+        text: '${state.finalAnswer}'

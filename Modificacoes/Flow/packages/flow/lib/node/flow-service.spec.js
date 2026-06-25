@@ -88,6 +88,86 @@ var TestFlowService = /** @class */ (function (_super) {
     };
     return TestFlowService;
 }(flow_service_1.FlowServiceImpl));
+var StartableTestFlowService = /** @class */ (function (_super) {
+    __extends(StartableTestFlowService, _super);
+    function StartableTestFlowService(workflow, capabilities, memoryError) {
+        if (capabilities === void 0) { capabilities = common_1.FLOW_CAPABILITIES; }
+        if (memoryError === void 0) { memoryError = new Error('Memory provider is not available and local fallback is not explicitly enabled.'); }
+        var _this = _super.call(this) || this;
+        _this.workflow = workflow;
+        _this.capabilities = capabilities;
+        _this.memoryError = memoryError;
+        _this.savedRuns = [];
+        Object.defineProperty(_this, 'memory', {
+            value: {
+                buildContextPack: function () { return __awaiter(_this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        throw this.memoryError;
+                    });
+                }); },
+                collectMemoryCandidates: function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                    return [2 /*return*/, []];
+                }); }); }
+            }
+        });
+        Object.defineProperty(_this, 'kernelBridge', {
+            value: {
+                startRun: function (workflow, prompt) { return __awaiter(_this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        return [2 /*return*/, ({
+                                id: 'run-with-human-gate',
+                                workflowId: workflow.id,
+                                prompt: prompt,
+                                status: 'waiting_gate',
+                                createdAt: '2026-06-18T10:00:00.000Z',
+                                updatedAt: '2026-06-18T10:00:00.000Z',
+                                currentStateIds: ['approval_gate'],
+                                stateStatuses: { input: 'done', approval_gate: 'waiting' },
+                                workloads: [],
+                                events: [],
+                                artifacts: [],
+                                effects: [],
+                                signals: [],
+                                gates: [{ id: 'approval', title: 'Approve', stateId: 'approval_gate', status: 'pending' }],
+                                tick: 0
+                            })];
+                    });
+                }); }
+            }
+        });
+        Object.defineProperty(_this, 'store', {
+            value: {
+                saveRun: function (_workspaceRootUri, run) { return __awaiter(_this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        this.savedRuns.push(run);
+                        return [2 /*return*/];
+                    });
+                }); },
+                getRun: function () { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                    return [2 /*return*/, this.savedRuns[this.savedRuns.length - 1]];
+                }); }); }
+            }
+        });
+        Object.defineProperty(_this, 'workloadStore', {
+            value: {
+                materializeRun: function (_workspaceRootUri, _workflow, run) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                    return [2 /*return*/, run];
+                }); }); }
+            }
+        });
+        return _this;
+    }
+    StartableTestFlowService.prototype.getWorkflow = function () {
+        return Promise.resolve(this.workflow);
+    };
+    StartableTestFlowService.prototype.getRuntimeCapabilities = function () {
+        return Promise.resolve(this.capabilities);
+    };
+    StartableTestFlowService.prototype.ensureRunStream = function () {
+        // Unit tests assert the startRun contract without opening a live kernel stream.
+    };
+    return StartableTestFlowService;
+}(flow_service_1.FlowServiceImpl));
 var RuntimeCapabilitiesFlowService = /** @class */ (function (_super) {
     __extends(RuntimeCapabilitiesFlowService, _super);
     function RuntimeCapabilitiesFlowService() {
@@ -371,6 +451,87 @@ describe('FlowServiceImpl capability gates', function () {
             }
         });
     }); });
+    it('starts non-Memory workflows with a minimal context pack when Memory is unavailable', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var service, run;
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    service = new StartableTestFlowService({
+                        version: 'flow.workflow/v1',
+                        id: 'gate_without_memory',
+                        name: 'Gate Without Memory',
+                        requires: {
+                            capabilities: ['human.approval']
+                        },
+                        states: {
+                            input: {
+                                type: 'input',
+                                outputs: ['input/request.md'],
+                                outcomes: { success: 'approval_gate' }
+                            },
+                            approval_gate: {
+                                type: 'gate',
+                                gates: [{ id: 'approval', title: 'Approve' }]
+                            }
+                        },
+                        transitions: []
+                    });
+                    return [4 /*yield*/, service.startRun({
+                            workspaceRootUri: workspaceRootUri,
+                            workflowId: 'gate_without_memory',
+                            prompt: 'wait for approval'
+                        })];
+                case 1:
+                    run = _c.sent();
+                    (0, chai_1.expect)(run.status).to.equal('waiting_gate');
+                    (0, chai_1.expect)((_a = run.contextPack) === null || _a === void 0 ? void 0 : _a.missingService).to.contain('Memory provider');
+                    (0, chai_1.expect)((_b = run.contextPack) === null || _b === void 0 ? void 0 : _b.workflow.id).to.equal('gate_without_memory');
+                    (0, chai_1.expect)(run.gates[0]).to.include({ id: 'approval', status: 'pending' });
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('still requires Memory when the workflow declares memory.context', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var service, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    service = new StartableTestFlowService({
+                        version: 'flow.workflow/v1',
+                        id: 'memory_required',
+                        name: 'Memory Required',
+                        requires: {
+                            capabilities: ['memory.context']
+                        },
+                        states: {
+                            input: {
+                                type: 'input',
+                                outputs: ['input/request.md']
+                            }
+                        },
+                        transitions: []
+                    }, __assign(__assign({}, common_1.FLOW_CAPABILITIES), { memoryProvider: 'external' }));
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, service.startRun({
+                            workspaceRootUri: workspaceRootUri,
+                            workflowId: 'memory_required',
+                            prompt: 'requires memory'
+                        })];
+                case 2:
+                    _a.sent();
+                    throw new Error('startRun unexpectedly succeeded.');
+                case 3:
+                    error_2 = _a.sent();
+                    (0, chai_1.expect)(error_2).to.be.instanceOf(Error);
+                    (0, chai_1.expect)(error_2.message).to.contain('Memory provider is not available and local fallback is not explicitly enabled');
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); });
     it('lists pipeline presets and materializes built-in preset agents when creating workflows', function () { return __awaiter(void 0, void 0, void 0, function () {
         var store, agentMarkdownStore, service, presets, workflow, coordinatorAgent, coordinatorState;
         var _a;
@@ -411,9 +572,9 @@ describe('FlowServiceImpl capability gates', function () {
     }); });
     it('materializes and runs AI-authored dynamic workflows without manual JSON editing', function () { return __awaiter(void 0, void 0, void 0, function () {
         var store, agentMarkdownStore, service, run, workflow, agent;
-        var _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
                     store = new flow_store_1.FlowStore();
                     agentMarkdownStore = new agent_markdown_store_1.AgentMarkdownStore();
@@ -453,18 +614,55 @@ describe('FlowServiceImpl capability gates', function () {
                             }
                         })];
                 case 1:
-                    run = _b.sent();
+                    run = _c.sent();
                     return [4 /*yield*/, store.getWorkflow(workspaceRootUri, run.workflowId)];
                 case 2:
-                    workflow = _b.sent();
+                    workflow = _c.sent();
                     return [4 /*yield*/, agentMarkdownStore.readAgent(workspaceRootUri, 'ai/reviewer.md')];
                 case 3:
-                    agent = _b.sent();
+                    agent = _c.sent();
                     (0, chai_1.expect)(run.workflowId).to.equal('ai_generated_report');
                     (0, chai_1.expect)(run.prompt).to.equal('Create a focused reporting workflow.');
+                    (0, chai_1.expect)(run.events.find(function (event) { return event.type === 'dynamic_workflow.selected'; })).to.deep.include({
+                        workflowId: 'ai_generated_report',
+                        type: 'dynamic_workflow.selected',
+                        message: 'AI authoring create_workflow generated workflow "ai_generated_report": No saved workflow or built-in pattern is specific enough.'
+                    });
+                    (0, chai_1.expect)((_a = run.events.find(function (event) { return event.type === 'dynamic_workflow.selected'; })) === null || _a === void 0 ? void 0 : _a.payload).to.deep.include({
+                        kind: 'generated_workflow',
+                        authoringAction: 'create_workflow',
+                        workflowId: 'ai_generated_report',
+                        reason: 'No saved workflow or built-in pattern is specific enough.'
+                    });
                     (0, chai_1.expect)(workflow === null || workflow === void 0 ? void 0 : workflow.name).to.equal('AI Generated Report');
-                    (0, chai_1.expect)((_a = workflow === null || workflow === void 0 ? void 0 : workflow.file) === null || _a === void 0 ? void 0 : _a.format).to.equal('json');
+                    (0, chai_1.expect)((_b = workflow === null || workflow === void 0 ? void 0 : workflow.file) === null || _b === void 0 ? void 0 : _b.format).to.equal('json');
                     (0, chai_1.expect)(agent === null || agent === void 0 ? void 0 : agent.content).to.contain('Act as the verifier stage');
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    it('records the selected built-in pattern when dynamic workflow planning instantiates one', function () { return __awaiter(void 0, void 0, void 0, function () {
+        var store, agentMarkdownStore, service, run, decision;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    store = new flow_store_1.FlowStore();
+                    agentMarkdownStore = new agent_markdown_store_1.AgentMarkdownStore();
+                    service = new AiAuthoringDraftFlowService(store, agentMarkdownStore);
+                    return [4 /*yield*/, service.runDynamicWorkflow({
+                            workspaceRootUri: workspaceRootUri,
+                            prompt: 'Compare three implementation options and choose the winner.'
+                        })];
+                case 1:
+                    run = _a.sent();
+                    decision = run.events.find(function (event) { return event.type === 'dynamic_workflow.selected'; });
+                    (0, chai_1.expect)(run.workflowId).to.equal('simple_tournament');
+                    (0, chai_1.expect)(decision === null || decision === void 0 ? void 0 : decision.message).to.contain('selected pattern "simple_tournament"');
+                    (0, chai_1.expect)(decision === null || decision === void 0 ? void 0 : decision.payload).to.deep.include({
+                        kind: 'pattern',
+                        patternId: 'simple_tournament',
+                        workflowId: 'simple_tournament'
+                    });
                     return [2 /*return*/];
             }
         });

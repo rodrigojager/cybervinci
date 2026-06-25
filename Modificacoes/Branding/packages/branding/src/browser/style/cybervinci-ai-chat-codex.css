@@ -170,7 +170,7 @@
   border: 1px solid color-mix(in srgb, var(--theia-foreground) 11%, transparent);
   background-color: color-mix(in srgb, var(--theia-input-background, var(--theia-editor-background)) 90%, #000 10%);
   box-shadow: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Override base index.css (flex-end + column-reverse) */
@@ -255,12 +255,14 @@
   padding-left: 2px !important;
 }
 
-/* Bottom toolbar — grid prevents send/reasoning overlap */
+/* Bottom toolbar — wraps instead of hiding controls on narrow widths. */
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   column-gap: 8px;
+  row-gap: 4px;
   width: 100%;
   height: auto;
   min-height: 34px;
@@ -271,18 +273,8 @@
 }
 
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left {
-  order: unset;
-  grid-column: 1;
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  display: contents;
   scrollbar-width: none;
-  flex-wrap: nowrap;
 }
 
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left::-webkit-scrollbar {
@@ -290,15 +282,22 @@
 }
 
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right {
-  order: unset;
-  grid-column: 2;
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 0;
-  flex-shrink: 0;
-  justify-self: end;
+  display: contents;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > *,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > * {
+  order: 1;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > * {
+  order: 0;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option[aria-label^="Send"],
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option[aria-label^="Cancel"] {
+  order: 2;
+  margin-left: auto;
 }
 
 /* Reasoning pill lives on the right (before send), like Codex model selector */
@@ -307,28 +306,25 @@
   flex-shrink: 0;
 }
 
-/* Circular + (attach) */
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > .option:first-child {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  flex-shrink: 0;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--theia-foreground) 16%, transparent);
-  background: transparent;
   justify-content: center;
 }
 
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > .option:first-child .codicon {
   font-size: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--theia-icon-size);
+  height: var(--theia-icon-size);
 }
 
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-left > .option:first-child .codicon::after {
   content: "+";
-  font-size: 18px;
+  display: block;
+  font-size: 16px;
   font-weight: 300;
-  line-height: 1;
+  line-height: var(--theia-icon-size);
   font-family: var(--theia-ui-font-family);
   color: var(--theia-foreground);
 }
@@ -393,7 +389,7 @@
   background: color-mix(in srgb, var(--theia-foreground) 82%, #fff 18%);
   color: var(--theia-editor-background);
   justify-content: center;
-  margin-left: 0;
+  margin-left: auto;
 }
 
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child:hover:not(.disabled) {
@@ -405,9 +401,23 @@
   background: color-mix(in srgb, var(--theia-foreground) 30%, transparent);
 }
 
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child .codicon-send::before,
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child .codicon-stop-circle::before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+}
+
 .chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child .codicon-send::before {
-  content: "\ea76";
-  color: inherit;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.33467 16.6663V4.93978L4.6374 9.63704L4.1667 9.16634L3.69599 8.69661L9.52998 2.86263L9.63447 2.77767C9.8925 2.60753 10.2433 2.63564 10.4704 2.86263L16.3034 8.69661L16.3884 8.80111C16.5588 9.05922 16.5306 9.40982 16.3034 9.63704C16.0762 9.86414 15.7255 9.89242 15.4675 9.722L15.363 9.63704L10.6647 4.9388V16.6663C10.6647 17.0336 10.367 17.3314 9.99971 17.3314C9.63259 17.3312 9.33467 17.0335 9.33467 16.6663ZM4.6374 9.63704C4.3777 9.89674 3.95569 9.89674 3.69599 9.63704C3.43657 9.37744 3.43668 8.95628 3.69599 8.69661L4.6374 9.63704Z' fill='black'/%3E%3C/svg%3E") center / 20px 20px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.33467 16.6663V4.93978L4.6374 9.63704L4.1667 9.16634L3.69599 8.69661L9.52998 2.86263L9.63447 2.77767C9.8925 2.60753 10.2433 2.63564 10.4704 2.86263L16.3034 8.69661L16.3884 8.80111C16.5588 9.05922 16.5306 9.40982 16.3034 9.63704C16.0762 9.86414 15.7255 9.89242 15.4675 9.722L15.363 9.63704L10.6647 4.9388V16.6663C10.6647 17.0336 10.367 17.3314 9.99971 17.3314C9.63259 17.3312 9.33467 17.0335 9.33467 16.6663ZM4.6374 9.63704C4.3777 9.89674 3.95569 9.89674 3.69599 9.63704C3.43657 9.37744 3.43668 8.95628 3.69599 8.69661L4.6374 9.63704Z' fill='black'/%3E%3C/svg%3E") center / 20px 20px no-repeat;
+}
+
+.chat-view-widget .cybervinci-codex-input-card .theia-ChatInputOptions .theia-ChatInputOptions-right > .option:last-child .codicon-stop-circle::before {
+  -webkit-mask: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='black' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.5 5.75C4.5 5.05964 5.05964 4.5 5.75 4.5H14.25C14.9404 4.5 15.5 5.05964 15.5 5.75V14.25C15.5 14.9404 14.9404 15.5 14.25 15.5H5.75C5.05964 15.5 4.5 14.9404 4.5 14.25V5.75Z'/%3E%3C/svg%3E") center / 20px 20px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='black' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.5 5.75C4.5 5.05964 5.05964 4.5 5.75 4.5H14.25C14.9404 4.5 15.5 5.05964 15.5 5.75V14.25C15.5 14.9404 14.9404 15.5 14.25 15.5H5.75C5.05964 15.5 4.5 14.9404 4.5 14.25V5.75Z'/%3E%3C/svg%3E") center / 20px 20px no-repeat;
 }
 
 /* Token usage badge — keep compact */

@@ -20,6 +20,8 @@
     --cv-razor-accent-hover: var(--theia-button-hoverBackground, var(--cv-razor-accent));
     --cv-razor-accent-foreground: var(--theia-button-foreground, #ffffff);
     --cv-razor-accent-secondary: var(--theia-textLink-foreground, var(--theia-focusBorder, var(--cv-razor-accent)));
+    --cybervinci-ai-action-gradient: linear-gradient(135deg, var(--cv-razor-accent), var(--cv-razor-accent-secondary));
+    --cv-ai-action-gradient: var(--cybervinci-ai-action-gradient);
     --cv-razor-active-background: var(--theia-list-activeSelectionBackground, var(--cv-razor-accent));
     --cv-razor-active-foreground: var(--theia-list-activeSelectionForeground, var(--cv-razor-accent-foreground));
     --cv-razor-canvas: color-mix(in srgb, var(--cv-razor-bg) 86%, var(--cv-razor-accent) 14%);
@@ -93,10 +95,16 @@
     filter: brightness(1.08);
 }
 
-.cv-ai-toolbar-button.active,
-.cv-ai-toolbar-button:not(:disabled):hover {
-    background: linear-gradient(135deg, var(--cv-razor-accent), var(--cv-razor-accent-secondary));
-    color: var(--cv-razor-accent-foreground);
+.cv-razor-toolbar button.cv-ai-toolbar-button,
+.cv-razor-toolbar button.cv-ai-toolbar-button.active,
+.cv-razor-toolbar button.cv-ai-toolbar-button:not(:disabled):hover {
+    color: var(--cv-razor-accent-foreground) !important;
+    background: var(--cv-ai-action-gradient) !important;
+    border-color: transparent !important;
+}
+
+.cv-razor-toolbar button.cv-ai-toolbar-button .cv-ai-sparkles-icon {
+    color: inherit;
 }
 
 .cv-ai-sparkles-icon {
@@ -115,14 +123,11 @@
     z-index: 25;
     display: grid;
     gap: 12px;
-    width: min(430px, calc(100% - 40px));
+    width: min(720px, calc(100% - 40px));
     padding: 14px;
     color: var(--theia-editor-foreground, var(--cv-razor-text));
-    background:
-        linear-gradient(145deg, color-mix(in srgb, var(--cv-razor-accent-secondary) 14%, transparent), transparent 44%),
-        linear-gradient(315deg, color-mix(in srgb, var(--cv-razor-accent) 18%, transparent), transparent 55%),
-        var(--theia-editorWidget-background);
-    border: 1px solid color-mix(in srgb, var(--cv-razor-accent) 48%, var(--cv-razor-border));
+    background: var(--theia-editorWidget-background, var(--cv-razor-panel));
+    border: 1px solid var(--cv-razor-border);
     border-radius: 8px;
     box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
 }
@@ -231,6 +236,73 @@
     border-color: color-mix(in srgb, var(--theia-errorForeground) 50%, var(--theia-panel-border));
 }
 
+.cv-ai-panel .cv-ai-runtime-execution-picker {
+    padding: 8px;
+    background: color-mix(in srgb, var(--theia-editor-background) 70%, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+}
+
+.cv-ai-context {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px;
+    color: var(--theia-descriptionForeground);
+    background: color-mix(in srgb, var(--theia-editor-background) 70%, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.cv-ai-context > span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cv-ai-context.empty strong {
+    color: var(--theia-descriptionForeground);
+    font-weight: 500;
+}
+
+.cv-ai-context-chip,
+.cv-ai-context-restore {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: var(--theia-button-secondaryBackground, var(--theia-input-background));
+    border: 1px solid var(--theia-button-border, var(--theia-panel-border));
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.cv-ai-context-chip strong {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-ai-context-chip .fa-times {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-ai-context-restore {
+    color: var(--theia-descriptionForeground);
+    font-weight: 500;
+}
+
 .cv-ai-provider-status button,
 .cv-ai-icon-button {
     display: inline-flex;
@@ -298,7 +370,7 @@
 
 .cv-ai-primary {
     color: var(--cv-razor-accent-foreground);
-    background: linear-gradient(135deg, var(--cv-razor-accent), var(--cv-razor-accent-secondary));
+    background: var(--cv-ai-action-gradient);
     border: 1px solid transparent;
 }
 

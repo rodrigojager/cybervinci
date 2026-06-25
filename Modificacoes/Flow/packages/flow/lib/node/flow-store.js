@@ -842,6 +842,58 @@ var FlowStore = function () {
                 });
             });
         };
+        FlowStore_1.prototype.listWorkspaceModelProfiles = function (workspaceRootUri) {
+            return __awaiter(this, void 0, void 0, function () {
+                var dir, entries, profiles, _i, entries_4, entry, _a, _b, _c;
+                return __generator(this, function (_d) {
+                    switch (_d.label) {
+                        case 0: return [4 /*yield*/, this.ensureDir(workspaceRootUri, 'model-profiles')];
+                        case 1:
+                            dir = _d.sent();
+                            return [4 /*yield*/, fs.readdir(dir, { withFileTypes: true }).catch(function () { return []; })];
+                        case 2:
+                            entries = _d.sent();
+                            profiles = [];
+                            _i = 0, entries_4 = entries;
+                            _d.label = 3;
+                        case 3:
+                            if (!(_i < entries_4.length)) return [3 /*break*/, 6];
+                            entry = entries_4[_i];
+                            if (!(entry.isFile() && entry.name.endsWith('.json'))) return [3 /*break*/, 5];
+                            _b = (_a = profiles).push;
+                            _c = common_1.normalizeFlowModelProfile;
+                            return [4 /*yield*/, this.readJson(path.join(dir, entry.name))];
+                        case 4:
+                            _b.apply(_a, [_c.apply(void 0, [_d.sent()])]);
+                            _d.label = 5;
+                        case 5:
+                            _i++;
+                            return [3 /*break*/, 3];
+                        case 6: return [2 /*return*/, profiles.sort(function (left, right) { return left.name.localeCompare(right.name); })];
+                    }
+                });
+            });
+        };
+        FlowStore_1.prototype.saveModelProfile = function (workspaceRootUri, profile) {
+            return __awaiter(this, void 0, void 0, function () {
+                var normalized, file, _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            normalized = (0, common_1.normalizeFlowModelProfile)(profile);
+                            return [4 /*yield*/, this.modelProfileFile(workspaceRootUri, normalized.id)];
+                        case 1:
+                            file = _b.sent();
+                            return [4 /*yield*/, this.writeJson(file, normalized)];
+                        case 2:
+                            _b.sent();
+                            _a = common_1.normalizeFlowModelProfile;
+                            return [4 /*yield*/, this.readJson(file)];
+                        case 3: return [2 /*return*/, _a.apply(void 0, [_b.sent()])];
+                    }
+                });
+            });
+        };
         FlowStore_1.prototype.createWorkflowFromPreset = function (workspaceRootUri_1, preset_1) {
             return __awaiter(this, arguments, void 0, function (workspaceRootUri, preset, options) {
                 var validation, identity, workflow, saved;
@@ -965,7 +1017,7 @@ var FlowStore = function () {
         };
         FlowStore_1.prototype.listRuns = function (workspaceRootUri) {
             return __awaiter(this, void 0, void 0, function () {
-                var dir, entries, runs, _i, entries_4, entry, _a, _b;
+                var dir, entries, runs, _i, entries_5, entry, _a, _b;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
                         case 0: return [4 /*yield*/, this.ensureDir(workspaceRootUri, 'runs')];
@@ -975,11 +1027,11 @@ var FlowStore = function () {
                         case 2:
                             entries = _c.sent();
                             runs = [];
-                            _i = 0, entries_4 = entries;
+                            _i = 0, entries_5 = entries;
                             _c.label = 3;
                         case 3:
-                            if (!(_i < entries_4.length)) return [3 /*break*/, 6];
-                            entry = entries_4[_i];
+                            if (!(_i < entries_5.length)) return [3 /*break*/, 6];
+                            entry = entries_5[_i];
                             if (!(entry.isFile() && entry.name.endsWith('.json'))) return [3 /*break*/, 5];
                             _b = (_a = runs).push;
                             return [4 /*yield*/, this.readRunFile(path.join(dir, entry.name))];
@@ -1027,6 +1079,95 @@ var FlowStore = function () {
                         case 2:
                             _a.sent();
                             return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        FlowStore_1.prototype.cleanupRuns = function (workspaceRootUri_1, runIds_1) {
+            return __awaiter(this, arguments, void 0, function (workspaceRootUri, runIds, options) {
+                var removedRuns, removedPaths, failed, runsDir, _i, runIds_2, runId, safeRunId, runFile, run, _a, error_1, artifactDir, error_2, worktreePath, worktreesRoot, error_3;
+                var _b;
+                if (options === void 0) { options = {}; }
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
+                        case 0:
+                            removedRuns = [];
+                            removedPaths = [];
+                            failed = [];
+                            return [4 /*yield*/, this.ensureDir(workspaceRootUri, 'runs')];
+                        case 1:
+                            runsDir = _c.sent();
+                            _i = 0, runIds_2 = runIds;
+                            _c.label = 2;
+                        case 2:
+                            if (!(_i < runIds_2.length)) return [3 /*break*/, 20];
+                            runId = runIds_2[_i];
+                            safeRunId = sanitizeFileName(runId);
+                            runFile = path.join(runsDir, "".concat(safeRunId, ".json"));
+                            run = void 0;
+                            _c.label = 3;
+                        case 3:
+                            _c.trys.push([3, 5, , 6]);
+                            return [4 /*yield*/, this.readRunFile(runFile)];
+                        case 4:
+                            run = _c.sent();
+                            return [3 /*break*/, 6];
+                        case 5:
+                            _a = _c.sent();
+                            run = undefined;
+                            return [3 /*break*/, 6];
+                        case 6:
+                            _c.trys.push([6, 8, , 9]);
+                            return [4 /*yield*/, fs.rm(runFile, { force: true })];
+                        case 7:
+                            _c.sent();
+                            removedRuns.push(runId);
+                            removedPaths.push(runFile);
+                            return [3 /*break*/, 9];
+                        case 8:
+                            error_1 = _c.sent();
+                            failed.push({ id: runId, path: runFile, message: error_1 instanceof Error ? error_1.message : String(error_1) });
+                            return [3 /*break*/, 9];
+                        case 9:
+                            if (!(options.includeArtifacts !== false)) return [3 /*break*/, 13];
+                            artifactDir = path.join(runsDir, safeRunId);
+                            _c.label = 10;
+                        case 10:
+                            _c.trys.push([10, 12, , 13]);
+                            return [4 /*yield*/, fs.rm(artifactDir, { recursive: true, force: true })];
+                        case 11:
+                            _c.sent();
+                            removedPaths.push(artifactDir);
+                            return [3 /*break*/, 13];
+                        case 12:
+                            error_2 = _c.sent();
+                            failed.push({ id: runId, path: artifactDir, message: error_2 instanceof Error ? error_2.message : String(error_2) });
+                            return [3 /*break*/, 13];
+                        case 13:
+                            if (!(options.includeWorktrees && ((_b = run === null || run === void 0 ? void 0 : run.workspace) === null || _b === void 0 ? void 0 : _b.rootUri))) return [3 /*break*/, 19];
+                            worktreePath = file_uri_1.FileUri.fsPath(run.workspace.rootUri);
+                            worktreesRoot = path.join(storageRoot(workspaceRootUri), 'worktrees');
+                            if (!isSubPath(worktreesRoot, worktreePath)) return [3 /*break*/, 18];
+                            _c.label = 14;
+                        case 14:
+                            _c.trys.push([14, 16, , 17]);
+                            return [4 /*yield*/, fs.rm(worktreePath, { recursive: true, force: true })];
+                        case 15:
+                            _c.sent();
+                            removedPaths.push(worktreePath);
+                            return [3 /*break*/, 17];
+                        case 16:
+                            error_3 = _c.sent();
+                            failed.push({ id: runId, path: worktreePath, message: error_3 instanceof Error ? error_3.message : String(error_3) });
+                            return [3 /*break*/, 17];
+                        case 17: return [3 /*break*/, 19];
+                        case 18:
+                            failed.push({ id: runId, path: worktreePath, message: 'Refusing to remove a workspace that is not inside the Flow worktrees directory.' });
+                            _c.label = 19;
+                        case 19:
+                            _i++;
+                            return [3 /*break*/, 2];
+                        case 20: return [2 /*return*/, { removedRuns: removedRuns, removedPaths: removedPaths, failed: failed }];
                     }
                 });
             });
@@ -1110,6 +1251,19 @@ var FlowStore = function () {
                         case 1:
                             dir = _a.sent();
                             return [2 /*return*/, path.join(dir, "".concat(sanitizeFileName(sanitizeWorkflowId(presetId)), ".json"))];
+                    }
+                });
+            });
+        };
+        FlowStore_1.prototype.modelProfileFile = function (workspaceRootUri, profileId) {
+            return __awaiter(this, void 0, void 0, function () {
+                var dir;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.ensureDir(workspaceRootUri, 'model-profiles')];
+                        case 1:
+                            dir = _a.sent();
+                            return [2 /*return*/, path.join(dir, "".concat(sanitizeFileName(profileId), ".json"))];
                     }
                 });
             });
@@ -1587,6 +1741,12 @@ function fileExists(file) {
         });
     });
 }
+function isSubPath(parentPath, childPath) {
+    var parent = path.resolve(parentPath);
+    var child = path.resolve(childPath);
+    var relative = path.relative(parent, child);
+    return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
 function isWorkflowFile(fileName) {
     return WORKFLOW_EXTENSIONS.includes(path.extname(fileName).toLowerCase());
 }
@@ -1605,7 +1765,7 @@ function workflowFileFormat(file) {
 }
 function copyDirectory(source, target) {
     return __awaiter(this, void 0, void 0, function () {
-        var entries, _i, entries_5, entry, sourcePath, targetPath;
+        var entries, _i, entries_6, entry, sourcePath, targetPath;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, fs.mkdir(target, { recursive: true })];
@@ -1614,11 +1774,11 @@ function copyDirectory(source, target) {
                     return [4 /*yield*/, fs.readdir(source, { withFileTypes: true })];
                 case 2:
                     entries = _a.sent();
-                    _i = 0, entries_5 = entries;
+                    _i = 0, entries_6 = entries;
                     _a.label = 3;
                 case 3:
-                    if (!(_i < entries_5.length)) return [3 /*break*/, 8];
-                    entry = entries_5[_i];
+                    if (!(_i < entries_6.length)) return [3 /*break*/, 8];
+                    entry = entries_6[_i];
                     sourcePath = path.join(source, entry.name);
                     targetPath = path.join(target, entry.name);
                     if (!entry.isDirectory()) return [3 /*break*/, 5];
