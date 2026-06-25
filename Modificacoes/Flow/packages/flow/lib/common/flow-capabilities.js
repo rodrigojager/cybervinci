@@ -22,5 +22,6 @@ exports.FLOW_CAPABILITIES = {
     demoMode: 'off',
     kernelBridge: 'simulated',
     deterministicFallback: true,
+    playbookExecution: 'unavailable',
     deterministicFallbackReason: 'No external Flow Kernel is confirmed; host uses deterministic local simulation and does not satisfy real provider/effect capabilities.'
 };

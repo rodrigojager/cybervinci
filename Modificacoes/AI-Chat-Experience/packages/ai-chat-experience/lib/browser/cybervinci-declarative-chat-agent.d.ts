@@ -1,0 +1,56 @@
+import { AbstractStreamParsingChatAgent, ChatAgent, ChatAgentLocation, ChatMode, MutableChatRequestModel, SystemMessageDescription } from '@theia/ai-chat/lib/common';
+import { AgentSpecificVariables, AIVariableContext, LanguageModelRequirement, PromptVariantSet, ToolInvocationRegistry } from '@theia/ai-core';
+import { CyberVinciDeclarativeChatAgent, CyberVinciDeclarativeChatMode, CyberVinciDeclarativePromptVariant } from '../common';
+import { CyberVinciNativeTheiaAgentAdapter } from './cybervinci-native-agent-adapter';
+import { CyberVinciPlaybookRuntime } from './cybervinci-playbook-runtime';
+export declare class CyberVinciDeclarativePromptChatAgent extends AbstractStreamParsingChatAgent {
+    protected readonly toolInvocationRegistry: ToolInvocationRegistry | undefined;
+    id: string;
+    name: string;
+    description: string;
+    iconClass: string;
+    tags: string[];
+    locations: ChatAgentLocation[];
+    variables: string[];
+    functions: string[];
+    agentSpecificVariables: AgentSpecificVariables[];
+    languageModelRequirements: LanguageModelRequirement[];
+    protected defaultLanguageModelPurpose: string;
+    protected modeDefinitions: CyberVinciDeclarativeChatMode[];
+    protected configuredToolIds: string[];
+    protected defaultPromptVariantId: string | undefined;
+    protected promptVariantIds: string[];
+    configure(definition: CyberVinciDeclarativeChatAgent, agencyProfileContent?: string): void;
+    get modes(): ChatMode[];
+    protected toPromptSet(definition: CyberVinciDeclarativeChatAgent, agencyProfileContent?: string): PromptVariantSet;
+    protected toBasePromptVariant(variant: CyberVinciDeclarativePromptVariant, agencyProfileContent?: string): PromptVariantSet['defaultVariant'];
+    protected decorateTemplate(template: string, agencyProfileContent?: string): string;
+    protected buildAgentProfileInstructionBlock(agencyProfileContent: string): string;
+    protected stripMarkdownFrontmatter(content: string): string;
+    protected readMarkdownFrontmatterString(content: string | undefined, key: string): string | undefined;
+    protected toModes(variants: CyberVinciDeclarativePromptVariant[] | undefined, defaultVariantId: string): CyberVinciDeclarativeChatMode[];
+    protected getSystemMessageDescription(context: AIVariableContext): Promise<SystemMessageDescription | undefined>;
+    protected getEffectiveVariantIdWithMode(modeId?: string): string | undefined;
+}
+export declare class CyberVinciDelegatingChatAgent implements ChatAgent {
+    protected readonly getSourceAgent: (sourceAgentId: string) => ChatAgent | undefined;
+    protected readonly playbookRuntime?: CyberVinciPlaybookRuntime;
+    readonly id: string;
+    readonly name: string;
+    readonly sourceAgentId: string;
+    readonly description: string;
+    readonly iconClass?: string;
+    readonly locations: ChatAgentLocation[];
+    readonly tags?: string[];
+    readonly variables: string[];
+    readonly functions: string[];
+    readonly agentSpecificVariables: AgentSpecificVariables[];
+    readonly prompts: PromptVariantSet[];
+    readonly languageModelRequirements: LanguageModelRequirement[];
+    readonly modes?: ChatMode[];
+    readonly defaultPlaybook: string;
+    readonly playbooks: string[];
+    protected readonly nativeAdapter: CyberVinciNativeTheiaAgentAdapter;
+    constructor(definition: CyberVinciDeclarativeChatAgent, getSourceAgent: (sourceAgentId: string) => ChatAgent | undefined, playbookRuntime?: CyberVinciPlaybookRuntime);
+    invoke(request: MutableChatRequestModel): Promise<void>;
+}

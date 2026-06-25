@@ -29,6 +29,8 @@ const KANBAN_ORDER: Array<{ id: FlowWorkloadStatus; label: string }> = [
 
 export function deriveFlowCanvasModel(workflow: FlowWorkflow, run?: FlowRun): FlowCanvasModel {
     const states = flattenWorkflowStates(workflow);
+    const stateRoutes = deriveStateRoutes(workflow);
+    const transitionRouteKeys = new Set((workflow.transitions || []).map(transition => routeKey(transition.from, transition.to)));
     const incoming = new Map<string, number>();
     const outgoing = new Map<string, string[]>();
 
@@ -37,6 +39,17 @@ export function deriveFlowCanvasModel(workflow: FlowWorkflow, run?: FlowRun): Fl
         const next = outgoing.get(transition.from) || [];
         next.push(transition.to);
         outgoing.set(transition.from, next);
+    }
+    for (const route of stateRoutes) {
+        if (transitionRouteKeys.has(routeKey(route.from, route.to))) {
+            continue;
+        }
+        incoming.set(route.to, (incoming.get(route.to) || 0) + 1);
+        const next = outgoing.get(route.from) || [];
+        if (!next.includes(route.to)) {
+            next.push(route.to);
+        }
+        outgoing.set(route.from, next);
     }
     for (const [stateId, state] of Object.entries(workflow.states || {})) {
         const branchIds = Object.keys(state.branches || {});
@@ -92,10 +105,76 @@ export function deriveFlowCanvasModel(workflow: FlowWorkflow, run?: FlowRun): Fl
             ] : []
         };
     });
+    for (const [index, route] of stateRoutes.entries()) {
+        if (transitionRouteKeys.has(routeKey(route.from, route.to))) {
+            continue;
+        }
+        const from = nodeById.get(route.from);
+        const to = nodeById.get(route.to);
+        edges.push({
+            id: route.id || `${route.from}-${route.to}-${route.event}-${index}`,
+            from: route.from,
+            to: route.to,
+            event: route.event,
+            guardSummary: route.summary,
+            points: from && to ? [
+                { x: from.x + from.width, y: from.y + from.height / 2 },
+                { x: to.x, y: to.y + to.height / 2 }
+            ] : []
+        });
+    }
 
     const width = Math.max(640, ...nodes.map(node => node.x + node.width + 32));
     const height = Math.max(361, ...nodes.map(node => node.y + node.height + 32));
     return { nodes, edges, width, height };
+}
+
+function routeKey(from: string, to: string): string {
+    return `${from}\u0000${to}`;
+}
+
+function deriveStateRoutes(workflow: FlowWorkflow): Array<{ id: string; from: string; to: string; event: string; summary?: string }> {
+    const knownStates = new Set(flattenWorkflowStates(workflow).map(state => state.id));
+    const routes: Array<{ id: string; from: string; to: string; event: string; summary?: string }> = [];
+    const visit = (stateId: string, state: FlowWorkflowState): void => {
+        for (const [outcomeId, route] of Object.entries(state.outcomes || {})) {
+            const target = typeof route === 'string' ? route : route?.to;
+            if (target && knownStates.has(target)) {
+                routes.push({
+                    id: `${stateId}_outcome_${outcomeId}_to_${target}`,
+                    from: stateId,
+                    to: target,
+                    event: `outcome.${outcomeId}`,
+                    summary: typeof route === 'string' ? undefined : route.action || route.label
+                });
+            }
+        }
+        if (state.loop?.body && knownStates.has(state.loop.body)) {
+            routes.push({
+                id: `${stateId}_loop_body_${state.loop.body}`,
+                from: stateId,
+                to: state.loop.body,
+                event: 'loop.body',
+                summary: state.loop.counter
+            });
+        }
+        if (state.loop?.repair && knownStates.has(state.loop.repair)) {
+            routes.push({
+                id: `${stateId}_loop_repair_${state.loop.repair}`,
+                from: stateId,
+                to: state.loop.repair,
+                event: 'loop.repair',
+                summary: state.loop.counter
+            });
+        }
+    };
+    for (const [stateId, state] of Object.entries(workflow.states || {})) {
+        visit(stateId, state);
+        for (const [branchId, branch] of Object.entries(state.branches || {})) {
+            visit(branchId, branch);
+        }
+    }
+    return routes;
 }
 
 export function deriveFlowFlowDraft(workflow: FlowWorkflow, run?: FlowRun): FlowFlowDraft {

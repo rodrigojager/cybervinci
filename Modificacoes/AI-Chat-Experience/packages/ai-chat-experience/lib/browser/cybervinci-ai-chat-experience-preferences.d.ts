@@ -1,0 +1,14 @@
+import { PreferenceContribution, PreferenceSchema } from '@theia/core/lib/common/preferences';
+export declare const CYBERVINCI_AI_CHAT_AGENT_PROFILE_PREF = "cybervinci.aiChat.agentProfile";
+export declare const CYBERVINCI_AI_CHAT_AGENT_PROFILE_FAVORITES_PREF = "cybervinci.aiChat.agentProfile.favorites";
+export declare const CYBERVINCI_AI_CHAT_MODE_PREF = "cybervinci.aiChat.mode";
+export declare const CYBERVINCI_AI_CHAT_PLAYBOOK_PREF = "cybervinci.aiChat.playbook";
+export declare const CYBERVINCI_AI_CHAT_FLOW_MODE_PREF = "cybervinci.aiChat.flow.mode";
+export declare const CYBERVINCI_AI_CHAT_SAVED_WORKFLOW_PREF = "cybervinci.aiChat.flow.workflowId";
+export declare const CYBERVINCI_AI_CHAT_VIRTUAL_REASONING_MODE_PREF = "cybervinci.aiChat.virtualReasoning.mode";
+export declare const CYBERVINCI_AI_CHAT_VISION_JUDGE_ENABLED_PREF = "cybervinci.aiChat.visionJudge.enabled";
+export declare const CYBERVINCI_AI_CHAT_VISION_JUDGE_PROVIDER_PREF = "cybervinci.aiChat.visionJudge.provider";
+export declare const CYBERVINCI_AI_CHAT_VISION_JUDGE_MODEL_PREF = "cybervinci.aiChat.visionJudge.model";
+export declare const cyberVinciAiChatExperiencePreferenceSchema: PreferenceSchema;
+export declare const CyberVinciAiChatExperiencePreferenceContribution: any;
+export declare const cyberVinciAiChatExperiencePreferenceContribution: PreferenceContribution;

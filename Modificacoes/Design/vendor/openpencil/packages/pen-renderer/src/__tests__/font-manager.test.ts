@@ -163,6 +163,62 @@ describe('system font detection via Local Font Access API', () => {
   });
 });
 
+describe('bundled font loading policy', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it('does not request default /fonts assets unless a bundled font path is configured', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 400, statusText: 'Bad Request' }));
+    globalThis.fetch = fetchMock;
+    vi.stubGlobal('window', {});
+
+    const fm = new SkiaFontManager(makeMockCk() as never, {
+      googleFontsCssUrl: 'https://fonts.example.invalid/css2',
+    });
+    await fm.ensureFont('Inter');
+
+    expect(
+      fetchMock.mock.calls.some((call: unknown[]) =>
+        String(call[0]).includes('/fonts/inter-400.woff2'),
+      ),
+    ).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('requests bundled assets when fontBasePath is configured explicitly', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 404, statusText: 'Not Found' }));
+    globalThis.fetch = fetchMock;
+    vi.stubGlobal('window', {});
+
+    const fm = new SkiaFontManager(makeMockCk() as never, {
+      fontBasePath: '/fonts/',
+      googleFontsCssUrl: 'https://fonts.example.invalid/css2',
+    });
+    await fm.ensureFont('Inter');
+
+    expect(
+      fetchMock.mock.calls.some((call: unknown[]) =>
+        String(call[0]).includes('/fonts/inter-400.woff2'),
+      ),
+    ).toBe(true);
+
+    vi.unstubAllGlobals();
+  });
+});
+
 describe('requestLocalFontAccess', () => {
   afterEach(() => {
     vi.restoreAllMocks();

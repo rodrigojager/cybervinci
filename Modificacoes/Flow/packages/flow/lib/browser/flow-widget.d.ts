@@ -1,4 +1,7 @@
 import { OpenerService, ReactWidget } from '@theia/core/lib/browser';
+import { FrontendLanguageModelRegistry } from '@theia/ai-core';
+import { CommandService } from '@theia/core/lib/common/command';
+import { CyberVinciAiExecutionSelection, CyberVinciAiProviderDescriptor, CyberVinciAiRuntimeService } from '@cybervinci/ai-runtime/lib/common';
 import * as React from '@theia/core/shared/react';
 import { WorkspaceService } from '@theia/workspace/lib/browser';
 import { FlowAiAuthoringDraft, FlowAgentMarkdownSummary, FlowMemoryScope, FlowModelProfile, FlowRun, FlowRunExecutionMode, FlowClient, FlowService, FlowSnapshot, FlowStateType, FlowValidationIssue, FlowWorkflow, FlowWorkflowStructuralDiff, FlowDeliverable, FlowPipelinePreset, FlowPatternRoleOverride, FlowWorkflowPattern, FlowWorkflowTemplate, FlowWorkflowTransition } from '../common';
@@ -7,6 +10,9 @@ interface FlowWidgetState {
     templates: FlowWorkflowTemplate[];
     workflowPatterns: FlowWorkflowPattern[];
     modelProfiles: FlowModelProfile[];
+    selectedModelProfileId?: string;
+    modelProfileDraft?: FlowModelProfile;
+    languageModels: FlowLanguageModelOption[];
     pipelinePresets: FlowPipelinePreset[];
     agents: FlowAgentMarkdownSummary[];
     agentSearch: string;
@@ -17,6 +23,8 @@ interface FlowWidgetState {
     selectedPipelinePresetId?: string;
     selectedKind: 'state' | 'transition';
     selectedId?: string;
+    detailsPopoverOpen: boolean;
+    detailsEditMode: boolean;
     workflowUndoStack: FlowWorkflowHistoryEntry[];
     workflowRedoStack: FlowWorkflowHistoryEntry[];
     workflowSourceText?: string;
@@ -28,6 +36,13 @@ interface FlowWidgetState {
     runHistoryVisible: boolean;
     openMenu?: FlowTopMenu;
     prompt: string;
+    aiMode: FlowAiInteractionMode;
+    selectedAiWorkflowId?: string;
+    aiPromptOpen: boolean;
+    aiPrompt: string;
+    aiExecution: CyberVinciAiExecutionSelection;
+    aiQuestion?: string;
+    aiAnswer?: string;
     busy: boolean;
     error?: string;
     executionModeHint?: FlowRunExecutionMode;
@@ -38,7 +53,8 @@ interface FlowWorkflowHistoryEntry {
     selectedKind: 'state' | 'transition';
     selectedId?: string;
 }
-type FlowTopMenu = 'workflow' | 'file' | 'agents' | 'history';
+type FlowTopMenu = 'workflow' | 'prompt' | 'file' | 'agents' | 'models' | 'kanban' | 'history';
+type FlowAiInteractionMode = 'chat' | 'saved-flow' | 'dynamic-flow';
 export interface FlowExternalRunOptions {
     prompt?: string;
     message?: string;
@@ -51,12 +67,20 @@ export interface FlowExternalRunOptions {
     authoringDraft?: FlowAiAuthoringDraft;
     draft?: FlowAiAuthoringDraft;
 }
+interface FlowLanguageModelOption {
+    id: string;
+    label: string;
+    status: 'ready' | 'unavailable';
+}
 export declare class FlowWidget extends ReactWidget {
     static readonly ID = "flow.widget";
     static readonly LABEL = "Flow";
     protected readonly flowService: FlowService;
     protected readonly flowClient: FlowClient;
     protected readonly workspaceService: WorkspaceService;
+    protected readonly languageModelRegistry: FrontendLanguageModelRegistry;
+    protected readonly aiRuntime?: CyberVinciAiRuntimeService;
+    protected readonly commandService: CommandService;
     protected readonly openerService: OpenerService;
     protected state: FlowWidgetState;
     protected activeRunStreamId?: string;
@@ -67,6 +91,13 @@ export declare class FlowWidget extends ReactWidget {
     readonly refresh: () => Promise<void>;
     protected render(): React.ReactNode;
     protected setPrompt(prompt: string): void;
+    protected setAiPrompt(aiPrompt: string): void;
+    protected setAiExecution(aiExecution: CyberVinciAiExecutionSelection): void;
+    protected setAiMode(aiMode: FlowAiInteractionMode): void;
+    protected setSelectedAiWorkflow(selectedAiWorkflowId: string): void;
+    protected readonly toggleAiPromptPanel: () => void;
+    protected renderAiPromptPanel(): React.ReactNode;
+    protected renderAiModeButton(mode: FlowAiInteractionMode, icon: string, label: string): React.ReactNode;
     protected readonly handleTopMenuPointerDown: (event: PointerEvent) => void;
     protected readonly handleTopMenuKeyDown: (event: KeyboardEvent) => void;
     protected readonly toggleTopMenu: (openMenu: FlowTopMenu) => void;
@@ -75,6 +106,10 @@ export declare class FlowWidget extends ReactWidget {
     protected setSelectedTemplate(selectedTemplateId: string): void;
     protected setSelectedPipelinePreset(selectedPipelinePresetId: string): void;
     protected readonly setSelectedPattern: (selectedPatternId: string) => void;
+    protected readonly setSelectedModelProfile: (selectedModelProfileId: string) => void;
+    protected readonly updateModelProfileDraft: (patch: Partial<FlowModelProfile>) => void;
+    protected readonly updateModelProfileExecutionDraft: (selection: CyberVinciAiExecutionSelection) => void;
+    protected readonly saveModelProfileDraft: () => Promise<void>;
     protected readonly updatePatternParameter: (parameterId: string, value: string | number | boolean) => void;
     protected readonly updatePatternRoleOverride: (roleId: string, override: FlowPatternRoleOverride | undefined) => void;
     protected readonly setAgentSearch: (agentSearch: string) => void;
@@ -83,6 +118,13 @@ export declare class FlowWidget extends ReactWidget {
     protected readonly duplicateAgentMarkdown: (sourceRelativePath: string) => Promise<void>;
     protected readonly renameAgentMarkdown: (sourceRelativePath: string) => Promise<void>;
     protected select(selectedKind: 'state' | 'transition', selectedId: string): void;
+    protected readonly openStateDetails: (selectedId: string) => void;
+    protected readonly openTransitionDetails: (selectedId: string) => void;
+    protected readonly startDetailsEdit: () => void;
+    protected readonly exitDetailsEdit: () => void;
+    protected readonly closeDetailsPopover: () => void;
+    protected readonly saveWorkflowFileAndExitEdit: () => Promise<void>;
+    protected readonly configureAiProvider: (provider: CyberVinciAiProviderDescriptor) => Promise<void>;
     protected readonly updateWorkflowSourceDraft: (workflowSourceText: string) => Promise<void>;
     protected readonly applyWorkflowSourceDraft: () => Promise<void>;
     protected readonly selectValidationIssue: (issue: FlowValidationIssue) => void;
@@ -104,6 +146,7 @@ export declare class FlowWidget extends ReactWidget {
     runWorkflowFromExternalPrompt(options?: FlowExternalRunOptions): Promise<void>;
     runDynamicWorkflowFromExternalPrompt(options?: FlowExternalRunOptions): Promise<void>;
     protected applyExternalRunState(workspaceRootUri: string | undefined, workflowId: string, activeRun: FlowRun, prompt: string): Promise<void>;
+    protected requireRunPrompt(value: string | undefined): string;
     protected readonly startRun: () => Promise<void>;
     protected readonly chooseWorkflow: (workflowId: string) => Promise<void>;
     protected readonly createWorkflowFromTemplate: () => Promise<void>;
@@ -111,9 +154,11 @@ export declare class FlowWidget extends ReactWidget {
     protected readonly createWorkflowFromPreset: () => Promise<void>;
     protected readonly createWorkflowFromPattern: () => Promise<void>;
     protected readonly runWorkflowPattern: () => Promise<void>;
+    protected readonly runFlowAiPrompt: () => Promise<void>;
     protected readonly runDynamicWorkflowFromPrompt: () => Promise<void>;
     protected readonly saveCurrentWorkflowAsPreset: () => Promise<void>;
     protected readonly openAgentMarkdown: (agentIdOrPath: string) => Promise<void>;
+    protected readonly selectStateAgent: (stateId: string, selection: string) => Promise<void>;
     protected readonly openArtifact: (artifactUri: string) => Promise<void>;
     protected readonly selectArtifact: (artifactId: string) => void;
     protected readonly toggleRunHistory: () => Promise<void>;
@@ -134,8 +179,9 @@ export declare class FlowWidget extends ReactWidget {
     protected readonly resumeRun: () => Promise<void>;
     protected readonly cancelRun: () => Promise<void>;
     protected readonly finalizeRun: () => Promise<void>;
+    protected readonly cleanupActiveRun: () => Promise<void>;
     protected runLifecycleAction(action: 'pauseRun' | 'resumeRun' | 'cancelRun' | 'finalizeRun', reason: string): Promise<void>;
-    protected readonly approveGate: (gateId: string, decision: "approved" | "rejected" | "revision_requested") => Promise<void>;
+    protected readonly approveGate: (gateId: string, decision: "approved" | "rejected" | "revision_requested", decisionId?: string, targetStateId?: string, note?: string) => Promise<void>;
     protected readonly decideMemoryCandidate: (candidateId: string, decision: "approved" | "rejected", content: string, scope?: FlowMemoryScope, target?: string) => Promise<void>;
     protected readonly decideEffect: (effectId: string, decision: "approved" | "rejected" | "applied", note?: string) => Promise<void>;
     protected readonly approveSecondRunSuggestion: (suggestionId: string) => Promise<void>;
@@ -145,6 +191,7 @@ export declare class FlowWidget extends ReactWidget {
         executionModeHintMessage?: string;
     } | undefined): Promise<void>;
     protected workspaceRootUri(): Promise<string | undefined>;
+    protected workspaceRootPath(): Promise<string | undefined>;
     protected subscribeActiveRunStream(runId: string | undefined): Promise<void>;
     protected unsubscribeActiveRunStream(): Promise<void>;
 }

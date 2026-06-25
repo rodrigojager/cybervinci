@@ -129,6 +129,7 @@ var path = require("path");
 var file_uri_1 = require("@theia/core/lib/common/file-uri");
 var common_1 = require("@theia/core/lib/common");
 var ai_core_1 = require("@theia/ai-core");
+var virtual_reasoning_1 = require("@cybervinci/ai-providers/lib/common/virtual-reasoning");
 var Ajv = require("@theia/core/shared/ajv");
 var inversify_1 = require("@theia/core/shared/inversify");
 var common_2 = require("../common");
@@ -158,7 +159,7 @@ var ProviderBackedFlowWorkloadExecutor = function () {
     var _classExtraInitializers = [];
     var _classThis;
     var ProviderBackedFlowWorkloadExecutor = _classThis = /** @class */ (function () {
-        function ProviderBackedFlowWorkloadExecutor_1(agentMarkdownStore, commandEffectHostAdapter, imageEffectHostAdapter, fileEffectHostAdapter, languageModelRegistry, languageModelService, codexProviderService, memoryAdapter, agentProviderResolver) {
+        function ProviderBackedFlowWorkloadExecutor_1(agentMarkdownStore, commandEffectHostAdapter, imageEffectHostAdapter, fileEffectHostAdapter, languageModelRegistry, languageModelService, codexProviderService, memoryAdapter, agentProviderResolver, playbookRunner, flowStore) {
             if (agentMarkdownStore === void 0) { agentMarkdownStore = new agent_markdown_store_1.AgentMarkdownStore(); }
             if (commandEffectHostAdapter === void 0) { commandEffectHostAdapter = new command_effect_host_adapter_1.LocalCommandEffectHostAdapter(); }
             if (imageEffectHostAdapter === void 0) { imageEffectHostAdapter = new image_effect_host_adapter_1.LocalImageEffectHostAdapter(); }
@@ -172,6 +173,8 @@ var ProviderBackedFlowWorkloadExecutor = function () {
             this.codexProviderService = codexProviderService;
             this.memoryAdapter = memoryAdapter;
             this.agentProviderResolver = agentProviderResolver;
+            this.playbookRunner = playbookRunner;
+            this.flowStore = flowStore;
         }
         ProviderBackedFlowWorkloadExecutor_1.prototype.execute = function (context) {
             return __awaiter(this, void 0, void 0, function () {
@@ -179,6 +182,8 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                     switch (context.state.type) {
                         case 'agent':
                             return [2 /*return*/, this.executeAgentWorkload(context)];
+                        case 'playbook':
+                            return [2 /*return*/, this.executePlaybookWorkload(context)];
                         case 'dynamic_parallel':
                             return [2 /*return*/, this.executeDynamicParallelWorkload(context)];
                         case 'tournament':
@@ -360,42 +365,213 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                 });
             });
         };
-        ProviderBackedFlowWorkloadExecutor_1.prototype.executeAgentWorkload = function (context) {
+        ProviderBackedFlowWorkloadExecutor_1.prototype.executePlaybookWorkload = function (context) {
             return __awaiter(this, void 0, void 0, function () {
-                var provider, error_1, policy, maxRetries, totalAttempts, attempt, error_2, message, error_3, message;
+                var playbookId, issue, issue, workloadDir, inputArtifacts, prompt_1, result, error_1, issue;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4 /*yield*/, this.resolveLlmProvider(context)];
+                            playbookId = toTrimmedString(context.state.playbookId) || toTrimmedString(context.state.playbook);
+                            if (!playbookId) {
+                                issue = "Playbook workload \"".concat(context.workload.stateId, "\" is missing playbookId or playbook.");
+                                addUnique(context.workload.issues, issue);
+                                return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [], {
+                                        effectSummary: issue,
+                                        completionStatus: 'failed'
+                                    })];
+                            }
+                            return [4 /*yield*/, this.isPlaybookRunnerAvailable()];
                         case 1:
-                            provider = _a.sent();
-                            return [3 /*break*/, 3];
+                            if (!(_a.sent())) {
+                                issue = "Playbook runner is not available for Flow state \"".concat(context.workload.stateId, "\".");
+                                addUnique(context.workload.issues, issue);
+                                return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [], {
+                                        effectSummary: issue,
+                                        completionStatus: 'failed'
+                                    })];
+                            }
+                            _a.label = 2;
                         case 2:
+                            _a.trys.push([2, 6, , 7]);
+                            workloadDir = workloadOutputDir(context.workspaceRootUri, context.run.id, context.workload.id);
+                            return [4 /*yield*/, this.prepareWorkOrderEnvelope(context, workloadDir)];
+                        case 3:
+                            inputArtifacts = _a.sent();
+                            prompt_1 = toTrimmedString(context.state.prompt) || toTrimmedString(context.state.taskPrompt) || context.run.prompt;
+                            return [4 /*yield*/, this.playbookRunner.runPlaybook({
+                                    workspaceRootUri: context.workspaceRootUri,
+                                    workflowId: context.workflow.id,
+                                    runId: context.run.id,
+                                    stateId: context.workload.stateId,
+                                    workloadId: context.workload.id,
+                                    playbookId: playbookId,
+                                    prompt: prompt_1,
+                                    input: __assign(__assign({}, (isRecord(context.state.playbookInput) ? context.state.playbookInput : {})), { flow: {
+                                            workflowId: context.workflow.id,
+                                            workflowName: context.workflow.name,
+                                            runId: context.run.id,
+                                            stateId: context.workload.stateId,
+                                            workloadId: context.workload.id,
+                                            prompt: context.run.prompt,
+                                            inputArtifacts: inputArtifacts.map(function (artifact) { return ({
+                                                path: artifact.path,
+                                                content: (0, common_2.truncateFlowText)(artifact.content, common_2.FlowSizeLimits.artifactBytes, "playbook input artifact ".concat(artifact.path))
+                                            }); })
+                                        } })
+                                })];
+                        case 4:
+                            result = _a.sent();
+                            return [4 /*yield*/, this.completePlaybookRun(context, playbookId, result)];
+                        case 5: return [2 /*return*/, _a.sent()];
+                        case 6:
                             error_1 = _a.sent();
+                            issue = "Playbook \"".concat(playbookId, "\" failed before completion: ").concat(errorToMessage(error_1));
+                            addUnique(context.workload.issues, issue);
                             return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [], {
-                                    effectSummary: "Agent workload \"".concat(context.state.id || context.workload.stateId, "\" failed before execution: ").concat(errorToMessage(error_1)),
+                                    effectSummary: issue,
                                     completionStatus: 'failed'
                                 })];
+                        case 7: return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        ProviderBackedFlowWorkloadExecutor_1.prototype.isPlaybookRunnerAvailable = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            if (!this.playbookRunner) {
+                                return [2 /*return*/, false];
+                            }
+                            if (!this.playbookRunner.available) {
+                                return [2 /*return*/, true];
+                            }
+                            _b.label = 1;
+                        case 1:
+                            _b.trys.push([1, 3, , 4]);
+                            return [4 /*yield*/, this.playbookRunner.available()];
+                        case 2: return [2 /*return*/, (_b.sent()) !== false];
                         case 3:
+                            _a = _b.sent();
+                            return [2 /*return*/, false];
+                        case 4: return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        ProviderBackedFlowWorkloadExecutor_1.prototype.completePlaybookRun = function (context, playbookId, result) {
+            return __awaiter(this, void 0, void 0, function () {
+                var _i, _a, issue, status, resultPath, payload, artifactUri;
+                var _b;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
+                        case 0:
+                            for (_i = 0, _a = result.issues || []; _i < _a.length; _i++) {
+                                issue = _a[_i];
+                                if (issue === null || issue === void 0 ? void 0 : issue.summary) {
+                                    addUnique(context.workload.issues, issue.summary);
+                                }
+                            }
+                            status = result.ok ? 'completed' : 'failed';
+                            resultPath = ((_b = context.state.outputs) === null || _b === void 0 ? void 0 : _b[0]) || "playbooks/".concat(context.workload.stateId, "/result.json");
+                            payload = {
+                                type: 'playbook',
+                                stateId: context.workload.stateId,
+                                playbookId: playbookId,
+                                ok: result.ok,
+                                stop: result.stop === true,
+                                message: result.message || '',
+                                value: (0, common_2.limitFlowJsonValue)(result.value, common_2.FlowSizeLimits.eventPayloadBytes, 'playbook result value'),
+                                artifacts: (result.artifacts || []).map(function (artifact) { return ({
+                                    path: artifact.path,
+                                    type: artifact.type,
+                                    hash: artifact.hash,
+                                    content: artifact.content === undefined
+                                        ? undefined
+                                        : (0, common_2.truncateFlowText)(artifact.content, common_2.FlowSizeLimits.artifactBytes, "playbook artifact ".concat(artifact.path))
+                                }); }),
+                                diagnostics: (0, common_2.limitFlowJsonValue)(result.diagnostics || [], common_2.FlowSizeLimits.eventPayloadBytes, 'playbook diagnostics')
+                            };
+                            return [4 /*yield*/, this.writePrimitiveAggregateArtifact(context, resultPath, payload)];
+                        case 1:
+                            artifactUri = _c.sent();
+                            this.registerPlaybookResultSignals(context, playbookId, result);
+                            context.workload.outputEnvelope = primitiveOutputEnvelope(context, status, resultPath, payload);
+                            return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [artifactUri], {
+                                    effectSummary: result.message || "Playbook \"".concat(playbookId, "\" ").concat(result.ok ? 'completed' : 'failed', "."),
+                                    completionStatus: status
+                                })];
+                    }
+                });
+            });
+        };
+        ProviderBackedFlowWorkloadExecutor_1.prototype.registerPlaybookResultSignals = function (context, playbookId, result) {
+            var _a;
+            var now = timestamp();
+            var signals = (_a = {},
+                _a["".concat(context.workload.stateId, ".playbook.id")] = playbookId,
+                _a["".concat(context.workload.stateId, ".playbook.ok")] = result.ok,
+                _a["".concat(context.workload.stateId, ".playbook.stop")] = result.stop === true,
+                _a);
+            for (var _i = 0, _b = Object.entries(result.signals || {}); _i < _b.length; _i++) {
+                var _c = _b[_i], key = _c[0], value = _c[1];
+                if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                    signals[key] = value;
+                }
+            }
+            for (var _d = 0, _e = Object.entries(signals); _d < _e.length; _d++) {
+                var _f = _e[_d], key = _f[0], value = _f[1];
+                context.run.signals.push({
+                    key: key,
+                    value: value,
+                    stateId: context.workload.stateId,
+                    runId: context.run.id,
+                    createdAt: now
+                });
+            }
+        };
+        ProviderBackedFlowWorkloadExecutor_1.prototype.executeAgentWorkload = function (context) {
+            return __awaiter(this, void 0, void 0, function () {
+                var provider, error_2, policy, maxRetries, totalAttempts, attempt, error_3, message, error_4, message;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.resolveModelProfileContext(context)];
+                        case 1:
+                            context = _a.sent();
+                            _a.label = 2;
+                        case 2:
+                            _a.trys.push([2, 4, , 5]);
+                            return [4 /*yield*/, this.resolveLlmProvider(context)];
+                        case 3:
+                            provider = _a.sent();
+                            return [3 /*break*/, 5];
+                        case 4:
+                            error_2 = _a.sent();
+                            return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [], {
+                                    effectSummary: "Agent workload \"".concat(context.state.id || context.workload.stateId, "\" failed before execution: ").concat(errorToMessage(error_2)),
+                                    completionStatus: 'failed'
+                                })];
+                        case 5:
                             policy = context.state.retry;
                             maxRetries = parseRetryMax(policy === null || policy === void 0 ? void 0 : policy.max);
                             totalAttempts = maxRetries + 1;
-                            _a.label = 4;
-                        case 4:
-                            _a.trys.push([4, 11, , 12]);
-                            attempt = 1;
-                            _a.label = 5;
-                        case 5:
-                            if (!(attempt <= totalAttempts)) return [3 /*break*/, 10];
                             _a.label = 6;
                         case 6:
-                            _a.trys.push([6, 8, , 9]);
-                            return [4 /*yield*/, this.executeRealAgentWorkload(context, provider)];
-                        case 7: return [2 /*return*/, _a.sent()];
+                            _a.trys.push([6, 13, , 14]);
+                            attempt = 1;
+                            _a.label = 7;
+                        case 7:
+                            if (!(attempt <= totalAttempts)) return [3 /*break*/, 12];
+                            _a.label = 8;
                         case 8:
-                            error_2 = _a.sent();
-                            message = errorToMessage(error_2);
+                            _a.trys.push([8, 10, , 11]);
+                            return [4 /*yield*/, this.executeRealAgentWorkload(context, provider)];
+                        case 9: return [2 /*return*/, _a.sent()];
+                        case 10:
+                            error_3 = _a.sent();
+                            message = errorToMessage(error_3);
                             if (attempt <= maxRetries) {
                                 pushEvent(context.run, {
                                     type: 'workload.retry',
@@ -410,7 +586,7 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                                         error: message
                                     }
                                 });
-                                return [3 /*break*/, 9];
+                                return [3 /*break*/, 11];
                             }
                             if (message.startsWith(workloadOutputContractErrorPrefix) || maxRetries > 0) {
                                 pushEvent(context.run, {
@@ -435,16 +611,16 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                                     effectSummary: "Agent workload \"".concat(context.state.id || context.workload.stateId, "\" failed: ").concat(message),
                                     completionStatus: 'failed'
                                 })];
-                        case 9:
+                        case 11:
                             attempt += 1;
-                            return [3 /*break*/, 5];
-                        case 10: return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [], {
+                            return [3 /*break*/, 7];
+                        case 12: return [2 /*return*/, this.completeWorkloadWithArtifacts(context, [], {
                                 effectSummary: "Agent workload \"".concat(context.state.id || context.workload.stateId, "\" failed: retry limit reached (").concat(maxRetries, ")."),
                                 completionStatus: 'failed'
                             })];
-                        case 11:
-                            error_3 = _a.sent();
-                            message = errorToMessage(error_3);
+                        case 13:
+                            error_4 = _a.sent();
+                            message = errorToMessage(error_4);
                             if (maxRetries > 0 || message.startsWith(workloadOutputContractErrorPrefix)) {
                                 pushEvent(context.run, {
                                     type: 'workload.failed',
@@ -468,7 +644,38 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                                     effectSummary: "Agent workload \"".concat(context.state.id || context.workload.stateId, "\" failed: ").concat(message),
                                     completionStatus: 'failed'
                                 })];
-                        case 12: return [2 /*return*/];
+                        case 14: return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        ProviderBackedFlowWorkloadExecutor_1.prototype.resolveModelProfileContext = function (context) {
+            return __awaiter(this, void 0, void 0, function () {
+                var profileId, workspaceProfiles, _a, profile, builtInProfile;
+                var _b, _c;
+                return __generator(this, function (_d) {
+                    switch (_d.label) {
+                        case 0:
+                            profileId = (_c = (_b = context.state.modelExecution) === null || _b === void 0 ? void 0 : _b.profileId) === null || _c === void 0 ? void 0 : _c.trim();
+                            if (!profileId) {
+                                return [2 /*return*/, context];
+                            }
+                            if (!this.flowStore) return [3 /*break*/, 2];
+                            return [4 /*yield*/, this.flowStore.listWorkspaceModelProfiles(context.workspaceRootUri).catch(function () { return []; })];
+                        case 1:
+                            _a = _d.sent();
+                            return [3 /*break*/, 3];
+                        case 2:
+                            _a = [];
+                            _d.label = 3;
+                        case 3:
+                            workspaceProfiles = _a;
+                            profile = (0, common_2.listFlowModelProfiles)(workspaceProfiles).find(function (candidate) { return candidate.id === profileId; });
+                            if (!profile) {
+                                return [2 /*return*/, context];
+                            }
+                            builtInProfile = (0, common_2.getFlowModelProfile)(profileId);
+                            return [2 /*return*/, __assign(__assign({}, context), { state: __assign(__assign({}, context.state), { provider: resolveEffectiveProfileProvider(profile, builtInProfile, context.state), modelExecution: resolveEffectiveProfileExecution(profile, builtInProfile, context.state) }) })];
                     }
                 });
             });
@@ -758,7 +965,7 @@ var ProviderBackedFlowWorkloadExecutor = function () {
         };
         ProviderBackedFlowWorkloadExecutor_1.prototype.executePrimitiveStep = function (parentContext, stateId, state, metadata) {
             return __awaiter(this, void 0, void 0, function () {
-                var now, workload, stepContext, error_4, message, result;
+                var now, workload, stepContext, error_5, message, result;
                 var _a;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
@@ -803,8 +1010,8 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                             _b.sent();
                             return [3 /*break*/, 4];
                         case 3:
-                            error_4 = _b.sent();
-                            message = errorToMessage(error_4);
+                            error_5 = _b.sent();
+                            message = errorToMessage(error_5);
                             workload.status = 'failed';
                             workload.updatedAt = timestamp();
                             workload.issues.push(message);
@@ -1097,7 +1304,7 @@ var ProviderBackedFlowWorkloadExecutor = function () {
         };
         ProviderBackedFlowWorkloadExecutor_1.prototype.applyGeneratedFileEffect = function (context, effect) {
             return __awaiter(this, void 0, void 0, function () {
-                var prepared, error_5, message, failedType;
+                var prepared, error_6, message, failedType;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -1126,8 +1333,8 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                             }, fileEffectApproved(effect))];
                         case 3: return [2 /*return*/, _a.sent()];
                         case 4:
-                            error_5 = _a.sent();
-                            message = errorToMessage(error_5);
+                            error_6 = _a.sent();
+                            message = errorToMessage(error_6);
                             failedType = effect.type === 'file.created' || effect.type === 'file.edited' || effect.type === 'file.deleted' ? effect.type : 'file.edited';
                             return [2 /*return*/, {
                                     type: failedType,
@@ -1213,7 +1420,7 @@ var ProviderBackedFlowWorkloadExecutor = function () {
                         return [2 /*return*/, invokeCommandProvider(provider.command, JSON.stringify(providerPayload, undefined, 2), workloadDir, parseProviderTimeoutMs())];
                     }
                     if ('codexProvider' in provider) {
-                        return [2 /*return*/, invokeCodexProviderProvider(provider.codexProvider, context, providerPayload, workloadDir)];
+                        return [2 /*return*/, invokeCodexProviderProvider(provider.codexProvider, context, providerPayload, workloadDir, provider.modelId, provider.request)];
                     }
                     return [2 /*return*/, invokeChatProvider(this.languageModelService, provider.model, context, provider.agentId, providerPayload)];
                 });
@@ -1661,148 +1868,46 @@ function workloadOutputDir(workspaceRootUri, runId, workloadId) {
 }
 function runVirtualReasoningHarness(request) {
     return __awaiter(this, void 0, void 0, function () {
-        var mode;
+        var engine, basePrompt, mode, result;
         return __generator(this, function (_a) {
-            mode = request.mode === 'auto' ? 'balanced' : request.mode;
-            if (mode === 'off') {
-                return [2 /*return*/, request.invoke(request.basePayload)];
-            }
-            if (mode === 'fast') {
-                return [2 /*return*/, runFastVirtualReasoning(request)];
-            }
-            return [2 /*return*/, runBalancedVirtualReasoning(request)];
-        });
-    });
-}
-function runFastVirtualReasoning(request) {
-    return __awaiter(this, void 0, void 0, function () {
-        var draft, critique, _a;
-        var _b, _c, _d;
-        return __generator(this, function (_e) {
-            switch (_e.label) {
+            switch (_a.label) {
                 case 0:
-                    draft = '';
-                    _e.label = 1;
+                    engine = new virtual_reasoning_1.VirtualReasoningEngine();
+                    basePrompt = JSON.stringify(request.basePayload, undefined, 2);
+                    mode = request.mode;
+                    if (engine.resolveMode(basePrompt, mode) === 'off') {
+                        return [2 /*return*/, request.invoke(request.basePayload)];
+                    }
+                    return [4 /*yield*/, engine.execute({
+                            mode: mode,
+                            basePrompt: basePrompt,
+                            responseContract: 'workload-output envelope JSON. Return only a valid workload-output envelope and no prose outside it.',
+                            onProgress: function (_stage, message) { var _a; return (_a = request.onProgress) === null || _a === void 0 ? void 0 : _a.call(request, message); },
+                            invokeStage: function (stage, prompt) { return request.invoke(reasoningStagePayload(request.basePayload, stage, prompt)); }
+                        })];
                 case 1:
-                    _e.trys.push([1, 5, , 6]);
-                    (_b = request.onProgress) === null || _b === void 0 ? void 0 : _b.call(request, 'Drafting response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'draft', [
-                            'Create a complete workload-output envelope draft.',
-                            'Do not mention internal reasoning or the harness.'
-                        ]))];
-                case 2:
-                    draft = _e.sent();
-                    (_c = request.onProgress) === null || _c === void 0 ? void 0 : _c.call(request, 'Reviewing response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'critique', [
-                            'Critique the draft for technical errors, omissions, unsupported assumptions, unclear language, and risk.',
-                            'Return concise JSON with approved, confidence, issues, and summary.'
-                        ], { draft: draft }))];
-                case 3:
-                    critique = _e.sent();
-                    (_d = request.onProgress) === null || _d === void 0 ? void 0 : _d.call(request, 'Revising response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'revise', [
-                            'Return the final workload-output envelope only.',
-                            'Use the draft and critique to improve the answer.',
-                            'Do not expose internal reasoning or mention this harness.'
-                        ], { draft: draft, critique: critique }))];
-                case 4: return [2 /*return*/, _e.sent()];
-                case 5:
-                    _a = _e.sent();
-                    return [2 /*return*/, draft || request.invoke(request.basePayload)];
-                case 6: return [2 /*return*/];
+                    result = _a.sent();
+                    return [2 /*return*/, result.finalAnswer.trim() || request.invoke(request.basePayload)];
             }
         });
     });
 }
-function runBalancedVirtualReasoning(request) {
-    return __awaiter(this, void 0, void 0, function () {
-        var draft, revised, classification, plan, critique, verification, _a;
-        var _b, _c, _d, _e, _f, _g, _h;
-        return __generator(this, function (_j) {
-            switch (_j.label) {
-                case 0:
-                    draft = '';
-                    revised = '';
-                    _j.label = 1;
-                case 1:
-                    _j.trys.push([1, 8, , 9]);
-                    (_b = request.onProgress) === null || _b === void 0 ? void 0 : _b.call(request, 'Analyzing request...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'classify', [
-                            'Classify the task. Return concise JSON only with taskType, complexity, needsReasoning, needsTools, recommendedMode, and reason.',
-                            'Do not solve the task.'
-                        ]))];
-                case 2:
-                    classification = _j.sent();
-                    (_c = request.onProgress) === null || _c === void 0 ? void 0 : _c.call(request, 'Planning response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'plan', [
-                            'Create a short plan for producing the workload-output envelope.',
-                            'Return concise JSON only with goal, constraints, steps, and risks.',
-                            'Do not answer the user yet.'
-                        ], { classification: classification }))];
-                case 3:
-                    plan = _j.sent();
-                    (_d = request.onProgress) === null || _d === void 0 ? void 0 : _d.call(request, 'Drafting response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'draft', [
-                            'Create a complete workload-output envelope draft using the plan.',
-                            'Do not mention internal reasoning or the harness.'
-                        ], { classification: classification, plan: plan }))];
-                case 4:
-                    draft = _j.sent();
-                    (_e = request.onProgress) === null || _e === void 0 ? void 0 : _e.call(request, 'Reviewing response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'critique', [
-                            'Critique the draft for technical errors, omissions, unsupported assumptions, unclear language, and practical risk.',
-                            'Return concise JSON only with approved, confidence, issues, and summary.'
-                        ], { classification: classification, plan: plan, draft: draft }))];
-                case 5:
-                    critique = _j.sent();
-                    (_f = request.onProgress) === null || _f === void 0 ? void 0 : _f.call(request, 'Revising response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'revise', [
-                            'Return the final workload-output envelope only.',
-                            'Use the plan, draft, and critique to improve the answer.',
-                            'Do not expose internal reasoning or mention this harness.'
-                        ], { classification: classification, plan: plan, draft: draft, critique: critique }))];
-                case 6:
-                    revised = _j.sent();
-                    (_g = request.onProgress) === null || _g === void 0 ? void 0 : _g.call(request, 'Verifying response...');
-                    return [4 /*yield*/, request.invoke(reasoningStagePayload(request.basePayload, 'verify', [
-                            'Verify whether the revised workload-output envelope satisfies the original request and Flow output contract.',
-                            'Return concise JSON only with approved, confidence, requiredFixes, and optionalImprovements.'
-                        ], { classification: classification, plan: plan, critique: critique, revised: revised }))];
-                case 7:
-                    verification = _j.sent();
-                    (_h = request.onProgress) === null || _h === void 0 ? void 0 : _h.call(request, 'Finalizing response...');
-                    return [2 /*return*/, revised || draft || verification];
-                case 8:
-                    _a = _j.sent();
-                    return [2 /*return*/, revised || draft || request.invoke(request.basePayload)];
-                case 9: return [2 /*return*/];
-            }
-        });
-    });
-}
-function reasoningStagePayload(basePayload, stage, instructions, inputs) {
-    if (inputs === void 0) { inputs = {}; }
+function reasoningStagePayload(basePayload, stage, prompt) {
     return __assign(__assign({}, basePayload), { virtualReasoning: {
             stage: stage,
             internal: true,
-            instructions: instructions,
-            inputs: redactReasoningInputs(inputs)
+            instructions: [
+                (0, common_2.truncateFlowText)(prompt, common_2.FlowSizeLimits.resultJsonBytes, "virtual reasoning ".concat(stage))
+            ]
         } });
 }
-function redactReasoningInputs(inputs) {
-    return Object.fromEntries(Object.entries(inputs).map(function (_a) {
-        var key = _a[0], value = _a[1];
-        return [
-            key,
-            typeof value === 'string' ? (0, common_2.truncateFlowText)(value, common_2.FlowSizeLimits.resultJsonBytes, "virtual reasoning ".concat(key)) : value
-        ];
-    }));
-}
-function invokeCodexProviderProvider(codexProvider, context, payload, cwd) {
-    return __awaiter(this, void 0, void 0, function () {
+function invokeCodexProviderProvider(codexProvider_1, context_1, payload_1, cwd_1, modelId_1) {
+    return __awaiter(this, arguments, void 0, function (codexProvider, context, payload, cwd, modelId, request) {
         var prompt, result;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var _a;
+        if (request === void 0) { request = {}; }
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     prompt = [
                         'You are an execution agent for the Flow workflow engine.',
@@ -1820,18 +1925,90 @@ function invokeCodexProviderProvider(codexProvider, context, payload, cwd) {
                                     text_elements: []
                                 }],
                             sessionId: "flow-workload-".concat(context.run.id),
+                            runtime: request.runtime,
+                            executablePath: request.executablePath,
+                            profile: request.profile,
+                            modelProvider: request.modelProvider,
+                            openRouterApiKey: request.openRouterApiKey,
+                            openCodeApiKey: request.openCodeApiKey,
+                            openCodeExecutablePath: request.openCodeExecutablePath,
+                            openCodeAgent: request.openCodeAgent,
+                            openCodeVariant: request.openCodeVariant,
+                            geminiExecutablePath: request.geminiExecutablePath,
+                            claudeExecutablePath: request.claudeExecutablePath,
+                            claudeAgent: request.claudeAgent,
+                            cursorExecutablePath: request.cursorExecutablePath,
+                            cursorMode: request.cursorMode,
                             options: {
                                 cwd: cwd,
+                                model: modelId,
+                                reasoningEffort: codexReasoningEffort(context),
+                                reasoningVariant: codexReasoningVariant(context),
+                                reasoningVariantOptions: (_a = context.state.modelExecution) === null || _a === void 0 ? void 0 : _a.reasoningVariantOptions,
+                                serviceTier: codexServiceTier(context),
                                 approvalPolicy: 'never',
                                 sandboxMode: 'read-only'
                             }
                         })];
                 case 1:
-                    result = _a.sent();
+                    result = _b.sent();
                     return [2 /*return*/, result.text];
             }
         });
     });
+}
+function codexReasoningEffort(context) {
+    var _a, _b;
+    var execution = context.state.modelExecution;
+    if ((execution === null || execution === void 0 ? void 0 : execution.reasoningPolicy) === 'off' || ((_a = execution === null || execution === void 0 ? void 0 : execution.nativeReasoning) === null || _a === void 0 ? void 0 : _a.effort) === 'none') {
+        return undefined;
+    }
+    return (_b = execution === null || execution === void 0 ? void 0 : execution.nativeReasoning) === null || _b === void 0 ? void 0 : _b.effort;
+}
+function codexReasoningVariant(context) {
+    var _a, _b;
+    var variant = (_b = (_a = context.state.modelExecution) === null || _a === void 0 ? void 0 : _a.reasoningVariant) === null || _b === void 0 ? void 0 : _b.trim();
+    return variant || undefined;
+}
+function codexServiceTier(context) {
+    var _a;
+    var serviceTier = (_a = context.state.modelExecution) === null || _a === void 0 ? void 0 : _a.serviceTier;
+    return serviceTier && serviceTier !== 'default' ? serviceTier : undefined;
+}
+function resolveEffectiveProfileProvider(profile, builtInProfile, state) {
+    if (state.provider && (!builtInProfile || !sameFlowValue(state.provider, builtInProfile.provider))) {
+        return state.provider;
+    }
+    return profile.provider;
+}
+function resolveEffectiveProfileExecution(profile, builtInProfile, state) {
+    var stateExecution = state.modelExecution || {};
+    var builtInExecution = builtInProfile === null || builtInProfile === void 0 ? void 0 : builtInProfile.execution;
+    var merged = __assign(__assign({}, (profile.execution || {})), { profileId: profile.id });
+    for (var _i = 0, _a = Object.entries(stateExecution); _i < _a.length; _i++) {
+        var _b = _a[_i], key = _b[0], value = _b[1];
+        if (key === 'profileId' || value === undefined) {
+            continue;
+        }
+        var builtInValue = builtInExecution === null || builtInExecution === void 0 ? void 0 : builtInExecution[key];
+        if (!builtInExecution || !sameFlowValue(value, builtInValue)) {
+            merged[key] = value;
+        }
+    }
+    return merged;
+}
+function sameFlowValue(left, right) {
+    return stableJsonValue(left) === stableJsonValue(right);
+}
+function stableJsonValue(value) {
+    if (Array.isArray(value)) {
+        return "[".concat(value.map(stableJsonValue).join(','), "]");
+    }
+    if (value && typeof value === 'object') {
+        var record_1 = value;
+        return "{".concat(Object.keys(record_1).sort().map(function (key) { return "".concat(JSON.stringify(key), ":").concat(stableJsonValue(record_1[key])); }).join(','), "}");
+    }
+    return JSON.stringify(value);
 }
 function invokeChatProvider(languageModelService, model, context, agentId, payload) {
     return __awaiter(this, void 0, void 0, function () {

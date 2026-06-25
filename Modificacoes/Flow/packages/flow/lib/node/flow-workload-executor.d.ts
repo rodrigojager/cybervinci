@@ -1,5 +1,5 @@
 import { LanguageModelRegistry, LanguageModelService } from '@theia/ai-core';
-import { CodexProviderService } from '@cybervinci/codex-provider/lib/common/codex-provider-service';
+import { CodexProviderService } from '@cybervinci/ai-providers/lib/common/ai-providers-service';
 import { FlowArtifact, FlowEffect, FlowRun, MemoryCandidate, FlowWorkflow, FlowWorkflowState, FlowWorkload, FlowReasoningMode } from '../common';
 import { AgentMarkdownStore } from './agent-markdown-store';
 import { CommandEffectHostAdapter } from './command-effect-host-adapter';
@@ -7,6 +7,8 @@ import { AppliedFileEffect, FileEffectHostAdapter } from './file-effect-host-ada
 import { ImageEffectHostAdapter } from './image-effect-host-adapter';
 import { MemoryAdapter } from './memory-adapter';
 import { FlowAgentProviderResolver, FlowLlmProviderConfig } from './flow-agent-provider-registry';
+import { FlowPlaybookRunner, FlowPlaybookRunResult } from './flow-playbook-runner';
+import { FlowStore } from './flow-store';
 export interface FlowWorkloadExecutionContext {
     workflow: FlowWorkflow;
     run: FlowRun;
@@ -22,6 +24,7 @@ export declare const FlowWorkloadExecutor: any;
 export interface FlowWorkloadExecutor {
     execute(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeAgentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
+    executePlaybookWorkload?(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeContextWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeCommandWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeMemoryWriteWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
@@ -106,11 +109,18 @@ export declare class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadE
     protected readonly codexProviderService?: CodexProviderService;
     protected readonly memoryAdapter?: MemoryAdapter;
     protected readonly agentProviderResolver?: FlowAgentProviderResolver;
-    constructor(agentMarkdownStore?: AgentMarkdownStore, commandEffectHostAdapter?: CommandEffectHostAdapter, imageEffectHostAdapter?: ImageEffectHostAdapter, fileEffectHostAdapter?: FileEffectHostAdapter, languageModelRegistry?: LanguageModelRegistry, languageModelService?: LanguageModelService, codexProviderService?: CodexProviderService, memoryAdapter?: MemoryAdapter, agentProviderResolver?: FlowAgentProviderResolver);
+    protected readonly playbookRunner?: FlowPlaybookRunner;
+    protected readonly flowStore?: FlowStore;
+    constructor(agentMarkdownStore?: AgentMarkdownStore, commandEffectHostAdapter?: CommandEffectHostAdapter, imageEffectHostAdapter?: ImageEffectHostAdapter, fileEffectHostAdapter?: FileEffectHostAdapter, languageModelRegistry?: LanguageModelRegistry, languageModelService?: LanguageModelService, codexProviderService?: CodexProviderService, memoryAdapter?: MemoryAdapter, agentProviderResolver?: FlowAgentProviderResolver, playbookRunner?: FlowPlaybookRunner, flowStore?: FlowStore);
     execute(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeDynamicParallelWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeTournamentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
+    executePlaybookWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
+    protected isPlaybookRunnerAvailable(): Promise<boolean>;
+    protected completePlaybookRun(context: FlowWorkloadExecutionContext, playbookId: string, result: FlowPlaybookRunResult): Promise<FlowWorkloadExecutionResult>;
+    protected registerPlaybookResultSignals(context: FlowWorkloadExecutionContext, playbookId: string, result: FlowPlaybookRunResult): void;
     executeAgentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
+    protected resolveModelProfileContext(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionContext>;
     protected executeRealAgentWorkload(context: FlowWorkloadExecutionContext, provider: FlowLlmProviderConfig): Promise<FlowWorkloadExecutionResult>;
     protected buildProviderPayload(context: FlowWorkloadExecutionContext, agentMarkdown: string, inputArtifacts: InputArtifact[]): Record<string, unknown>;
     protected prepareWorkOrderEnvelope(context: FlowWorkloadExecutionContext, workloadDir: string): Promise<InputArtifact[]>;

@@ -84,6 +84,15 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AgentMarkdownStore = void 0;
 var fs = require("fs/promises");
@@ -92,6 +101,8 @@ var path = require("path");
 var file_uri_1 = require("@theia/core/lib/common/file-uri");
 var inversify_1 = require("@theia/core/shared/inversify");
 var MARKDOWN_EXTENSIONS = new Set(['.md', '.markdown']);
+var AGENCY_AGENT_CATALOG_PREFIX = 'agents/agency/';
+var AGENCY_AGENT_CATALOG_ROOT_SEGMENTS = ['Skills', 'Manual', 'Agency Agents'];
 var AgentMarkdownStore = function () {
     var _classDecorators = [(0, inversify_1.injectable)()];
     var _classDescriptor;
@@ -102,7 +113,7 @@ var AgentMarkdownStore = function () {
         }
         AgentMarkdownStore_1.prototype.listAgents = function (workspaceRootUri) {
             return __awaiter(this, void 0, void 0, function () {
-                var root, files, summaries;
+                var root, files, workspaceSummaries, catalogSummaries, workspacePaths;
                 var _this = this;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -112,45 +123,69 @@ var AgentMarkdownStore = function () {
                             return [4 /*yield*/, this.collectMarkdownFiles(root)];
                         case 2:
                             files = _a.sent();
-                            return [4 /*yield*/, Promise.all(files.map(function (file) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
-                                    return [2 /*return*/, this.summary(root, file)];
-                                }); }); }))];
+                            return [4 /*yield*/, Promise.all(files.map(function (file) { return __awaiter(_this, void 0, void 0, function () {
+                                    var _a;
+                                    return __generator(this, function (_b) {
+                                        switch (_b.label) {
+                                            case 0:
+                                                _a = [{}];
+                                                return [4 /*yield*/, this.summary(root, file)];
+                                            case 1: return [2 /*return*/, (__assign.apply(void 0, [__assign.apply(void 0, _a.concat([_b.sent()])), { source: 'workspace' }]))];
+                                        }
+                                    });
+                                }); }))];
                         case 3:
-                            summaries = _a.sent();
-                            return [2 /*return*/, summaries.sort(function (left, right) { return left.relativePath.localeCompare(right.relativePath); })];
+                            workspaceSummaries = _a.sent();
+                            return [4 /*yield*/, this.listCatalogAgents()];
+                        case 4:
+                            catalogSummaries = _a.sent();
+                            workspacePaths = new Set(workspaceSummaries.map(function (summary) { return summary.relativePath; }));
+                            return [2 /*return*/, __spreadArray(__spreadArray([], workspaceSummaries, true), catalogSummaries.filter(function (summary) { return !workspacePaths.has(summary.relativePath); }), true).sort(function (left, right) { return sourceRank(left.source) - sourceRank(right.source) || left.relativePath.localeCompare(right.relativePath); })];
                     }
                 });
             });
         };
         AgentMarkdownStore_1.prototype.readAgent = function (workspaceRootUri_1, relativePath_1) {
             return __awaiter(this, arguments, void 0, function (workspaceRootUri, relativePath, options) {
-                var root, file, _a, _b;
-                var _c;
+                var root, file, catalogFile, _a, _b, _c, _d;
+                var _e, _f;
                 if (options === void 0) { options = {}; }
-                return __generator(this, function (_d) {
-                    switch (_d.label) {
+                return __generator(this, function (_g) {
+                    switch (_g.label) {
                         case 0: return [4 /*yield*/, this.ensureAgentsDir(workspaceRootUri)];
                         case 1:
-                            root = _d.sent();
+                            root = _g.sent();
                             file = this.agentFile(root, relativePath);
                             return [4 /*yield*/, exists(file)];
                         case 2:
-                            if (!!(_d.sent())) return [3 /*break*/, 4];
+                            if (!!(_g.sent())) return [3 /*break*/, 8];
+                            return [4 /*yield*/, this.catalogAgentFile(relativePath)];
+                        case 3:
+                            catalogFile = _g.sent();
+                            if (!catalogFile) return [3 /*break*/, 6];
+                            _a = [{}];
+                            return [4 /*yield*/, this.catalogSummary(catalogFile.root, catalogFile.file)];
+                        case 4:
+                            _b = [__assign.apply(void 0, _a.concat([_g.sent()]))];
+                            _e = {};
+                            return [4 /*yield*/, fs.readFile(catalogFile.file, 'utf8')];
+                        case 5: return [2 /*return*/, __assign.apply(void 0, _b.concat([(_e.content = _g.sent(), _e)]))];
+                        case 6:
                             if (!options.createIfMissing) {
                                 return [2 /*return*/, undefined];
                             }
                             return [4 /*yield*/, this.writeAgent(workspaceRootUri, relativePath, defaultAgentTemplate(relativePath, options.title))];
-                        case 3:
-                            _d.sent();
-                            _d.label = 4;
-                        case 4:
-                            _a = [{}];
+                        case 7:
+                            _g.sent();
+                            _g.label = 8;
+                        case 8:
+                            _c = [{}];
                             return [4 /*yield*/, this.summary(root, file)];
-                        case 5:
-                            _b = [__assign.apply(void 0, _a.concat([_d.sent()]))];
-                            _c = {};
+                        case 9:
+                            _d = [__assign.apply(void 0, _c.concat([_g.sent()]))];
+                            _f = {};
                             return [4 /*yield*/, fs.readFile(file, 'utf8')];
-                        case 6: return [2 /*return*/, __assign.apply(void 0, _b.concat([(_c.content = _d.sent(), _c)]))];
+                        case 10: return [2 /*return*/, __assign.apply(void 0, _d.concat([(_f.content = _g.sent(), _f)]))];
                     }
                 });
             });
@@ -218,7 +253,7 @@ var AgentMarkdownStore = function () {
         };
         AgentMarkdownStore_1.prototype.duplicateAgent = function (workspaceRootUri_1, sourceRelativePath_1, targetRelativePath_1) {
             return __awaiter(this, arguments, void 0, function (workspaceRootUri, sourceRelativePath, targetRelativePath, options) {
-                var root, sourceFile, targetFile, sourceContent, _a, _b;
+                var root, sourceFile, targetFile, sourceContent, catalogFile, _a, _b;
                 var _c;
                 if (options === void 0) { options = {}; }
                 return __generator(this, function (_d) {
@@ -228,32 +263,43 @@ var AgentMarkdownStore = function () {
                             root = _d.sent();
                             sourceFile = this.agentFile(root, sourceRelativePath);
                             targetFile = this.agentFile(root, targetRelativePath);
-                            return [4 /*yield*/, exists(sourceFile)];
-                        case 2:
-                            if (!(_d.sent())) {
-                                throw new Error("Agent markdown \"".concat(sourceRelativePath, "\" was not found."));
-                            }
                             return [4 /*yield*/, exists(targetFile)];
-                        case 3:
+                        case 2:
                             if (_d.sent()) {
                                 throw new Error("Agent markdown \"".concat(targetRelativePath, "\" already exists."));
                             }
-                            return [4 /*yield*/, fs.mkdir(path.dirname(targetFile), { recursive: true })];
-                        case 4:
-                            _d.sent();
+                            return [4 /*yield*/, exists(sourceFile)];
+                        case 3:
+                            if (!_d.sent()) return [3 /*break*/, 5];
                             return [4 /*yield*/, fs.readFile(sourceFile, 'utf8')];
-                        case 5:
+                        case 4:
                             sourceContent = _d.sent();
-                            return [4 /*yield*/, fs.writeFile(targetFile, normalizeMarkdown(options.title ? retitleMarkdown(sourceContent, options.title) : sourceContent), 'utf8')];
+                            return [3 /*break*/, 8];
+                        case 5: return [4 /*yield*/, this.catalogAgentFile(sourceRelativePath)];
                         case 6:
+                            catalogFile = _d.sent();
+                            if (!catalogFile) return [3 /*break*/, 8];
+                            return [4 /*yield*/, fs.readFile(catalogFile.file, 'utf8')];
+                        case 7:
+                            sourceContent = _d.sent();
+                            _d.label = 8;
+                        case 8:
+                            if (sourceContent === undefined) {
+                                throw new Error("Agent markdown \"".concat(sourceRelativePath, "\" was not found."));
+                            }
+                            return [4 /*yield*/, fs.mkdir(path.dirname(targetFile), { recursive: true })];
+                        case 9:
+                            _d.sent();
+                            return [4 /*yield*/, fs.writeFile(targetFile, normalizeMarkdown(options.title ? retitleMarkdown(sourceContent, options.title) : sourceContent), 'utf8')];
+                        case 10:
                             _d.sent();
                             _a = [{}];
                             return [4 /*yield*/, this.summary(root, targetFile)];
-                        case 7:
+                        case 11:
                             _b = [__assign.apply(void 0, _a.concat([_d.sent()]))];
                             _c = {};
                             return [4 /*yield*/, fs.readFile(targetFile, 'utf8')];
-                        case 8: return [2 /*return*/, __assign.apply(void 0, _b.concat([(_c.content = _d.sent(), _c)]))];
+                        case 12: return [2 /*return*/, __assign.apply(void 0, _b.concat([(_c.content = _d.sent(), _c)]))];
                     }
                 });
             });
@@ -353,6 +399,29 @@ var AgentMarkdownStore = function () {
                 });
             });
         };
+        AgentMarkdownStore_1.prototype.listCatalogAgents = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var root, files;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, this.resolveAgencyAgentCatalogRoot()];
+                        case 1:
+                            root = _a.sent();
+                            if (!root) {
+                                return [2 /*return*/, []];
+                            }
+                            return [4 /*yield*/, this.collectMarkdownFiles(root)];
+                        case 2:
+                            files = (_a.sent())
+                                .filter(function (file) { return !_this.isCatalogMetadataFile(root, file); });
+                            return [2 /*return*/, Promise.all(files.map(function (file) { return __awaiter(_this, void 0, void 0, function () { return __generator(this, function (_a) {
+                                    return [2 /*return*/, this.catalogSummary(root, file)];
+                                }); }); }))];
+                    }
+                });
+            });
+        };
         AgentMarkdownStore_1.prototype.summary = function (root, file) {
             return __awaiter(this, void 0, void 0, function () {
                 var stat, relativePath;
@@ -366,11 +435,98 @@ var AgentMarkdownStore = function () {
                                     path: file,
                                     uri: file_uri_1.FileUri.create(file).toString(),
                                     relativePath: relativePath,
-                                    updatedAt: stat.mtime.toISOString()
+                                    updatedAt: stat.mtime.toISOString(),
+                                    source: 'workspace'
                                 }];
                     }
                 });
             });
+        };
+        AgentMarkdownStore_1.prototype.catalogSummary = function (root, file) {
+            return __awaiter(this, void 0, void 0, function () {
+                var stat, relativePath;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, fs.stat(file)];
+                        case 1:
+                            stat = _a.sent();
+                            relativePath = "".concat(AGENCY_AGENT_CATALOG_PREFIX).concat(path.relative(root, file).split(path.sep).join('/'));
+                            return [2 /*return*/, {
+                                    path: file,
+                                    uri: file_uri_1.FileUri.create(file).toString(),
+                                    relativePath: relativePath,
+                                    updatedAt: stat.mtime.toISOString(),
+                                    source: 'catalog'
+                                }];
+                    }
+                });
+            });
+        };
+        AgentMarkdownStore_1.prototype.catalogAgentFile = function (relativePath) {
+            return __awaiter(this, void 0, void 0, function () {
+                var root, catalogRelativePath, file;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (!relativePath.startsWith(AGENCY_AGENT_CATALOG_PREFIX)) {
+                                return [2 /*return*/, undefined];
+                            }
+                            return [4 /*yield*/, this.resolveAgencyAgentCatalogRoot()];
+                        case 1:
+                            root = _a.sent();
+                            if (!root) {
+                                return [2 /*return*/, undefined];
+                            }
+                            catalogRelativePath = relativePath.slice(AGENCY_AGENT_CATALOG_PREFIX.length);
+                            assertMarkdownPath(catalogRelativePath);
+                            file = path.resolve(root, catalogRelativePath);
+                            assertInsideRoot(root, file);
+                            return [4 /*yield*/, exists(file)];
+                        case 2:
+                            if (_a.sent()) {
+                                return [2 /*return*/, { root: root, file: file }];
+                            }
+                            return [2 /*return*/, undefined];
+                    }
+                });
+            });
+        };
+        AgentMarkdownStore_1.prototype.resolveAgencyAgentCatalogRoot = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var envPath, candidates, _i, candidates_1, candidate;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            envPath = process.env.CYBERVINCI_AGENCY_AGENTS_DIR;
+                            candidates = [
+                                envPath,
+                                path.resolve.apply(path, __spreadArray([process.cwd()], AGENCY_AGENT_CATALOG_ROOT_SEGMENTS, false)),
+                                path.resolve.apply(path, __spreadArray([process.cwd(), '..', '..', 'Modificacoes'], AGENCY_AGENT_CATALOG_ROOT_SEGMENTS, false)),
+                                path.resolve.apply(path, __spreadArray([__dirname, '..', '..', '..', '..', '..'], AGENCY_AGENT_CATALOG_ROOT_SEGMENTS, false)),
+                                path.resolve.apply(path, __spreadArray([__dirname, '..', '..', '..', '..', '..', '..', 'Modificacoes'], AGENCY_AGENT_CATALOG_ROOT_SEGMENTS, false))
+                            ].filter(function (candidate) { return !!candidate; });
+                            _i = 0, candidates_1 = candidates;
+                            _a.label = 1;
+                        case 1:
+                            if (!(_i < candidates_1.length)) return [3 /*break*/, 4];
+                            candidate = candidates_1[_i];
+                            return [4 /*yield*/, isDirectory(candidate)];
+                        case 2:
+                            if (_a.sent()) {
+                                return [2 /*return*/, candidate];
+                            }
+                            _a.label = 3;
+                        case 3:
+                            _i++;
+                            return [3 /*break*/, 1];
+                        case 4: return [2 /*return*/, undefined];
+                    }
+                });
+            });
+        };
+        AgentMarkdownStore_1.prototype.isCatalogMetadataFile = function (root, file) {
+            var relativePath = path.relative(root, file).split(path.sep).join('/').toLowerCase();
+            return relativePath === 'readme.md' || relativePath === 'readme-cybervinci.md' || relativePath === 'license.md';
         };
         return AgentMarkdownStore_1;
     }());
@@ -459,4 +615,24 @@ function exists(file) {
             }
         });
     });
+}
+function isDirectory(file) {
+    return __awaiter(this, void 0, void 0, function () {
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _b.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, fs.stat(file)];
+                case 1: return [2 /*return*/, (_b.sent()).isDirectory()];
+                case 2:
+                    _a = _b.sent();
+                    return [2 /*return*/, false];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
+function sourceRank(source) {
+    return source === 'workspace' ? 0 : 1;
 }

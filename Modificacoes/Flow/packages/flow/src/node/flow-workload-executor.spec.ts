@@ -14,6 +14,7 @@ import { AgentMarkdownStore } from './agent-markdown-store';
 import { FlowWorkloadExecutionContext, ProviderBackedFlowWorkloadExecutor, runVirtualReasoningHarness } from './flow-workload-executor';
 import { FlowLlmProviderConfig } from './flow-agent-provider-registry';
 import { MemoryAdapter } from './memory-adapter';
+import { FlowPlaybookRunner, FlowPlaybookRunRequest, FlowPlaybookRunResult } from './flow-playbook-runner';
 
 class MockLlmProviderExecutor extends ProviderBackedFlowWorkloadExecutor {
     private readonly responses: Array<string | Error>;
@@ -63,6 +64,31 @@ class MockLlmProviderExecutor extends ProviderBackedFlowWorkloadExecutor {
 class MemoryWriteExecutor extends ProviderBackedFlowWorkloadExecutor {
     constructor(memoryAdapter?: MemoryAdapter) {
         super(undefined as unknown as AgentMarkdownStore, undefined, undefined, undefined, undefined, undefined, undefined, memoryAdapter);
+    }
+}
+
+class MockPlaybookRunner implements FlowPlaybookRunner {
+    public readonly calls: FlowPlaybookRunRequest[] = [];
+
+    constructor(
+        protected readonly result: FlowPlaybookRunResult,
+        protected readonly availableFlag = true
+    ) {
+    }
+
+    available(): boolean {
+        return this.availableFlag;
+    }
+
+    async runPlaybook(request: FlowPlaybookRunRequest): Promise<FlowPlaybookRunResult> {
+        this.calls.push(request);
+        return this.result;
+    }
+}
+
+class PlaybookWorkloadExecutor extends ProviderBackedFlowWorkloadExecutor {
+    constructor(runner?: FlowPlaybookRunner) {
+        super(undefined as unknown as AgentMarkdownStore, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, runner);
     }
 }
 
@@ -501,6 +527,85 @@ describe('ProviderBackedFlowWorkloadExecutor with mocked LLM provider', () => {
         const aggregate = JSON.parse(await fs.readFile(aggregatePath, 'utf8')) as { candidateCount: number; strategy: string };
         expect(aggregate.candidateCount).to.equal(2);
         expect(aggregate.strategy).to.equal('single_round');
+    });
+
+    it('executa playbook workload por FlowPlaybookRunner e registra resultado', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'design_qa',
+            type: 'playbook',
+            playbookId: 'canvas-design-qa',
+            prompt: 'Check the current Canvas document.',
+            playbookInput: {
+                mode: 'qa'
+            },
+            outputs: ['playbook/result.json']
+        });
+        const runner = new MockPlaybookRunner({
+            ok: true,
+            stop: true,
+            message: 'Design QA completed.',
+            value: {
+                score: 92
+            },
+            artifacts: [{
+                path: 'qa/report.md',
+                content: '# QA\n\nLooks good.'
+            }],
+            signals: {
+                'design_qa.score': 92
+            },
+            issues: [{
+                severity: 'non_blocking',
+                type: 'design_qa',
+                summary: 'Footer should be checked in a real Canvas run.'
+            }]
+        });
+        const executor = new PlaybookWorkloadExecutor(runner);
+
+        await executor.execute(context);
+
+        expect(runner.calls).to.have.length(1);
+        expect(runner.calls[0]).to.deep.include({
+            workspaceRootUri,
+            workflowId: context.workflow.id,
+            runId: context.run.id,
+            stateId: 'design_qa',
+            workloadId: context.workload.id,
+            playbookId: 'canvas-design-qa',
+            prompt: 'Check the current Canvas document.'
+        });
+        expect((runner.calls[0].input.flow as Record<string, unknown>).prompt).to.equal('run this task');
+        expect(context.workload.status).to.equal('done');
+        expect(context.run.stateStatuses.design_qa).to.equal('done');
+        expect(context.workload.issues).to.include('Footer should be checked in a real Canvas run.');
+        expect(context.run.signals.some(signal => signal.key === 'design_qa.playbook.id' && signal.value === 'canvas-design-qa')).to.equal(true);
+        expect(context.run.signals.some(signal => signal.key === 'design_qa.score' && signal.value === 92)).to.equal(true);
+        expect(context.workload.outputEnvelope?.result.status).to.equal('completed');
+        expect(context.workload.outputEnvelope?.issues.some(issue => issue.summary === 'Footer should be checked in a real Canvas run.')).to.equal(true);
+        const aggregatePath = path.join(workspaceRootDir, '.theia', 'flow', 'runs', context.run.id, 'workloads', context.workload.id, 'output', 'artifacts', 'playbook', 'result.json');
+        const aggregate = JSON.parse(await fs.readFile(aggregatePath, 'utf8')) as { playbookId: string; ok: boolean; stop: boolean; value: { score: number } };
+        expect(aggregate.playbookId).to.equal('canvas-design-qa');
+        expect(aggregate.ok).to.equal(true);
+        expect(aggregate.stop).to.equal(true);
+        expect(aggregate.value.score).to.equal(92);
+    });
+
+    it('falha playbook workload quando o host nao disponibiliza runner', async () => {
+        const context = createExecutionContext(workspaceRootUri, {
+            id: 'design_qa',
+            type: 'playbook',
+            playbookId: 'canvas-design-qa'
+        });
+        const runner = new MockPlaybookRunner({ ok: true }, false);
+        const executor = new PlaybookWorkloadExecutor(runner);
+
+        await executor.execute(context);
+
+        expect(runner.calls).to.have.length(0);
+        expect(context.workload.status).to.equal('failed');
+        expect(context.run.stateStatuses.design_qa).to.equal('failed');
+        expect(context.workload.issues[0]).to.contain('Playbook runner is not available');
+        expect(context.run.events.some(event => event.type === 'workload.failed')).to.equal(true);
     });
 
     it('falha agent workload quando provider nao esta configurado', async () => {

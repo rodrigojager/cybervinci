@@ -192,14 +192,15 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(styles).to.contain('.openpencil-runtime-export-toolbar .openpencil-export-meta');
     });
 
-    it('exposes Continue Design with AI command wiring in the editor toolbar and contribution', () => {
+    it('keeps Continue Design with AI command-only while the editor toolbar uses AI and AI Edit', () => {
         const widgetSource = readPackageFile('src/browser/openpencil-editor-widget.tsx');
         const contributionSource = readPackageFile('src/browser/openpencil-editor-contribution.ts');
 
-        expect(widgetSource).to.contain('OPENPENCIL_CONTINUE_DESIGN_WITH_AI_COMMAND');
-        expect(widgetSource).to.contain("openpencil.continueDesignWithAi");
-        expect(widgetSource).to.contain('Continue');
-        expect(widgetSource).to.contain('this.executeOpenPencilCommand(OPENPENCIL_CONTINUE_DESIGN_WITH_AI_COMMAND, this.uri)');
+        expect(widgetSource).not.to.contain('OPENPENCIL_CONTINUE_DESIGN_WITH_AI_COMMAND');
+        expect(widgetSource).not.to.contain('Continue design with AI');
+        expect(widgetSource).not.to.contain('this.executeOpenPencilCommand(OPENPENCIL_CONTINUE_DESIGN_WITH_AI_COMMAND, this.uri)');
+        expect(widgetSource).to.contain("this.executeOpenPencilCommand(OPENPENCIL_PROMPT_TO_DESIGN_COMMAND, this.uri");
+        expect(widgetSource).to.contain("this.executeOpenPencilCommand(OPENPENCIL_EDIT_SELECTED_NODE_WITH_AI_COMMAND, this.uri");
         expect(contributionSource).to.contain('CONTINUE_DESIGN_WITH_AI');
         expect(contributionSource).to.contain('continueDesignWithAi');
         expect(contributionSource).to.contain("requestMode: 'continuation'");
@@ -225,6 +226,7 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(source).to.contain('restoreAiRollbackSnapshot(snapshot: OpenPencilDocumentStateSnapshot)');
         expect(source).to.contain('applyOperationsProgressively(operations: OpenPencilDesignOperation[], options: OpenPencilProgressiveApplyOptions = {})');
         expect(source).to.contain('applyOptions?: OpenPencilApplyOperationsOptions;');
+        expect(source).to.contain('const result = this.commandService.applyOperationsToDocument(this.document, initialSelection, [], options.applyOptions);');
         expect(source).to.contain('this.commandService.applyOperationsToDocument(this.document, currentSelection, [operation], options.applyOptions)');
         expect(source).to.contain('await options.onProgress?.({ applied, total, result: lastResult });');
         expect(source).to.contain('await this.waitForProgressiveApplyFrame(delayMs);');
@@ -241,13 +243,40 @@ describe('OpenPencilEditorWidget parity contract', () => {
         expect(source).to.contain('OPENPENCIL_AI_PROGRESSIVE_APPLY_DELAY_MS');
         expect(source).to.contain("this.createAiStatus('preparing', 'Preparing'");
         expect(source).to.contain("this.createAiStatus('validating', 'Validating'");
-        expect(source).to.contain('const applyValidation = this.commandService.validateDocument(applyPreview.document);');
-        expect(source).to.contain('await widget.applyOperationsProgressively(operations, {');
+        expect(source).to.contain('let applyValidation = this.commandService.validateDocument(applyPreview.document);');
+        expect(source).to.contain('await widget.applyOperationsProgressively(operationsToApply, {');
+        expect(source).to.contain('repairActiveAiLayoutBeforeApplyRetry');
         expect(source).to.contain('createAiApplyOptions(prompt, requestMode)');
         expect(source).to.contain('normalizeVisibleBounds: true');
         expect(source).to.contain('preservePageWidth');
         expect(source).to.contain('this.commandService.validateAiLayoutQuality(applyPreview.document');
-        expect(source).to.contain('OPENPENCIL_AI_STREAMING_FULL_PAGE_CONTINUATION_PASSES');
+        expect(source).to.contain('OPENPENCIL_AI_COMPLETENESS_MAX_STREAMING_PASSES');
+        expect(source).to.contain('OpenPencilAiCompositionProfile');
+        expect(source).to.contain('evaluateAiCompleteness');
+        expect(source).to.contain('detectAiCompositionProfile');
+        expect(source).to.contain('scoreAiCompleteness');
+        expect(source).to.contain('targetAreaCoverage');
+        expect(source).to.contain('isAiCompletenessPageContainerNode');
+        expect(source).to.contain('Do not satisfy vertical coverage by only resizing a parent/root/background frame');
+        expect(source).to.contain('Canvas AI stopped before the design met completeness checks');
+        expect(source).to.contain('applyDeterministicAiCompletenessRepair');
+        expect(source).to.contain('applyLocalCompletionAfterStreamingNoOp');
+        expect(source).to.contain('slow/free router model');
+        expect(source).to.contain('createDeterministicWebPageCompletionRepairOperations');
+        expect(source).to.contain('createDeterministicWebPageRootRepairOperations');
+        expect(source).to.contain('createAiRepairPageHeaderSection');
+        expect(source).to.contain('createAiRepairPageHeroSection');
+        expect(source).to.contain('findAiCompletionRoot');
+        expect(source).to.contain('shouldCountAiRepairOwnBottom');
+        expect(source).to.contain('Completing structure');
+        expect(source).to.contain('Canvas AI is applying a deterministic completion repair inside the existing design frame');
+        expect(source).to.contain('createAiCompletenessContinuationPrompt');
+        expect(source).to.contain('aiCompositionProfileInstruction');
+        expect(source).to.contain('shouldRunAiCompletenessContinuation');
+        expect(source).to.contain('isAiReferenceClonePrompt');
+        expect(source).to.contain('Canvas AI visual similarity is');
+        expect(source).to.contain('streaming-completeness-result');
+        expect(source).to.contain('incremental-completeness-result');
         expect(source).to.contain('this.createAiApplyingStatus(applyProgress.applied, applyProgress.total)');
         expect(source).to.contain("this.createAiStatus('complete', 'Done'");
         expect(source).to.contain("this.createAiStatus('error', 'Error'");

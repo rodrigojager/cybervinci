@@ -31,14 +31,14 @@ import { ImageContextVariable } from '@theia/ai-chat/lib/common/image-context-va
 import { AgentCompletionNotificationService, FrontendVariableService, AIActivationService, CompletionNotificationOptions } from '@theia/ai-core/lib/browser';
 import { AISettingsService, PromptService } from '@theia/ai-core/lib/common';
 import { ApplicationShell } from '@theia/core/lib/browser/shell/application-shell';
-import { CommandService, DisposableCollection, Emitter, InMemoryResources, MessageService, URI, nls, Disposable } from '@theia/core';
+import { CommandService, ContributionProvider, DisposableCollection, Emitter, InMemoryResources, MessageService, URI, nls, Disposable } from '@theia/core';
 import { CommonCommands, ContextMenuRenderer, HoverService, LabelProvider, Message, OpenerService, ReactWidget } from '@theia/core/lib/browser';
 import { MarkdownString } from '@theia/core/lib/common/markdown-rendering';
 import { SelectComponent, SelectOption } from '@theia/core/lib/browser/widgets/select-component';
 import { ContextKey, ContextKeyService } from '@theia/core/lib/browser/context-key-service';
 import { KeybindingRegistry } from '@theia/core/lib/browser/keybinding';
 import { Deferred } from '@theia/core/lib/common/promise-util';
-import { inject, injectable, optional, postConstruct } from '@theia/core/shared/inversify';
+import { inject, injectable, named, optional, postConstruct } from '@theia/core/shared/inversify';
 import * as React from '@theia/core/shared/react';
 import { IMouseEvent, Range } from '@theia/monaco-editor-core';
 import { MonacoEditorProvider } from '@theia/monaco/lib/browser/monaco-editor-provider';
@@ -67,7 +67,7 @@ import {
 } from './chat-view-preferences';
 import {
     buildBarTooltip,
-    CHAT_CONTEXT_WINDOW_SIZE_FALLBACK as CHAT_CONTEXT_WINDOW_SIZE,
+    CHAT_CONTEXT_WINDOW_SIZE_FALLBACK,
     computeSessionTokenUsage,
     decideTokenUsageWarning,
     getLatestTokenUsage,
@@ -81,25 +81,7 @@ type Cancel = (requestModel: ChatRequestModel) => void;
 type DeleteChangeSet = (requestModel: ChatRequestModel) => void;
 type DeleteChangeSetElement = (requestModel: ChatRequestModel, index: number) => void;
 type OpenContextElement = (request: AIVariableResolutionRequest) => unknown;
-type VirtualReasoningMode = 'off' | 'auto' | 'fast' | 'balanced' | 'deep' | 'coding' | 'research' | 'lats';
-type FlowChatMode = 'chat' | 'saved' | 'dynamic';
 
-interface VirtualReasoningSettings {
-    enabled: boolean;
-    mode: VirtualReasoningMode;
-}
-
-type ChatSessionSettingsWithVirtualReasoning = ChatSessionSettings & {
-    virtualReasoning?: VirtualReasoningSettings;
-    flowMode?: FlowChatMode;
-    commonSettings?: ChatSessionSettings['commonSettings'] & {
-        virtualReasoning?: VirtualReasoningSettings;
-        flowMode?: FlowChatMode;
-    };
-};
-
-const FLOW_START_WORKFLOW_COMMAND = 'cybervinci.flow.startWorkflow';
-const FLOW_RUN_DYNAMIC_WORKFLOW_COMMAND = 'cybervinci.flow.runDynamicWorkflow';
 const IMAGE_CONTEXT_REF_REGEX = /#imageContext:(\S+)/g;
 
 interface PendingImageDisplayEntry {
@@ -110,16 +92,6 @@ interface PendingImageDisplayEntry {
     wsRelativePath?: string;
 }
 
-interface FlowChatCommandRequest {
-    commandId: string;
-    options: {
-        prompt: string;
-        workflowId?: string;
-        selectWorkflow?: boolean;
-        preferSaved?: boolean;
-    };
-}
-
 export const AIChatInputConfiguration = Symbol('AIChatInputConfiguration');
 export interface AIChatInputConfiguration {
     showContext?: boolean;
@@ -128,6 +100,19 @@ export interface AIChatInputConfiguration {
     showSuggestions?: boolean;
     showCapabilities?: boolean;
     enablePromptHistory?: boolean;
+}
+
+export const AIChatInputOptionsContribution = Symbol('AIChatInputOptionsContribution');
+export interface AIChatInputOptionsContribution {
+    render(context: AIChatInputOptionsContribution.Context): React.ReactNode;
+}
+export namespace AIChatInputOptionsContribution {
+    export interface Context {
+        chatModel: ChatModel;
+        pending: boolean;
+        enabled: boolean;
+        hoverService: HoverService;
+    }
 }
 
 @injectable()
@@ -230,6 +215,9 @@ export class AIChatInputWidget extends ReactWidget {
     @inject(CommandService)
     protected readonly commandService: CommandService;
 
+    @inject(ContributionProvider) @named(AIChatInputOptionsContribution) @optional()
+    protected readonly inputOptionsContributions: ContributionProvider<AIChatInputOptionsContribution> | undefined;
+
     protected tokenUsageEnabled = false;
     /** Sessions we have already notified for the current warning cycle (re-armed when usage drops below the threshold). */
     protected readonly notifiedSessions = new Set<string>();
@@ -304,6 +292,8 @@ export class AIChatInputWidget extends ReactWidget {
     protected currentReasoningSupport?: ReasoningSupport;
     /** Id (`provider/model`) of the model that backs {@link currentReasoningSupport}; used to resolve preference defaults. */
     protected currentLanguageModelId?: string;
+    /** Context window (max input tokens) of the receiving agent's primary model; falls back to {@link CHAT_CONTEXT_WINDOW_SIZE_FALLBACK} when unknown. */
+    protected currentMaxInputTokens?: number;
     /** Saved reasoning selection for the receiving agent (loaded from {@link AISettingsService}); kept in sync with the persisted value. */
     protected savedReasoning?: ReasoningSettings;
 
@@ -368,44 +358,27 @@ export class AIChatInputWidget extends ReactWidget {
         return mergeReasoningSettings(entries, modelId, providerId, this.receivingAgent?.agentId)?.reasoning?.level;
     }
 
-    protected handleVirtualReasoningChange = (mode: VirtualReasoningMode): void => {
-        this.applyVirtualReasoningToSession(mode === 'off' ? undefined : { enabled: true, mode });
-        this.update();
-    };
-
-    protected handleFlowChatModeChange = (mode: FlowChatMode): void => {
-        this.applyFlowChatModeToSession(mode);
-        this.update();
-    };
-
-    protected getCurrentFlowChatMode(): FlowChatMode {
-        const session = this.chatService.getSessions().find(s => s.model.id === this._chatModel?.id);
-        const settings = session?.model.settings as ChatSessionSettingsWithVirtualReasoning | undefined;
-        return normalizeFlowChatMode(settings?.flowMode ?? settings?.commonSettings?.flowMode);
-    }
-
-    protected getCurrentVirtualReasoningMode(): VirtualReasoningMode {
-        const session = this.chatService.getSessions().find(s => s.model.id === this._chatModel?.id);
-        const settings = session?.model.settings as ChatSessionSettingsWithVirtualReasoning | undefined;
-        const virtualReasoning = settings?.virtualReasoning ?? settings?.commonSettings?.virtualReasoning;
-        if (!virtualReasoning?.enabled) {
-            return 'off';
-        }
-        return normalizeVirtualReasoningMode(virtualReasoning.mode);
-    }
-
     protected async updateReasoningSupport(agentId: string | undefined): Promise<void> {
         let support: ReasoningSupport | undefined;
         let modelId: string | undefined;
+        let maxInputTokens: number | undefined;
         if (agentId) {
             const agent = this.chatAgentService.getAgent(agentId);
             if (agent) {
                 for (const requirement of agent.languageModelRequirements ?? []) {
                     try {
                         const model = await this.languageModelRegistry.selectLanguageModel({ agent: agent.id, ...requirement });
-                        if (model?.reasoningSupport) {
+                        if (!model) {
+                            continue;
+                        }
+                        if (maxInputTokens === undefined && model.maxInputTokens !== undefined) {
+                            maxInputTokens = model.maxInputTokens;
+                        }
+                        if (!support && model.reasoningSupport) {
                             support = model.reasoningSupport;
                             modelId = model.id;
+                        }
+                        if (support && maxInputTokens !== undefined) {
                             break;
                         }
                     } catch (error) {
@@ -414,9 +387,12 @@ export class AIChatInputWidget extends ReactWidget {
                 }
             }
         }
-        if (support !== this.currentReasoningSupport || modelId !== this.currentLanguageModelId) {
+        if (support !== this.currentReasoningSupport
+            || modelId !== this.currentLanguageModelId
+            || maxInputTokens !== this.currentMaxInputTokens) {
             this.currentReasoningSupport = support;
             this.currentLanguageModelId = modelId;
+            this.currentMaxInputTokens = maxInputTokens;
             this.update();
         }
     }
@@ -500,56 +476,6 @@ export class AIChatInputWidget extends ReactWidget {
             delete newCommon.reasoning;
         }
         (session.model as MutableChatModel).setSettings({ ...currentSettings, commonSettings: newCommon });
-    }
-
-    /** Updates the active chat session's Virtual Reasoning setting without exposing raw JSON to the user. */
-    protected applyVirtualReasoningToSession(virtualReasoning: VirtualReasoningSettings | undefined): void {
-        const session = this.chatService.getSessions().find(s => s.model.id === this._chatModel?.id);
-        if (!session) {
-            return;
-        }
-        const currentSettings = (session.model.settings ?? {}) as ChatSessionSettingsWithVirtualReasoning;
-        const currentVirtualReasoning = currentSettings.virtualReasoning ?? currentSettings.commonSettings?.virtualReasoning;
-        if (
-            (currentVirtualReasoning?.enabled ?? false) === (virtualReasoning?.enabled ?? false) &&
-            normalizeVirtualReasoningMode(currentVirtualReasoning?.mode) === normalizeVirtualReasoningMode(virtualReasoning?.mode)
-        ) {
-            return;
-        }
-        const newCommon = { ...(currentSettings.commonSettings ?? {}) } as NonNullable<ChatSessionSettingsWithVirtualReasoning['commonSettings']>;
-        const newSettings: ChatSessionSettingsWithVirtualReasoning = { ...currentSettings, commonSettings: newCommon };
-        if (virtualReasoning?.enabled) {
-            newSettings.virtualReasoning = { ...virtualReasoning };
-            newCommon.virtualReasoning = { ...virtualReasoning };
-        } else {
-            delete newSettings.virtualReasoning;
-            delete newCommon.virtualReasoning;
-        }
-        (session.model as MutableChatModel).setSettings(newSettings);
-    }
-
-    /** Updates the active chat session's Flow routing mode through a compact UI setting. */
-    protected applyFlowChatModeToSession(mode: FlowChatMode): void {
-        const session = this.chatService.getSessions().find(s => s.model.id === this._chatModel?.id);
-        if (!session) {
-            return;
-        }
-        const normalizedMode = normalizeFlowChatMode(mode);
-        const currentSettings = (session.model.settings ?? {}) as ChatSessionSettingsWithVirtualReasoning;
-        const currentMode = normalizeFlowChatMode(currentSettings.flowMode ?? currentSettings.commonSettings?.flowMode);
-        if (currentMode === normalizedMode) {
-            return;
-        }
-        const newCommon = { ...(currentSettings.commonSettings ?? {}) } as NonNullable<ChatSessionSettingsWithVirtualReasoning['commonSettings']>;
-        const newSettings: ChatSessionSettingsWithVirtualReasoning = { ...currentSettings, commonSettings: newCommon };
-        if (normalizedMode !== 'chat') {
-            newSettings.flowMode = normalizedMode;
-            newCommon.flowMode = normalizedMode;
-        } else {
-            delete newSettings.flowMode;
-            delete newCommon.flowMode;
-        }
-        (session.model as MutableChatModel).setSettings(newSettings);
     }
 
     protected async updateAvailableGenericCapabilities(): Promise<void> {
@@ -801,37 +727,6 @@ export class AIChatInputWidget extends ReactWidget {
     set onQuery(query: Query) {
         this._onQuery = async (prompt: string, mode?: string, capabilityOverrides?: Record<string, boolean>,
             genericCapabilitySelections?: GenericCapabilitySelections) => {
-            const flowCommand = this.parseFlowChatCommand(prompt);
-            if (flowCommand) {
-                if (this.configuration?.enablePromptHistory !== false && prompt.trim()) {
-                    this.historyService.addToHistory(prompt);
-                    this.navigationState.stopNavigation();
-                }
-                await this.commandService.executeCommand(flowCommand.commandId, flowCommand.options);
-                return;
-            }
-            if (prompt.trim().startsWith('/flow')) {
-                return;
-            }
-            const flowMode = this.getCurrentFlowChatMode();
-            if (flowMode !== 'chat' && prompt.trim()) {
-                if (this.configuration?.enablePromptHistory !== false) {
-                    this.historyService.addToHistory(prompt);
-                    this.navigationState.stopNavigation();
-                }
-                if (flowMode === 'dynamic') {
-                    await this.commandService.executeCommand(FLOW_RUN_DYNAMIC_WORKFLOW_COMMAND, {
-                        prompt: prompt.trim(),
-                        preferSaved: true
-                    });
-                } else {
-                    await this.commandService.executeCommand(FLOW_START_WORKFLOW_COMMAND, {
-                        prompt: prompt.trim(),
-                        selectWorkflow: true
-                    });
-                }
-                return;
-            }
             if (this.configuration?.enablePromptHistory !== false && prompt.trim()) {
                 this.historyService.addToHistory(prompt);
                 this.navigationState.stopNavigation();
@@ -842,39 +737,6 @@ export class AIChatInputWidget extends ReactWidget {
             } finally {
                 this.queryInFlight = false;
             }
-        };
-    }
-
-    protected parseFlowChatCommand(prompt: string): FlowChatCommandRequest | undefined {
-        const trimmed = prompt.trim();
-        if (!trimmed.startsWith('/flow')) {
-            return undefined;
-        }
-        const dynamicMatch = trimmed.match(/^\/flow(?:-dynamic|\s+dynamic)\s+([\s\S]+)$/i);
-        const dynamicPrompt = dynamicMatch?.[1]?.trim();
-        if (dynamicPrompt) {
-            return {
-                commandId: FLOW_RUN_DYNAMIC_WORKFLOW_COMMAND,
-                options: {
-                    prompt: dynamicPrompt,
-                    preferSaved: true
-                }
-            };
-        }
-        const manualMatch = trimmed.match(/^\/flow\s+([\s\S]+)$/i);
-        const manualBody = manualMatch?.[1]?.trim();
-        if (!manualBody) {
-            this.messageService.warn('Use /flow <prompt> or /flow-dynamic <prompt>. For a specific saved workflow, use /flow <workflowId>: <prompt>.');
-            return undefined;
-        }
-        const workflowMatch = manualBody.match(/^([a-zA-Z0-9_.-]+)\s*:\s+([\s\S]+)$/);
-        const workflowId = workflowMatch?.[1]?.trim();
-        const workflowPrompt = workflowMatch?.[2]?.trim();
-        return {
-            commandId: FLOW_START_WORKFLOW_COMMAND,
-            options: workflowId && workflowPrompt
-                ? { workflowId, prompt: workflowPrompt }
-                : { prompt: manualBody, selectWorkflow: true }
         };
     }
     protected _onUnpin: Unpin;
@@ -1106,14 +968,14 @@ export class AIChatInputWidget extends ReactWidget {
         this.chatInputLastLineKey.set(isLastVisualOverall);
     }
 
-    /**
-     * Resolve the configured token usage warning threshold as an absolute token count.
-     * The preference is stored as a percentage of the context window; this method
-     * converts it using the current assumed context window size.
-     */
+    protected getContextWindowSize(): number {
+        return this.currentMaxInputTokens ?? CHAT_CONTEXT_WINDOW_SIZE_FALLBACK;
+    }
+
+    /** Converts the percentage-based preference to an absolute token count. */
     protected getTokenUsageWarningThreshold(): number {
         const percentage = this.getTokenUsageWarningThresholdPercentage();
-        return Math.round((percentage / 100) * CHAT_CONTEXT_WINDOW_SIZE);
+        return Math.round((percentage / 100) * this.getContextWindowSize());
     }
 
     protected getTokenUsageWarningThresholdPercentage(): number {
@@ -1435,6 +1297,27 @@ export class AIChatInputWidget extends ReactWidget {
         const isEditing = !!(currentRequest && (EditableChatRequestModel.isEditing(currentRequest)));
         const isPending = () => !!(currentRequest && !isEditing && ChatRequestModel.isInProgress(currentRequest));
         const pending = isPending();
+        const seenContributionKeys = new Set<React.Key>();
+        const contributedOptions = this.inputOptionsContributions?.getContributions(true)
+            .map(contribution => contribution.render({
+                chatModel: this._chatModel,
+                pending,
+                enabled: this.isEnabled,
+                hoverService: this.hoverService
+            }))
+            .filter((element): element is React.ReactNode => {
+                if (element === undefined || element === null || element === false) {
+                    return false;
+                }
+                if (!React.isValidElement(element) || element.key === null) {
+                    return true;
+                }
+                if (seenContributionKeys.has(element.key)) {
+                    return false;
+                }
+                seenContributionKeys.add(element.key);
+                return true;
+            }) ?? [];
 
         return (
             <ChatInput
@@ -1489,6 +1372,7 @@ export class AIChatInputWidget extends ReactWidget {
                 }}
                 onResize={() => this.onDidResizeEmitter.fire()}
                 hoverService={this.hoverService}
+                contributedOptions={contributedOptions}
                 modeSelectorProps={{
                     receivingAgentModes: this.receivingAgent?.modes,
                     currentMode: this.receivingAgent?.currentModeId,
@@ -1499,14 +1383,6 @@ export class AIChatInputWidget extends ReactWidget {
                     reasoningSupport: this.currentReasoningSupport,
                     currentLevel: this.getCurrentReasoningLevel(),
                     onReasoningChange: this.handleReasoningChange,
-                }}
-                flowModeSelectorProps={{
-                    currentMode: this.getCurrentFlowChatMode(),
-                    onFlowModeChange: this.handleFlowChatModeChange,
-                }}
-                virtualReasoningSelectorProps={{
-                    currentMode: this.getCurrentVirtualReasoningMode(),
-                    onVirtualReasoningChange: this.handleVirtualReasoningChange,
                 }}
                 capabilitiesProps={{
                     capabilities: this.capabilityDefaults,
@@ -1528,6 +1404,7 @@ export class AIChatInputWidget extends ReactWidget {
                 }}
                 tokenUsageEnabled={this.tokenUsageEnabled}
                 tokenUsageWarningThreshold={this.getTokenUsageWarningThreshold()}
+                contextWindowSize={this.getContextWindowSize()}
                 pendingImages={this.getPendingImagesForDisplay()}
                 onRemovePendingImage={this.removePendingImage.bind(this)}
             />
@@ -1925,6 +1802,7 @@ interface ChatInputProperties {
     onResponseChanged: () => void;
     onResize: () => void;
     hoverService: HoverService;
+    contributedOptions?: React.ReactNode[];
     modeSelectorProps: {
         receivingAgentModes?: ChatMode[];
         currentMode?: string;
@@ -1935,14 +1813,6 @@ interface ChatInputProperties {
         reasoningSupport?: ReasoningSupport;
         currentLevel?: ReasoningLevel;
         onReasoningChange: (level: ReasoningLevel) => void;
-    };
-    flowModeSelectorProps: {
-        currentMode: FlowChatMode;
-        onFlowModeChange: (mode: FlowChatMode) => void;
-    };
-    virtualReasoningSelectorProps: {
-        currentMode: VirtualReasoningMode;
-        onVirtualReasoningChange: (mode: VirtualReasoningMode) => void;
     };
     capabilitiesProps: {
         capabilities: ParsedCapability[];
@@ -1964,6 +1834,7 @@ interface ChatInputProperties {
     };
     tokenUsageEnabled?: boolean;
     tokenUsageWarningThreshold: number;
+    contextWindowSize: number;
     pendingImages?: PendingImageDisplayEntry[];
     onRemovePendingImage?: (shortId: string) => void;
 }
@@ -2343,7 +2214,9 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
             : []),
         ...(props.showPinnedAgent
             ? [{
-                title: props.pinnedAgent ? nls.localize('theia/ai/chat-ui/unpinAgent', 'Unpin Agent') : nls.localizeByDefault('Agent'),
+                title: props.pinnedAgent
+                    ? nls.localize('theia/ai/chat-ui/unpinChatAgent', 'Unpin chat agent')
+                    : nls.localize('theia/ai/chat-ui/mentionChatAgent', 'Mention or pin a chat agent'),
                 handler: props.pinnedAgent ? props.onUnpin : handlePin,
                 className: 'codicon-mention',
                 disabled: !props.isEnabled,
@@ -2366,16 +2239,18 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
     }, [latestRequest, onResponseChanged]);
     const hasPendingImages = (props.pendingImages?.length ?? 0) > 0;
     const canSend = !isInputEmpty || hasPendingImages;
+    const sendDisabled = (!canSend && !shouldUseTaskPlaceholder) || !props.isEnabled;
+    const sendIcon = 'codicon-send';
     if (isEditing) {
         rightOptions = [{
             title: nls.localize('theia/ai/chat-ui/send', 'Send (Enter)'),
             handler: () => {
-                if (props.isEnabled) {
+                if (!sendDisabled) {
                     submit(editorRef.current?.document.textEditorModel.getValue() || '');
                 }
             },
-            className: 'codicon-send',
-            disabled: (!canSend && !shouldUseTaskPlaceholder) || !props.isEnabled
+            className: sendIcon,
+            disabled: sendDisabled
         }];
     } else if (pending) {
         rightOptions = [{
@@ -2391,12 +2266,12 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
         rightOptions = [{
             title: nls.localize('theia/ai/chat-ui/send', 'Send (Enter)'),
             handler: () => {
-                if (props.isEnabled) {
+                if (!sendDisabled) {
                     submit(editorRef.current?.document.textEditorModel.getValue() || '');
                 }
             },
-            className: 'codicon-send',
-            disabled: (!canSend && !shouldUseTaskPlaceholder) || !props.isEnabled
+            className: sendIcon,
+            disabled: sendDisabled
         }];
     }
 
@@ -2408,9 +2283,11 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
     // Token usage computation (cheap pure function walking the model's request list)
     const totalTokens = props.tokenUsageEnabled ? computeSessionTokenUsage(props.chatModel) : 0;
     const showTokenUsage = props.tokenUsageEnabled && totalTokens > 0;
-    const tokenColorClass = showTokenUsage ? getUsageColorClass(totalTokens, props.tokenUsageWarningThreshold) : '';
+    const tokenColorClass = showTokenUsage ? getUsageColorClass(totalTokens, props.tokenUsageWarningThreshold, props.contextWindowSize) : '';
     const tokenIsWarningOrError = tokenColorClass === 'token-usage-yellow' || tokenColorClass === 'token-usage-red';
-    const tokenTooltip = showTokenUsage ? buildBarTooltip(getLatestTokenUsage(props.chatModel), totalTokens, props.tokenUsageWarningThreshold) : undefined;
+    const tokenTooltip = showTokenUsage
+        ? buildBarTooltip(getLatestTokenUsage(props.chatModel), totalTokens, props.tokenUsageWarningThreshold, props.contextWindowSize)
+        : undefined;
 
         return (
         <div className="theia-ChatInput" data-ai-disabled={!props.isEnabled} onDragOver={props.onDragOver} onDrop={props.onDrop} ref={containerRef}>
@@ -2454,7 +2331,7 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
                     isEnabled={props.isEnabled}
                     hoverService={props.hoverService}
                     tokenUsage={showTokenUsage ? {
-                        percent: Math.min((totalTokens / CHAT_CONTEXT_WINDOW_SIZE) * 100, 100),
+                        percent: Math.min((totalTokens / props.contextWindowSize) * 100, 100),
                         colorClass: tokenColorClass,
                         tooltip: tokenTooltip,
                     } : undefined}
@@ -2471,16 +2348,6 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
                         currentLevel: props.reasoningSelectorProps.currentLevel,
                         onReasoningChange: props.reasoningSelectorProps.onReasoningChange,
                     }}
-                    flowModeSelectorProps={{
-                        show: true,
-                        currentMode: props.flowModeSelectorProps.currentMode,
-                        onFlowModeChange: props.flowModeSelectorProps.onFlowModeChange,
-                    }}
-                    virtualReasoningSelectorProps={{
-                        show: true,
-                        currentMode: props.virtualReasoningSelectorProps.currentMode,
-                        onVirtualReasoningChange: props.virtualReasoningSelectorProps.onVirtualReasoningChange,
-                    }}
                     capabilitiesToggle={{
                         show: props.showCapabilities !== false,
                         isOpen: props.capabilitiesProps.isOpen,
@@ -2490,6 +2357,7 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
                         onToggle: props.capabilitiesProps.onToggle,
                         keybindingHint: props.capabilitiesProps.keybindingHint,
                     }}
+                    contributedOptions={props.contributedOptions}
                 />
             </div>
         </div>
@@ -2514,6 +2382,7 @@ interface ChatInputOptionsProps {
     rightOptions: Option[];
     isEnabled?: boolean;
     hoverService: HoverService;
+    contributedOptions?: React.ReactNode[];
     tokenUsage?: {
         percent: number;
         colorClass: string;
@@ -2532,16 +2401,6 @@ interface ChatInputOptionsProps {
         currentLevel?: ReasoningLevel;
         onReasoningChange: (level: ReasoningLevel) => void;
     };
-    flowModeSelectorProps: {
-        show: boolean;
-        currentMode: FlowChatMode;
-        onFlowModeChange: (mode: FlowChatMode) => void;
-    };
-    virtualReasoningSelectorProps: {
-        show: boolean;
-        currentMode: VirtualReasoningMode;
-        onVirtualReasoningChange: (mode: VirtualReasoningMode) => void;
-    };
     capabilitiesToggle: {
         show: boolean;
         isOpen: boolean;
@@ -2557,11 +2416,10 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
     rightOptions,
     isEnabled,
     hoverService,
+    contributedOptions,
     tokenUsage,
     modeSelectorProps,
     reasoningSelectorProps,
-    flowModeSelectorProps,
-    virtualReasoningSelectorProps,
     capabilitiesToggle
 }) => {
     const capabilitiesLabel = nls.localize('theia/ai/chat-ui/toggleCapabilitiesConfig', 'Toggle Capabilities Configuration');
@@ -2598,22 +2456,6 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
                         hoverService={hoverService}
                     />
                 )}
-                {flowModeSelectorProps.show && (
-                    <FlowModeSelector
-                        currentMode={flowModeSelectorProps.currentMode}
-                        onFlowModeChange={flowModeSelectorProps.onFlowModeChange}
-                        disabled={!isEnabled}
-                        hoverService={hoverService}
-                    />
-                )}
-                {virtualReasoningSelectorProps.show && (
-                    <VirtualReasoningSelector
-                        currentMode={virtualReasoningSelectorProps.currentMode}
-                        onVirtualReasoningChange={virtualReasoningSelectorProps.onVirtualReasoningChange}
-                        disabled={!isEnabled}
-                        hoverService={hoverService}
-                    />
-                )}
                 {rightOptions.map((option, index) => (
                     <span
                         key={index}
@@ -2636,6 +2478,7 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
                 ))}
             </div>
             <div className="theia-ChatInputOptions-left">
+                {contributedOptions}
                 {leftOptions.map((option, index) => (
                     <span
                         key={index}
@@ -2657,14 +2500,16 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
                     </span>
                 ))}
                 {modeSelectorProps.show && modeSelectorProps.modes && (
-                    <ChatModeSelector
-                        modes={modeSelectorProps.modes}
-                        currentMode={modeSelectorProps.currentMode}
-                        onModeChange={modeSelectorProps.onModeChange}
-                        disabled={!isEnabled}
-                        keybindingHint={modeSelectorProps.keybindingHint}
-                        hoverService={hoverService}
-                    />
+                    <span className='theia-ChatInputOptions-mode-selector-wrapper'>
+                        <ChatModeSelector
+                            modes={modeSelectorProps.modes}
+                            currentMode={modeSelectorProps.currentMode}
+                            onModeChange={modeSelectorProps.onModeChange}
+                            disabled={!isEnabled}
+                            keybindingHint={modeSelectorProps.keybindingHint}
+                            hoverService={hoverService}
+                        />
+                    </span>
                 )}
                 {capabilitiesToggle.show && (
                     <span
@@ -2853,27 +2698,13 @@ interface ReasoningSelectorProps {
     hoverService: HoverService;
 }
 
-interface VirtualReasoningSelectorProps {
-    currentMode: VirtualReasoningMode;
-    onVirtualReasoningChange: (mode: VirtualReasoningMode) => void;
-    disabled?: boolean;
-    hoverService: HoverService;
-}
-
-interface FlowModeSelectorProps {
-    currentMode: FlowChatMode;
-    onFlowModeChange: (mode: FlowChatMode) => void;
-    disabled?: boolean;
-    hoverService: HoverService;
-}
-
 const reasoningLevelLabel = (level: ReasoningLevel): string => {
     switch (level) {
         case 'off': return nls.localizeByDefault('Off');
         case 'minimal': return nls.localize('theia/ai/chat-ui/reasoning/minimal', 'Minimal');
-        case 'low': return nls.localize('theia/ai/chat-ui/reasoning/low', 'Low');
-        case 'medium': return nls.localize('theia/ai/chat-ui/reasoning/medium', 'Medium');
-        case 'high': return nls.localize('theia/ai/chat-ui/reasoning/high', 'High');
+        case 'low': return nls.localizeByDefault('Low');
+        case 'medium': return nls.localizeByDefault('Medium');
+        case 'high': return nls.localizeByDefault('High');
         case 'auto': return nls.localizeByDefault('Auto');
     }
 };
@@ -2909,104 +2740,6 @@ const ReasoningSelector: React.FunctionComponent<ReasoningSelectorProps> = React
         </span>
     );
 });
-
-const VIRTUAL_REASONING_MODE_OPTIONS: SelectOption[] = [
-    { value: 'auto', label: nls.localizeByDefault('Auto') },
-    { value: 'fast', label: nls.localize('theia/ai/chat-ui/virtualReasoning/fast', 'Fast') },
-    { value: 'balanced', label: nls.localize('theia/ai/chat-ui/virtualReasoning/balanced', 'Balanced') },
-    { value: 'deep', label: nls.localize('theia/ai/chat-ui/virtualReasoning/deep', 'Deep') },
-    { value: 'coding', label: nls.localize('theia/ai/chat-ui/virtualReasoning/coding', 'Coding') },
-    { value: 'research', label: nls.localize('theia/ai/chat-ui/virtualReasoning/research', 'Research') },
-    { value: 'lats', label: nls.localize('theia/ai/chat-ui/virtualReasoning/lats', 'LATS') }
-];
-
-const FLOW_MODE_OPTIONS: SelectOption[] = [
-    { value: 'chat', label: nls.localize('theia/ai/chat-ui/flowMode/chat', 'Chat') },
-    { value: 'saved', label: nls.localize('theia/ai/chat-ui/flowMode/saved', 'Saved Flow') },
-    { value: 'dynamic', label: nls.localize('theia/ai/chat-ui/flowMode/dynamic', 'Dynamic Flow') }
-];
-
-const FlowModeSelector: React.FunctionComponent<FlowModeSelectorProps> = React.memo(({
-    currentMode, onFlowModeChange, disabled, hoverService
-}) => {
-    const effectiveMode = normalizeFlowChatMode(currentMode);
-    const handleChange = React.useCallback(
-        (option: SelectOption) => onFlowModeChange(normalizeFlowChatMode(option.value)),
-        [onFlowModeChange]
-    );
-    const title = nls.localize('theia/ai/chat-ui/flowMode/title', 'Workflow routing');
-
-    return (
-        <span onMouseEnter={hoverHandler(hoverService, title)}>
-            <SelectComponent
-                className={`theia-ChatInput-FlowModeSelector flow-mode-${effectiveMode}${disabled ? ' disabled' : ''}`}
-                options={FLOW_MODE_OPTIONS}
-                defaultValue={effectiveMode}
-                onChange={handleChange}
-            />
-        </span>
-    );
-});
-
-const VirtualReasoningSelector: React.FunctionComponent<VirtualReasoningSelectorProps> = React.memo(({
-    currentMode, onVirtualReasoningChange, disabled, hoverService
-}) => {
-    const effectiveMode = normalizeVirtualReasoningMode(currentMode);
-    const enabled = effectiveMode !== 'off';
-    const handleChange = React.useCallback(
-        (option: SelectOption) => onVirtualReasoningChange(normalizeVirtualReasoningMode(option.value)),
-        [onVirtualReasoningChange]
-    );
-    const handleToggle = React.useCallback(() => {
-        if (!disabled) {
-            onVirtualReasoningChange(enabled ? 'off' : 'auto');
-        }
-    }, [disabled, enabled, onVirtualReasoningChange]);
-    const title = nls.localize('theia/ai/chat-ui/virtualReasoning/title', 'Virtual Reasoning');
-    const toggleTitle = enabled
-        ? nls.localize('theia/ai/chat-ui/virtualReasoning/disable', 'Disable Virtual Reasoning')
-        : nls.localize('theia/ai/chat-ui/virtualReasoning/enable', 'Enable Virtual Reasoning');
-
-    return (
-        <span className={`theia-ChatInput-VirtualReasoningControl virtual-reasoning-${effectiveMode}${disabled ? ' disabled' : ''}`}>
-            <span
-                className={`option theia-ChatInput-VirtualReasoningToggle${enabled ? ' toggled' : ''}${disabled ? ' disabled' : ''}`}
-                aria-label={toggleTitle}
-                aria-pressed={enabled}
-                role='button'
-                tabIndex={disabled ? -1 : 0}
-                onClick={handleToggle}
-                onMouseEnter={hoverHandler(hoverService, toggleTitle)}
-                onKeyDown={event => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        handleToggle();
-                    }
-                }}
-            >
-                <span className='codicon codicon-lightbulb' />
-            </span>
-            {enabled && (
-                <span onMouseEnter={hoverHandler(hoverService, title)}>
-                    <SelectComponent
-                        className={`theia-ChatInput-VirtualReasoningSelector virtual-reasoning-${effectiveMode}${disabled ? ' disabled' : ''}`}
-                        options={VIRTUAL_REASONING_MODE_OPTIONS}
-                        defaultValue={effectiveMode}
-                        onChange={handleChange}
-                    />
-                </span>
-            )}
-        </span>
-    );
-});
-
-function normalizeFlowChatMode(value: unknown): FlowChatMode {
-    return value === 'saved' || value === 'dynamic' ? value : 'chat';
-}
-
-function normalizeVirtualReasoningMode(value: unknown): VirtualReasoningMode {
-    return value === 'auto' || value === 'fast' || value === 'balanced' || value === 'deep' || value === 'coding' || value === 'research' || value === 'lats' ? value : 'off';
-}
 
 const noPropagation = (handler: () => void) => (e: React.MouseEvent) => {
     handler();
@@ -3205,10 +2938,7 @@ function buildContextUI(
                 // Use the path directly as the key (same as storage)
                 const validationResult = fileValidationState.get(element.arg);
                 if (validationResult) {
-                    if ((validationResult.state as string) === 'invalid-secondary') {
-                        className = 'warning-file';
-                        validationMessage = validationResult.message;
-                    } else if (validationResult.state === FileValidationState.INVALID_NOT_FOUND) {
+                    if (validationResult.state === FileValidationState.INVALID_NOT_FOUND) {
                         className = 'invalid-file';
                         validationMessage = validationResult.message;
                     }

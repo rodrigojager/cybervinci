@@ -12,6 +12,14 @@ export class RazorVisualAiService {
     @inject(WorkspaceService)
     protected readonly workspaceService: WorkspaceService;
 
+    getRuntimeService(): CyberVinciAiRuntimeService | undefined {
+        return this.aiRuntime;
+    }
+
+    async getWorkspaceRootPath(): Promise<string | undefined> {
+        return this.getWorkspaceRoot();
+    }
+
     async listProviders(): Promise<VisualAiProviderDescriptor[]> {
         if (!this.aiRuntime) {
             return [{
@@ -57,10 +65,10 @@ export class RazorVisualAiService {
                 tokenBudget: 1200
             },
             output: {
-                mode: 'json',
+                mode: 'text',
                 schemaName: 'CyberVinciVisualAiResult',
                 schema: VISUAL_AI_RESULT_SCHEMA,
-                instructions: 'Return the complete processed HTML and optional complete GrapesJS CSS for preview application.'
+                instructions: 'Return exactly one JSON object matching the schema. Do not use Markdown fences, comments, explanations, or trailing text.'
             },
             effectPolicy: {
                 previewOnly: true,
@@ -69,10 +77,10 @@ export class RazorVisualAiService {
                 requireUserConfirmation: true
             },
             execution: {
-                providerId: request.providerId,
-                model: normalizedModel(request.model),
-                reasoningPolicy: request.reasoningPolicy ?? 'auto',
-                reasoningEffort: request.reasoningEffort ?? 'medium',
+                ...request.execution,
+                model: normalizedModel(request.execution.model),
+                reasoningPolicy: request.execution.reasoningPolicy ?? 'auto',
+                reasoningEffort: request.execution.reasoningEffort ?? 'medium',
                 approvalPolicy: 'never',
                 sandboxMode: 'read-only',
                 collaborationMode: 'default',
@@ -94,6 +102,8 @@ export class RazorVisualAiService {
 const VISUAL_AI_SYSTEM_PROMPT = [
     'You are CyberVinci Visual AI for a GrapesJS HTML/Razor visual editor.',
     'Modify only the visual canvas HTML and optional GrapesJS CSS requested by the user.',
+    'If input.selectedElement is present, treat it as the default target and closest context for the edit unless the user explicitly asks for a broader page change.',
+    'If input.selectedElement is absent, do not assume a clicked element target.',
     'Do not execute Razor. Do not run shell commands. Do not edit files. Do not save anything.',
     'Razor placeholders are locked. Preserve every element with data-cv-razor-token exactly once, including all data-cv-* attributes.'
 ].join('\n');
@@ -160,15 +170,72 @@ function buildVisualAiPromptPayload(request: VisualAiRunRequest): VisualAiPrompt
 }
 
 function coerceVisualAiResult(parsed: unknown, rawText: string): VisualAiRunResult {
-    if (!isRecord(parsed) || typeof parsed.html !== 'string') {
+    const candidate = isRecord(parsed) ? parsed : parseVisualAiResult(rawText);
+    if (!isRecord(candidate) || typeof candidate.html !== 'string') {
         throw new Error(`Visual AI response must include an "html" string. Response: ${rawText.slice(0, 500)}`);
     }
     return {
-        html: parsed.html,
-        css: typeof parsed.css === 'string' ? parsed.css : undefined,
-        summary: typeof parsed.summary === 'string' ? parsed.summary : 'Visual AI changes applied.',
-        warnings: Array.isArray(parsed.warnings) ? parsed.warnings.map(String) : []
+        html: candidate.html,
+        css: typeof candidate.css === 'string' ? candidate.css : undefined,
+        summary: typeof candidate.summary === 'string' ? candidate.summary : 'Visual AI changes applied.',
+        warnings: Array.isArray(candidate.warnings) ? candidate.warnings.map(String) : []
     };
+}
+
+function parseVisualAiResult(rawText: string): unknown {
+    const text = stripMarkdownFence(rawText.trim());
+    const attempts = [
+        text,
+        extractFirstJsonObject(text)
+    ].filter((candidate): candidate is string => !!candidate);
+    const errors: string[] = [];
+    for (const attempt of attempts) {
+        try {
+            return JSON.parse(attempt);
+        } catch (error) {
+            errors.push(error instanceof Error ? error.message : String(error));
+        }
+    }
+    throw new Error(`Visual AI returned invalid JSON. ${errors[0] ?? 'No JSON object found.'}`);
+}
+
+function stripMarkdownFence(text: string): string {
+    const fenceMatch = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+    return fenceMatch ? fenceMatch[1].trim() : text;
+}
+
+function extractFirstJsonObject(text: string): string | undefined {
+    const start = text.indexOf('{');
+    if (start < 0) {
+        return undefined;
+    }
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+    for (let index = start; index < text.length; index++) {
+        const char = text[index];
+        if (inString) {
+            if (escaped) {
+                escaped = false;
+            } else if (char === '\\') {
+                escaped = true;
+            } else if (char === '"') {
+                inString = false;
+            }
+            continue;
+        }
+        if (char === '"') {
+            inString = true;
+        } else if (char === '{') {
+            depth++;
+        } else if (char === '}') {
+            depth--;
+            if (depth === 0) {
+                return text.slice(start, index + 1);
+            }
+        }
+    }
+    return undefined;
 }
 
 function validateVisualAiResult(result: VisualAiRunResult, request: VisualAiRunRequest): void {

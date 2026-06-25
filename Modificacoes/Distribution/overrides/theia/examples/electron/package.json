@@ -68,6 +68,7 @@
     "@theia/core": "1.72.0",
     "@cybervinci/branding": "1.72.0",
     "@cybervinci/ai-output-cleaner": "1.72.0",
+    "@cybervinci/markdown-mermaid-preview": "1.72.0",
     "@theia/debug": "1.72.0",
     "@theia/dev-container": "1.72.0",
     "@theia/editor": "1.72.0",

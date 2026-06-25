@@ -763,7 +763,7 @@ const palettes: ThemePalette[] = [
             'notificationCenterHeader.foreground': '#cccccc',
             'notifications.background': '#1f1f1f',
             'notifications.border': '#2b2b2b',
-            'notifications.foreground': '#cccccc',
+            'notifications.foreground': '#f8fafc',
             'panel.background': '#181818',
             'panel.border': '#2b2b2b',
             'panelInput.border': '#2b2b2b',

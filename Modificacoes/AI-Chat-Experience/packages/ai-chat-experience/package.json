@@ -1,0 +1,74 @@
+{
+  "name": "@cybervinci/ai-chat-experience",
+  "version": "1.72.0",
+  "description": "CyberVinci AI Chat experience override for Theia",
+  "dependencies": {
+    "@cybervinci/ai-providers": "1.72.0",
+    "@cybervinci/ai-runtime": "1.72.0",
+    "@cybervinci/flow": "1.72.0",
+    "@cybervinci/memory": "1.72.0",
+    "@cybervinci/openpencil-extension": "1.72.0",
+    "@theia/ai-chat": "1.72.0",
+    "@theia/ai-core": "1.72.0",
+    "@theia/ai-chat-ui": "1.72.0",
+    "@theia/core": "1.72.0",
+    "@theia/filesystem": "1.72.0",
+    "@theia/workspace": "1.72.0",
+    "js-yaml": "^4.1.1",
+    "tslib": "^2.8.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "theiaExtensions": [
+    {
+      "frontend": "lib/browser/cybervinci-ai-chat-experience-frontend-module",
+      "backend": "lib/node/cybervinci-ai-chat-experience-backend-module"
+    }
+  ],
+  "keywords": [
+    "theia-extension"
+  ],
+  "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eclipse-theia/theia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eclipse-theia/theia/issues"
+  },
+  "homepage": "https://github.com/eclipse-theia/theia",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "theiaext build",
+    "clean": "theiaext clean",
+    "compile": "theiaext compile",
+    "lint": "theiaext lint",
+    "test:catalog": "node scripts/check-catalog-smoke.js",
+    "test:catalog-service": "node scripts/check-catalog-service-smoke.js",
+    "test:canvas-design-qa": "node scripts/check-canvas-design-qa-smoke.js",
+    "test:input-routing": "node scripts/check-chat-input-routing-smoke.js",
+    "test:flow-playbook-runner": "node scripts/check-flow-playbook-runner-smoke.js",
+    "test:multi-agent-playbook": "node scripts/check-multi-agent-playbook-smoke.js",
+    "test:native-agent-execution": "node scripts/check-native-agent-execution-smoke.js",
+    "test:redaction": "node scripts/check-secret-redaction-smoke.js",
+    "test:runtime-agents": "node scripts/check-runtime-agent-overlay-smoke.js",
+    "test:runtime": "node scripts/check-playbook-runtime-smoke.js",
+    "test:tools": "node scripts/check-tool-registry-smoke.js",
+    "test:virtual-goal": "node scripts/check-virtual-goal-smoke.js",
+    "test:ui-chat": "node scripts/check-ai-chat-ui-smoke.js",
+    "test:ui-flow-playbook": "node scripts/check-ai-chat-ui-smoke.js --flow-playbook",
+    "test:overlay-sync": "node scripts/check-overlay-sync.js",
+    "test": "theiaext test",
+    "watch": "theiaext watch"
+  },
+  "devDependencies": {
+    "@theia/ext-scripts": "1.72.0"
+  },
+  "nyc": {
+    "extends": "../../configs/nyc.json"
+  }
+}

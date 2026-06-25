@@ -172,7 +172,9 @@ describe('SimulatedFlowKernelBridge', function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    bridge = new flow_kernel_bridge_1.SimulatedFlowKernelBridge();
+                    bridge = new flow_kernel_bridge_1.SimulatedFlowKernelBridge(new StateMappedMockLlmExecutor({
+                        review: [workloadOutput('completed', 'Review ready.', [{ path: 'report.md', content: 'Review ready.' }])]
+                    }));
                     workflow = sampleWorkflow();
                     return [4 /*yield*/, bridge.startRun(workflow, 'review this', 'empty context')];
                 case 1:
@@ -531,6 +533,56 @@ describe('FlowKernelBridge external transport', function () {
                         setEnv('FLOW_KERNEL_MODE', previousMode);
                         return [7 /*endfinally*/];
                     case 6: return [2 /*return*/];
+                }
+            });
+        });
+    });
+    it('auto-detecta o Flow Kernel Go local a partir do cwd aninhado do app', function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var repositoryRoot, kernelMain, nestedAppCwd, previousCwd, previousEndpoint, previousCli, previousMode, bridge, _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        this.timeout(20000);
+                        repositoryRoot = path.resolve(__dirname, '..', '..', '..', '..');
+                        kernelMain = path.join(repositoryRoot, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
+                        nestedAppCwd = path.join(repositoryRoot, 'examples', 'browser');
+                        previousCwd = process.cwd();
+                        previousEndpoint = process.env.FLOW_KERNEL_HTTP;
+                        previousCli = process.env.FLOW_KERNEL_CLI;
+                        previousMode = process.env.FLOW_KERNEL_MODE;
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, , 6, 8]);
+                        return [4 /*yield*/, fs.access(kernelMain)];
+                    case 2:
+                        _b.sent();
+                        return [4 /*yield*/, fs.access(nestedAppCwd)];
+                    case 3:
+                        _b.sent();
+                        process.chdir(nestedAppCwd);
+                        setEnv('FLOW_KERNEL_HTTP', undefined);
+                        setEnv('FLOW_KERNEL_CLI', undefined);
+                        process.env.FLOW_KERNEL_MODE = 'external';
+                        bridge = new flow_kernel_bridge_1.ExternalFlowKernelBridge();
+                        (0, chai_1.expect)(bridge.available()).to.equal(true);
+                        return [4 /*yield*/, bridge.checkKernelHealth()];
+                    case 4:
+                        _b.sent();
+                        _a = chai_1.expect;
+                        return [4 /*yield*/, bridge.getBridgeMode()];
+                    case 5:
+                        _a.apply(void 0, [_b.sent()]).to.equal('external');
+                        return [3 /*break*/, 8];
+                    case 6: return [4 /*yield*/, (bridge === null || bridge === void 0 ? void 0 : bridge.shutdownKernelProcess())];
+                    case 7:
+                        _b.sent();
+                        process.chdir(previousCwd);
+                        setEnv('FLOW_KERNEL_HTTP', previousEndpoint);
+                        setEnv('FLOW_KERNEL_CLI', previousCli);
+                        setEnv('FLOW_KERNEL_MODE', previousMode);
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         });

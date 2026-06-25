@@ -1,4 +1,19 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -51,6 +66,16 @@ var os = require("os");
 var path = require("path");
 var file_uri_1 = require("@theia/core/lib/common/file-uri");
 var agent_markdown_store_1 = require("./agent-markdown-store");
+var WorkspaceOnlyAgentMarkdownStore = /** @class */ (function (_super) {
+    __extends(WorkspaceOnlyAgentMarkdownStore, _super);
+    function WorkspaceOnlyAgentMarkdownStore() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    WorkspaceOnlyAgentMarkdownStore.prototype.listCatalogAgents = function () {
+        return Promise.resolve([]);
+    };
+    return WorkspaceOnlyAgentMarkdownStore;
+}(agent_markdown_store_1.AgentMarkdownStore));
 describe('AgentMarkdownStore', function () {
     var tempDir;
     var workspaceRootUri;
@@ -62,7 +87,7 @@ describe('AgentMarkdownStore', function () {
                 case 1:
                     tempDir = _a.sent();
                     workspaceRootUri = file_uri_1.FileUri.create(tempDir).toString();
-                    store = new agent_markdown_store_1.AgentMarkdownStore();
+                    store = new WorkspaceOnlyAgentMarkdownStore();
                     return [2 /*return*/];
             }
         });

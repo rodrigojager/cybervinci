@@ -802,9 +802,7 @@ div:last-child>.theia-ChatNode {
 
 /* Mode and reasoning selectors - compact SelectComponents inside toolbar */
 .theia-ChatInput-ModeSelector.theia-select-component,
-.theia-ChatInput-ReasoningSelector.theia-select-component,
-.theia-ChatInput-FlowModeSelector.theia-select-component,
-.theia-ChatInput-VirtualReasoningSelector.theia-select-component {
+.theia-ChatInput-ReasoningSelector.theia-select-component {
   min-width: unset;
   min-height: unset;
   height: calc(var(--theia-icon-size) + var(--theia-ui-padding) - 1px);
@@ -820,39 +818,29 @@ div:last-child>.theia-ChatNode {
 }
 
 /* Anchor for the off-level slash overlay drawn via ::after. */
-.theia-ChatInput-ReasoningSelector.theia-select-component,
-.theia-ChatInput-FlowModeSelector.theia-select-component,
-.theia-ChatInput-VirtualReasoningSelector.theia-select-component {
+.theia-ChatInput-ReasoningSelector.theia-select-component {
   position: relative;
 }
 
 .theia-ChatInput-ModeSelector .theia-select-component-chevron,
-.theia-ChatInput-ReasoningSelector .theia-select-component-chevron,
-.theia-ChatInput-FlowModeSelector .theia-select-component-chevron,
-.theia-ChatInput-VirtualReasoningSelector .theia-select-component-chevron {
+.theia-ChatInput-ReasoningSelector .theia-select-component-chevron {
   font-size: var(--theia-ui-font-size1);
   margin-left: calc(var(--theia-ui-padding) / 3);
 }
 
 .theia-ChatInput-ModeSelector.theia-select-component:hover,
-.theia-ChatInput-ReasoningSelector.theia-select-component:hover,
-.theia-ChatInput-FlowModeSelector.theia-select-component:hover,
-.theia-ChatInput-VirtualReasoningSelector.theia-select-component:hover {
+.theia-ChatInput-ReasoningSelector.theia-select-component:hover {
   background-color: var(--theia-toolbar-hoverBackground);
 }
 
 .theia-ChatInput-ModeSelector.theia-select-component:focus-visible,
-.theia-ChatInput-ReasoningSelector.theia-select-component:focus-visible,
-.theia-ChatInput-FlowModeSelector.theia-select-component:focus-visible,
-.theia-ChatInput-VirtualReasoningSelector.theia-select-component:focus-visible {
+.theia-ChatInput-ReasoningSelector.theia-select-component:focus-visible {
   outline: 1px solid var(--theia-focusBorder);
   outline-offset: -1px;
 }
 
 .theia-ChatInput-ModeSelector.disabled,
-.theia-ChatInput-ReasoningSelector.disabled,
-.theia-ChatInput-FlowModeSelector.disabled,
-.theia-ChatInput-VirtualReasoningSelector.disabled {
+.theia-ChatInput-ReasoningSelector.disabled {
   opacity: var(--theia-mod-disabled-opacity);
   cursor: default;
   pointer-events: none;
@@ -924,72 +912,6 @@ div:last-child>.theia-ChatNode {
 .theia-ChatInput-ReasoningSelector.reasoning-level-auto::before {
   content: '\ec1f';
   /* codicon-lightbulb-sparkle */
-}
-
-.theia-ChatInput-FlowModeSelector.theia-select-component::before {
-  font-family: codicon;
-  content: '\ea86';
-  /* codicon-symbol-event */
-  font-size: var(--theia-icon-size);
-  line-height: 1;
-  margin-right: calc(var(--theia-ui-padding) / 3);
-  display: inline-flex;
-  align-items: center;
-}
-
-.theia-ChatInput-FlowModeSelector.flow-mode-chat::before {
-  opacity: 0.55;
-}
-
-.theia-ChatInput-FlowModeSelector.flow-mode-saved::before {
-  color: var(--theia-charts-green);
-}
-
-.theia-ChatInput-FlowModeSelector.flow-mode-dynamic::before {
-  color: var(--theia-charts-blue);
-}
-
-.theia-ChatInput-VirtualReasoningSelector.theia-select-component::before {
-  font-family: codicon;
-  content: '\ea86';
-  /* codicon-symbol-event */
-  font-size: var(--theia-icon-size);
-  line-height: 1;
-  margin-right: calc(var(--theia-ui-padding) / 3);
-  display: inline-flex;
-  align-items: center;
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-off::before {
-  opacity: 0.5;
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-auto::before {
-  content: '\ec1f';
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-fast::before {
-  color: var(--theia-charts-green);
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-balanced::before {
-  color: var(--theia-editorWarning-foreground);
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-deep::before {
-  color: var(--theia-charts-purple);
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-coding::before {
-  color: var(--theia-charts-blue);
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-research::before {
-  color: var(--theia-charts-green);
-}
-
-.theia-ChatInput-VirtualReasoningSelector.virtual-reasoning-lats::before {
-  color: var(--theia-charts-red);
 }
 
 .theia-CodePartRenderer-root {
@@ -1404,10 +1326,40 @@ details.theia-tool-confirmation-args>summary::marker {
 }
 
 .theia-ChatPart-Error {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5em;
+  margin-block: 1em;
+}
+
+.theia-ChatPart-Error-headline {
   color: var(--theia-errorForeground);
+  display: flex;
+  flex-direction: column;
+  row-gap: var(--theia-ui-padding);
+}
+
+.theia-ChatPart-Error-prefix {
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: var(--theia-ui-padding);
+}
+
+.theia-ChatPart-Error details {
+  margin-top: var(--theia-ui-padding);
+  color: var(--theia-descriptionForeground);
+}
+
+.theia-ChatPart-Error details summary::marker {
+  color: var(--theia-button-background);
+}
+
+.theia-ChatPart-Error details pre {
+  cursor: text;
+  line-height: 1rem;
+  margin: 0;
+  padding: 6px;
+  background-color: var(--theia-editor-background);
+  overflow: auto;
+  text-wrap: auto;
 }
 
 .section-header {

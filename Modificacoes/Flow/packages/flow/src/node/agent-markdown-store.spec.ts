@@ -5,6 +5,12 @@ import * as path from 'path';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { AgentMarkdownStore } from './agent-markdown-store';
 
+class WorkspaceOnlyAgentMarkdownStore extends AgentMarkdownStore {
+    protected override listCatalogAgents(): Promise<[]> {
+        return Promise.resolve([]);
+    }
+}
+
 describe('AgentMarkdownStore', () => {
 
     let tempDir: string;
@@ -14,7 +20,7 @@ describe('AgentMarkdownStore', () => {
     beforeEach(async () => {
         tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'flow-agent-store-'));
         workspaceRootUri = FileUri.create(tempDir).toString();
-        store = new AgentMarkdownStore();
+        store = new WorkspaceOnlyAgentMarkdownStore();
     });
 
     afterEach(async () => {

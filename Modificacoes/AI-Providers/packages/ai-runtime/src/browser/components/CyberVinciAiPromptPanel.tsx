@@ -9,6 +9,7 @@ import {
     CyberVinciAiEffectPolicy,
     CyberVinciAiExecutionSelection,
     CyberVinciAiOutputContract,
+    CyberVinciAiProviderDescriptor,
     CyberVinciAiRuntimeService,
     CyberVinciAiTaskRequest,
     CyberVinciAiTaskResult
@@ -33,6 +34,7 @@ export interface CyberVinciAiPromptPanelProps<TStructured = unknown> {
     output?: CyberVinciAiOutputContract;
     effectPolicy?: CyberVinciAiEffectPolicy;
     buildRequest?: (input: CyberVinciAiPromptPanelBuildInput) => CyberVinciAiTaskRequest;
+    onConfigureProvider?: (provider: CyberVinciAiProviderDescriptor) => void | Promise<void>;
     onResult: (result: CyberVinciAiTaskResult<TStructured>) => void | Promise<void>;
     onClose?: () => void;
 }
@@ -50,6 +52,7 @@ export const CyberVinciAiPromptPanel = <TStructured,>({
     output,
     effectPolicy,
     buildRequest,
+    onConfigureProvider,
     onResult,
     onClose
 }: CyberVinciAiPromptPanelProps<TStructured>): React.ReactElement => {
@@ -60,9 +63,20 @@ export const CyberVinciAiPromptPanel = <TStructured,>({
     });
     const [running, setRunning] = React.useState(false);
     const [error, setError] = React.useState<string | undefined>();
+    const [selectedProvider, setSelectedProvider] = React.useState<CyberVinciAiProviderDescriptor | undefined>();
+
+    const unavailableProvider = selectedProvider && (!selectedProvider.available || !!selectedProvider.configurationRequired?.length)
+        ? selectedProvider
+        : undefined;
 
     const submit = async (): Promise<void> => {
         if (!prompt.trim() || running) {
+            return;
+        }
+        if (unavailableProvider) {
+            setError(unavailableProvider.configurationRequired?.length
+                ? `Configuration required: ${unavailableProvider.configurationRequired.join(', ')}`
+                : unavailableProvider.message ?? 'Configure this provider before running AI.');
             return;
         }
         setRunning(true);
@@ -113,6 +127,8 @@ export const CyberVinciAiPromptPanel = <TStructured,>({
                 workspacePath={workspacePath}
                 value={execution}
                 disabled={running}
+                onConfigureProvider={onConfigureProvider}
+                onSelectedProviderChange={setSelectedProvider}
                 onChange={setExecution}
             />
             <textarea
@@ -126,7 +142,7 @@ export const CyberVinciAiPromptPanel = <TStructured,>({
                 <button type='button' className='theia-button secondary' disabled={running} onClick={onClose}>
                     Cancel
                 </button>
-                <button type='button' className='theia-button main' disabled={running || !prompt.trim()} onClick={submit}>
+                <button type='button' className='theia-button main' disabled={running || !prompt.trim() || !!unavailableProvider} onClick={submit}>
                     {running ? 'Running...' : 'Run AI'}
                 </button>
             </footer>

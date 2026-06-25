@@ -14,6 +14,7 @@ export interface AttachCanvasOptions {
   devicePixelRatio?: number;
   backgroundColor?: string;
   fontBasePath?: string;
+  loadBundledFonts?: boolean;
   googleFontsCssUrl?: string;
   onProgress?: (loaded: number, total: number) => void;
 }
@@ -39,6 +40,7 @@ export async function attachCanvas(
     devicePixelRatio: options?.devicePixelRatio,
     backgroundColor: options?.backgroundColor,
     fontBasePath: options?.fontBasePath,
+    loadBundledFonts: options?.loadBundledFonts,
     googleFontsCssUrl: options?.googleFontsCssUrl,
   });
 

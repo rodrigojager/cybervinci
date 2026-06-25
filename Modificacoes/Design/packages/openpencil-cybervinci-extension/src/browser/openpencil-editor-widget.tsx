@@ -8,7 +8,6 @@ import * as React from '@theia/core/shared/react';
 import {
     BookOpen,
     Braces,
-    ChevronDown,
     Circle,
     Code2,
     Copy,
@@ -54,6 +53,15 @@ import { OpenPencilReactRuntimeHost } from './openpencil-react-runtime-host';
 export const OpenPencilEditorWidgetOptions = Symbol('OpenPencilEditorWidgetOptions');
 export interface OpenPencilEditorWidgetOptions {
     uri: string;
+}
+
+interface OpenPencilAiPromptAnchorRect {
+    readonly left: number;
+    readonly top: number;
+    readonly right: number;
+    readonly bottom: number;
+    readonly width: number;
+    readonly height: number;
 }
 
 interface DragState {
@@ -173,7 +181,6 @@ const OPENPENCIL_EXPORT_TARGETS: OpenPencilExportTarget[] = [
 const OPENPENCIL_OPEN_AS_JSON_COMMAND = 'openpencil.openAsJson';
 const OPENPENCIL_EXPORT_UI_KIT_COMMAND = 'openpencil.exportUIKit';
 const OPENPENCIL_PROMPT_TO_DESIGN_COMMAND = 'openpencil.promptToDesign';
-const OPENPENCIL_CONTINUE_DESIGN_WITH_AI_COMMAND = 'openpencil.continueDesignWithAi';
 const OPENPENCIL_EDIT_SELECTED_NODE_WITH_AI_COMMAND = 'openpencil.editSelectedNodeWithAi';
 const OPENPENCIL_IMPORT_FIGMA_JSON_COMMAND = 'openpencil.importFigmaJson';
 
@@ -356,13 +363,36 @@ export class OpenPencilEditorWidget extends ReactWidget implements Navigatable, 
         const total = operations.length;
         const initialSelection = this.filterSelection(options.selection ?? this.selectedIds, this.document);
         if (!total) {
-            return {
-                document: this.document,
-                selection: initialSelection,
-                changed: false,
+            const result = this.commandService.applyOperationsToDocument(this.document, initialSelection, [], options.applyOptions);
+            if (result.changed) {
+                this.undoStack.push(this.createSnapshot());
+                this.redoStack = [];
+                this.document = result.document;
+                this.selectedIds = this.filterSelection(result.selection, result.document);
+                this.updateDirtyState(true);
+                this.update();
+            } else {
+                this.selectedIds = this.filterSelection(result.selection, this.document);
+                this.update();
+            }
+            await options.onProgress?.({
                 applied: 0,
                 total: 0,
-                completed: true
+                result: {
+                    document: this.document,
+                    selection: [...this.selectedIds],
+                    changed: result.changed,
+                    message: result.message
+                }
+            });
+            return {
+                document: this.document,
+                selection: [...this.selectedIds],
+                changed: result.changed,
+                applied: 0,
+                total: 0,
+                completed: true,
+                message: result.message
             };
         }
 
@@ -618,7 +648,7 @@ export class OpenPencilEditorWidget extends ReactWidget implements Navigatable, 
                 <details className='openpencil-file-menu-shell'>
                     <summary className='theia-button openpencil-file-menu-trigger' title='File menu'>
                         <Folder size={15} strokeWidth={1.5} />
-                        <ChevronDown size={10} strokeWidth={1.5} />
+                        <span className='cybervinci-control-caret openpencil-control-caret openpencil-file-menu-caret' aria-hidden='true' />
                     </summary>
                     <div className='openpencil-menu openpencil-file-menu'>
                         <button type='button' onClick={() => this.save()} disabled={!this.dirty}>
@@ -686,7 +716,7 @@ export class OpenPencilEditorWidget extends ReactWidget implements Navigatable, 
             <details className='openpencil-tool-dropdown'>
                 <summary className='theia-button openpencil-shape-trigger' title='Shape tools'>
                     <Square size={20} strokeWidth={1.5} />
-                    <ChevronDown size={12} strokeWidth={2.2} />
+                    <span className='cybervinci-control-caret openpencil-control-caret openpencil-shape-caret' aria-hidden='true' />
                 </summary>
                 <div className='openpencil-menu openpencil-shape-menu'>
                     <button type='button' onClick={() => this.addRectangle()}><Square size={18} strokeWidth={1.5} /><span>Rectangle</span></button>
@@ -845,19 +875,27 @@ export class OpenPencilEditorWidget extends ReactWidget implements Navigatable, 
                     ? 'loading'
                     : 'sparkle';
         return <>
-            <button className='theia-button openpencil-ai-run' title={aiDetail ?? 'Prompt to design with AI'} disabled={aiBusy} onClick={() => this.executeOpenPencilCommand(OPENPENCIL_PROMPT_TO_DESIGN_COMMAND, this.uri)}>
+            <button className='theia-button openpencil-ai-run' title={aiDetail ?? 'Prompt to design with AI'} disabled={aiBusy} onClick={event => this.executeOpenPencilCommand(OPENPENCIL_PROMPT_TO_DESIGN_COMMAND, this.uri, this.createAiPromptAnchor(event.currentTarget))}>
                 <i className={codicon(aiIcon) + (aiBusy ? ' theia-animation-spin' : '')}></i>
                 <span>{aiLabel}</span>
             </button>
-            <button className='theia-button openpencil-ai-run' title={aiDetail ?? 'Continue design with AI'} disabled={aiBusy} onClick={() => this.executeOpenPencilCommand(OPENPENCIL_CONTINUE_DESIGN_WITH_AI_COMMAND, this.uri)}>
-                <i className={codicon(aiIcon) + (aiBusy ? ' theia-animation-spin' : '')}></i>
-                <span>{this.aiStatus ? aiLabel : 'Continue'}</span>
-            </button>
-            <button className='theia-button openpencil-ai-run' title={aiDetail ?? 'Edit selected layer with AI'} disabled={aiBusy || !this.selectedIds.length} onClick={() => this.executeOpenPencilCommand(OPENPENCIL_EDIT_SELECTED_NODE_WITH_AI_COMMAND, this.uri)}>
+            <button className='theia-button openpencil-ai-run' title={aiDetail ?? 'Edit selected layer with AI'} disabled={aiBusy || !this.selectedIds.length} onClick={event => this.executeOpenPencilCommand(OPENPENCIL_EDIT_SELECTED_NODE_WITH_AI_COMMAND, this.uri, this.createAiPromptAnchor(event.currentTarget))}>
                 <i className={codicon(aiIcon) + (aiBusy ? ' theia-animation-spin' : '')}></i>
                 <span>{this.aiStatus ? aiLabel : 'AI Edit'}</span>
             </button>
         </>;
+    }
+
+    protected createAiPromptAnchor(target: HTMLElement): OpenPencilAiPromptAnchorRect {
+        const rect = target.getBoundingClientRect();
+        return {
+            left: rect.left,
+            top: rect.top,
+            right: rect.right,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height
+        };
     }
 
     protected renderQuickTextEditButton(): React.ReactNode {

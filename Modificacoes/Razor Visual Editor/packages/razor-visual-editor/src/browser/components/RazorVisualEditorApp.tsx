@@ -17,7 +17,6 @@ import { analyzeCssVariables } from '../assets/css-variable-analyzer';
 import { applyCssVariableOverride, applyCssVariableOverrides, initialCssVariableValues } from '../grapes/grapes-css-variables';
 import { CssVariableDefinition, CssVariableSaveChange } from '../types/css-variable';
 import { RazorVisualAiService } from '../services/visual-ai-service';
-import { VisualAiProviderDescriptor } from '../types/visual-ai';
 
 export interface RazorVisualEditorAppProps {
     document?: EditorDocument;
@@ -31,6 +30,7 @@ export interface RazorVisualEditorAppProps {
     visualAiService: RazorVisualAiService;
     onSave(): void;
     onSaveAs(): void;
+    onOpenCodeEditor(): void;
     onReload(): void;
     onShowDiff(): void;
     onShowTokens(): void;
@@ -57,8 +57,8 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
     const [traitsContainer, setTraitsContainer] = React.useState<HTMLElement | undefined>(undefined);
     const [stylesContainer, setStylesContainer] = React.useState<HTMLElement | undefined>(undefined);
     const [aiOpen, setAiOpen] = React.useState(false);
-    const [aiProviders, setAiProviders] = React.useState<VisualAiProviderDescriptor[]>([]);
-    const [aiProvidersLoading, setAiProvidersLoading] = React.useState(false);
+    const [aiWorkspacePath, setAiWorkspacePath] = React.useState<string | undefined>(undefined);
+    const [includeSelectedElementContext, setIncludeSelectedElementContext] = React.useState(false);
     const [aiRunning, setAiRunning] = React.useState(false);
     const [aiError, setAiError] = React.useState<string | undefined>(undefined);
     const [aiSummary, setAiSummary] = React.useState<string | undefined>(undefined);
@@ -71,6 +71,10 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
         selectedComponentRef.current = component;
         setSelectedElement(createSelectedElementSnapshot(component));
     }, []);
+
+    React.useEffect(() => {
+        setIncludeSelectedElementContext(Boolean(selectedElement));
+    }, [selectedElement?.id]);
 
     const cssVariables = React.useMemo(() => {
         return props.document ? analyzeCssVariables(props.document.assetResolution) : [];
@@ -94,22 +98,13 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
 
     React.useEffect(() => () => sourceHoverCleanupRef.current(), []);
 
-    const refreshAiProviders = React.useCallback(async () => {
-        setAiProvidersLoading(true);
-        try {
-            setAiProviders(await props.visualAiService.listProviders());
-        } catch (error) {
-            setAiError(error instanceof Error ? error.message : String(error));
-        } finally {
-            setAiProvidersLoading(false);
-        }
-    }, [props.visualAiService]);
-
     React.useEffect(() => {
         if (aiOpen) {
-            refreshAiProviders();
+            props.visualAiService.getWorkspaceRootPath()
+                .then(setAiWorkspacePath)
+                .catch(error => setAiError(error instanceof Error ? error.message : String(error)));
         }
-    }, [aiOpen, refreshAiProviders]);
+    }, [aiOpen, props.visualAiService]);
 
     const selectedSourceLine = React.useMemo(() => {
         return props.mode === 'source' ? findSourceLineForSelection(sourceDraft, selectedElement) : undefined;
@@ -206,16 +201,13 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
         setAiSummary(undefined);
         try {
             const result = await props.visualAiService.run({
-                providerId: options.providerId,
-                model: options.model,
-                reasoningPolicy: options.reasoningPolicy,
-                reasoningEffort: options.reasoningEffort,
+                execution: options.execution,
                 instruction: options.instruction,
                 fileUri: props.document.uri.toString(),
                 html: editor.getHtml(),
                 css: editor.getCss() ?? '',
                 isRazor: props.document.isRazor,
-                selectedElement,
+                selectedElement: options.includeSelectedElementContext ? selectedElement : undefined,
                 protectedTokens: (props.document.sourceMap?.tokens ?? []).map(token => ({
                     id: token.id,
                     kind: token.kind
@@ -369,6 +361,7 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
             assetWarningCount={props.document.assetResolution.warnings.length}
             onSave={props.onSave}
             onSaveAs={props.onSaveAs}
+            onOpenCodeEditor={props.onOpenCodeEditor}
             onReload={props.onReload}
             onShowDiff={props.onShowDiff}
             onShowTokens={props.onShowTokens}
@@ -378,13 +371,15 @@ export function RazorVisualEditorApp(props: RazorVisualEditorAppProps): React.Re
             onViewportChange={props.onViewportChange}
         />
         {aiOpen && <VisualAiPanel
-            providers={aiProviders}
-            loadingProviders={aiProvidersLoading}
+            runtimeService={props.visualAiService.getRuntimeService()}
+            workspacePath={aiWorkspacePath}
+            selectedElement={selectedElement}
+            includeSelectedElementContext={includeSelectedElementContext}
             running={aiRunning}
             summary={aiSummary}
             error={aiError}
             onRun={runVisualAi}
-            onRefreshProviders={refreshAiProviders}
+            onIncludeSelectedElementContextChange={setIncludeSelectedElementContext}
             onClose={() => setAiOpen(false)}
         />}
         <main className='cv-razor-main'>

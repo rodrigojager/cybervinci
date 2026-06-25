@@ -4,7 +4,7 @@ import * as path from 'path';
 import { FileUri } from '@theia/core/lib/common/file-uri';
 import { injectable } from '@theia/core/shared/inversify';
 import * as yaml from 'js-yaml';
-import { FLOW_PIPELINE_PRESET_VERSION, FlowArtifact, FlowEffect, FlowFileMetadata, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunExportResult, FlowWorkflow, FlowWorkflowExportResult, FlowWorkflowFileFormat, FlowWorkflowState, FlowWorkflowVersion, compareFlowWorkflowStructure, instantiateFlowPipelinePreset, instantiateFlowWorkflowTemplate, listFlowWorkflowTemplates, redactFlowRunForDisplay, redactFlowSecretsText, validateFlowPipelinePreset, validateFlowWorkflow } from '../common';
+import { FLOW_PIPELINE_PRESET_VERSION, FlowArtifact, FlowCleanupRunsResult, FlowEffect, FlowFileMetadata, FlowModelProfile, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunExportResult, FlowWorkflow, FlowWorkflowExportResult, FlowWorkflowFileFormat, FlowWorkflowState, FlowWorkflowVersion, compareFlowWorkflowStructure, instantiateFlowPipelinePreset, instantiateFlowWorkflowTemplate, listFlowWorkflowTemplates, normalizeFlowModelProfile, redactFlowRunForDisplay, redactFlowSecretsText, validateFlowPipelinePreset, validateFlowWorkflow } from '../common';
 import { KernelEvent, KernelRunState, mapKernelRunToFlowRun } from './flow-kernel-bridge';
 
 const WORKFLOW_EXTENSIONS = ['.json', '.yaml', '.yml'];
@@ -418,6 +418,25 @@ export class FlowStore {
         return { ...await this.readJson<FlowPipelinePreset>(file), source: 'workspace' };
     }
 
+    async listWorkspaceModelProfiles(workspaceRootUri: string | undefined): Promise<FlowModelProfile[]> {
+        const dir = await this.ensureDir(workspaceRootUri, 'model-profiles');
+        const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+        const profiles: FlowModelProfile[] = [];
+        for (const entry of entries) {
+            if (entry.isFile() && entry.name.endsWith('.json')) {
+                profiles.push(normalizeFlowModelProfile(await this.readJson<FlowModelProfile>(path.join(dir, entry.name))));
+            }
+        }
+        return profiles.sort((left, right) => left.name.localeCompare(right.name));
+    }
+
+    async saveModelProfile(workspaceRootUri: string | undefined, profile: FlowModelProfile): Promise<FlowModelProfile> {
+        const normalized = normalizeFlowModelProfile(profile);
+        const file = await this.modelProfileFile(workspaceRootUri, normalized.id);
+        await this.writeJson(file, normalized);
+        return normalizeFlowModelProfile(await this.readJson<FlowModelProfile>(file));
+    }
+
     async createWorkflowFromPreset(
         workspaceRootUri: string | undefined,
         preset: FlowPipelinePreset,
@@ -537,6 +556,58 @@ export class FlowStore {
         await this.writeJson(file, stripFileMetadata(redactFlowRunForDisplay(run)));
     }
 
+    async cleanupRuns(
+        workspaceRootUri: string | undefined,
+        runIds: string[],
+        options: { includeArtifacts?: boolean; includeWorktrees?: boolean } = {}
+    ): Promise<FlowCleanupRunsResult> {
+        const removedRuns: string[] = [];
+        const removedPaths: string[] = [];
+        const failed: FlowCleanupRunsResult['failed'] = [];
+        const runsDir = await this.ensureDir(workspaceRootUri, 'runs');
+        for (const runId of runIds) {
+            const safeRunId = sanitizeFileName(runId);
+            const runFile = path.join(runsDir, `${safeRunId}.json`);
+            let run: FlowRun | undefined;
+            try {
+                run = await this.readRunFile(runFile);
+            } catch {
+                run = undefined;
+            }
+            try {
+                await fs.rm(runFile, { force: true });
+                removedRuns.push(runId);
+                removedPaths.push(runFile);
+            } catch (error) {
+                failed.push({ id: runId, path: runFile, message: error instanceof Error ? error.message : String(error) });
+            }
+            if (options.includeArtifacts !== false) {
+                const artifactDir = path.join(runsDir, safeRunId);
+                try {
+                    await fs.rm(artifactDir, { recursive: true, force: true });
+                    removedPaths.push(artifactDir);
+                } catch (error) {
+                    failed.push({ id: runId, path: artifactDir, message: error instanceof Error ? error.message : String(error) });
+                }
+            }
+            if (options.includeWorktrees && run?.workspace?.rootUri) {
+                const worktreePath = FileUri.fsPath(run.workspace.rootUri);
+                const worktreesRoot = path.join(storageRoot(workspaceRootUri), 'worktrees');
+                if (isSubPath(worktreesRoot, worktreePath)) {
+                    try {
+                        await fs.rm(worktreePath, { recursive: true, force: true });
+                        removedPaths.push(worktreePath);
+                    } catch (error) {
+                        failed.push({ id: runId, path: worktreePath, message: error instanceof Error ? error.message : String(error) });
+                    }
+                } else {
+                    failed.push({ id: runId, path: worktreePath, message: 'Refusing to remove a workspace that is not inside the Flow worktrees directory.' });
+                }
+            }
+        }
+        return { removedRuns, removedPaths, failed };
+    }
+
     async writeRunReport(workspaceRootUri: string | undefined, runId: string, relativePath: string, content: string): Promise<string> {
         const dir = path.join(await this.ensureDir(workspaceRootUri, 'runs'), sanitizeFileName(runId), 'final');
         await fs.mkdir(dir, { recursive: true });
@@ -563,6 +634,11 @@ export class FlowStore {
     protected async pipelinePresetFile(workspaceRootUri: string | undefined, presetId: string): Promise<string> {
         const dir = await this.ensureDir(workspaceRootUri, 'presets');
         return path.join(dir, `${sanitizeFileName(sanitizeWorkflowId(presetId))}.json`);
+    }
+
+    protected async modelProfileFile(workspaceRootUri: string | undefined, profileId: string): Promise<string> {
+        const dir = await this.ensureDir(workspaceRootUri, 'model-profiles');
+        return path.join(dir, `${sanitizeFileName(profileId)}.json`);
     }
 
     protected async nextWorkflowIdentity(workspaceRootUri: string | undefined, requestedId: string, requestedName: string): Promise<{ id: string; name: string }> {
@@ -602,7 +678,7 @@ export class FlowStore {
         return workflows.find(workflow => workflow.id === workflowId)?.file?.path;
     }
 
-    protected async ensureDir(workspaceRootUri: string | undefined, child: 'workflows' | 'runs' | 'exports' | 'workflow-history' | 'presets'): Promise<string> {
+    protected async ensureDir(workspaceRootUri: string | undefined, child: 'workflows' | 'runs' | 'exports' | 'workflow-history' | 'presets' | 'model-profiles'): Promise<string> {
         const root = storageRoot(workspaceRootUri);
         const dir = path.join(root, child);
         await fs.mkdir(dir, { recursive: true });
@@ -832,6 +908,13 @@ async function fileExists(file: string): Promise<boolean> {
     } catch {
         return false;
     }
+}
+
+function isSubPath(parentPath: string, childPath: string): boolean {
+    const parent = path.resolve(parentPath);
+    const child = path.resolve(childPath);
+    const relative = path.relative(parent, child);
+    return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
 function isWorkflowFile(fileName: string): boolean {

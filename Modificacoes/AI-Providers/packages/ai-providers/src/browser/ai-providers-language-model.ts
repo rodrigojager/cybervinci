@@ -33,6 +33,22 @@ import { VirtualReasoningEngine, VirtualReasoningMode, VirtualReasoningOptions, 
 export const CYBERVINCI_AI_PROVIDER_LANGUAGE_MODEL_ID = 'cybervinci-ai-provider';
 export const CODEX_CLI_LANGUAGE_MODEL_ID = CYBERVINCI_AI_PROVIDER_LANGUAGE_MODEL_ID;
 
+type VirtualGoalStatus = 'active' | 'paused' | 'blocked' | 'usage_limited' | 'budget_limited' | 'complete';
+
+interface VirtualGoalOptions {
+    enabled: boolean;
+    allowModelControl: boolean;
+    goalId?: string;
+    objective?: string;
+    status?: VirtualGoalStatus;
+    rounds?: number;
+    maxRounds?: number;
+    tokenBudget?: number;
+    tokensUsed?: number;
+    usageEstimated?: boolean;
+    timeUsedSeconds?: number;
+}
+
 @injectable()
 export class CodexProviderLanguageModel implements LanguageModel, FrontendApplicationContribution {
     readonly id = CODEX_CLI_LANGUAGE_MODEL_ID;
@@ -281,6 +297,10 @@ export class CodexProviderLanguageModel implements LanguageModel, FrontendApplic
         if (virtualReasoningInstruction) {
             lines.push(virtualReasoningInstruction);
         }
+        const virtualGoalInstruction = this.toVirtualGoalInstruction(request);
+        if (virtualGoalInstruction) {
+            lines.push(virtualGoalInstruction);
+        }
         for (const message of request.messages) {
             const text = this.messageToText(message);
             if (text) {
@@ -309,6 +329,59 @@ export class CodexProviderLanguageModel implements LanguageModel, FrontendApplic
         ].join('\n');
     }
 
+    protected toVirtualGoalInstruction(request: UserRequest): string {
+        const virtualGoal = this.readVirtualGoalSettings(request.settings?.virtualGoal);
+        if (!virtualGoal?.enabled && !virtualGoal?.allowModelControl) {
+            return '';
+        }
+        const lines = [
+            '[system] CyberVinci Goal controls are available for this turn.',
+            'If native tool calling is available, use get_goal to inspect the goal, create_goal only when the latest user message explicitly asks to create a goal, and update_goal only with status "complete" or "blocked".',
+            'When using update_goal with status "complete", include concise evidence when the provider supports an evidence argument: tests, files, commands, runtime checks, or other direct verification.',
+            'Only create a goal when the latest user message explicitly asks for a goal. The model must not pause, resume, clear, rewrite, or budget a goal; those operations are user/runtime controlled.',
+            'If native tool calling is not available and the user explicitly asks to create a goal, include exactly one hidden HTML comment in the final answer: <!-- cybervinci:goal action="set" objective="..." -->.',
+            `If hidden comments are not reliable for the provider, use exactly one fenced JSON fallback instead: {"tool":"create_goal","arguments":{"objective":"..."}} or {"tool":"update_goal","arguments":{"status":"complete","expectedGoalId":"${virtualGoal?.goalId ?? '<current-goal-id>'}","evidence":"..."}}. Do not mention hidden controls or fallback JSON to the user.`
+        ];
+        if (virtualGoal?.enabled && virtualGoal.objective) {
+            lines.push(
+                'Virtual Goal is active. Continue concrete work toward this objective unless higher-priority instructions or the latest user message conflict with it.',
+                'Do not narrow, replace, or declare completion based on partial progress. Before marking complete, audit the current state against the objective and cite direct evidence from files, commands, tests, rendered output, or runtime state.',
+                virtualGoal.goalId ? `Goal ID: ${virtualGoal.goalId}` : 'Goal ID: unknown',
+                `Objective: ${virtualGoal.objective}`,
+                `Current progress: ${virtualGoal.rounds ?? 0} continuation rounds${virtualGoal.maxRounds ? ` of ${virtualGoal.maxRounds}` : ''}.`,
+                `Token usage: ${virtualGoal.tokensUsed ?? 0}${virtualGoal.tokenBudget ? ` of ${virtualGoal.tokenBudget}` : ''}${virtualGoal.usageEstimated ? ' estimated' : ''}.`,
+                `At the end of the final answer include exactly one hidden HTML comment: <!-- cybervinci:goal status="active" --> while more work remains, <!-- cybervinci:goal status="complete"${virtualGoal.goalId ? ` expectedGoalId="${virtualGoal.goalId}"` : ''} --> only when the objective is fully satisfied, or <!-- cybervinci:goal status="blocked"${virtualGoal.goalId ? ` expectedGoalId="${virtualGoal.goalId}"` : ''} --> only when meaningful progress is no longer possible without user input or an external state change. If hidden comments are not reliable for the provider, use a fenced JSON update_goal fallback with status "complete" or "blocked"${virtualGoal.goalId ? ` and expectedGoalId "${virtualGoal.goalId}"` : ''} instead.`
+            );
+        } else if (virtualGoal?.status === 'paused' && virtualGoal.objective) {
+            lines.push(
+                'A CyberVinci Goal exists but is paused. Do not pursue it automatically unless the latest user message explicitly asks to resume it.',
+                `Paused objective: ${virtualGoal.objective}`
+            );
+        } else if (virtualGoal?.status === 'budget_limited' && virtualGoal.objective) {
+            lines.push(
+                'A CyberVinci Goal exists but its token budget is exhausted. Do not start new autonomous work for it.',
+                `Budget-limited objective: ${virtualGoal.objective}`,
+                `Token usage: ${virtualGoal.tokensUsed ?? 0}${virtualGoal.tokenBudget ? ` of ${virtualGoal.tokenBudget}` : ''}${virtualGoal.usageEstimated ? ' estimated' : ''}.`
+            );
+        } else if (virtualGoal?.status === 'usage_limited' && virtualGoal.objective) {
+            lines.push(
+                'A CyberVinci Goal exists but provider usage limits stopped it. Do not auto-loop; explain the current limit if the user asks.',
+                `Usage-limited objective: ${virtualGoal.objective}`
+            );
+        } else if (virtualGoal?.status === 'blocked' && virtualGoal.objective) {
+            lines.push(
+                'A CyberVinci Goal is blocked. Do not claim it is complete unless the user gives new information or explicitly resumes/replaces it.',
+                `Blocked objective: ${virtualGoal.objective}`
+            );
+        } else if (virtualGoal?.status === 'complete' && virtualGoal.objective) {
+            lines.push(
+                'A CyberVinci Goal is complete. Do not continue it unless the user explicitly creates or resumes a new goal.',
+                `Completed objective: ${virtualGoal.objective}`
+            );
+        }
+        return lines.join('\n');
+    }
+
     protected readVirtualReasoningSettings(value: unknown): VirtualReasoningOptions | undefined {
         if (!value || typeof value !== 'object') {
             return undefined;
@@ -320,6 +393,32 @@ export class CodexProviderLanguageModel implements LanguageModel, FrontendApplic
             mode,
             showProgress: typeof record.showProgress === 'boolean' ? record.showProgress : undefined
         };
+    }
+
+    protected readVirtualGoalSettings(value: unknown): VirtualGoalOptions | undefined {
+        if (!value || typeof value !== 'object') {
+            return undefined;
+        }
+        const record = value as Record<string, unknown>;
+        return {
+            enabled: record.enabled === true,
+            allowModelControl: record.allowModelControl !== false,
+            goalId: typeof record.goalId === 'string' && record.goalId ? record.goalId : undefined,
+            objective: typeof record.objective === 'string' ? record.objective : undefined,
+            status: this.normalizeVirtualGoalStatus(record.status),
+            rounds: typeof record.rounds === 'number' && Number.isFinite(record.rounds) ? Math.max(0, Math.floor(record.rounds)) : undefined,
+            maxRounds: typeof record.maxRounds === 'number' && Number.isFinite(record.maxRounds) ? Math.max(1, Math.floor(record.maxRounds)) : undefined,
+            tokenBudget: typeof record.tokenBudget === 'number' && Number.isFinite(record.tokenBudget) ? Math.max(1, Math.floor(record.tokenBudget)) : undefined,
+            tokensUsed: typeof record.tokensUsed === 'number' && Number.isFinite(record.tokensUsed) ? Math.max(0, Math.floor(record.tokensUsed)) : undefined,
+            usageEstimated: record.usageEstimated === true,
+            timeUsedSeconds: typeof record.timeUsedSeconds === 'number' && Number.isFinite(record.timeUsedSeconds) ? Math.max(0, Math.floor(record.timeUsedSeconds)) : undefined
+        };
+    }
+
+    protected normalizeVirtualGoalStatus(value: unknown): VirtualGoalStatus | undefined {
+        return value === 'active' || value === 'paused' || value === 'blocked' || value === 'usage_limited' || value === 'budget_limited' || value === 'complete'
+            ? value
+            : undefined;
     }
 
     protected normalizeVirtualReasoningMode(value: unknown): VirtualReasoningMode {

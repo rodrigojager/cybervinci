@@ -1,6 +1,8 @@
 import { FlowPatternCompileRequest, FlowWorkflowPattern } from './flow-patterns';
-import { FlowAgenticRole, FlowModelProfile, FlowReasoningEffort, FlowReasoningMode, FlowReasoningPolicy, FlowStateType, FlowWorkflow, FlowWorkflowFileFormat } from './flow-types';
+import { FlowAgenticRole, FlowModelProfile, FlowReasoningEffort, FlowReasoningMode, FlowReasoningPolicy, FlowServiceTier, FlowStateType, FlowWorkflow, FlowWorkflowFileFormat } from './flow-types';
 export declare const FLOW_AI_AUTHORING_SPEC_VERSION = "flow.ai-authoring/v1";
+export declare const FLOW_DYNAMIC_AUTHORING_AGENT_ID = "cybervinci-flow-dynamic-authoring";
+export declare const FLOW_DYNAMIC_AUTHORING_PURPOSE = "dynamic_workflow_authoring";
 export type FlowAiAuthoringAction = 'run_saved_workflow' | 'instantiate_pattern' | 'create_workflow' | 'ask_user';
 export type FlowUiControlType = 'dropdown' | 'toggle' | 'number' | 'text' | 'markdown' | 'model_picker' | 'provider_picker' | 'reasoning_picker' | 'state_canvas';
 export interface FlowUiControlSpec {
@@ -13,7 +15,7 @@ export interface FlowUiControlSpec {
 }
 export interface FlowAiAuthoringSpec {
     version: typeof FLOW_AI_AUTHORING_SPEC_VERSION;
-    purpose: 'dynamic_workflow_authoring';
+    purpose: typeof FLOW_DYNAMIC_AUTHORING_PURPOSE;
     internalFormats: Exclude<FlowWorkflowFileFormat, 'unknown'>[];
     humanEditableFormats: ['markdown'];
     actions: FlowAiAuthoringAction[];
@@ -22,6 +24,7 @@ export interface FlowAiAuthoringSpec {
     reasoningModes: FlowReasoningMode[];
     reasoningEfforts: FlowReasoningEffort[];
     reasoningPolicies: FlowReasoningPolicy[];
+    serviceTiers: FlowServiceTier[];
     modelProfiles: FlowModelProfile[];
     patterns: FlowWorkflowPattern[];
     uiControls: FlowUiControlSpec[];

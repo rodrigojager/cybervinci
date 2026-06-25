@@ -1,8 +1,10 @@
 import type { TypefaceFontProvider, CanvasKit } from 'canvaskit-wasm';
 
 export interface FontManagerOptions {
-  /** Base URL for bundled font files. Default: '/fonts/' */
+  /** Base URL for bundled font files. Used only when bundled font loading is enabled. */
   fontBasePath?: string;
+  /** Fetch bundled font files before CDN fallback. Default: enabled only when fontBasePath is provided. */
+  loadBundledFonts?: boolean;
   /** Custom Google Fonts CSS endpoint. Default: 'https://fonts.googleapis.com/css2' */
   googleFontsCssUrl?: string;
 }
@@ -91,6 +93,7 @@ export const BUNDLED_FONT_FAMILIES = [
 export class SkiaFontManager {
   private provider: TypefaceFontProvider;
   private fontBasePath: string;
+  private loadBundledFonts: boolean;
   private googleFontsCssUrl: string;
   /** Registered family names (lowercase) -> true once loaded */
   private loadedFamilies = new Set<string>();
@@ -110,6 +113,7 @@ export class SkiaFontManager {
   constructor(ck: CanvasKit, options?: FontManagerOptions) {
     this.provider = ck.TypefaceFontProvider.Make();
     this.fontBasePath = options?.fontBasePath ?? '/fonts/';
+    this.loadBundledFonts = options?.loadBundledFonts ?? options?.fontBasePath !== undefined;
     // Ensure trailing slash
     if (!this.fontBasePath.endsWith('/')) this.fontBasePath += '/';
     this.googleFontsCssUrl = options?.googleFontsCssUrl ?? 'https://fonts.googleapis.com/css2';
@@ -349,25 +353,33 @@ export class SkiaFontManager {
   }
 
   private async _loadFont(family: string, weights: number[]): Promise<boolean> {
-    // 1. Try bundled fonts first (no network dependency)
+    // 1. If native access is already granted, prefer it to avoid noisy 404s
+    // from optional bundled font paths that are not mounted by every host app.
+    const nativeKey = family.toLowerCase();
+    if (this.nativeFontPermission === 'granted' || this.nativeFontMap.has(nativeKey)) {
+      const nativeLoaded = await this._loadNativeFontData(family);
+      if (nativeLoaded) return true;
+    }
+
+    // 2. Try bundled fonts only when the host explicitly opts into a font path.
     const bundled = BUNDLED_FONTS[family.toLowerCase()];
-    if (bundled) {
+    if (bundled && this.loadBundledFonts) {
       const urls = bundled.map((f) => `${this.fontBasePath}${f}`);
       const ok = await this._fetchLocalFonts(family, urls, bundled);
       if (ok) return true;
     }
 
-    // 2. Skip further loading for known system/proprietary fonts
+    // 3. Skip further loading for known system/proprietary fonts
     if (isKnownNonGoogleFont(family)) {
       return false;
     }
 
-    // 3. Try loading from native fonts via Local Font Access API (vector rendering)
+    // 4. Try loading from native fonts via Local Font Access API (vector rendering)
     //    If we have the font data cached, load it into CanvasKit for vector rendering.
     const nativeLoaded = await this._loadNativeFontData(family);
     if (nativeLoaded) return true;
 
-    // 4. Check if font is installed natively via Local Font Access API
+    // 5. Check if font is installed natively via Local Font Access API
     const nativeFonts = await this.getNativeFontSet();
     if (nativeFonts.has(family.toLowerCase())) {
       // Found natively — try blob loading for vector rendering
@@ -378,13 +390,13 @@ export class SkiaFontManager {
       return false;
     }
 
-    // 5. Canvas-based width comparison heuristic (fast, no permission needed)
+    // 6. Canvas-based width comparison heuristic (fast, no permission needed)
     if (isFontLocallyAvailable(family)) {
       this.systemFontFamilies.add(family.toLowerCase());
       return false;
     }
 
-    // 6. Fall back to Google Fonts CDN (network request — last resort)
+    // 7. Fall back to Google Fonts CDN (network request — last resort)
     const isFontFromGoogle = await this._fetchGoogleFont(family, weights);
     if (isFontFromGoogle) return true;
 

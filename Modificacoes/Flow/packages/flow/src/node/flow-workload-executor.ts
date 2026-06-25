@@ -21,11 +21,14 @@ import {
     FlowWorkloadResultEffect,
     MemoryWrite,
     MemoryCandidate,
+    FlowModelProfile,
     FlowWorkflow,
     FlowWorkflowState,
     FlowWorkload,
     FlowReasoningMode,
     FlowSizeLimits,
+    getFlowModelProfile,
+    listFlowModelProfiles,
     limitFlowJsonValue,
     truncateFlowText
 } from '../common';
@@ -38,6 +41,8 @@ import workloadOutputSchema = require('./schemas/workload-output.schema.json');
 import contractsSchema = require('./schemas/contracts.schema.json');
 import { MemoryAdapter } from './memory-adapter';
 import { FlowAgentProviderRegistry, FlowAgentProviderResolver, FlowLlmProviderConfig } from './flow-agent-provider-registry';
+import { FlowPlaybookRunner, FlowPlaybookRunResult } from './flow-playbook-runner';
+import { FlowStore } from './flow-store';
 
 export interface FlowWorkloadExecutionContext {
     workflow: FlowWorkflow;
@@ -57,6 +62,7 @@ export const FlowWorkloadExecutor = Symbol('FlowWorkloadExecutor');
 export interface FlowWorkloadExecutor {
     execute(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeAgentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
+    executePlaybookWorkload?(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeContextWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeCommandWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
     executeMemoryWriteWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult>;
@@ -173,7 +179,9 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         @inject(LanguageModelService) @optional() protected readonly languageModelService?: LanguageModelService,
         @inject(CodexProviderService) @optional() protected readonly codexProviderService?: CodexProviderService,
         @inject(MemoryAdapter) @optional() protected readonly memoryAdapter?: MemoryAdapter,
-        @inject(FlowAgentProviderResolver) @optional() protected readonly agentProviderResolver?: FlowAgentProviderResolver
+        @inject(FlowAgentProviderResolver) @optional() protected readonly agentProviderResolver?: FlowAgentProviderResolver,
+        @inject(FlowPlaybookRunner) @optional() protected readonly playbookRunner?: FlowPlaybookRunner,
+        @inject(FlowStore) @optional() protected readonly flowStore?: FlowStore
     ) {
     }
 
@@ -181,6 +189,8 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         switch (context.state.type) {
             case 'agent':
                 return this.executeAgentWorkload(context);
+            case 'playbook':
+                return this.executePlaybookWorkload(context);
             case 'dynamic_parallel':
                 return this.executeDynamicParallelWorkload(context);
             case 'tournament':
@@ -349,7 +359,147 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
         });
     }
 
+    async executePlaybookWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
+        const playbookId = toTrimmedString(context.state.playbookId) || toTrimmedString(context.state.playbook);
+        if (!playbookId) {
+            const issue = `Playbook workload "${context.workload.stateId}" is missing playbookId or playbook.`;
+            addUnique(context.workload.issues, issue);
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: issue,
+                completionStatus: 'failed'
+            });
+        }
+
+        if (!await this.isPlaybookRunnerAvailable()) {
+            const issue = `Playbook runner is not available for Flow state "${context.workload.stateId}".`;
+            addUnique(context.workload.issues, issue);
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: issue,
+                completionStatus: 'failed'
+            });
+        }
+
+        try {
+            const workloadDir = workloadOutputDir(context.workspaceRootUri, context.run.id, context.workload.id);
+            const inputArtifacts = await this.prepareWorkOrderEnvelope(context, workloadDir);
+            const prompt = toTrimmedString(context.state.prompt) || toTrimmedString(context.state.taskPrompt) || context.run.prompt;
+            const result = await this.playbookRunner!.runPlaybook({
+                workspaceRootUri: context.workspaceRootUri,
+                workflowId: context.workflow.id,
+                runId: context.run.id,
+                stateId: context.workload.stateId,
+                workloadId: context.workload.id,
+                playbookId,
+                prompt,
+                input: {
+                    ...(isRecord(context.state.playbookInput) ? context.state.playbookInput : {}),
+                    flow: {
+                        workflowId: context.workflow.id,
+                        workflowName: context.workflow.name,
+                        runId: context.run.id,
+                        stateId: context.workload.stateId,
+                        workloadId: context.workload.id,
+                        prompt: context.run.prompt,
+                        inputArtifacts: inputArtifacts.map(artifact => ({
+                            path: artifact.path,
+                            content: truncateFlowText(artifact.content, FlowSizeLimits.artifactBytes, `playbook input artifact ${artifact.path}`)
+                        }))
+                    }
+                }
+            });
+            return await this.completePlaybookRun(context, playbookId, result);
+        } catch (error) {
+            const issue = `Playbook "${playbookId}" failed before completion: ${errorToMessage(error)}`;
+            addUnique(context.workload.issues, issue);
+            return this.completeWorkloadWithArtifacts(context, [], {
+                effectSummary: issue,
+                completionStatus: 'failed'
+            });
+        }
+    }
+
+    protected async isPlaybookRunnerAvailable(): Promise<boolean> {
+        if (!this.playbookRunner) {
+            return false;
+        }
+        if (!this.playbookRunner.available) {
+            return true;
+        }
+        try {
+            return await this.playbookRunner.available() !== false;
+        } catch {
+            return false;
+        }
+    }
+
+    protected async completePlaybookRun(
+        context: FlowWorkloadExecutionContext,
+        playbookId: string,
+        result: FlowPlaybookRunResult
+    ): Promise<FlowWorkloadExecutionResult> {
+        for (const issue of result.issues || []) {
+            if (issue?.summary) {
+                addUnique(context.workload.issues, issue.summary);
+            }
+        }
+        const status = result.ok ? 'completed' : 'failed';
+        const resultPath = context.state.outputs?.[0] || `playbooks/${context.workload.stateId}/result.json`;
+        const payload = {
+            type: 'playbook',
+            stateId: context.workload.stateId,
+            playbookId,
+            ok: result.ok,
+            stop: result.stop === true,
+            message: result.message || '',
+            value: limitFlowJsonValue(result.value, FlowSizeLimits.eventPayloadBytes, 'playbook result value'),
+            artifacts: (result.artifacts || []).map(artifact => ({
+                path: artifact.path,
+                type: artifact.type,
+                hash: artifact.hash,
+                content: artifact.content === undefined
+                    ? undefined
+                    : truncateFlowText(artifact.content, FlowSizeLimits.artifactBytes, `playbook artifact ${artifact.path}`)
+            })),
+            diagnostics: limitFlowJsonValue(result.diagnostics || [], FlowSizeLimits.eventPayloadBytes, 'playbook diagnostics')
+        };
+        const artifactUri = await this.writePrimitiveAggregateArtifact(context, resultPath, payload);
+        this.registerPlaybookResultSignals(context, playbookId, result);
+        context.workload.outputEnvelope = primitiveOutputEnvelope(context, status, resultPath, payload);
+        return this.completeWorkloadWithArtifacts(context, [artifactUri], {
+            effectSummary: result.message || `Playbook "${playbookId}" ${result.ok ? 'completed' : 'failed'}.`,
+            completionStatus: status
+        });
+    }
+
+    protected registerPlaybookResultSignals(
+        context: FlowWorkloadExecutionContext,
+        playbookId: string,
+        result: FlowPlaybookRunResult
+    ): void {
+        const now = timestamp();
+        const signals: Record<string, SignalValue> = {
+            [`${context.workload.stateId}.playbook.id`]: playbookId,
+            [`${context.workload.stateId}.playbook.ok`]: result.ok,
+            [`${context.workload.stateId}.playbook.stop`]: result.stop === true
+        };
+        for (const [key, value] of Object.entries(result.signals || {})) {
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                signals[key] = value;
+            }
+        }
+        for (const [key, value] of Object.entries(signals)) {
+            context.run.signals.push({
+                key,
+                value,
+                stateId: context.workload.stateId,
+                runId: context.run.id,
+                createdAt: now
+            });
+        }
+    }
+
     async executeAgentWorkload(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionResult> {
+        context = await this.resolveModelProfileContext(context);
         let provider: FlowLlmProviderConfig;
         try {
             provider = await this.resolveLlmProvider(context);
@@ -439,6 +589,29 @@ export class ProviderBackedFlowWorkloadExecutor implements FlowWorkloadExecutor 
                 completionStatus: 'failed'
             });
         }
+    }
+
+    protected async resolveModelProfileContext(context: FlowWorkloadExecutionContext): Promise<FlowWorkloadExecutionContext> {
+        const profileId = context.state.modelExecution?.profileId?.trim();
+        if (!profileId) {
+            return context;
+        }
+        const workspaceProfiles = this.flowStore
+            ? await this.flowStore.listWorkspaceModelProfiles(context.workspaceRootUri).catch(() => [])
+            : [];
+        const profile = listFlowModelProfiles(workspaceProfiles).find(candidate => candidate.id === profileId);
+        if (!profile) {
+            return context;
+        }
+        const builtInProfile = getFlowModelProfile(profileId);
+        return {
+            ...context,
+            state: {
+                ...context.state,
+                provider: resolveEffectiveProfileProvider(profile, builtInProfile, context.state),
+                modelExecution: resolveEffectiveProfileExecution(profile, builtInProfile, context.state)
+            }
+        };
     }
 
     protected async executeRealAgentWorkload(
@@ -1567,6 +1740,9 @@ async function invokeCodexProviderProvider(
             cwd,
             model: modelId,
             reasoningEffort: codexReasoningEffort(context),
+            reasoningVariant: codexReasoningVariant(context),
+            reasoningVariantOptions: context.state.modelExecution?.reasoningVariantOptions,
+            serviceTier: codexServiceTier(context),
             approvalPolicy: 'never',
             sandboxMode: 'read-only'
         }
@@ -1580,6 +1756,65 @@ function codexReasoningEffort(context: FlowWorkloadExecutionContext): CodexProvi
         return undefined;
     }
     return execution?.nativeReasoning?.effort as CodexProviderOptions['reasoningEffort'] | undefined;
+}
+
+function codexReasoningVariant(context: FlowWorkloadExecutionContext): CodexProviderOptions['reasoningVariant'] | undefined {
+    const variant = context.state.modelExecution?.reasoningVariant?.trim();
+    return variant || undefined;
+}
+
+function codexServiceTier(context: FlowWorkloadExecutionContext): CodexProviderOptions['serviceTier'] | undefined {
+    const serviceTier = context.state.modelExecution?.serviceTier;
+    return serviceTier && serviceTier !== 'default' ? serviceTier as CodexProviderOptions['serviceTier'] : undefined;
+}
+
+function resolveEffectiveProfileProvider(
+    profile: FlowModelProfile,
+    builtInProfile: FlowModelProfile | undefined,
+    state: FlowWorkflowState
+): FlowWorkflowState['provider'] {
+    if (state.provider && (!builtInProfile || !sameFlowValue(state.provider, builtInProfile.provider))) {
+        return state.provider;
+    }
+    return profile.provider;
+}
+
+function resolveEffectiveProfileExecution(
+    profile: FlowModelProfile,
+    builtInProfile: FlowModelProfile | undefined,
+    state: FlowWorkflowState
+): FlowWorkflowState['modelExecution'] {
+    const stateExecution = state.modelExecution || {};
+    const builtInExecution = builtInProfile?.execution;
+    const merged: NonNullable<FlowWorkflowState['modelExecution']> = {
+        ...(profile.execution || {}),
+        profileId: profile.id
+    };
+    for (const [key, value] of Object.entries(stateExecution)) {
+        if (key === 'profileId' || value === undefined) {
+            continue;
+        }
+        const builtInValue = builtInExecution?.[key as keyof typeof builtInExecution];
+        if (!builtInExecution || !sameFlowValue(value, builtInValue)) {
+            (merged as Record<string, unknown>)[key] = value;
+        }
+    }
+    return merged;
+}
+
+function sameFlowValue(left: unknown, right: unknown): boolean {
+    return stableJsonValue(left) === stableJsonValue(right);
+}
+
+function stableJsonValue(value: unknown): string {
+    if (Array.isArray(value)) {
+        return `[${value.map(stableJsonValue).join(',')}]`;
+    }
+    if (value && typeof value === 'object') {
+        const record = value as Record<string, unknown>;
+        return `{${Object.keys(record).sort().map(key => `${JSON.stringify(key)}:${stableJsonValue(record[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
 }
 
 async function invokeChatProvider(

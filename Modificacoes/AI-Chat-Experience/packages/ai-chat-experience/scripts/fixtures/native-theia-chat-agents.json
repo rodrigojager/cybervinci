@@ -1,0 +1,83 @@
+{
+  "version": "cybervinci.nativeTheiaChatAgents.fixture/v1",
+  "agents": [
+    {
+      "id": "OpenCoder",
+      "sourceAgentId": "OpenCoder",
+      "name": "CyberVinci",
+      "iconClass": "codicon codicon-hubot"
+    },
+    {
+      "id": "Coder",
+      "sourceAgentId": "Coder",
+      "name": "Coder",
+      "iconClass": "codicon codicon-code"
+    },
+    {
+      "id": "Architect",
+      "sourceAgentId": "Architect",
+      "name": "Architect",
+      "iconClass": "codicon codicon-map"
+    },
+    {
+      "id": "GitHub",
+      "sourceAgentId": "GitHub",
+      "name": "GitHub",
+      "iconClass": "codicon codicon-github"
+    },
+    {
+      "id": "AppTester",
+      "sourceAgentId": "AppTester",
+      "name": "AppTester",
+      "iconClass": "codicon codicon-beaker"
+    },
+    {
+      "id": "code-reviewer",
+      "sourceAgentId": "code-reviewer",
+      "name": "Code Reviewer",
+      "iconClass": "codicon codicon-code-review"
+    },
+    {
+      "id": "pr-reviewer",
+      "sourceAgentId": "pr-reviewer",
+      "name": "PR Reviewer",
+      "iconClass": "codicon codicon-git-pull-request-go-to-changes"
+    },
+    {
+      "id": "explore",
+      "sourceAgentId": "explore",
+      "name": "Explore",
+      "iconClass": "codicon codicon-compass"
+    },
+    {
+      "id": "ProjectInfo",
+      "sourceAgentId": "ProjectInfo",
+      "name": "ProjectInfo",
+      "iconClass": "codicon codicon-info"
+    },
+    {
+      "id": "CreateSkill",
+      "sourceAgentId": "CreateSkill",
+      "name": "CreateSkill",
+      "iconClass": "codicon codicon-tools"
+    },
+    {
+      "id": "Orchestrator",
+      "sourceAgentId": "Orchestrator",
+      "name": "Orchestrator",
+      "iconClass": "codicon codicon-organization"
+    },
+    {
+      "id": "Universal",
+      "sourceAgentId": "Universal",
+      "name": "Universal",
+      "iconClass": "codicon codicon-copilot"
+    },
+    {
+      "id": "Command",
+      "sourceAgentId": "Command",
+      "name": "Command",
+      "iconClass": "codicon codicon-terminal"
+    }
+  ]
+}

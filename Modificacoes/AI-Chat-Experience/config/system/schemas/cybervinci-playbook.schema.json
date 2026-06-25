@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cybervinci.playbook/v1",
+  "title": "CyberVinci Playbook",
+  "type": "object",
+  "required": ["id", "name", "entry", "states"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "enum": ["cybervinci.playbook/v1", 1] },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "category": { "type": "string" },
+    "source": { "enum": ["core", "system", "system-override", "user"] },
+    "sourcePath": { "type": "string" },
+    "description": { "type": "string" },
+    "entry": { "type": "string", "minLength": 1 },
+    "uses": { "type": "object" },
+    "defaults": { "type": "object" },
+    "tools": { "type": "array", "items": { "type": "string" } },
+    "guards": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "enabled": { "type": "boolean" },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": {
+            "enum": ["start", "guard", "tool", "ai", "ask", "condition", "flow", "playbook", "parallel", "response", "end"]
+          },
+          "prompt": { "type": "string" },
+          "template": { "type": "string" },
+          "tool": { "type": "string" },
+          "guard": { "type": "string" },
+          "agent": { "type": "string" },
+          "provider": {
+            "oneOf": [
+              { "enum": ["inherit"] },
+              { "type": "object" }
+            ]
+          },
+          "input": { "type": "object" },
+          "args": { "type": "object" },
+          "saveAs": { "type": "string" },
+          "playbook": { "type": "string" },
+          "playbookId": { "type": "string" },
+          "branches": { "type": "array", "items": { "type": "string" } },
+          "flowId": { "type": "string" },
+          "mode": { "enum": ["saved", "dynamic", "authoring"] },
+          "workflowId": { "type": "string" },
+          "preferSaved": { "type": "boolean" },
+          "authoringDraft": {},
+          "route": { "enum": ["direct", "saved-flow", "dynamic-workflow"] },
+          "text": { "type": "string" },
+          "outputSchema": { "type": "object" },
+          "outputMode": { "enum": ["text", "json"] },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label"],
+              "additionalProperties": true,
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "next": { "type": "string" }
+              }
+            }
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["if", "next"],
+              "additionalProperties": true,
+              "properties": {
+                "if": {},
+                "next": { "type": "string" }
+              }
+            }
+          },
+          "default": { "type": "string" },
+          "next": { "type": "string" },
+          "onPass": { "type": "string" },
+          "onFail": { "type": "string" },
+          "onError": { "type": "string" },
+          "retry": { "type": "object" },
+          "transitions": { "type": "array" }
+        }
+      }
+    }
+  }
+}

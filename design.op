@@ -1,0 +1,82 @@
+{
+  "version": "0.7.6",
+  "name": "design",
+  "activePageId": "page-mqjbfgg9-pkx8h5",
+  "pages": [
+    {
+      "id": "page-mqjbfgg9-pkx8h5",
+      "name": "Page 1",
+      "width": 900,
+      "height": 620,
+      "background": "#ffffff",
+      "gridSize": 20,
+      "showGrid": true,
+      "snapToGrid": false,
+      "children": [
+        {
+          "id": "hero-card",
+          "type": "rectangle",
+          "name": "Hero card",
+          "x": 120,
+          "y": 96,
+          "width": 520,
+          "height": 260,
+          "cornerRadius": 24,
+          "fill": [
+            {
+              "type": "solid",
+              "color": "#f8fafc"
+            }
+          ],
+          "stroke": {
+            "thickness": 1,
+            "width": 1,
+            "color": "#cbd5e1",
+            "fill": [
+              {
+                "type": "solid",
+                "color": "#cbd5e1"
+              }
+            ]
+          }
+        },
+        {
+          "id": "hero-title",
+          "type": "text",
+          "name": "Hero title",
+          "x": 160,
+          "y": 144,
+          "width": 440,
+          "height": 64,
+          "content": "OpenPencil Design",
+          "fontSize": 36,
+          "fontWeight": 700,
+          "fill": [
+            {
+              "type": "solid",
+              "color": "#111827"
+            }
+          ]
+        },
+        {
+          "id": "hero-copy",
+          "type": "text",
+          "name": "Hero copy",
+          "x": 162,
+          "y": 226,
+          "width": 380,
+          "height": 48,
+          "content": "Edit this embedded .op design inside Theia.",
+          "fontSize": 18,
+          "fill": [
+            {
+              "type": "solid",
+              "color": "#475569"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "children": []
+}

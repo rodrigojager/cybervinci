@@ -10,6 +10,8 @@ export interface DesignEngineOptions {
   canvasKitPath?: string | ((file: string) => string);
   /** Base URL for bundled font files. */
   fontBasePath?: string;
+  /** Fetch bundled font files before CDN fallback. Default: enabled only when fontBasePath is provided. */
+  loadBundledFonts?: boolean;
   /** Custom Google Fonts CSS endpoint. */
   googleFontsCssUrl?: string;
   /** Icon lookup function for resolving icon names to SVG path data. */

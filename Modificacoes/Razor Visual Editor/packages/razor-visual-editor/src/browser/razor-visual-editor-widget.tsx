@@ -6,6 +6,7 @@ import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import { inject, injectable, postConstruct } from '@theia/core/shared/inversify';
 import * as React from '@theia/core/shared/react';
 import type { Editor } from 'grapesjs';
+import { EditorManager } from '@theia/editor/lib/browser';
 import { GrapesEditorFactory } from './grapes/grapes-editor-factory';
 import { RazorVisualEditorApp } from './components/RazorVisualEditorApp';
 import { EditorDocument, RazorVisualEditorMode, RazorVisualViewport } from './types/editor-document';
@@ -67,6 +68,9 @@ export class RazorVisualEditorWidget extends ReactWidget implements Navigatable,
 
     @inject(RazorVisualAiService)
     protected readonly visualAiService: RazorVisualAiService;
+
+    @inject(EditorManager)
+    protected readonly editorManager: EditorManager;
 
     constructor(@inject(RazorVisualEditorWidgetOptions) protected readonly options: RazorVisualEditorWidgetOptions) {
         super();
@@ -135,6 +139,7 @@ export class RazorVisualEditorWidget extends ReactWidget implements Navigatable,
             visualAiService={this.visualAiService}
             onSave={() => this.save({ saveReason: SaveReason.Manual })}
             onSaveAs={() => this.saveAs()}
+            onOpenCodeEditor={() => this.openCodeEditor()}
             onReload={() => this.reload()}
             onShowDiff={() => this.showDiff()}
             onShowTokens={() => this.showTokens()}
@@ -238,6 +243,13 @@ export class RazorVisualEditorWidget extends ReactWidget implements Navigatable,
     async reload(): Promise<void> {
         this.loadPromise = this.load();
         await this.loadPromise;
+    }
+
+    async openCodeEditor(): Promise<void> {
+        await this.editorManager.open(this.uri, { mode: 'activate' });
+        if (this.dirty) {
+            this.messages.info(`Opened ${this.uri.path.base} in the code editor. Save visual changes first if you want that editor to include the current visual draft.`);
+        }
     }
 
     showTokens(): void {

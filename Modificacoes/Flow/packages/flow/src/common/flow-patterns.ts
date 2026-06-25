@@ -368,6 +368,9 @@ function workflow(
         ...extraStates
     };
     const firstNonInput = Object.keys(workflowStates).find(stateId => stateId !== 'input');
+    const workflowTransitions = firstNonInput
+        ? [{ id: `input_to_${firstNonInput}`, from: 'input', to: firstNonInput, on: 'run.started' }, ...transitions]
+        : transitions;
     return {
         version: 'flow.workflow/v1',
         id,
@@ -377,11 +380,43 @@ function workflow(
         templateVersion: 'flow.pattern/v1',
         agents: collectAgents(workflowStates),
         requires: { capabilities: ['llm.agent.execute'] },
-        states: workflowStates,
-        transitions: firstNonInput
-            ? [{ id: `input_to_${firstNonInput}`, from: 'input', to: firstNonInput, on: 'run.started' }, ...transitions]
-            : transitions
+        states: applyConservativeOutcomeRoutes(workflowStates, workflowTransitions),
+        transitions: workflowTransitions
     };
+}
+
+function applyConservativeOutcomeRoutes(
+    states: Record<string, FlowWorkflowState>,
+    transitions: FlowWorkflow['transitions']
+): Record<string, FlowWorkflowState> {
+    const next: Record<string, FlowWorkflowState> = { ...states };
+    const transitionsBySource = new Map<string, FlowWorkflow['transitions']>();
+    for (const transition of transitions) {
+        transitionsBySource.set(transition.from, [...(transitionsBySource.get(transition.from) || []), transition]);
+    }
+    for (const [stateId, stateTransitions] of transitionsBySource) {
+        const state = next[stateId];
+        if (!state || stateTransitions.length !== 1) {
+            continue;
+        }
+        const [transition] = stateTransitions;
+        const canRoute = !transition.guard
+            || transition.on === 'run.started'
+            || transition.on === 'gate.approved'
+            || transition.on === 'state.completed';
+        if (!canRoute || state.outcomes?.success || state.outcomes?.approved) {
+            continue;
+        }
+        const outcome = transition.on === 'gate.approved' ? 'approved' : 'success';
+        next[stateId] = {
+            ...state,
+            outcomes: {
+                ...(state.outcomes || {}),
+                [outcome]: transition.to
+            }
+        };
+    }
+    return next;
 }
 
 function agent(
@@ -395,16 +430,16 @@ function agent(
     const override = request.roleOverrides?.[role] || request.roleOverrides?.[id];
     const defaultProfileId = roleProfileId(request, role, profileParameterId);
     const profileId = override?.modelExecution?.profileId || override?.profileId || defaultProfileId;
-    const profile = getFlowModelProfile(profileId);
+    const modelProfile = getFlowModelProfile(profileId);
     return compact({
         type: 'agent',
         agent: role,
         agentRole: role,
-        provider: override?.provider || profile?.provider,
+        provider: override?.provider || modelProfile?.provider,
         modelExecution: {
-            ...profile?.execution,
+            ...(modelProfile?.execution || {}),
             ...override?.modelExecution,
-            profileId: override?.modelExecution?.profileId || override?.profileId || profile?.execution.profileId || profileId
+            profileId
         },
         systemPrompt: roleSystemPrompt(role),
         taskPrompt,

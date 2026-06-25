@@ -95,9 +95,14 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FlowServiceImpl = void 0;
+var child_process_1 = require("child_process");
+var fs = require("fs/promises");
+var path = require("path");
+var util_1 = require("util");
+var file_uri_1 = require("@theia/core/lib/common/file-uri");
 var inversify_1 = require("@theia/core/shared/inversify");
 var ai_core_1 = require("@theia/ai-core");
-var codex_provider_service_1 = require("@cybervinci/codex-provider/lib/common/codex-provider-service");
+var ai_providers_service_1 = require("@cybervinci/ai-providers/lib/common/ai-providers-service");
 var common_1 = require("../common");
 var flow_approval_policy_1 = require("../common/flow-approval-policy");
 var flow_kernel_bridge_1 = require("./flow-kernel-bridge");
@@ -107,6 +112,8 @@ var markdown_workload_store_1 = require("./markdown-workload-store");
 var memory_adapter_1 = require("./memory-adapter");
 var file_effect_host_adapter_1 = require("./file-effect-host-adapter");
 var image_effect_host_adapter_1 = require("./image-effect-host-adapter");
+var flow_playbook_runner_1 = require("./flow-playbook-runner");
+var execFileAsync = (0, util_1.promisify)(child_process_1.execFile);
 var FlowServiceImpl = function () {
     var _classDecorators = [(0, inversify_1.injectable)()];
     var _classDescriptor;
@@ -133,6 +140,9 @@ var FlowServiceImpl = function () {
     var _imageEffectHostAdapter_decorators;
     var _imageEffectHostAdapter_initializers = [];
     var _imageEffectHostAdapter_extraInitializers = [];
+    var _playbookRunner_decorators;
+    var _playbookRunner_initializers = [];
+    var _playbookRunner_extraInitializers = [];
     var _languageModelRegistry_decorators;
     var _languageModelRegistry_initializers = [];
     var _languageModelRegistry_extraInitializers = [];
@@ -150,7 +160,8 @@ var FlowServiceImpl = function () {
             this.memory = (__runInitializers(this, _kernelBridge_extraInitializers), __runInitializers(this, _memory_initializers, void 0));
             this.fileEffectHostAdapter = (__runInitializers(this, _memory_extraInitializers), __runInitializers(this, _fileEffectHostAdapter_initializers, void 0));
             this.imageEffectHostAdapter = (__runInitializers(this, _fileEffectHostAdapter_extraInitializers), __runInitializers(this, _imageEffectHostAdapter_initializers, void 0));
-            this.languageModelRegistry = (__runInitializers(this, _imageEffectHostAdapter_extraInitializers), __runInitializers(this, _languageModelRegistry_initializers, void 0));
+            this.playbookRunner = (__runInitializers(this, _imageEffectHostAdapter_extraInitializers), __runInitializers(this, _playbookRunner_initializers, void 0));
+            this.languageModelRegistry = (__runInitializers(this, _playbookRunner_extraInitializers), __runInitializers(this, _languageModelRegistry_initializers, void 0));
             this.codexProviderService = (__runInitializers(this, _languageModelRegistry_extraInitializers), __runInitializers(this, _codexProviderService_initializers, void 0));
             __runInitializers(this, _codexProviderService_extraInitializers);
         }
@@ -250,9 +261,23 @@ var FlowServiceImpl = function () {
             });
         };
         FlowServiceImpl_1.prototype.listModelProfiles = function () {
+            return __awaiter(this, arguments, void 0, function (request) {
+                var _a;
+                if (request === void 0) { request = {}; }
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _a = common_1.listFlowModelProfiles;
+                            return [4 /*yield*/, this.store.listWorkspaceModelProfiles(request.workspaceRootUri)];
+                        case 1: return [2 /*return*/, _a.apply(void 0, [_b.sent()])];
+                    }
+                });
+            });
+        };
+        FlowServiceImpl_1.prototype.saveModelProfile = function (request) {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
-                    return [2 /*return*/, (0, common_1.listFlowModelProfiles)()];
+                    return [2 /*return*/, this.store.saveModelProfile(request.workspaceRootUri, request.profile)];
                 });
             });
         };
@@ -414,7 +439,7 @@ var FlowServiceImpl = function () {
                         case 0: return [4 /*yield*/, this.listWorkflows(request)];
                         case 1:
                             workflows = _a.sent();
-                            return [2 /*return*/, planDynamicWorkflow({
+                            return [2 /*return*/, (0, common_1.planDynamicWorkflow)({
                                     prompt: request.prompt,
                                     workflows: workflows,
                                     patterns: (0, common_1.listFlowWorkflowPatterns)(),
@@ -426,7 +451,7 @@ var FlowServiceImpl = function () {
         };
         FlowServiceImpl_1.prototype.runDynamicWorkflow = function (request) {
             return __awaiter(this, void 0, void 0, function () {
-                var plan, workflow;
+                var plan, run_1, workflow, run_2, run;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -436,69 +461,124 @@ var FlowServiceImpl = function () {
                             return [4 /*yield*/, this.planDynamicWorkflow(request)];
                         case 1:
                             plan = _a.sent();
-                            if (plan.kind === 'saved_workflow' && plan.workflowId) {
-                                return [2 /*return*/, this.startRun({
-                                        workspaceRootUri: request.workspaceRootUri,
-                                        workflowId: plan.workflowId,
-                                        prompt: request.prompt
-                                    })];
-                            }
-                            if (!(plan.kind === 'generated_workflow' && plan.workflow)) return [3 /*break*/, 4];
-                            return [4 /*yield*/, this.store.createWorkflowFromGeneratedWorkflow(request.workspaceRootUri, plan.workflow, plan.reason)];
+                            if (!(plan.kind === 'saved_workflow' && plan.workflowId)) return [3 /*break*/, 3];
+                            return [4 /*yield*/, this.startRun({
+                                    workspaceRootUri: request.workspaceRootUri,
+                                    workflowId: plan.workflowId,
+                                    prompt: request.prompt
+                                })];
                         case 2:
+                            run_1 = _a.sent();
+                            return [2 /*return*/, this.recordDynamicWorkflowDecision(request.workspaceRootUri, run_1, plan)];
+                        case 3:
+                            if (!(plan.kind === 'generated_workflow' && plan.workflow)) return [3 /*break*/, 7];
+                            return [4 /*yield*/, this.store.createWorkflowFromGeneratedWorkflow(request.workspaceRootUri, plan.workflow, plan.reason)];
+                        case 4:
                             workflow = _a.sent();
                             return [4 /*yield*/, this.materializeWorkflowAgents(request.workspaceRootUri, workflow)];
-                        case 3:
+                        case 5:
                             _a.sent();
-                            return [2 /*return*/, this.startRun({
+                            return [4 /*yield*/, this.startRun({
                                     workspaceRootUri: request.workspaceRootUri,
                                     workflowId: workflow.id,
                                     prompt: request.prompt
                                 })];
-                        case 4:
+                        case 6:
+                            run_2 = _a.sent();
+                            return [2 /*return*/, this.recordDynamicWorkflowDecision(request.workspaceRootUri, run_2, __assign(__assign({}, plan), { workflowId: workflow.id, workflow: undefined }))];
+                        case 7:
                             if (!plan.patternId) {
                                 throw new Error("Dynamic workflow planner did not select an executable workflow for prompt: ".concat(plan.reason));
                             }
-                            return [2 /*return*/, this.runWorkflowPattern({
+                            return [4 /*yield*/, this.runWorkflowPattern({
                                     workspaceRootUri: request.workspaceRootUri,
                                     patternId: plan.patternId,
                                     parameters: __assign(__assign({}, (plan.parameters || {})), (request.parameters || {})),
                                     roleOverrides: request.roleOverrides,
                                     prompt: request.prompt
                                 })];
+                        case 8:
+                            run = _a.sent();
+                            return [2 /*return*/, this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, __assign(__assign({}, plan), { workflowId: run.workflowId, parameters: __assign(__assign({}, (plan.parameters || {})), (request.parameters || {})) }))];
                     }
                 });
             });
         };
         FlowServiceImpl_1.prototype.runAiAuthoringDraft = function (request) {
             return __awaiter(this, void 0, void 0, function () {
-                var draft, prompt, workflow;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var draft, prompt, run_3, workflow, run;
+                var _a, _b, _c, _d;
+                return __generator(this, function (_e) {
+                    switch (_e.label) {
                         case 0:
                             draft = request.authoringDraft;
                             if (!draft) {
                                 throw new Error('Dynamic workflow run is missing an AI authoring draft.');
                             }
                             prompt = draft.promptMarkdown || request.prompt;
-                            if (draft.action === 'run_saved_workflow') {
-                                if (!draft.savedWorkflowId) {
-                                    throw new Error('AI authoring draft action "run_saved_workflow" requires savedWorkflowId.');
-                                }
-                                return [2 /*return*/, this.startRun({
-                                        workspaceRootUri: request.workspaceRootUri,
-                                        workflowId: draft.savedWorkflowId,
-                                        prompt: prompt
-                                    })];
+                            if (!(draft.action === 'run_saved_workflow')) return [3 /*break*/, 2];
+                            if (!draft.savedWorkflowId) {
+                                throw new Error('AI authoring draft action "run_saved_workflow" requires savedWorkflowId.');
                             }
-                            return [4 /*yield*/, this.materializeAiAuthoringDraft(request.workspaceRootUri, draft)];
+                            return [4 /*yield*/, this.startRun({
+                                    workspaceRootUri: request.workspaceRootUri,
+                                    workflowId: draft.savedWorkflowId,
+                                    prompt: prompt
+                                })];
                         case 1:
-                            workflow = _a.sent();
-                            return [2 /*return*/, this.startRun({
+                            run_3 = _e.sent();
+                            return [2 /*return*/, this.recordDynamicWorkflowDecision(request.workspaceRootUri, run_3, {
+                                    kind: 'saved_workflow',
+                                    workflowId: draft.savedWorkflowId,
+                                    reason: draft.reason || 'AI authoring selected a saved workflow.',
+                                    confidence: (_a = draft.confidence) !== null && _a !== void 0 ? _a : 0
+                                }, draft.action)];
+                        case 2: return [4 /*yield*/, this.materializeAiAuthoringDraft(request.workspaceRootUri, draft)];
+                        case 3:
+                            workflow = _e.sent();
+                            return [4 /*yield*/, this.startRun({
                                     workspaceRootUri: request.workspaceRootUri,
                                     workflowId: workflow.id,
                                     prompt: prompt
                                 })];
+                        case 4:
+                            run = _e.sent();
+                            return [2 /*return*/, this.recordDynamicWorkflowDecision(request.workspaceRootUri, run, {
+                                    kind: draft.action === 'instantiate_pattern' ? 'pattern' : 'generated_workflow',
+                                    workflowId: workflow.id,
+                                    patternId: (_b = draft.pattern) === null || _b === void 0 ? void 0 : _b.patternId,
+                                    reason: draft.reason || "AI authoring action \"".concat(draft.action, "\" materialized workflow \"").concat(workflow.id, "\"."),
+                                    confidence: (_c = draft.confidence) !== null && _c !== void 0 ? _c : 0,
+                                    parameters: (_d = draft.pattern) === null || _d === void 0 ? void 0 : _d.parameters
+                                }, draft.action)];
+                    }
+                });
+            });
+        };
+        FlowServiceImpl_1.prototype.recordDynamicWorkflowDecision = function (workspaceRootUri, run, plan, authoringAction) {
+            return __awaiter(this, void 0, void 0, function () {
+                var eventId;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            eventId = stableId('event', run.id, 'dynamic-workflow-selected');
+                            if (!!run.events.some(function (event) { return event.id === eventId; })) return [3 /*break*/, 2];
+                            run.events.push({
+                                id: eventId,
+                                runId: run.id,
+                                workflowId: run.workflowId,
+                                type: 'dynamic_workflow.selected',
+                                timestamp: timestamp(),
+                                message: dynamicWorkflowDecisionMessage(plan, authoringAction),
+                                payload: compactDynamicWorkflowDecisionPayload(plan, authoringAction)
+                            });
+                            run.updatedAt = timestamp();
+                            return [4 /*yield*/, this.store.saveRun(workspaceRootUri, run)];
+                        case 1:
+                            _a.sent();
+                            this.publishRunUpdate(workspaceRootUri, run, 'started');
+                            _a.label = 2;
+                        case 2: return [2 /*return*/, run];
                     }
                 });
             });
@@ -825,9 +905,107 @@ var FlowServiceImpl = function () {
                 });
             });
         };
+        FlowServiceImpl_1.prototype.prepareRunWorkspace = function (workspaceRootUri, workflow, options) {
+            return __awaiter(this, void 0, void 0, function () {
+                var mode, sourceRoot, suffix, workspaceSlug, worktreesRoot, targetRoot, targetUri, branch, error_1, detail;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            mode = (options === null || options === void 0 ? void 0 : options.mode) || 'shared';
+                            if (mode === 'shared') {
+                                return [2 /*return*/, { workspaceRootUri: workspaceRootUri }];
+                            }
+                            if (!workspaceRootUri) {
+                                throw new Error("Flow workspace mode \"".concat(mode, "\" requires an open workspace."));
+                            }
+                            sourceRoot = file_uri_1.FileUri.fsPath(workspaceRootUri);
+                            suffix = "".concat(Date.now().toString(36), "-").concat(Math.random().toString(36).slice(2, 8));
+                            workspaceSlug = "".concat(sanitizeWorkflowId(workflow.id), "-").concat(suffix);
+                            worktreesRoot = path.join(sourceRoot, '.theia', 'flow', 'worktrees');
+                            return [4 /*yield*/, fs.mkdir(worktreesRoot, { recursive: true })];
+                        case 1:
+                            _a.sent();
+                            targetRoot = path.join(worktreesRoot, workspaceSlug);
+                            targetUri = file_uri_1.FileUri.create(targetRoot).toString();
+                            if (!(mode === 'temporary_copy')) return [3 /*break*/, 3];
+                            return [4 /*yield*/, fs.cp(sourceRoot, targetRoot, {
+                                    recursive: true,
+                                    filter: function (source) { return shouldCopyTemporaryWorkspaceEntry(sourceRoot, source); }
+                                })];
+                        case 2:
+                            _a.sent();
+                            return [2 /*return*/, {
+                                    workspaceRootUri: targetUri,
+                                    workspace: {
+                                        mode: mode,
+                                        rootUri: targetUri,
+                                        sourceRootUri: workspaceRootUri,
+                                        createdAt: timestamp(),
+                                        cleanupStatus: (options === null || options === void 0 ? void 0 : options.cleanupOnCompletion) ? 'pending' : 'skipped'
+                                    }
+                                }];
+                        case 3:
+                            branch = "flow/".concat(sanitizeWorkflowId(workflow.id), "/").concat(suffix);
+                            _a.label = 4;
+                        case 4:
+                            _a.trys.push([4, 6, , 7]);
+                            return [4 /*yield*/, execFileAsync('git', [
+                                    '-C',
+                                    sourceRoot,
+                                    'worktree',
+                                    'add',
+                                    '-b',
+                                    branch,
+                                    targetRoot,
+                                    (options === null || options === void 0 ? void 0 : options.baseBranch) || 'HEAD'
+                                ], { timeout: 120000 })];
+                        case 5:
+                            _a.sent();
+                            return [3 /*break*/, 7];
+                        case 6:
+                            error_1 = _a.sent();
+                            detail = error_1 && typeof error_1 === 'object' && 'stderr' in error_1
+                                ? String(error_1.stderr || '')
+                                : error_1 instanceof Error ? error_1.message : String(error_1);
+                            throw new Error("Could not create Flow worktree for \"".concat(workflow.name, "\": ").concat(detail.trim() || 'git worktree failed'));
+                        case 7: return [2 /*return*/, {
+                                workspaceRootUri: targetUri,
+                                workspace: {
+                                    mode: mode,
+                                    rootUri: targetUri,
+                                    sourceRootUri: workspaceRootUri,
+                                    branch: branch,
+                                    createdAt: timestamp(),
+                                    cleanupStatus: (options === null || options === void 0 ? void 0 : options.cleanupOnCompletion) ? 'pending' : 'skipped'
+                                }
+                            }];
+                    }
+                });
+            });
+        };
+        FlowServiceImpl_1.prototype.buildRunContextPack = function (workspaceRootUri, workflow) {
+            return __awaiter(this, void 0, void 0, function () {
+                var error_2;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            _a.trys.push([0, 2, , 3]);
+                            return [4 /*yield*/, this.memory.buildContextPack(workspaceRootUri, workflow)];
+                        case 1: return [2 /*return*/, _a.sent()];
+                        case 2:
+                            error_2 = _a.sent();
+                            if (workflowRequiresMemoryContext(workflow)) {
+                                throw error_2;
+                            }
+                            return [2 /*return*/, minimalFlowContextPack(workspaceRootUri, workflow, error_2 instanceof Error ? error_2.message : String(error_2))];
+                        case 3: return [2 /*return*/];
+                    }
+                });
+            });
+        };
         FlowServiceImpl_1.prototype.startRun = function (request) {
             return __awaiter(this, void 0, void 0, function () {
-                var workflow, contextPack, run, _a, materializedRun;
+                var workflow, contextPack, runWorkspace, executionWorkspaceRootUri, run, _a, materializedRun;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0: return [4 /*yield*/, this.getWorkflow(request)];
@@ -836,22 +1014,29 @@ var FlowServiceImpl = function () {
                             return [4 /*yield*/, this.assertHostCapabilities(workflow)];
                         case 2:
                             _b.sent();
-                            return [4 /*yield*/, this.memory.buildContextPack(request.workspaceRootUri, workflow)];
+                            return [4 /*yield*/, this.buildRunContextPack(request.workspaceRootUri, workflow)];
                         case 3:
                             contextPack = _b.sent();
-                            return [4 /*yield*/, this.kernelBridge.startRun(workflow, request.prompt, contextPack.summary, request.workspaceRootUri)];
+                            return [4 /*yield*/, this.prepareRunWorkspace(request.workspaceRootUri, workflow, request.workspace)];
                         case 4:
+                            runWorkspace = _b.sent();
+                            executionWorkspaceRootUri = runWorkspace.workspaceRootUri || request.workspaceRootUri;
+                            return [4 /*yield*/, this.kernelBridge.startRun(workflow, request.prompt, contextPack.summary, executionWorkspaceRootUri)];
+                        case 5:
                             run = _b.sent();
+                            if (runWorkspace.workspace) {
+                                run.workspace = runWorkspace.workspace;
+                            }
                             run.contextPack = contextPack;
                             _a = run;
                             return [4 /*yield*/, this.memory.collectMemoryCandidates(run)];
-                        case 5:
-                            _a.memoryCandidates = _b.sent();
-                            return [4 /*yield*/, this.workloadStore.materializeRun(request.workspaceRootUri, workflow, run)];
                         case 6:
+                            _a.memoryCandidates = _b.sent();
+                            return [4 /*yield*/, this.workloadStore.materializeRun(executionWorkspaceRootUri, workflow, run)];
+                        case 7:
                             materializedRun = _b.sent();
                             return [4 /*yield*/, this.store.saveRun(request.workspaceRootUri, materializedRun)];
-                        case 7:
+                        case 8:
                             _b.sent();
                             this.publishRunUpdate(request.workspaceRootUri, materializedRun, 'started');
                             this.ensureRunStream({ workspaceRootUri: request.workspaceRootUri, runId: materializedRun.id });
@@ -878,30 +1063,32 @@ var FlowServiceImpl = function () {
         };
         FlowServiceImpl_1.prototype.tickRun = function (request) {
             return __awaiter(this, void 0, void 0, function () {
-                var run, workflow, updated, _a, _b, _c, materializedRun;
-                return __generator(this, function (_d) {
-                    switch (_d.label) {
+                var run, workflow, executionWorkspaceRootUri, updated, _a, _b, _c, materializedRun;
+                var _d;
+                return __generator(this, function (_e) {
+                    switch (_e.label) {
                         case 0: return [4 /*yield*/, this.getRun(request)];
                         case 1:
-                            run = _d.sent();
+                            run = _e.sent();
                             return [4 /*yield*/, this.getWorkflow(__assign(__assign({}, request), { workflowId: run.workflowId }))];
                         case 2:
-                            workflow = _d.sent();
-                            return [4 /*yield*/, this.kernelBridge.tickRun(workflow, run, request.workspaceRootUri)];
+                            workflow = _e.sent();
+                            executionWorkspaceRootUri = ((_d = run.workspace) === null || _d === void 0 ? void 0 : _d.rootUri) || request.workspaceRootUri;
+                            return [4 /*yield*/, this.kernelBridge.tickRun(workflow, run, executionWorkspaceRootUri)];
                         case 3:
-                            updated = _d.sent();
+                            updated = _e.sent();
                             _a = updated;
                             _b = mergeMemoryCandidates;
                             _c = [updated.memoryCandidates];
                             return [4 /*yield*/, this.memory.collectMemoryCandidates(updated)];
                         case 4:
-                            _a.memoryCandidates = _b.apply(void 0, _c.concat([_d.sent()]));
-                            return [4 /*yield*/, this.workloadStore.materializeRun(request.workspaceRootUri, workflow, updated)];
+                            _a.memoryCandidates = _b.apply(void 0, _c.concat([_e.sent()]));
+                            return [4 /*yield*/, this.workloadStore.materializeRun(executionWorkspaceRootUri, workflow, updated)];
                         case 5:
-                            materializedRun = _d.sent();
+                            materializedRun = _e.sent();
                             return [4 /*yield*/, this.store.saveRun(request.workspaceRootUri, materializedRun)];
                         case 6:
-                            _d.sent();
+                            _e.sent();
                             this.publishRunUpdate(request.workspaceRootUri, materializedRun, 'tick');
                             return [2 /*return*/, materializedRun];
                     }
@@ -958,33 +1145,78 @@ var FlowServiceImpl = function () {
         };
         FlowServiceImpl_1.prototype.approveGate = function (request) {
             return __awaiter(this, void 0, void 0, function () {
-                var run, workflow, updated, _a, _b, _c, materializedRun;
-                return __generator(this, function (_d) {
-                    switch (_d.label) {
+                var run, workflow, executionWorkspaceRootUri, updated, _a, _b, _c, materializedRun;
+                var _d;
+                return __generator(this, function (_e) {
+                    switch (_e.label) {
                         case 0: return [4 /*yield*/, this.getRun(request)];
                         case 1:
-                            run = _d.sent();
+                            run = _e.sent();
                             return [4 /*yield*/, this.getWorkflow(__assign(__assign({}, request), { workflowId: run.workflowId }))];
                         case 2:
-                            workflow = _d.sent();
-                            return [4 /*yield*/, this.kernelBridge.approveGate(workflow, run, request, request.workspaceRootUri)];
+                            workflow = _e.sent();
+                            executionWorkspaceRootUri = ((_d = run.workspace) === null || _d === void 0 ? void 0 : _d.rootUri) || request.workspaceRootUri;
+                            return [4 /*yield*/, this.kernelBridge.approveGate(workflow, run, request, executionWorkspaceRootUri)];
                         case 3:
-                            updated = _d.sent();
+                            updated = _e.sent();
                             _a = updated;
                             _b = mergeMemoryCandidates;
                             _c = [updated.memoryCandidates];
                             return [4 /*yield*/, this.memory.collectMemoryCandidates(updated)];
                         case 4:
-                            _a.memoryCandidates = _b.apply(void 0, _c.concat([_d.sent()]));
-                            return [4 /*yield*/, this.workloadStore.materializeRun(request.workspaceRootUri, workflow, updated)];
+                            _a.memoryCandidates = _b.apply(void 0, _c.concat([_e.sent()]));
+                            return [4 /*yield*/, this.workloadStore.materializeRun(executionWorkspaceRootUri, workflow, updated)];
                         case 5:
-                            materializedRun = _d.sent();
+                            materializedRun = _e.sent();
                             return [4 /*yield*/, this.store.saveRun(request.workspaceRootUri, materializedRun)];
                         case 6:
-                            _d.sent();
+                            _e.sent();
                             this.publishRunUpdate(request.workspaceRootUri, materializedRun, 'approval');
                             this.ensureRunStream({ workspaceRootUri: request.workspaceRootUri, runId: materializedRun.id });
                             return [2 /*return*/, materializedRun];
+                    }
+                });
+            });
+        };
+        FlowServiceImpl_1.prototype.cleanupRuns = function (request) {
+            return __awaiter(this, void 0, void 0, function () {
+                var hasExplicitSelector, cutoff, runs, requestedIds, runIds, _i, runIds_1, runId;
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            hasExplicitSelector = Boolean(((_a = request.runIds) === null || _a === void 0 ? void 0 : _a.length) || request.workflowId || request.olderThanDays !== undefined);
+                            if (!hasExplicitSelector) {
+                                throw new Error('Flow cleanup requires runIds, workflowId, or olderThanDays.');
+                            }
+                            cutoff = request.olderThanDays !== undefined
+                                ? Date.now() - Math.max(0, request.olderThanDays) * 24 * 60 * 60 * 1000
+                                : undefined;
+                            return [4 /*yield*/, this.store.listRuns(request.workspaceRootUri)];
+                        case 1:
+                            runs = _b.sent();
+                            requestedIds = new Set(request.runIds || []);
+                            runIds = runs
+                                .filter(function (run) { return requestedIds.size === 0 || requestedIds.has(run.id); })
+                                .filter(function (run) { return !request.workflowId || run.workflowId === request.workflowId; })
+                                .filter(function (run) { return cutoff === undefined || Date.parse(run.updatedAt || run.createdAt) < cutoff; })
+                                .map(function (run) { return run.id; });
+                            _i = 0, runIds_1 = runIds;
+                            _b.label = 2;
+                        case 2:
+                            if (!(_i < runIds_1.length)) return [3 /*break*/, 5];
+                            runId = runIds_1[_i];
+                            return [4 /*yield*/, this.unsubscribeRunEvents({ workspaceRootUri: request.workspaceRootUri, runId: runId })];
+                        case 3:
+                            _b.sent();
+                            _b.label = 4;
+                        case 4:
+                            _i++;
+                            return [3 /*break*/, 2];
+                        case 5: return [2 /*return*/, this.store.cleanupRuns(request.workspaceRootUri, runIds, {
+                                includeArtifacts: request.includeArtifacts !== false,
+                                includeWorktrees: request.includeWorktrees === true
+                            })];
                     }
                 });
             });
@@ -1195,7 +1427,7 @@ var FlowServiceImpl = function () {
                             return [4 /*yield*/, this.getWorkflow({ workspaceRootUri: request.workspaceRootUri, workflowId: secondWorkflow.id })];
                         case 4:
                             savedWorkflow = _b.sent();
-                            return [4 /*yield*/, this.memory.buildContextPack(request.workspaceRootUri, savedWorkflow)];
+                            return [4 /*yield*/, this.buildRunContextPack(request.workspaceRootUri, savedWorkflow)];
                         case 5:
                             contextPack = _b.sent();
                             prompt = renderSecondRunPrompt(sourceRun, suggestion);
@@ -1438,7 +1670,7 @@ var FlowServiceImpl = function () {
         };
         FlowServiceImpl_1.prototype.getRuntimeCapabilities = function () {
             return __awaiter(this, void 0, void 0, function () {
-                var runtimeKernelBridge, runEventStream, _a, memoryReport, codexProvider, llmProvider, filesystemEdit, imageProviderConfigured, commandPolicyConfigured;
+                var runtimeKernelBridge, runEventStream, _a, memoryReport, codexProvider, llmProvider, filesystemEdit, imageProviderConfigured, commandPolicyConfigured, playbookExecution;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0: return [4 /*yield*/, this.resolveKernelBridgeMode()];
@@ -1464,7 +1696,10 @@ var FlowServiceImpl = function () {
                             filesystemEdit = this.resolveFilesystemEditCapability();
                             imageProviderConfigured = this.hasConfiguredImageProvider() || (this.isExplicitCodexProvider() && codexProvider.imageGeneration);
                             commandPolicyConfigured = this.hasConfiguredCommandPolicy();
-                            return [2 /*return*/, __assign(__assign({}, common_1.FLOW_CAPABILITIES), { runEventStream: runEventStream, llmAgentExecution: llmProvider.llmAgentExecution, llmAgentProvider: llmProvider.llmAgentProvider, filesystemEdit: filesystemEdit.available ? 'available' : 'blocked', filesystemEditPolicy: filesystemEdit.available ? 'configured' : 'missing', imageGeneration: imageProviderConfigured ? 'available' : 'unavailable', imageProvider: imageProviderConfigured ? 'configured' : 'missing', commandExecution: commandPolicyConfigured, commandExecutionPolicy: commandPolicyConfigured ? 'configured' : 'blocked', memoryAdapter: memoryReport.available, memoryProvider: memoryReport.provider, demoMode: llmProvider.demoMode, kernelBridge: runtimeKernelBridge, deterministicFallback: runtimeKernelBridge !== 'external', deterministicFallbackReason: runtimeKernelBridge === 'external'
+                            return [4 /*yield*/, this.resolvePlaybookExecutionCapability()];
+                        case 7:
+                            playbookExecution = _b.sent();
+                            return [2 /*return*/, __assign(__assign({}, common_1.FLOW_CAPABILITIES), { runEventStream: runEventStream, llmAgentExecution: llmProvider.llmAgentExecution, llmAgentProvider: llmProvider.llmAgentProvider, playbookExecution: playbookExecution, filesystemEdit: filesystemEdit.available ? 'available' : 'blocked', filesystemEditPolicy: filesystemEdit.available ? 'configured' : 'missing', imageGeneration: imageProviderConfigured ? 'available' : 'unavailable', imageProvider: imageProviderConfigured ? 'configured' : 'missing', commandExecution: commandPolicyConfigured, commandExecutionPolicy: commandPolicyConfigured ? 'configured' : 'blocked', memoryAdapter: memoryReport.available, memoryProvider: memoryReport.provider, demoMode: llmProvider.demoMode, kernelBridge: runtimeKernelBridge, deterministicFallback: runtimeKernelBridge !== 'external', deterministicFallbackReason: runtimeKernelBridge === 'external'
                                         ? undefined
                                         : common_1.FLOW_CAPABILITIES.deterministicFallbackReason })];
                     }
@@ -1485,6 +1720,31 @@ var FlowServiceImpl = function () {
                             _a = _d.sent();
                             return [2 /*return*/, false];
                         case 3: return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        FlowServiceImpl_1.prototype.resolvePlaybookExecutionCapability = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            if (!this.playbookRunner) {
+                                return [2 /*return*/, 'unavailable'];
+                            }
+                            if (!this.playbookRunner.available) {
+                                return [2 /*return*/, 'available'];
+                            }
+                            _b.label = 1;
+                        case 1:
+                            _b.trys.push([1, 3, , 4]);
+                            return [4 /*yield*/, this.playbookRunner.available()];
+                        case 2: return [2 /*return*/, (_b.sent()) === false ? 'unavailable' : 'available'];
+                        case 3:
+                            _a = _b.sent();
+                            return [2 /*return*/, 'unavailable'];
+                        case 4: return [2 /*return*/];
                     }
                 });
             });
@@ -1777,7 +2037,7 @@ var FlowServiceImpl = function () {
                         case 2:
                             workflow = _c.sent();
                             return [4 /*yield*/, ((_b = (_a = this.kernelBridge).subscribeRunEvents) === null || _b === void 0 ? void 0 : _b.call(_a, workflow, run, request.workspaceRootUri, function (updated) { return __awaiter(_this, void 0, void 0, function () {
-                                    var _a, _b, _c, materializedRun, error_1;
+                                    var _a, _b, _c, materializedRun, error_3;
                                     var _d;
                                     return __generator(this, function (_e) {
                                         switch (_e.label) {
@@ -1803,11 +2063,11 @@ var FlowServiceImpl = function () {
                                                 _e.label = 5;
                                             case 5: return [3 /*break*/, 7];
                                             case 6:
-                                                error_1 = _e.sent();
+                                                error_3 = _e.sent();
                                                 (_d = this.client) === null || _d === void 0 ? void 0 : _d.onRunStreamError({
                                                     workspaceRootUri: request.workspaceRootUri,
                                                     runId: request.runId,
-                                                    message: error_1 instanceof Error ? error_1.message : String(error_1)
+                                                    message: error_3 instanceof Error ? error_3.message : String(error_3)
                                                 });
                                                 return [3 /*break*/, 7];
                                             case 7: return [2 /*return*/];
@@ -1924,8 +2184,9 @@ var FlowServiceImpl = function () {
         _memory_decorators = [(0, inversify_1.inject)(memory_adapter_1.MemoryAdapter)];
         _fileEffectHostAdapter_decorators = [(0, inversify_1.inject)(file_effect_host_adapter_1.FileEffectHostAdapter), (0, inversify_1.optional)()];
         _imageEffectHostAdapter_decorators = [(0, inversify_1.inject)(image_effect_host_adapter_1.ImageEffectHostAdapter), (0, inversify_1.optional)()];
+        _playbookRunner_decorators = [(0, inversify_1.inject)(flow_playbook_runner_1.FlowPlaybookRunner), (0, inversify_1.optional)()];
         _languageModelRegistry_decorators = [(0, inversify_1.inject)(ai_core_1.LanguageModelRegistry), (0, inversify_1.optional)()];
-        _codexProviderService_decorators = [(0, inversify_1.inject)(codex_provider_service_1.CodexProviderService), (0, inversify_1.optional)()];
+        _codexProviderService_decorators = [(0, inversify_1.inject)(ai_providers_service_1.CodexProviderService), (0, inversify_1.optional)()];
         __esDecorate(null, null, _store_decorators, { kind: "field", name: "store", static: false, private: false, access: { has: function (obj) { return "store" in obj; }, get: function (obj) { return obj.store; }, set: function (obj, value) { obj.store = value; } }, metadata: _metadata }, _store_initializers, _store_extraInitializers);
         __esDecorate(null, null, _workloadStore_decorators, { kind: "field", name: "workloadStore", static: false, private: false, access: { has: function (obj) { return "workloadStore" in obj; }, get: function (obj) { return obj.workloadStore; }, set: function (obj, value) { obj.workloadStore = value; } }, metadata: _metadata }, _workloadStore_initializers, _workloadStore_extraInitializers);
         __esDecorate(null, null, _agentMarkdownStore_decorators, { kind: "field", name: "agentMarkdownStore", static: false, private: false, access: { has: function (obj) { return "agentMarkdownStore" in obj; }, get: function (obj) { return obj.agentMarkdownStore; }, set: function (obj, value) { obj.agentMarkdownStore = value; } }, metadata: _metadata }, _agentMarkdownStore_initializers, _agentMarkdownStore_extraInitializers);
@@ -1933,6 +2194,7 @@ var FlowServiceImpl = function () {
         __esDecorate(null, null, _memory_decorators, { kind: "field", name: "memory", static: false, private: false, access: { has: function (obj) { return "memory" in obj; }, get: function (obj) { return obj.memory; }, set: function (obj, value) { obj.memory = value; } }, metadata: _metadata }, _memory_initializers, _memory_extraInitializers);
         __esDecorate(null, null, _fileEffectHostAdapter_decorators, { kind: "field", name: "fileEffectHostAdapter", static: false, private: false, access: { has: function (obj) { return "fileEffectHostAdapter" in obj; }, get: function (obj) { return obj.fileEffectHostAdapter; }, set: function (obj, value) { obj.fileEffectHostAdapter = value; } }, metadata: _metadata }, _fileEffectHostAdapter_initializers, _fileEffectHostAdapter_extraInitializers);
         __esDecorate(null, null, _imageEffectHostAdapter_decorators, { kind: "field", name: "imageEffectHostAdapter", static: false, private: false, access: { has: function (obj) { return "imageEffectHostAdapter" in obj; }, get: function (obj) { return obj.imageEffectHostAdapter; }, set: function (obj, value) { obj.imageEffectHostAdapter = value; } }, metadata: _metadata }, _imageEffectHostAdapter_initializers, _imageEffectHostAdapter_extraInitializers);
+        __esDecorate(null, null, _playbookRunner_decorators, { kind: "field", name: "playbookRunner", static: false, private: false, access: { has: function (obj) { return "playbookRunner" in obj; }, get: function (obj) { return obj.playbookRunner; }, set: function (obj, value) { obj.playbookRunner = value; } }, metadata: _metadata }, _playbookRunner_initializers, _playbookRunner_extraInitializers);
         __esDecorate(null, null, _languageModelRegistry_decorators, { kind: "field", name: "languageModelRegistry", static: false, private: false, access: { has: function (obj) { return "languageModelRegistry" in obj; }, get: function (obj) { return obj.languageModelRegistry; }, set: function (obj, value) { obj.languageModelRegistry = value; } }, metadata: _metadata }, _languageModelRegistry_initializers, _languageModelRegistry_extraInitializers);
         __esDecorate(null, null, _codexProviderService_decorators, { kind: "field", name: "codexProviderService", static: false, private: false, access: { has: function (obj) { return "codexProviderService" in obj; }, get: function (obj) { return obj.codexProviderService; }, set: function (obj, value) { obj.codexProviderService = value; } }, metadata: _metadata }, _codexProviderService_initializers, _codexProviderService_extraInitializers);
         __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
@@ -2181,8 +2443,36 @@ function normalizeAiAuthoredWorkflow(workflow, fallbackName) {
     var name = ((_a = cloned.name) === null || _a === void 0 ? void 0 : _a.trim()) || (fallbackName === null || fallbackName === void 0 ? void 0 : fallbackName.trim()) || 'AI Authored Workflow';
     return __assign(__assign({}, cloned), { version: cloned.version || 'flow.workflow/v1', id: sanitizeWorkflowId(cloned.id || name || 'ai_authored_workflow'), name: name, states: cloned.states || {}, transitions: cloned.transitions || [] });
 }
+function dynamicWorkflowDecisionMessage(plan, authoringAction) {
+    var _a;
+    var source = authoringAction ? "AI authoring ".concat(authoringAction) : 'Dynamic workflow planner';
+    if (plan.kind === 'saved_workflow') {
+        return "".concat(source, " selected saved workflow \"").concat(plan.workflowId || 'unknown', "\": ").concat(plan.reason);
+    }
+    if (plan.kind === 'pattern') {
+        return "".concat(source, " selected pattern \"").concat(plan.patternId || 'unknown', "\": ").concat(plan.reason);
+    }
+    return "".concat(source, " generated workflow \"").concat(plan.workflowId || ((_a = plan.workflow) === null || _a === void 0 ? void 0 : _a.id) || 'unknown', "\": ").concat(plan.reason);
+}
+function compactDynamicWorkflowDecisionPayload(plan, authoringAction) {
+    return compactRecord({
+        kind: plan.kind,
+        authoringAction: authoringAction,
+        workflowId: plan.workflowId,
+        patternId: plan.patternId,
+        reason: plan.reason,
+        confidence: plan.confidence,
+        parameters: plan.parameters && Object.keys(plan.parameters).length > 0 ? plan.parameters : undefined
+    });
+}
 function sanitizeWorkflowId(value) {
     return value.trim().replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'ai_authored_workflow';
+}
+function compactRecord(value) {
+    return Object.fromEntries(Object.entries(value).filter(function (_a) {
+        var entry = _a[1];
+        return entry !== undefined && entry !== '';
+    }));
 }
 function stableId(prefix) {
     var parts = [];
@@ -2193,6 +2483,53 @@ function stableId(prefix) {
 }
 function timestamp() {
     return new Date().toISOString();
+}
+function shouldCopyTemporaryWorkspaceEntry(sourceRoot, source) {
+    var relative = path.relative(sourceRoot, source).replace(/\\/g, '/');
+    if (!relative) {
+        return true;
+    }
+    var first = relative.split('/')[0];
+    if (first === '.git' || first === 'node_modules') {
+        return false;
+    }
+    if (relative.startsWith('.theia/flow/worktrees')) {
+        return false;
+    }
+    return true;
+}
+function workflowRequiresMemoryContext(workflow) {
+    var _a, _b;
+    return Boolean((_b = (_a = workflow.requires) === null || _a === void 0 ? void 0 : _a.capabilities) === null || _b === void 0 ? void 0 : _b.includes('memory.context'));
+}
+function minimalFlowContextPack(workspaceRootUri, workflow, missingService) {
+    var _a, _b;
+    var agentIds = Array.from(new Set(Object.values(workflow.states || {})
+        .flatMap(function (state) { return __spreadArray([
+        state.agent
+    ], Object.values(state.branches || {}).map(function (branch) { return branch.agent; }), true); })
+        .filter(function (agentId) { return typeof agentId === 'string' && agentId.trim().length > 0; })));
+    return {
+        workspaceRootUri: workspaceRootUri,
+        summary: [
+            "Workflow \"".concat(workflow.name, "\" (").concat(workflow.id, ") has ").concat(Object.keys(workflow.states || {}).length, " states"),
+            "".concat(((_a = workflow.transitions) === null || _a === void 0 ? void 0 : _a.length) || 0, " transitions"),
+            agentIds.length > 0 ? "".concat(agentIds.length, " agents") : 'no declared agents',
+            missingService ? 'Memory context was skipped because Memory is unavailable for this non-Memory workflow' : undefined
+        ].filter(Boolean).join(', ') + '.',
+        workflow: {
+            id: workflow.id,
+            name: workflow.name,
+            stateCount: Object.keys(workflow.states || {}).length,
+            transitionCount: ((_b = workflow.transitions) === null || _b === void 0 ? void 0 : _b.length) || 0,
+            agentIds: agentIds
+        },
+        files: [],
+        symbols: [],
+        signals: [],
+        sections: [],
+        missingService: missingService
+    };
 }
 function createSampleWorkflow() {
     return {
@@ -2208,13 +2545,15 @@ function createSampleWorkflow() {
         states: {
             intake: {
                 type: 'input',
-                outputs: ['request.md']
+                outputs: ['request.md'],
+                outcomes: { success: 'architecture' }
             },
             architecture: {
                 type: 'agent',
                 agent: 'architect',
                 input: { include: ['request.md'] },
-                outputs: ['architecture/plan.md']
+                outputs: ['architecture/plan.md'],
+                outcomes: { success: 'frontend_work' }
             },
             frontend_work: {
                 type: 'agent',
@@ -2224,13 +2563,20 @@ function createSampleWorkflow() {
                 gates: [{
                         id: 'frontend_review_gate',
                         title: 'Review frontend plan',
-                        prompt: 'Approve the simulated frontend workload before QA starts.'
-                    }]
+                        prompt: 'Approve the simulated frontend workload before QA starts.',
+                        decisions: [
+                            { id: 'approved', label: 'Approve for QA', outcome: 'approved', to: 'qa' },
+                            { id: 'revision_requested', label: 'Route to another step', outcome: 'revision_requested', allowTargetSelection: true },
+                            { id: 'rejected', label: 'Reject run', outcome: 'rejected', action: 'fail' }
+                        ]
+                    }],
+                outcomes: { approved: 'qa', revision_requested: { action: 'wait' }, rejected: { action: 'fail' } }
             },
             qa: {
                 type: 'agent',
                 agent: 'qa',
-                outputs: ['qa/report.md']
+                outputs: ['qa/report.md'],
+                outcomes: { success: 'final_report' }
             },
             final_report: {
                 type: 'report',

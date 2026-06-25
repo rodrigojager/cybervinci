@@ -1,4 +1,4 @@
-export type FlowStateType = 'input' | 'context' | 'agent' | 'parallel' | 'dynamic_parallel' | 'tournament' | 'join' | 'condition' | 'gate' | 'command' | 'memory_write' | 'report';
+export type FlowStateType = 'input' | 'context' | 'agent' | 'playbook' | 'parallel' | 'dynamic_parallel' | 'tournament' | 'join' | 'condition' | 'gate' | 'loop' | 'command' | 'memory_write' | 'report';
 export interface FlowWorkflow {
     version: 'flow.workflow/v1' | string;
     id: string;
@@ -29,6 +29,10 @@ export interface FlowWorkflowState {
     type: FlowStateType;
     layout?: FlowWorkflowStateLayout;
     agent?: string;
+    playbookId?: string;
+    playbook?: string;
+    prompt?: string;
+    playbookInput?: Record<string, unknown>;
     agentRole?: FlowAgenticRole;
     provider?: FlowProviderSelection;
     modelExecution?: FlowModelExecutionProfile;
@@ -42,6 +46,8 @@ export interface FlowWorkflowState {
     input?: FlowInputContract;
     outputs?: string[];
     gates?: FlowHumanGate[];
+    outcomes?: FlowOutcomeMap;
+    loop?: FlowLoopConfig;
     timeoutMs?: number;
     retry?: FlowRetryPolicy;
     [key: string]: unknown;
@@ -97,8 +103,9 @@ export interface FlowProviderSelection {
     options?: Record<string, unknown>;
 }
 export type FlowReasoningMode = 'off' | 'auto' | 'fast' | 'balanced' | 'deep' | 'coding' | 'research' | 'lats';
-export type FlowReasoningEffort = 'none' | 'low' | 'medium' | 'high';
+export type FlowReasoningEffort = 'none' | 'low' | 'medium' | 'high' | 'xhigh';
 export type FlowReasoningPolicy = 'off' | 'native' | 'virtual' | 'auto' | 'native_plus_virtual_light';
+export type FlowServiceTier = 'default' | 'fast' | 'flex';
 export interface FlowNativeReasoningOptions {
     enabled?: boolean;
     effort?: FlowReasoningEffort;
@@ -118,6 +125,9 @@ export interface FlowModelExecutionProfile {
     maxTokens?: number;
     topP?: number;
     reasoningPolicy?: FlowReasoningPolicy;
+    reasoningVariant?: string;
+    reasoningVariantOptions?: Record<string, unknown>;
+    serviceTier?: FlowServiceTier;
     nativeReasoning?: FlowNativeReasoningOptions;
     virtualReasoning?: FlowVirtualReasoningOptions;
 }
@@ -166,6 +176,23 @@ export interface FlowInputContract {
 export interface FlowRetryPolicy {
     max: number;
     counter?: string;
+}
+export type FlowOutcomeId = 'success' | 'completed' | 'failed' | 'error' | 'timeout' | 'approved' | 'rejected' | 'revision_requested' | 'changes_requested' | 'cancelled' | 'skipped' | 'exhausted' | 'waiting_human' | string;
+export type FlowOutcomeTargetAction = 'continue' | 'complete' | 'fail' | 'pause' | 'wait' | 'cancel' | 'stop';
+export interface FlowOutcomeRoute {
+    to?: string;
+    action?: FlowOutcomeTargetAction;
+    label?: string;
+    note?: string;
+}
+export type FlowOutcomeMap = Record<string, FlowOutcomeRoute | string>;
+export interface FlowLoopConfig {
+    body: string;
+    repair?: string;
+    until?: FlowGuardExpression;
+    maxIterations?: number;
+    counter?: string;
+    iterationArtifactPrefix?: string;
 }
 export interface FlowWorkflowTransition {
     id?: string;
@@ -229,6 +256,19 @@ export interface FlowHumanGate {
     stateId?: string;
     status?: FlowGateStatus;
     prompt?: string;
+    decisions?: FlowGateDecisionDefinition[];
+    selectedDecisionId?: string;
+    selectedTargetStateId?: string;
+    note?: string;
+}
+export interface FlowGateDecisionDefinition {
+    id: string;
+    label: string;
+    outcome?: FlowOutcomeId;
+    to?: string;
+    action?: FlowOutcomeTargetAction;
+    allowTargetSelection?: boolean;
+    requireNote?: boolean;
 }
 export type FlowGateStatus = 'pending' | 'approved' | 'rejected' | 'revision_requested';
 export type FlowRunStatus = 'idle' | 'running' | 'paused' | 'waiting_gate' | 'completed' | 'failed' | 'cancelled';
@@ -260,7 +300,25 @@ export interface FlowRun {
     memoryWrites?: MemoryWrite[];
     secondRunSuggestion?: FlowSecondRunSuggestion;
     audit?: FlowRunAuditMetadata;
+    workspace?: FlowRunWorkspaceState;
     tick: number;
+}
+export type FlowRunWorkspaceMode = 'shared' | 'isolated_worktree' | 'temporary_copy';
+export interface FlowRunWorkspaceOptions {
+    mode?: FlowRunWorkspaceMode;
+    baseBranch?: string;
+    cleanupOnCompletion?: boolean;
+    keepArtifacts?: boolean;
+}
+export interface FlowRunWorkspaceState {
+    mode: FlowRunWorkspaceMode;
+    rootUri?: string;
+    sourceRootUri?: string;
+    branch?: string;
+    createdAt?: string;
+    cleanupStatus?: 'pending' | 'completed' | 'failed' | 'skipped';
+    cleanupAt?: string;
+    cleanupError?: string;
 }
 export interface FlowRunAuditMetadata {
     readOnly: boolean;
@@ -468,7 +526,7 @@ export interface MemoryWrite {
     target?: string;
     error?: string;
 }
-export type FlowEventType = 'workflow.saved' | 'workflow.validation_failed' | 'run.started' | 'run.completed' | 'run.failed' | 'run.cancelled' | 'run.paused' | 'run.resumed' | 'state.entered' | 'state.completed' | 'transition.evaluated' | 'transition.fired' | 'workload.created' | 'workload.requeued' | 'workload.started' | 'workload.retry' | 'workload.failed' | 'workload.completed' | 'virtual_reasoning.progress' | 'artifact.created' | 'effect.proposed' | 'effect.approved' | 'effect.applied' | 'effect.rejected' | 'effect.blocked' | 'effect.failed' | 'issue.recorded' | 'signal.emitted' | 'gate.created' | 'gate.approved' | 'gate.rejected' | 'gate.revision_requested' | 'memory_write.approved' | 'memory_write.rejected' | 'memory_write.written' | 'memory_write.failed' | 'second_run.approved' | 'second_run.dismissed';
+export type FlowEventType = 'workflow.saved' | 'workflow.validation_failed' | 'run.started' | 'run.completed' | 'run.failed' | 'run.cancelled' | 'run.paused' | 'run.resumed' | 'state.entered' | 'state.completed' | 'state.failed' | 'state.outcome_resolved' | 'transition.evaluated' | 'transition.fired' | 'loop.iteration_started' | 'loop.completed' | 'loop.exhausted' | 'workload.created' | 'workload.requeued' | 'workload.started' | 'workload.retry' | 'workload.failed' | 'workload.completed' | 'dynamic_workflow.selected' | 'virtual_reasoning.progress' | 'artifact.created' | 'effect.proposed' | 'effect.approved' | 'effect.applied' | 'effect.rejected' | 'effect.blocked' | 'effect.failed' | 'issue.recorded' | 'signal.emitted' | 'gate.created' | 'gate.approved' | 'gate.rejected' | 'gate.revision_requested' | 'worktree.created' | 'worktree.cleaned' | 'worktree.cleanup_failed' | 'cleanup.completed' | 'cleanup.failed' | 'memory_write.approved' | 'memory_write.rejected' | 'memory_write.written' | 'memory_write.failed' | 'second_run.approved' | 'second_run.dismissed';
 export interface FlowEvent {
     id: string;
     runId?: string;
@@ -576,6 +634,7 @@ export interface FlowCapabilities {
     runLifecycleControls: boolean;
     llmAgentExecution: FlowCapabilityAvailability;
     llmAgentProvider: FlowProviderAvailability;
+    playbookExecution: FlowCapabilityAvailability;
     filesystemEdit: FlowCapabilityAvailability;
     filesystemEditPolicy: FlowPolicyAvailability;
     imageGeneration: FlowCapabilityAvailability;

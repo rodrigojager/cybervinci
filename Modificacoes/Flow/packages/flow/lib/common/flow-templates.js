@@ -10,6 +10,15 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listFlowWorkflowTemplates = listFlowWorkflowTemplates;
 exports.getFlowWorkflowTemplate = getFlowWorkflowTemplate;
@@ -625,11 +634,11 @@ var TEMPLATES = [
     }
 ];
 function listFlowWorkflowTemplates() {
-    return clone(TEMPLATES);
+    return clone(TEMPLATES).map(function (template) { return (__assign(__assign({}, template), { workflow: applyConservativeOutcomeRoutes(template.workflow) })); });
 }
 function getFlowWorkflowTemplate(id) {
     var template = TEMPLATES.find(function (candidate) { return candidate.id === id; });
-    return template ? clone(template) : undefined;
+    return template ? __assign(__assign({}, clone(template)), { workflow: applyConservativeOutcomeRoutes(clone(template.workflow)) }) : undefined;
 }
 function instantiateFlowWorkflowTemplate(templateId, options) {
     var template = getFlowWorkflowTemplate(templateId);
@@ -640,4 +649,32 @@ function instantiateFlowWorkflowTemplate(templateId, options) {
 }
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
+}
+function applyConservativeOutcomeRoutes(workflow) {
+    var _a;
+    var _b, _c;
+    var states = __assign({}, workflow.states);
+    var transitionsBySource = new Map();
+    for (var _i = 0, _d = workflow.transitions || []; _i < _d.length; _i++) {
+        var transition = _d[_i];
+        transitionsBySource.set(transition.from, __spreadArray(__spreadArray([], (transitionsBySource.get(transition.from) || []), true), [transition], false));
+    }
+    for (var _e = 0, transitionsBySource_1 = transitionsBySource; _e < transitionsBySource_1.length; _e++) {
+        var _f = transitionsBySource_1[_e], stateId = _f[0], stateTransitions = _f[1];
+        var state = states[stateId];
+        if (!state || stateTransitions.length !== 1) {
+            continue;
+        }
+        var transition = stateTransitions[0];
+        var canRoute = !transition.guard
+            || transition.on === 'run.started'
+            || transition.on === 'gate.approved'
+            || transition.on === 'state.completed';
+        if (!canRoute || ((_b = state.outcomes) === null || _b === void 0 ? void 0 : _b.success) || ((_c = state.outcomes) === null || _c === void 0 ? void 0 : _c.approved)) {
+            continue;
+        }
+        var outcome = transition.on === 'gate.approved' ? 'approved' : 'success';
+        states[stateId] = __assign(__assign({}, state), { outcomes: __assign(__assign({}, (state.outcomes || {})), (_a = {}, _a[outcome] = transition.to, _a)) });
+    }
+    return __assign(__assign({}, workflow), { states: states });
 }

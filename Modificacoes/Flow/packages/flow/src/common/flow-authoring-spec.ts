@@ -6,6 +6,7 @@ import {
     FlowReasoningEffort,
     FlowReasoningMode,
     FlowReasoningPolicy,
+    FlowServiceTier,
     FlowStateType,
     FlowWorkflow,
     FlowWorkflowFileFormat
@@ -52,6 +53,7 @@ export interface FlowAiAuthoringSpec {
     reasoningModes: FlowReasoningMode[];
     reasoningEfforts: FlowReasoningEffort[];
     reasoningPolicies: FlowReasoningPolicy[];
+    serviceTiers: FlowServiceTier[];
     modelProfiles: FlowModelProfile[];
     patterns: FlowWorkflowPattern[];
     uiControls: FlowUiControlSpec[];
@@ -78,11 +80,12 @@ export function getFlowAiAuthoringSpec(): FlowAiAuthoringSpec {
         internalFormats: ['json', 'yaml'],
         humanEditableFormats: ['markdown'],
         actions: ['run_saved_workflow', 'instantiate_pattern', 'create_workflow', 'ask_user'],
-        stateTypes: ['input', 'context', 'agent', 'parallel', 'dynamic_parallel', 'tournament', 'join', 'condition', 'gate', 'command', 'memory_write', 'report'],
+        stateTypes: ['input', 'context', 'agent', 'parallel', 'dynamic_parallel', 'tournament', 'join', 'condition', 'gate', 'loop', 'command', 'memory_write', 'report'],
         agentRoles: ['classifier', 'planner', 'executor', 'candidate_generator', 'critic', 'judge', 'verifier', 'synthesizer', 'repairer', 'researcher'],
         reasoningModes: ['off', 'auto', 'fast', 'balanced', 'deep', 'coding', 'research', 'lats'],
-        reasoningEfforts: ['none', 'low', 'medium', 'high'],
+        reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh'],
         reasoningPolicies: ['off', 'native', 'virtual', 'auto', 'native_plus_virtual_light'],
+        serviceTiers: ['default', 'fast', 'flex'],
         modelProfiles: listFlowModelProfiles(),
         patterns: listFlowWorkflowPatterns(),
         uiControls: FLOW_AI_AUTHORING_UI_CONTROLS,
@@ -149,6 +152,20 @@ export const FLOW_AI_AUTHORING_UI_CONTROLS: FlowUiControlSpec[] = [
         options: ['off', 'auto', 'fast', 'balanced', 'deep', 'coding', 'research', 'lats']
     },
     {
+        id: 'state.reasoning.variant',
+        label: 'Model variant',
+        control: 'text',
+        path: 'workflow.states.*.modelExecution.reasoningVariant',
+        description: 'Optional provider-specific model variant, such as a thinking-budget, fast, or quality variant when exposed by the selected model.'
+    },
+    {
+        id: 'state.service.tier',
+        label: 'Service tier',
+        control: 'dropdown',
+        path: 'workflow.states.*.modelExecution.serviceTier',
+        options: ['default', 'fast', 'flex']
+    },
+    {
         id: 'state.timeout',
         label: 'Timeout',
         control: 'number',
@@ -207,7 +224,7 @@ export const FLOW_AI_AUTHORING_SYSTEM_PROMPT = [
     'For pattern model selection, use pattern.agenticStages and emit roleOverrides keyed by stage id or role.',
     'When choosing provider/model for agentic states, prefer provider ids and models from the aiProviders catalog supplied in the task input.',
     'When no saved workflow or pattern fits, choose action "create_workflow" and emit a complete FlowWorkflow object.',
-    'Every agentic state may specify provider, model, modelExecution.reasoningPolicy, nativeReasoning effort, and virtualReasoning mode.',
+    'Every agentic state may specify provider, model, modelExecution.reasoningPolicy, nativeReasoning effort, reasoningVariant, virtualReasoning mode, and serviceTier.',
     'Use dynamic_parallel for data-dependent fan-out and tournament for candidate competition judged by an agentic step.',
     'Keep orchestration in Flow states and transitions; keep natural-language task instructions in Markdown prompt fields.',
     'Return only one object matching flow.ai-authoring/v1.'

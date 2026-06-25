@@ -4,12 +4,14 @@ export interface AgentMarkdownFile {
     relativePath: string;
     content: string;
     updatedAt: string;
+    source?: 'workspace' | 'catalog';
 }
 export interface AgentMarkdownSummary {
     path: string;
     uri: string;
     relativePath: string;
     updatedAt: string;
+    source?: 'workspace' | 'catalog';
 }
 export interface ReadAgentMarkdownOptions {
     createIfMissing?: boolean;
@@ -32,5 +34,13 @@ export declare class AgentMarkdownStore {
     protected ensureAgentsDir(workspaceRootUri: string | undefined): Promise<string>;
     protected agentFile(root: string, relativePath: string): string;
     protected collectMarkdownFiles(root: string, dir?: string): Promise<string[]>;
+    protected listCatalogAgents(): Promise<AgentMarkdownSummary[]>;
     protected summary(root: string, file: string): Promise<AgentMarkdownSummary>;
+    protected catalogSummary(root: string, file: string): Promise<AgentMarkdownSummary>;
+    protected catalogAgentFile(relativePath: string): Promise<{
+        root: string;
+        file: string;
+    } | undefined>;
+    protected resolveAgencyAgentCatalogRoot(): Promise<string | undefined>;
+    protected isCatalogMetadataFile(root: string, file: string): boolean;
 }

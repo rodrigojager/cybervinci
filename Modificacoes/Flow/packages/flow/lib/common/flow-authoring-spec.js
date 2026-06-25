@@ -1,10 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FLOW_AI_AUTHORING_SYSTEM_PROMPT = exports.FLOW_AI_AUTHORING_OUTPUT_SCHEMA = exports.FLOW_AI_AUTHORING_UI_CONTROLS = exports.FLOW_AI_AUTHORING_SPEC_VERSION = void 0;
+exports.FLOW_AI_AUTHORING_SYSTEM_PROMPT = exports.FLOW_AI_AUTHORING_OUTPUT_SCHEMA = exports.FLOW_AI_AUTHORING_UI_CONTROLS = exports.FLOW_DYNAMIC_AUTHORING_PURPOSE = exports.FLOW_DYNAMIC_AUTHORING_AGENT_ID = exports.FLOW_AI_AUTHORING_SPEC_VERSION = void 0;
 exports.getFlowAiAuthoringSpec = getFlowAiAuthoringSpec;
 var flow_model_profiles_1 = require("./flow-model-profiles");
 var flow_patterns_1 = require("./flow-patterns");
 exports.FLOW_AI_AUTHORING_SPEC_VERSION = 'flow.ai-authoring/v1';
+exports.FLOW_DYNAMIC_AUTHORING_AGENT_ID = 'cybervinci-flow-dynamic-authoring';
+exports.FLOW_DYNAMIC_AUTHORING_PURPOSE = 'dynamic_workflow_authoring';
 function getFlowAiAuthoringSpec() {
     return {
         version: exports.FLOW_AI_AUTHORING_SPEC_VERSION,
@@ -12,11 +14,12 @@ function getFlowAiAuthoringSpec() {
         internalFormats: ['json', 'yaml'],
         humanEditableFormats: ['markdown'],
         actions: ['run_saved_workflow', 'instantiate_pattern', 'create_workflow', 'ask_user'],
-        stateTypes: ['input', 'context', 'agent', 'parallel', 'dynamic_parallel', 'tournament', 'join', 'condition', 'gate', 'command', 'memory_write', 'report'],
+        stateTypes: ['input', 'context', 'agent', 'parallel', 'dynamic_parallel', 'tournament', 'join', 'condition', 'gate', 'loop', 'command', 'memory_write', 'report'],
         agentRoles: ['classifier', 'planner', 'executor', 'candidate_generator', 'critic', 'judge', 'verifier', 'synthesizer', 'repairer', 'researcher'],
         reasoningModes: ['off', 'auto', 'fast', 'balanced', 'deep', 'coding', 'research', 'lats'],
-        reasoningEfforts: ['none', 'low', 'medium', 'high'],
+        reasoningEfforts: ['none', 'low', 'medium', 'high', 'xhigh'],
         reasoningPolicies: ['off', 'native', 'virtual', 'auto', 'native_plus_virtual_light'],
+        serviceTiers: ['default', 'fast', 'flex'],
         modelProfiles: (0, flow_model_profiles_1.listFlowModelProfiles)(),
         patterns: (0, flow_patterns_1.listFlowWorkflowPatterns)(),
         uiControls: exports.FLOW_AI_AUTHORING_UI_CONTROLS,
@@ -82,6 +85,20 @@ exports.FLOW_AI_AUTHORING_UI_CONTROLS = [
         options: ['off', 'auto', 'fast', 'balanced', 'deep', 'coding', 'research', 'lats']
     },
     {
+        id: 'state.reasoning.variant',
+        label: 'Reasoning variant',
+        control: 'text',
+        path: 'workflow.states.*.modelExecution.reasoningVariant',
+        description: 'Optional provider-specific reasoning variant, such as a fast or quality variant when exposed by the selected model.'
+    },
+    {
+        id: 'state.service.tier',
+        label: 'Service tier',
+        control: 'dropdown',
+        path: 'workflow.states.*.modelExecution.serviceTier',
+        options: ['default', 'fast', 'flex']
+    },
+    {
         id: 'state.timeout',
         label: 'Timeout',
         control: 'number',
@@ -136,8 +153,9 @@ exports.FLOW_AI_AUTHORING_SYSTEM_PROMPT = [
     'When existing saved workflows fit the user request, choose action "run_saved_workflow".',
     'When a built-in workflow pattern fits, choose action "instantiate_pattern" and fill typed parameters.',
     'For pattern model selection, use pattern.agenticStages and emit roleOverrides keyed by stage id or role.',
+    'When choosing provider/model for agentic states, prefer provider ids and models from the aiProviders catalog supplied in the task input.',
     'When no saved workflow or pattern fits, choose action "create_workflow" and emit a complete FlowWorkflow object.',
-    'Every agentic state may specify provider, model, modelExecution.reasoningPolicy, nativeReasoning effort, and virtualReasoning mode.',
+    'Every agentic state may specify provider, model, modelExecution.reasoningPolicy, nativeReasoning effort, reasoningVariant, virtualReasoning mode, and serviceTier.',
     'Use dynamic_parallel for data-dependent fan-out and tournament for candidate competition judged by an agentic step.',
     'Keep orchestration in Flow states and transitions; keep natural-language task instructions in Markdown prompt fields.',
     'Return only one object matching flow.ai-authoring/v1.'

@@ -112,6 +112,33 @@ describe('FlowAgentProviderRegistry', () => {
         expect('codexProvider' in provider && provider.modelId).to.equal('gpt-5-codex');
     });
 
+    it('preserves picker runtime and model provider options for generic Codex provider states', async () => {
+        const statusRequests: unknown[] = [];
+        const registry = new FlowAgentProviderRegistry(undefined, undefined, codexProviderService(true, statusRequests));
+
+        const provider = await registry.resolveProvider(createResolutionContext({
+            provider: {
+                providerId: 'codex-provider',
+                modelId: 'opencode/gpt-5.5',
+                options: {
+                    runtime: 'direct-http',
+                    modelProvider: 'opencode',
+                    openCodeVariant: 'zen'
+                }
+            }
+        }));
+
+        expect('codexProvider' in provider).to.equal(true);
+        expect('codexProvider' in provider && provider.request?.runtime).to.equal('direct-http');
+        expect('codexProvider' in provider && provider.request?.modelProvider).to.equal('opencode');
+        expect('codexProvider' in provider && provider.request?.openCodeVariant).to.equal('zen');
+        expect(statusRequests[0]).to.deep.include({
+            runtime: 'direct-http',
+            modelProvider: 'opencode',
+            model: 'opencode/gpt-5.5'
+        });
+    });
+
     it('allows e2e mock only when explicitly configured through FLOW_AGENT_PROVIDER', async () => {
         const registry = new FlowAgentProviderRegistry();
         await expectRejectedWith(
@@ -229,13 +256,16 @@ function readyLanguageModel(id: string): LanguageModel {
     } as unknown as LanguageModel;
 }
 
-function codexProviderService(available: boolean): CodexProviderService {
+function codexProviderService(available: boolean, statusRequests: unknown[] = []): CodexProviderService {
     return {
-        getStatus: async () => ({
-            available,
-            authenticated: available,
-            capabilities: { imageGeneration: available }
-        })
+        getStatus: async (request: unknown) => {
+            statusRequests.push(request);
+            return {
+                available,
+                authenticated: available,
+                capabilities: { imageGeneration: available }
+            };
+        }
     } as unknown as CodexProviderService;
 }
 

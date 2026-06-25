@@ -29,6 +29,9 @@ import {
     CodexProviderInputItem,
     CodexProviderLoginRequest,
     CodexProviderLoginResult,
+    CodexProviderModelCost,
+    CodexProviderModelMetadata,
+    CodexProviderModelPricing,
     CodexProviderOptions,
     CodexProviderRuntime,
     CodexProviderStatusRequest,
@@ -67,6 +70,7 @@ interface ActiveStream {
     threadId?: string;
     turnId?: string;
     receivedNotification?: boolean;
+    receivedAgentDelta?: boolean;
     cwd?: string;
     cliProcess?: ChildProcessWithoutNullStreams;
     abortController?: AbortController;
@@ -81,6 +85,12 @@ interface WorkspaceFileSnapshot {
     content: string;
     mtimeMs: number;
     size: number;
+}
+
+interface DirectHttpUnavailableModel {
+    reason: string;
+    observedAt: number;
+    expiresAt: number;
 }
 
 interface ResolvedSpawnEnvironment {
@@ -98,6 +108,12 @@ interface CliRuntimeAdapter {
 }
 
 type DirectHttpProtocol = 'openai-chat' | 'openai-responses' | 'anthropic-messages' | 'google-generate';
+
+interface DirectHttpPromptParts {
+    system: string;
+    user: string;
+    images: string[];
+}
 
 interface DirectHttpProviderConfig {
     runtime: 'direct-http';
@@ -125,16 +141,23 @@ const CODEX_CLI_SYNTHETIC_FILE_CHANGE_MAX_DIFF_SIZE = 48 * 1024;
 const CODEX_CLI_OPTIONAL_STATUS_REQUEST_TIMEOUT = 1500;
 const OPENCODE_STATUS_REQUEST_TIMEOUT = 15000;
 const OPENCODE_COMMAND_MAX_OUTPUT = 2 * 1024 * 1024;
+const DIRECT_HTTP_MODEL_CATALOG_TTL_MS = 30 * 60 * 1000;
+const DIRECT_HTTP_UNAVAILABLE_MODEL_TTL_MS = 30 * 60 * 1000;
+const MODELS_DEV_CATALOG_URL = 'https://models.dev/api.json';
+const MODELS_DEV_CATALOG_TTL_MS = 12 * 60 * 60 * 1000;
 const OPENCODE_PROVIDER_DEFAULT_MODELS: Record<string, string> = {
-    openrouter: 'openrouter/openai/gpt-5',
+    openrouter: 'openrouter/openai/gpt-5.5',
     'opencode-go': 'opencode-go/deepseek-v4-flash',
-    opencode: 'opencode/gpt-5-codex'
+    opencode: 'opencode/gpt-5.5'
 };
 const OPENCODE_PROVIDER_LABELS: Record<string, string[]> = {
     openrouter: ['OpenRouter', 'openrouter'],
     'opencode-go': ['OpenCode Go', 'opencode-go'],
     opencode: ['OpenCode Zen', 'OpenCode', 'opencode']
 };
+const OPENCODE_ZEN_LIMITED_FREE_MODEL_IDS = new Set([
+    'big-pickle'
+]);
 const DIRECT_HTTP_PROVIDER_CONFIGS: Record<string, DirectHttpProviderConfig> = {
     openrouter: {
         runtime: 'direct-http',
@@ -145,7 +168,7 @@ const DIRECT_HTTP_PROVIDER_CONFIGS: Record<string, DirectHttpProviderConfig> = {
         apiKeyEnvVar: 'OPENROUTER_API_KEY',
         apiKeyRequestField: 'openRouterApiKey',
         modelPrefix: 'openrouter',
-        defaultModel: 'openrouter/openai/gpt-5'
+        defaultModel: 'openrouter/openai/gpt-5.5'
     },
     'opencode-go': {
         runtime: 'direct-http',
@@ -167,7 +190,7 @@ const DIRECT_HTTP_PROVIDER_CONFIGS: Record<string, DirectHttpProviderConfig> = {
         apiKeyEnvVar: 'OPENCODE_API_KEY',
         apiKeyRequestField: 'openCodeApiKey',
         modelPrefix: 'opencode',
-        defaultModel: 'opencode/gpt-5-codex'
+        defaultModel: 'opencode/gpt-5.5'
     }
 };
 const OPENCODE_GO_ANTHROPIC_MODELS = new Set([
@@ -212,9 +235,9 @@ const CLI_RUNTIME_ADAPTERS: Record<Exclude<CodexProviderRuntime, 'codex-app-serv
 };
 const PROVIDER_DETECTION_PRESETS: ProviderDetectionPreset[] = [
     { runtime: 'codex-app-server', modelProvider: 'codex', label: 'Codex CLI' },
-    { runtime: 'direct-http', modelProvider: 'openrouter', label: 'OpenRouter', defaultModel: 'openrouter/openai/gpt-5' },
+    { runtime: 'direct-http', modelProvider: 'openrouter', label: 'OpenRouter', defaultModel: 'openrouter/openai/gpt-5.5' },
     { runtime: 'direct-http', modelProvider: 'opencode-go', label: 'OpenCode Go', defaultModel: 'opencode-go/deepseek-v4-flash' },
-    { runtime: 'direct-http', modelProvider: 'opencode', label: 'OpenCode Zen', defaultModel: 'opencode/gpt-5-codex' },
+    { runtime: 'direct-http', modelProvider: 'opencode', label: 'OpenCode Zen', defaultModel: 'opencode/gpt-5.5' },
     { runtime: 'gemini-cli', modelProvider: 'gemini', label: 'Gemini CLI' },
     { runtime: 'claude-code-cli', modelProvider: 'claude-code', label: 'Claude Code', defaultModel: 'sonnet' },
     { runtime: 'cursor-cli', modelProvider: 'cursor', label: 'Cursor CLI' }
@@ -258,6 +281,17 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     protected activeStreams = new Map<string, ActiveStream>();
     protected turnToStream = new Map<string, string>();
     protected sessionThreads = new Map<string, string>();
+    protected directHttpModelCatalogCache = new Map<string, {
+        expiresAt: number;
+        promise?: Promise<CodexProviderModelMetadata[] | undefined>;
+        value?: CodexProviderModelMetadata[] | undefined;
+    }>();
+    protected directHttpUnavailableModels = new Map<string, Map<string, DirectHttpUnavailableModel>>();
+    protected modelsDevCatalogCache: {
+        expiresAt: number;
+        promise?: Promise<Map<string, Map<string, CodexProviderModelMetadata>>>;
+        value?: Map<string, Map<string, CodexProviderModelMetadata>>;
+    } | undefined;
     protected loadedThreads = new Set<string>();
     protected sessionThreadsLoaded = false;
     protected activeStreamId: string | undefined;
@@ -866,6 +900,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             }
             if (!response.ok) {
                 const detail = await response.text().catch(() => '');
+                this.markDirectHttpModelUnavailableFromError(provider, model, response.status, detail);
                 throw new Error(nls.localize(
                     'theia/ai/ai-providers/directApiHttpError',
                     '{0} returned HTTP {1}.{2}',
@@ -942,8 +977,10 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         }
         if (request.openCodeVariant?.trim()) {
             args.push('--variant', request.openCodeVariant.trim());
+        } else if (request.options?.reasoningVariant?.trim()) {
+            args.push('--variant', request.options.reasoningVariant.trim());
         }
-        if (request.options?.reasoningEffort) {
+        if (request.options?.reasoningEffort && !request.options?.reasoningVariant) {
             args.push('--thinking');
         }
         return args;
@@ -1094,10 +1131,22 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         apiKey: string
     ): { url: string, headers: Record<string, string>, body: Record<string, unknown> } {
         const prompt = this.buildDirectHttpPrompt(request.prompt, request.input, cwd);
+        const variantOptions = this.reasoningVariantOptions(request.options);
         const baseHeaders: Record<string, string> = {
             'content-type': 'application/json'
         };
         if (protocol === 'anthropic-messages') {
+            const body = this.compactObject({
+                model,
+                max_tokens: 32000,
+                system: [{ type: 'text', text: prompt.system }],
+                messages: [{
+                    role: 'user',
+                    content: this.buildAnthropicMessageContent(prompt)
+                }],
+                thinking: this.readRecord(variantOptions.thinking),
+                stream: true
+            });
             return {
                 url: `${provider.baseUrl}/messages`,
                 headers: {
@@ -1105,55 +1154,66 @@ export class CodexProviderServiceImpl implements CodexProviderService {
                     'x-api-key': apiKey,
                     'anthropic-version': '2023-06-01'
                 },
-                body: {
-                    model,
-                    max_tokens: 32000,
-                    system: [{ type: 'text', text: prompt.system }],
-                    messages: [{
-                        role: 'user',
-                        content: [{ type: 'text', text: prompt.user }]
-                    }],
-                    stream: true
-                }
+                body
             };
         }
         if (protocol === 'openai-responses') {
+            const body = this.compactObject({
+                model,
+                input: [
+                    { role: 'system', content: prompt.system },
+                    { role: 'user', content: this.buildOpenAiResponseInputContent(prompt) }
+                ],
+                stream: true,
+                text: request.options?.verbosity ? { verbosity: request.options.verbosity } : undefined,
+                reasoning: this.openAiResponsesReasoningOptions(request.options, variantOptions),
+                service_tier: request.options?.serviceTier,
+                include: variantOptions.include
+            });
             return {
                 url: `${provider.baseUrl}/responses`,
                 headers: {
                     ...baseHeaders,
                     authorization: `Bearer ${apiKey}`
                 },
-                body: {
-                    model,
-                    input: [
-                        { role: 'system', content: prompt.system },
-                        { role: 'user', content: [{ type: 'input_text', text: prompt.user }] }
-                    ],
-                    stream: true,
-                    text: request.options?.verbosity ? { verbosity: request.options.verbosity } : undefined,
-                    reasoning: request.options?.reasoningEffort ? { effort: request.options.reasoningEffort } : undefined
-                }
+                body
             };
         }
         if (protocol === 'google-generate') {
+            const generationConfig = this.readRecord(variantOptions.thinkingConfig)
+                ? { thinkingConfig: variantOptions.thinkingConfig }
+                : undefined;
             return {
                 url: `${provider.baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse`,
                 headers: {
                     ...baseHeaders,
                     'x-goog-api-key': apiKey
                 },
-                body: {
+                body: this.compactObject({
                     systemInstruction: {
                         parts: [{ text: prompt.system }]
                     },
                     contents: [{
                         role: 'user',
-                        parts: [{ text: prompt.user }]
-                    }]
-                }
+                        parts: this.buildGoogleGenerateParts(prompt)
+                    }],
+                    generationConfig
+                })
             };
         }
+        const chatBody = this.compactObject({
+            model,
+            messages: [
+                { role: 'system', content: prompt.system },
+                { role: 'user', content: this.buildOpenAiChatMessageContent(prompt) }
+            ],
+            stream: true,
+            stream_options: { include_usage: true },
+            reasoning: this.readRecord(variantOptions.reasoning),
+            reasoning_effort: this.readString(variantOptions, 'reasoning_effort') || this.readString(variantOptions, 'reasoningEffort') || request.options?.reasoningEffort,
+            thinking: this.readRecord(variantOptions.thinking),
+            service_tier: request.options?.serviceTier
+        });
         return {
             url: `${provider.baseUrl}/chat/completions`,
             headers: {
@@ -1166,15 +1226,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
                     'x-session-affinity': request.sessionId || streamIdSafe(request.prompt)
                 })
             },
-            body: {
-                model,
-                messages: [
-                    { role: 'system', content: prompt.system },
-                    { role: 'user', content: prompt.user }
-                ],
-                stream: true,
-                stream_options: { include_usage: true }
-            }
+            body: chatBody
         };
 
         function streamIdSafe(value: string): string {
@@ -1182,11 +1234,46 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         }
     }
 
-    protected buildDirectHttpPrompt(prompt: string, input: CodexProviderInputItem[] | undefined, cwd: string): { system: string, user: string } {
+    protected reasoningVariantOptions(options: Partial<CodexProviderOptions> | undefined): Record<string, unknown> {
+        return options?.reasoningVariant && options.reasoningVariant !== 'default'
+            ? options.reasoningVariantOptions ?? {}
+            : {};
+    }
+
+    protected openAiResponsesReasoningOptions(
+        options: Partial<CodexProviderOptions> | undefined,
+        variantOptions: Record<string, unknown>
+    ): Record<string, unknown> | undefined {
+        const reasoning = this.readRecord(variantOptions.reasoning) ?? {};
+        const effort = this.readString(variantOptions, 'reasoningEffort')
+            || this.readString(reasoning, 'effort')
+            || options?.reasoningEffort;
+        const summary = this.readString(variantOptions, 'reasoningSummary') || this.readString(reasoning, 'summary');
+        const result = this.compactObject({
+            ...reasoning,
+            effort,
+            summary
+        });
+        return Object.keys(result).length ? result : undefined;
+    }
+
+    protected compactObject<T extends Record<string, unknown>>(value: T): T {
+        return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
+    }
+
+    protected readRecord(value: unknown): Record<string, unknown> | undefined {
+        return value && typeof value === 'object' && !Array.isArray(value)
+            ? value as Record<string, unknown>
+            : undefined;
+    }
+
+    protected buildDirectHttpPrompt(prompt: string, input: CodexProviderInputItem[] | undefined, cwd: string): DirectHttpPromptParts {
         const items = this.buildTurnInput(prompt, input, cwd);
         const system = items.slice(0, 2).map(item => this.directInputItemToText(item)).filter(Boolean).join('\n\n');
-        const user = items.slice(2).map(item => this.directInputItemToText(item)).filter(Boolean).join('\n\n') || prompt;
-        return { system, user };
+        const userItems = items.slice(2);
+        const user = userItems.map(item => this.directInputItemToText(item)).filter(Boolean).join('\n\n') || prompt;
+        const images = userItems.map(item => this.directInputItemToImageUrl(item)).filter((url): url is string => !!url);
+        return { system, user, images };
     }
 
     protected directInputItemToText(item: CodexProviderInputItem): string {
@@ -1194,15 +1281,118 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             return item.text;
         }
         if (item.type === 'image') {
-            return `Image: ${item.url}`;
+            return item.url.startsWith('data:') ? 'Image attached.' : `Image attached: ${item.url}`;
         }
         if (item.type === 'localImage') {
-            return `Image: ${item.path}`;
+            return `Image attached: ${path.basename(item.path)}`;
         }
         if (item.type === 'skill') {
             return `Skill: ${item.name} (${item.path})`;
         }
         return `Mention: ${item.name} (${item.path})`;
+    }
+
+    protected directInputItemToImageUrl(item: CodexProviderInputItem): string | undefined {
+        if (item.type === 'image') {
+            return item.url;
+        }
+        if (item.type === 'localImage') {
+            return this.localImageToDataUrl(item.path);
+        }
+        return undefined;
+    }
+
+    protected localImageToDataUrl(filePath: string): string | undefined {
+        try {
+            if (!fs.existsSync(filePath)) {
+                return undefined;
+            }
+            const mimeType = this.imageMimeType(filePath);
+            return `data:${mimeType};base64,${fs.readFileSync(filePath).toString('base64')}`;
+        } catch {
+            return undefined;
+        }
+    }
+
+    protected imageMimeType(filePath: string): string {
+        switch (path.extname(filePath).toLowerCase()) {
+            case '.jpg':
+            case '.jpeg':
+                return 'image/jpeg';
+            case '.webp':
+                return 'image/webp';
+            case '.gif':
+                return 'image/gif';
+            case '.svg':
+                return 'image/svg+xml';
+            case '.png':
+            default:
+                return 'image/png';
+        }
+    }
+
+    protected buildOpenAiChatMessageContent(prompt: DirectHttpPromptParts): string | Array<Record<string, unknown>> {
+        if (!prompt.images.length) {
+            return prompt.user;
+        }
+        return [
+            { type: 'text', text: prompt.user },
+            ...prompt.images.map(url => ({ type: 'image_url', image_url: { url } }))
+        ];
+    }
+
+    protected buildOpenAiResponseInputContent(prompt: DirectHttpPromptParts): Array<Record<string, unknown>> {
+        return [
+            { type: 'input_text', text: prompt.user },
+            ...prompt.images.map(url => ({ type: 'input_image', image_url: url }))
+        ];
+    }
+
+    protected buildAnthropicMessageContent(prompt: DirectHttpPromptParts): Array<Record<string, unknown>> {
+        return [
+            { type: 'text', text: prompt.user },
+            ...prompt.images.map(url => this.toAnthropicImageContent(url)).filter((content): content is Record<string, unknown> => !!content)
+        ];
+    }
+
+    protected toAnthropicImageContent(url: string): Record<string, unknown> | undefined {
+        const parsed = this.parseImageDataUrl(url);
+        if (!parsed) {
+            return undefined;
+        }
+        return {
+            type: 'image',
+            source: {
+                type: 'base64',
+                media_type: parsed.mimeType,
+                data: parsed.base64
+            }
+        };
+    }
+
+    protected buildGoogleGenerateParts(prompt: DirectHttpPromptParts): Array<Record<string, unknown>> {
+        return [
+            { text: prompt.user },
+            ...prompt.images.map(url => this.toGoogleImagePart(url)).filter((part): part is Record<string, unknown> => !!part)
+        ];
+    }
+
+    protected toGoogleImagePart(url: string): Record<string, unknown> | undefined {
+        const parsed = this.parseImageDataUrl(url);
+        if (!parsed) {
+            return undefined;
+        }
+        return {
+            inlineData: {
+                mimeType: parsed.mimeType,
+                data: parsed.base64
+            }
+        };
+    }
+
+    protected parseImageDataUrl(url: string): { mimeType: string; base64: string } | undefined {
+        const match = /^data:([^;,]+);base64,(.+)$/i.exec(url.trim());
+        return match ? { mimeType: match[1], base64: match[2] } : undefined;
     }
 
     protected async readDirectHttpSseStream(
@@ -1421,6 +1611,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         const stream = this.activeStreams.get(streamId);
         if (stream) {
             stream.receivedNotification = true;
+            stream.receivedAgentDelta = true;
         }
         client?.sendToken(streamId, {
             type: 'notification',
@@ -1508,6 +1699,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
                 const stream = this.activeStreams.get(streamId);
                 if (stream) {
                     stream.receivedNotification = true;
+                    stream.receivedAgentDelta = true;
                 }
                 client?.sendToken(streamId, {
                     type: 'notification',
@@ -1594,7 +1786,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         const text = this.extractCliText(event);
         if (text) {
             const finalLike = type === 'result' || type === 'complete' || type === 'completed' || type === 'response';
-            if (finalLike && this.activeStreams.get(streamId)?.receivedNotification) {
+            if (finalLike && this.activeStreams.get(streamId)?.receivedAgentDelta) {
                 return;
             }
             this.sendCliTextDelta(adapter, streamId, text, client);
@@ -1623,6 +1815,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         const stream = this.activeStreams.get(streamId);
         if (stream) {
             stream.receivedNotification = true;
+            stream.receivedAgentDelta = true;
         }
         client?.sendToken(streamId, {
             type: 'notification',
@@ -1998,8 +2191,12 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             input: this.buildTurnInput(prompt, input, cwd)
         };
         if (includeOverrides) {
+            const variantOptions = this.reasoningVariantOptions(options);
+            const effort = this.readString(variantOptions, 'reasoningEffort')
+                || this.readString(this.readRecord(variantOptions.reasoning), 'effort')
+                || options?.reasoningEffort;
             this.addIfTruthy(params, 'model', options?.model);
-            this.addIfTruthy(params, 'effort', options?.reasoningEffort);
+            this.addIfTruthy(params, 'effort', effort);
             this.addIfTruthy(params, 'serviceTier', options?.serviceTier);
             this.addIfTruthy(params, 'approvalPolicy', options?.approvalPolicy ?? 'on-request');
             params.approvalsReviewer = 'user';
@@ -2064,10 +2261,11 @@ export class CodexProviderServiceImpl implements CodexProviderService {
 
     protected async getDirectHttpStatus(provider: DirectHttpProviderConfig, request: CodexProviderStatusRequest): Promise<CodexProviderBackendStatus> {
         const apiKey = this.resolveDirectHttpApiKey(provider, request);
-        const models = await this.readDirectHttpModels(provider).catch(error => {
+        const modelMetadata = await this.readDirectHttpModelCatalog(provider).catch(error => {
             this.logger.debug(`${provider.label} model list failed:`, error);
-            return [provider.defaultModel];
+            return [this.fallbackDirectHttpModelMetadata(provider)];
         });
+        const models = this.modelIdsFromMetadata(modelMetadata) ?? [provider.defaultModel];
         return {
             runtime: 'direct-http',
             modelProvider: provider.provider,
@@ -2078,6 +2276,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             authStatus: apiKey ? 'api key configured' : 'api key required',
             accountLabel: apiKey ? provider.label : undefined,
             models,
+            modelMetadata,
             configurationRequired: apiKey ? undefined : [provider.apiKeyEnvVar],
             message: apiKey ? undefined : nls.localize(
                 'theia/ai/ai-providers/directApiKeyMissing',
@@ -2100,6 +2299,42 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     }
 
     protected async readDirectHttpModels(provider: DirectHttpProviderConfig): Promise<string[] | undefined> {
+        return this.modelIdsFromMetadata(await this.readDirectHttpModelCatalog(provider));
+    }
+
+    protected async readDirectHttpModelCatalog(provider: DirectHttpProviderConfig): Promise<CodexProviderModelMetadata[] | undefined> {
+        const cacheKey = provider.provider;
+        const now = Date.now();
+        const cached = this.directHttpModelCatalogCache.get(cacheKey);
+        if (cached?.value && cached.expiresAt > now) {
+            return this.applyDirectHttpUnavailableModels(provider, cached.value);
+        }
+        if (cached?.promise) {
+            return cached.promise.then(value => this.applyDirectHttpUnavailableModels(provider, value));
+        }
+        const promise = this.fetchDirectHttpModelCatalog(provider).then(value => {
+            this.directHttpModelCatalogCache.set(cacheKey, {
+                value,
+                expiresAt: Date.now() + DIRECT_HTTP_MODEL_CATALOG_TTL_MS
+            });
+            return this.applyDirectHttpUnavailableModels(provider, value);
+        }, error => {
+            const previous = this.directHttpModelCatalogCache.get(cacheKey)?.value;
+            this.directHttpModelCatalogCache.delete(cacheKey);
+            if (previous?.length) {
+                return this.applyDirectHttpUnavailableModels(provider, previous);
+            }
+            throw error;
+        });
+        this.directHttpModelCatalogCache.set(cacheKey, {
+            promise,
+            value: cached?.value,
+            expiresAt: cached?.expiresAt ?? 0
+        });
+        return promise;
+    }
+
+    protected async fetchDirectHttpModelCatalog(provider: DirectHttpProviderConfig): Promise<CodexProviderModelMetadata[] | undefined> {
         const response = await fetch(provider.modelsUrl);
         if (!response.ok) {
             throw new Error(nls.localize(
@@ -2110,16 +2345,417 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         }
         const json = await response.json();
         const modelValues = this.readArray(json, 'data').length > 0 ? this.readArray(json, 'data') : this.readArray(json, 'models');
-        const models = modelValues.map(model => {
-            if (typeof model === 'string') {
+        const metadata = modelValues
+            .map(model => this.toDirectHttpModelMetadata(provider, model))
+            .filter((model): model is CodexProviderModelMetadata => !!model);
+        const baseMetadata = metadata.length > 0 ? this.uniqueModelMetadata(metadata) : [this.fallbackDirectHttpModelMetadata(provider)];
+        return this.enrichDirectHttpModelMetadata(provider, baseMetadata);
+    }
+
+    protected markDirectHttpModelUnavailableFromError(provider: DirectHttpProviderConfig, model: string, status: number, detail: string): void {
+        const reason = this.directHttpUnavailableModelReason(status, detail);
+        if (!reason) {
+            return;
+        }
+        const modelId = this.withDirectProviderPrefix(provider, model);
+        const now = Date.now();
+        const providerModels = this.directHttpUnavailableModels.get(provider.provider) ?? new Map<string, DirectHttpUnavailableModel>();
+        providerModels.set(modelId, {
+            reason,
+            observedAt: now,
+            expiresAt: now + DIRECT_HTTP_UNAVAILABLE_MODEL_TTL_MS
+        });
+        this.directHttpUnavailableModels.set(provider.provider, providerModels);
+        this.directHttpModelCatalogCache.delete(provider.provider);
+        this.logger?.warn(`${provider.label} model marked unavailable: ${modelId}. ${reason}`);
+    }
+
+    protected directHttpUnavailableModelReason(status: number, detail: string): string | undefined {
+        if (status !== 401 && status !== 403 && status !== 404) {
+            return undefined;
+        }
+        const parsedMessage = this.extractDirectHttpErrorMessage(detail);
+        const candidate = parsedMessage || detail;
+        const normalized = candidate.toLowerCase();
+        if (normalized.includes('free promotion has ended')) {
+            return parsedMessage || 'Free promotion has ended for this model.';
+        }
+        if (normalized.includes('modelerror') && (normalized.includes('not available') || normalized.includes('unavailable'))) {
+            return parsedMessage || 'Model is not available for this provider/account.';
+        }
+        return undefined;
+    }
+
+    protected extractDirectHttpErrorMessage(detail: string): string | undefined {
+        const trimmed = detail.trim();
+        if (!trimmed) {
+            return undefined;
+        }
+        try {
+            const parsed = JSON.parse(trimmed);
+            const error = this.readObject(parsed, 'error');
+            return this.readString(error, 'message') || this.readString(parsed, 'message') || undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    protected applyDirectHttpUnavailableModels(
+        provider: DirectHttpProviderConfig,
+        metadata: CodexProviderModelMetadata[] | undefined
+    ): CodexProviderModelMetadata[] | undefined {
+        if (!metadata?.length) {
+            return metadata;
+        }
+        const unavailable = this.currentDirectHttpUnavailableModels(provider);
+        if (!unavailable.size) {
+            return metadata;
+        }
+        return metadata.map(model => {
+            const unavailableModel = unavailable.get(model.id);
+            if (!unavailableModel) {
                 return model;
             }
-            return this.readString(model, 'id') ||
-                this.readString(model, 'name') ||
-                this.readString(model, 'model') ||
-                this.readString(model, 'slug');
-        }).filter(Boolean).map(model => this.withDirectProviderPrefix(provider, model));
-        return models.length > 0 ? Array.from(new Set(models)) : [provider.defaultModel];
+            return {
+                ...model,
+                unavailable: true,
+                unavailableReason: unavailableModel.reason,
+                unavailableAt: unavailableModel.observedAt
+            };
+        });
+    }
+
+    protected currentDirectHttpUnavailableModels(provider: DirectHttpProviderConfig): Map<string, DirectHttpUnavailableModel> {
+        const providerModels = this.directHttpUnavailableModels.get(provider.provider);
+        if (!providerModels?.size) {
+            return new Map();
+        }
+        const now = Date.now();
+        for (const [modelId, state] of providerModels) {
+            if (state.expiresAt <= now) {
+                providerModels.delete(modelId);
+            }
+        }
+        if (!providerModels.size) {
+            this.directHttpUnavailableModels.delete(provider.provider);
+            return new Map();
+        }
+        return providerModels;
+    }
+
+    protected toDirectHttpModelMetadata(provider: DirectHttpProviderConfig, value: unknown): CodexProviderModelMetadata | undefined {
+        if (typeof value === 'string') {
+            const id = this.withDirectProviderPrefix(provider, value);
+            return {
+                id,
+                label: value,
+                provider: provider.provider,
+                cost: this.classifyDirectHttpModelCost(provider, id)
+            };
+        }
+        if (typeof value !== 'object' || !value) {
+            return undefined;
+        }
+        const idValue = this.readString(value, 'id') ||
+            this.readString(value, 'name') ||
+            this.readString(value, 'model') ||
+            this.readString(value, 'slug');
+        if (!idValue) {
+            return undefined;
+        }
+        const id = this.withDirectProviderPrefix(provider, idValue);
+        const pricing = this.extractDirectHttpModelPricing(value);
+        const architecture = this.readObject(value, 'architecture');
+        const topProvider = this.readObject(value, 'top_provider');
+        const supportedParameters = this.readStringArray(value, 'supported_parameters');
+        const inputModalities = this.readStringArray(architecture, 'input_modalities');
+        const outputModalities = this.readStringArray(architecture, 'output_modalities');
+        return {
+            id,
+            label: this.readString(value, 'name') || idValue,
+            provider: provider.provider,
+            cost: this.classifyDirectHttpModelCost(provider, id, pricing),
+            pricing,
+            contextLength: this.readNumeric(value, 'context_length') ?? this.readNumeric(topProvider, 'context_length'),
+            inputModalities,
+            outputModalities,
+            supportedParameters,
+            reasoning: this.modelSupportedParameterAvailable(supportedParameters, ['reasoning', 'include_reasoning']),
+            toolCalling: this.modelSupportedParameterAvailable(supportedParameters, ['tools', 'tool_choice']),
+            structuredOutput: this.modelSupportedParameterAvailable(supportedParameters, ['structured_output', 'response_format']),
+            description: this.readString(value, 'description') || undefined,
+            raw: value
+        };
+    }
+
+    protected async enrichDirectHttpModelMetadata(provider: DirectHttpProviderConfig, metadata: CodexProviderModelMetadata[]): Promise<CodexProviderModelMetadata[]> {
+        if (!metadata.length) {
+            return metadata;
+        }
+        const providerMetadata = await this.readModelsDevProviderModelMetadata(provider.provider).catch(error => {
+            this.logger.debug(`${provider.label} models.dev enrichment failed:`, error);
+            return undefined;
+        });
+        if (!providerMetadata?.size) {
+            return metadata;
+        }
+        return metadata.map(model => this.mergeDirectHttpModelMetadata(
+            provider,
+            model,
+            providerMetadata.get(this.stripDirectProviderPrefix(provider, model.id))
+        ));
+    }
+
+    protected async readModelsDevProviderModelMetadata(provider: string): Promise<Map<string, CodexProviderModelMetadata> | undefined> {
+        const catalog = await this.readModelsDevCatalog();
+        return catalog.get(provider);
+    }
+
+    protected async readModelsDevCatalog(): Promise<Map<string, Map<string, CodexProviderModelMetadata>>> {
+        const now = Date.now();
+        const cached = this.modelsDevCatalogCache;
+        if (cached?.value && cached.expiresAt > now) {
+            return cached.value;
+        }
+        if (cached?.promise) {
+            return cached.promise;
+        }
+        const promise = this.fetchModelsDevCatalog().then(value => {
+            this.modelsDevCatalogCache = {
+                value,
+                expiresAt: Date.now() + MODELS_DEV_CATALOG_TTL_MS
+            };
+            return value;
+        }, error => {
+            const previous = this.modelsDevCatalogCache?.value;
+            this.modelsDevCatalogCache = undefined;
+            if (previous?.size) {
+                return previous;
+            }
+            throw error;
+        });
+        this.modelsDevCatalogCache = {
+            promise,
+            value: cached?.value,
+            expiresAt: cached?.expiresAt ?? 0
+        };
+        return promise;
+    }
+
+    protected async fetchModelsDevCatalog(): Promise<Map<string, Map<string, CodexProviderModelMetadata>>> {
+        const response = await fetch(MODELS_DEV_CATALOG_URL);
+        if (!response.ok) {
+            throw new Error(nls.localize(
+                'theia/ai/ai-providers/modelsDevHttpError',
+                'Models.dev catalog request failed with HTTP {0}.',
+                response.status
+            ));
+        }
+        const json = await response.json();
+        const catalog = new Map<string, Map<string, CodexProviderModelMetadata>>();
+        for (const provider of Object.values(DIRECT_HTTP_PROVIDER_CONFIGS)) {
+            const providerObject = this.readObject(json, provider.provider);
+            const modelsObject = this.readObject(providerObject, 'models');
+            const providerModels = new Map<string, CodexProviderModelMetadata>();
+            for (const [modelId, value] of Object.entries(modelsObject)) {
+                const metadata = this.toModelsDevModelMetadata(provider, modelId, value);
+                if (metadata) {
+                    providerModels.set(modelId, metadata);
+                }
+            }
+            if (providerModels.size) {
+                catalog.set(provider.provider, providerModels);
+            }
+        }
+        return catalog;
+    }
+
+    protected toModelsDevModelMetadata(provider: DirectHttpProviderConfig, modelId: string, value: unknown): CodexProviderModelMetadata | undefined {
+        if (typeof value !== 'object' || !value) {
+            return undefined;
+        }
+        const id = this.withDirectProviderPrefix(provider, modelId);
+        const limit = this.readObject(value, 'limit');
+        const modalities = this.readObject(value, 'modalities');
+        const pricing = this.extractModelsDevModelPricing(value);
+        return {
+            id,
+            label: this.readString(value, 'name') || modelId,
+            provider: provider.provider,
+            cost: this.classifyDirectHttpModelCost(provider, id, pricing),
+            pricing,
+            contextLength: this.readNumeric(limit, 'context'),
+            inputModalities: this.readStringArray(modalities, 'input'),
+            outputModalities: this.readStringArray(modalities, 'output'),
+            attachment: this.readBoolean(value, 'attachment'),
+            reasoning: this.readBoolean(value, 'reasoning'),
+            toolCalling: this.readBoolean(value, 'tool_call') ?? this.readBoolean(value, 'toolCalling'),
+            structuredOutput: this.readBoolean(value, 'structured_output') ?? this.readBoolean(value, 'structuredOutput'),
+            temperature: this.readBoolean(value, 'temperature'),
+            description: this.readString(value, 'description') || undefined,
+            raw: value
+        };
+    }
+
+    protected extractModelsDevModelPricing(value: unknown): CodexProviderModelPricing | undefined {
+        const cost = this.readObject(value, 'cost');
+        if (!Object.keys(cost).length) {
+            return undefined;
+        }
+        return {
+            prompt: this.readPriceString(cost, 'input'),
+            completion: this.readPriceString(cost, 'output'),
+            request: this.readPriceString(cost, 'request'),
+            image: this.readPriceString(cost, 'image') ?? this.readPriceString(cost, 'output_image'),
+            inputCacheRead: this.readPriceString(cost, 'input_cache_read'),
+            inputCacheWrite: this.readPriceString(cost, 'input_cache_write'),
+            cachedRead: this.readPriceString(cost, 'cache_read'),
+            cachedWrite: this.readPriceString(cost, 'cache_write'),
+            raw: cost
+        };
+    }
+
+    protected mergeDirectHttpModelMetadata(
+        provider: DirectHttpProviderConfig,
+        primary: CodexProviderModelMetadata,
+        enrichment: CodexProviderModelMetadata | undefined
+    ): CodexProviderModelMetadata {
+        if (!enrichment) {
+            return primary;
+        }
+        const pricing = primary.pricing ?? enrichment.pricing;
+        return {
+            ...primary,
+            label: primary.label ?? enrichment.label,
+            cost: primary.pricing ? primary.cost : enrichment.cost ?? primary.cost,
+            pricing,
+            contextLength: primary.contextLength ?? enrichment.contextLength,
+            inputModalities: this.mergeModelMetadataStringArrays(primary.inputModalities, enrichment.inputModalities),
+            outputModalities: this.mergeModelMetadataStringArrays(primary.outputModalities, enrichment.outputModalities),
+            supportedParameters: this.mergeModelMetadataStringArrays(primary.supportedParameters, enrichment.supportedParameters),
+            attachment: primary.attachment ?? enrichment.attachment,
+            reasoning: primary.reasoning ?? enrichment.reasoning,
+            toolCalling: primary.toolCalling ?? enrichment.toolCalling,
+            structuredOutput: primary.structuredOutput ?? enrichment.structuredOutput,
+            temperature: primary.temperature ?? enrichment.temperature,
+            description: primary.description ?? enrichment.description,
+            raw: primary.raw && enrichment.raw
+                ? { directHttp: primary.raw, modelsDev: enrichment.raw, provider: provider.provider }
+                : primary.raw ?? enrichment.raw
+        };
+    }
+
+    protected mergeModelMetadataStringArrays(left: string[] | undefined, right: string[] | undefined): string[] | undefined {
+        const values = [...(left ?? []), ...(right ?? [])]
+            .map(value => value.trim())
+            .filter(Boolean);
+        const unique = Array.from(new Set(values));
+        return unique.length ? unique : undefined;
+    }
+
+    protected modelSupportedParameterAvailable(parameters: string[] | undefined, candidates: string[]): boolean | undefined {
+        if (!parameters?.length) {
+            return undefined;
+        }
+        const normalized = new Set(parameters.map(parameter => parameter.toLowerCase()));
+        return candidates.some(candidate => normalized.has(candidate.toLowerCase()));
+    }
+
+    protected fallbackDirectHttpModelMetadata(provider: DirectHttpProviderConfig): CodexProviderModelMetadata {
+        return {
+            id: provider.defaultModel,
+            provider: provider.provider,
+            cost: this.classifyDirectHttpModelCost(provider, provider.defaultModel)
+        };
+    }
+
+    protected extractDirectHttpModelPricing(value: unknown): CodexProviderModelPricing | undefined {
+        const pricing = this.readObject(value, 'pricing');
+        if (!Object.keys(pricing).length) {
+            return undefined;
+        }
+        return {
+            prompt: this.readPriceString(pricing, 'prompt'),
+            completion: this.readPriceString(pricing, 'completion'),
+            request: this.readPriceString(pricing, 'request'),
+            image: this.readPriceString(pricing, 'image'),
+            inputCacheRead: this.readPriceString(pricing, 'input_cache_read'),
+            inputCacheWrite: this.readPriceString(pricing, 'input_cache_write'),
+            cachedRead: this.readPriceString(pricing, 'cached_read'),
+            cachedWrite: this.readPriceString(pricing, 'cached_write'),
+            raw: pricing
+        };
+    }
+
+    protected classifyDirectHttpModelCost(provider: DirectHttpProviderConfig, modelId: string, pricing?: CodexProviderModelPricing): CodexProviderModelCost {
+        const normalized = this.stripDirectProviderPrefix(provider, modelId).toLowerCase();
+        const hasFreeSlug = normalized.endsWith(':free') || /(^|[-_:/\s])free($|[-_:/\s])/.test(normalized);
+        const isKnownZenLimitedFree = provider.provider === 'opencode' && OPENCODE_ZEN_LIMITED_FREE_MODEL_IDS.has(normalized);
+        const priceValues = this.directHttpPriceValues(pricing);
+        const allExplicitPricesAreZero = priceValues.length > 0 && priceValues.every(value => value === 0);
+        const hasPositivePrice = priceValues.some(value => value > 0);
+        if (provider.provider === 'opencode-go') {
+            return hasFreeSlug || allExplicitPricesAreZero ? 'free-limited' : 'included';
+        }
+        if (hasFreeSlug || isKnownZenLimitedFree || allExplicitPricesAreZero) {
+            return provider.provider === 'opencode' ? 'free-limited' : 'free';
+        }
+        if (hasPositivePrice) {
+            return 'paid';
+        }
+        return provider.provider === 'opencode' ? 'paid' : 'unknown';
+    }
+
+    protected directHttpPriceValues(pricing: CodexProviderModelPricing | undefined): number[] {
+        if (!pricing) {
+            return [];
+        }
+        return [
+            pricing.prompt,
+            pricing.completion,
+            pricing.request,
+            pricing.image,
+            pricing.inputCacheRead,
+            pricing.inputCacheWrite,
+            pricing.cachedRead,
+            pricing.cachedWrite
+        ].map(value => this.priceStringToNumber(value)).filter((value): value is number => value !== undefined);
+    }
+
+    protected priceStringToNumber(value: string | undefined): number | undefined {
+        if (value === undefined || value === '') {
+            return undefined;
+        }
+        const normalized = value.trim().toLowerCase();
+        if (!normalized || normalized === '-' || normalized === 'n/a' || normalized === 'na') {
+            return undefined;
+        }
+        if (normalized === 'free') {
+            return 0;
+        }
+        const parsed = Number(normalized.replace(/[$,\s]/g, ''));
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            return undefined;
+        }
+        return parsed;
+    }
+
+    protected modelIdsFromMetadata(metadata: readonly CodexProviderModelMetadata[] | undefined): string[] | undefined {
+        const ids = metadata?.map(model => model.id).filter(Boolean) ?? [];
+        return ids.length > 0 ? Array.from(new Set(ids)) : undefined;
+    }
+
+    protected uniqueModelMetadata(metadata: readonly CodexProviderModelMetadata[]): CodexProviderModelMetadata[] {
+        const seen = new Set<string>();
+        const result: CodexProviderModelMetadata[] = [];
+        for (const model of metadata) {
+            if (!model.id || seen.has(model.id)) {
+                continue;
+            }
+            seen.add(model.id);
+            result.push(model);
+        }
+        return result;
     }
 
     protected async detectProviders(request: CodexProviderStatusRequest): Promise<CodexProviderDetectedProvider[]> {
@@ -2159,12 +2795,21 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             if (preset.runtime === 'direct-http') {
                 const provider = DIRECT_HTTP_PROVIDER_CONFIGS[preset.modelProvider];
                 const apiKey = provider ? this.resolveDirectHttpApiKey(provider, request) : undefined;
+                const modelMetadata = apiKey && provider
+                    ? await this.readDirectHttpModelCatalog(provider).catch(error => {
+                        this.logger.debug(`${provider.label} detected model list failed:`, error);
+                        return [this.fallbackDirectHttpModelMetadata(provider)];
+                    })
+                    : provider ? [this.fallbackDirectHttpModelMetadata(provider)] : undefined;
+                const models = this.modelIdsFromMetadata(modelMetadata);
                 return {
                     ...preset,
                     executablePath: provider?.baseUrl ?? preset.modelProvider,
                     available: !!apiKey,
                     cliAvailable: true,
                     configured: !!apiKey,
+                    models,
+                    modelMetadata,
                     message: apiKey ? undefined : nls.localize(
                         'theia/ai/ai-providers/directProviderNeedsApiKey',
                         'Set {0} or paste the API key in CyberVinci.',
@@ -3327,6 +3972,33 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         return '';
     }
 
+    protected readPriceString(source: unknown, key: string): string | undefined {
+        if (typeof source === 'object' && source && key in source) {
+            const value = (source as Record<string, unknown>)[key];
+            if (typeof value === 'string') {
+                return value;
+            }
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                return String(value);
+            }
+        }
+        return undefined;
+    }
+
+    protected readNumeric(source: unknown, key: string): number | undefined {
+        if (typeof source === 'object' && source && key in source) {
+            const value = (source as Record<string, unknown>)[key];
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                return value;
+            }
+            if (typeof value === 'string') {
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? parsed : undefined;
+            }
+        }
+        return undefined;
+    }
+
     protected readObject(source: unknown, key: string): Record<string, unknown> {
         if (typeof source === 'object' && source && key in source) {
             const value = (source as Record<string, unknown>)[key];
@@ -3349,6 +4021,11 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             return Array.isArray(value) ? value : [];
         }
         return [];
+    }
+
+    protected readStringArray(source: unknown, key: string): string[] | undefined {
+        const values = this.readArray(source, key).map(value => typeof value === 'string' ? value : undefined).filter((value): value is string => !!value);
+        return values.length ? values : undefined;
     }
 
     protected readBoolean(source: unknown, key: string): boolean | undefined {

@@ -289,6 +289,8 @@ function workflow(request, id, fallbackName, states, transitions, extraStates) {
     if (extraStates === void 0) { extraStates = {}; }
     var workflowStates = __assign(__assign({ input: { type: 'input', outputs: ['input/request.md'] } }, states), extraStates);
     var firstNonInput = Object.keys(workflowStates).find(function (stateId) { return stateId !== 'input'; });
+    var workflowTransitions = firstNonInput
+        ? __spreadArray([{ id: "input_to_".concat(firstNonInput), from: 'input', to: firstNonInput, on: 'run.started' }], transitions, true) : transitions;
     return {
         version: 'flow.workflow/v1',
         id: id,
@@ -298,23 +300,50 @@ function workflow(request, id, fallbackName, states, transitions, extraStates) {
         templateVersion: 'flow.pattern/v1',
         agents: collectAgents(workflowStates),
         requires: { capabilities: ['llm.agent.execute'] },
-        states: workflowStates,
-        transitions: firstNonInput
-            ? __spreadArray([{ id: "input_to_".concat(firstNonInput), from: 'input', to: firstNonInput, on: 'run.started' }], transitions, true) : transitions
+        states: applyConservativeOutcomeRoutes(workflowStates, workflowTransitions),
+        transitions: workflowTransitions
     };
 }
+function applyConservativeOutcomeRoutes(states, transitions) {
+    var _a;
+    var _b, _c;
+    var next = __assign({}, states);
+    var transitionsBySource = new Map();
+    for (var _i = 0, transitions_1 = transitions; _i < transitions_1.length; _i++) {
+        var transition = transitions_1[_i];
+        transitionsBySource.set(transition.from, __spreadArray(__spreadArray([], (transitionsBySource.get(transition.from) || []), true), [transition], false));
+    }
+    for (var _d = 0, transitionsBySource_1 = transitionsBySource; _d < transitionsBySource_1.length; _d++) {
+        var _e = transitionsBySource_1[_d], stateId = _e[0], stateTransitions = _e[1];
+        var state = next[stateId];
+        if (!state || stateTransitions.length !== 1) {
+            continue;
+        }
+        var transition = stateTransitions[0];
+        var canRoute = !transition.guard
+            || transition.on === 'run.started'
+            || transition.on === 'gate.approved'
+            || transition.on === 'state.completed';
+        if (!canRoute || ((_b = state.outcomes) === null || _b === void 0 ? void 0 : _b.success) || ((_c = state.outcomes) === null || _c === void 0 ? void 0 : _c.approved)) {
+            continue;
+        }
+        var outcome = transition.on === 'gate.approved' ? 'approved' : 'success';
+        next[stateId] = __assign(__assign({}, state), { outcomes: __assign(__assign({}, (state.outcomes || {})), (_a = {}, _a[outcome] = transition.to, _a)) });
+    }
+    return next;
+}
 function agent(id, role, outputs, taskPrompt, request, profileParameterId) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     var override = ((_a = request.roleOverrides) === null || _a === void 0 ? void 0 : _a[role]) || ((_b = request.roleOverrides) === null || _b === void 0 ? void 0 : _b[id]);
     var defaultProfileId = roleProfileId(request, role, profileParameterId);
     var profileId = ((_c = override === null || override === void 0 ? void 0 : override.modelExecution) === null || _c === void 0 ? void 0 : _c.profileId) || (override === null || override === void 0 ? void 0 : override.profileId) || defaultProfileId;
-    var profile = (0, flow_model_profiles_1.getFlowModelProfile)(profileId);
+    var modelProfile = (0, flow_model_profiles_1.getFlowModelProfile)(profileId);
     return compact({
         type: 'agent',
         agent: role,
         agentRole: role,
-        provider: (override === null || override === void 0 ? void 0 : override.provider) || (profile === null || profile === void 0 ? void 0 : profile.provider),
-        modelExecution: __assign(__assign(__assign({}, profile === null || profile === void 0 ? void 0 : profile.execution), override === null || override === void 0 ? void 0 : override.modelExecution), { profileId: ((_d = override === null || override === void 0 ? void 0 : override.modelExecution) === null || _d === void 0 ? void 0 : _d.profileId) || (override === null || override === void 0 ? void 0 : override.profileId) || (profile === null || profile === void 0 ? void 0 : profile.execution.profileId) || profileId }),
+        provider: (override === null || override === void 0 ? void 0 : override.provider) || (modelProfile === null || modelProfile === void 0 ? void 0 : modelProfile.provider),
+        modelExecution: __assign(__assign(__assign({}, ((modelProfile === null || modelProfile === void 0 ? void 0 : modelProfile.execution) || {})), override === null || override === void 0 ? void 0 : override.modelExecution), { profileId: profileId }),
         systemPrompt: roleSystemPrompt(role),
         taskPrompt: taskPrompt,
         outputs: outputs

@@ -85,7 +85,26 @@ function createFlowWorkflowState(stateType, stateId) {
         return __assign(__assign({}, base), { input: { signals: ["".concat(stateId, ".status")] } });
     }
     if (stateType === 'gate') {
-        return __assign(__assign({}, base), { gates: [{ id: "".concat(stateId, "_approval"), title: 'Approve next step', stateId: stateId }] });
+        return __assign(__assign({}, base), { gates: [{
+                    id: "".concat(stateId, "_approval"),
+                    title: 'Approve next step',
+                    stateId: stateId,
+                    decisions: [
+                        { id: 'approved', label: 'Approve', outcome: 'approved' },
+                        { id: 'revision_requested', label: 'Request changes', outcome: 'revision_requested', allowTargetSelection: true },
+                        { id: 'rejected', label: 'Reject', outcome: 'rejected', action: 'fail' }
+                    ]
+                }] });
+    }
+    if (stateType === 'loop') {
+        return __assign(__assign({}, base), { loop: {
+                body: '',
+                maxIterations: 3,
+                counter: "".concat(stateId, ".iteration")
+            }, outcomes: {
+                success: { action: 'complete' },
+                exhausted: { action: 'fail' }
+            } });
     }
     if (stateType === 'command') {
         return __assign(__assign({}, base), { effects: [{ kind: 'command', summary: 'Run an approved command.' }], outputs: ["".concat(stateId, "/command-result.md")] });
@@ -119,7 +138,7 @@ function addFlowWorkflowTransition(workflow, from, to) {
     };
     return {
         transition: transition,
-        workflow: __assign(__assign({}, workflow), { transitions: __spreadArray(__spreadArray([], (workflow.transitions || []), true), [transition], false) })
+        workflow: __assign(__assign({}, workflow), { states: upsertStateOutcome(workflow.states, from, 'success', to), transitions: __spreadArray(__spreadArray([], (workflow.transitions || []), true), [transition], false) })
     };
 }
 function addFlowParallelBranch(workflow, parallelStateId, branchType) {
@@ -239,9 +258,48 @@ function compactFlowState(state) {
     return compactFlowObject(state);
 }
 function collectWaitForReferences(candidateId, state, stateId, references) {
+    var _a, _b;
     if ((state.waitFor || []).includes(stateId)) {
         references.push("state ".concat(candidateId, ".waitFor"));
     }
+    for (var _i = 0, _c = Object.entries(state.outcomes || {}); _i < _c.length; _i++) {
+        var _d = _c[_i], outcomeId = _d[0], route = _d[1];
+        var target = typeof route === 'string' ? route : route === null || route === void 0 ? void 0 : route.to;
+        if (target === stateId) {
+            references.push("state ".concat(candidateId, ".outcomes.").concat(outcomeId));
+        }
+    }
+    for (var _e = 0, _f = state.gates || []; _e < _f.length; _e++) {
+        var gate = _f[_e];
+        for (var _g = 0, _h = gate.decisions || []; _g < _h.length; _g++) {
+            var decision = _h[_g];
+            if (decision.to === stateId) {
+                references.push("state ".concat(candidateId, ".gates.").concat(gate.id, ".decisions.").concat(decision.id));
+            }
+        }
+    }
+    if (((_a = state.loop) === null || _a === void 0 ? void 0 : _a.body) === stateId) {
+        references.push("state ".concat(candidateId, ".loop.body"));
+    }
+    if (((_b = state.loop) === null || _b === void 0 ? void 0 : _b.repair) === stateId) {
+        references.push("state ".concat(candidateId, ".loop.repair"));
+    }
+}
+function upsertStateOutcome(states, stateId, outcomeId, targetStateId) {
+    var _a, _b, _c, _d;
+    var _e;
+    if (states[stateId]) {
+        return __assign(__assign({}, states), (_a = {}, _a[stateId] = compactFlowState(__assign(__assign({}, states[stateId]), { outcomes: __assign(__assign({}, (states[stateId].outcomes || {})), (_b = {}, _b[outcomeId] = targetStateId, _b)) })), _a));
+    }
+    var nextStates = __assign({}, states);
+    for (var _i = 0, _f = Object.entries(nextStates); _i < _f.length; _i++) {
+        var _g = _f[_i], parentId = _g[0], parentState = _g[1];
+        if ((_e = parentState.branches) === null || _e === void 0 ? void 0 : _e[stateId]) {
+            nextStates[parentId] = compactFlowState(__assign(__assign({}, parentState), { branches: __assign(__assign({}, parentState.branches), (_c = {}, _c[stateId] = compactFlowState(__assign(__assign({}, parentState.branches[stateId]), { outcomes: __assign(__assign({}, (parentState.branches[stateId].outcomes || {})), (_d = {}, _d[outcomeId] = targetStateId, _d)) })), _c)) }));
+            break;
+        }
+    }
+    return nextStates;
 }
 function compactFlowObject(value) {
     var compacted = {};

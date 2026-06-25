@@ -1,0 +1,110 @@
+version: cybervinci.marketplace/v1
+marketplace:
+  - id: canvas.design-qa-pack
+    name: Canvas Design QA Pack
+    collection: canvas-qa-packs
+    description: Installs the Canvas QA playbook that captures the document, runs layout diagnostics, invokes Vision Judge, plans repairs, applies operations, and verifies.
+    tags: [Canvas, Vision, QA, Repair]
+    installTarget:
+      kind: playbook
+      id: canvas-design-qa
+      action: duplicate-to-user
+  - id: canvas.qa-pack-metadata
+    name: Canvas QA Pack Metadata
+    collection: canvas-qa-packs
+    description: Installs editable local metadata for a Canvas QA pack so Canvas and Playbooks can bind a pack id without depending on a core-only list.
+    tags: [Canvas, QA, Metadata]
+    installTarget:
+      kind: canvas-qa-pack
+      id: canvas-design-qa
+      action: duplicate-to-user
+  - id: flow.ai-chat-dynamic-workflow
+    name: AI Chat Dynamic Workflow Metadata
+    collection: flows
+    description: Installs editable local metadata for the AI Chat Dynamic Workflow route used when the chat prompt should select or author a Flow.
+    tags: [Flow, Chat, Dynamic Workflow]
+    installTarget:
+      kind: flow
+      id: ai-chat-dynamic-workflow
+      action: duplicate-to-user
+  - id: skill.dynamic-workflow-authoring
+    name: Dynamic Workflow Authoring Skill Metadata
+    collection: skills
+    description: Installs editable local metadata for the skill that lets AI Chat choose a saved Flow or author a new Flow from a prompt.
+    tags: [Skills, Flow, Authoring]
+    installTarget:
+      kind: skill
+      id: dynamic-workflow-authoring
+      action: duplicate-to-user
+  - id: playbook.native-agent-delegate
+    name: Native Agent Delegate Playbook
+    collection: playbooks
+    description: Preserves current @ agent behavior while adding run history and deterministic playbook hooks.
+    tags: [Agents, Native, Compatibility]
+    installTarget:
+      kind: playbook
+      id: native-agent-delegate
+      action: duplicate-to-user
+  - id: playbook.ai-chat-flow-route
+    name: AI Chat Flow Route
+    collection: playbooks
+    description: Routes an AI Chat prompt into Saved Flow, Dynamic Workflow, or AI-authored Flow through Playbook flow states.
+    tags: [Flow, Chat, Routing, Playbooks]
+    installTarget:
+      kind: playbook
+      id: ai-chat-flow-route
+      action: duplicate-to-user
+  - id: tool.theia-tool-bridge
+    name: Theia Tool Bridge
+    collection: tools
+    description: Installs a user copy of the host bridge used to list and invoke tools registered in Theia.
+    tags: [Tools, Theia, Bridge]
+    installTarget:
+      kind: tool
+      id: core.theiaTool.invoke
+      action: duplicate-to-user
+  - id: tool.playbook-workload-bridge
+    name: Playbook Workload Bridge
+    collection: tools
+    description: Installs a user copy of the host bridge that lets Flow, tools, or playbooks run another CyberVinci Playbook as workload.
+    tags: [Playbooks, Flow, Workload]
+    installTarget:
+      kind: tool
+      id: core.playbook.run
+      action: duplicate-to-user
+  - id: tool.playbook-flow-compiler
+    name: Playbook To Flow Compiler
+    collection: tools
+    description: Installs a user copy of the tool that compiles a Playbook into a flow.ai-authoring/v1 workflow draft.
+    tags: [Playbooks, Flow, Compiler]
+    installTarget:
+      kind: tool
+      id: core.playbook.compileToFlowDraft
+      action: duplicate-to-user
+  - id: tool.memory-context-pack
+    name: Memory Context Pack
+    collection: tools
+    description: Installs a user copy of the Memory context search tool for Playbooks.
+    tags: [Memory, Context, Playbooks]
+    installTarget:
+      kind: tool
+      id: system.memory.searchContext
+      action: duplicate-to-user
+  - id: tool.memory-approved-write
+    name: Memory Approved Write
+    collection: tools
+    description: Installs a user copy of the explicit approval Memory write tool.
+    tags: [Memory, Approval, Playbooks]
+    installTarget:
+      kind: tool
+      id: system.memory.requestWriteApproval
+      action: duplicate-to-user
+  - id: agent.cybervinci-native-copy
+    name: CyberVinci Native Agent Copy
+    collection: agents
+    description: Creates an editable delegate copy of the CyberVinci native agent while preserving native behavior.
+    tags: [Agents, Native, Delegate]
+    installTarget:
+      kind: agent
+      id: OpenCoder
+      action: duplicate-to-user

@@ -24,6 +24,7 @@ const BUILT_IN_MODEL_PROFILES: FlowModelProfile[] = [
             reasoningPolicy: 'off',
             temperature: 0.1,
             maxTokens: 2048,
+            serviceTier: 'flex',
             virtualReasoning: { enabled: false, mode: 'off' }
         },
         tags: ['cost']
@@ -38,6 +39,7 @@ const BUILT_IN_MODEL_PROFILES: FlowModelProfile[] = [
             reasoningPolicy: 'virtual',
             temperature: 0.2,
             maxTokens: 4096,
+            serviceTier: 'fast',
             virtualReasoning: { enabled: true, mode: 'fast', maxCostMultiplier: 3 }
         },
         tags: ['speed']
@@ -117,8 +119,8 @@ const BUILT_IN_MODEL_PROFILES: FlowModelProfile[] = [
     }
 ];
 
-export function listFlowModelProfiles(): FlowModelProfile[] {
-    return clone(BUILT_IN_MODEL_PROFILES);
+export function listFlowModelProfiles(overrides: FlowModelProfile[] = []): FlowModelProfile[] {
+    return mergeFlowModelProfiles(BUILT_IN_MODEL_PROFILES, overrides);
 }
 
 export function getFlowModelProfile(id: string | undefined): FlowModelProfile | undefined {
@@ -127,6 +129,49 @@ export function getFlowModelProfile(id: string | undefined): FlowModelProfile | 
     }
     const profile = BUILT_IN_MODEL_PROFILES.find(candidate => candidate.id === id);
     return profile ? clone(profile) : undefined;
+}
+
+export function mergeFlowModelProfiles(base: FlowModelProfile[], overrides: FlowModelProfile[] = []): FlowModelProfile[] {
+    const merged = new Map<string, FlowModelProfile>();
+    for (const profile of base) {
+        merged.set(profile.id, clone(profile));
+    }
+    for (const profile of overrides) {
+        const normalized = normalizeFlowModelProfile(profile);
+        merged.set(normalized.id, normalized);
+    }
+    return [...merged.values()].sort((left, right) => {
+        const leftIndex = base.findIndex(profile => profile.id === left.id);
+        const rightIndex = base.findIndex(profile => profile.id === right.id);
+        if (leftIndex >= 0 && rightIndex >= 0) {
+            return leftIndex - rightIndex;
+        }
+        if (leftIndex >= 0) {
+            return -1;
+        }
+        if (rightIndex >= 0) {
+            return 1;
+        }
+        return left.name.localeCompare(right.name);
+    });
+}
+
+export function normalizeFlowModelProfile(profile: FlowModelProfile): FlowModelProfile {
+    const id = profile.id.trim();
+    if (!id) {
+        throw new Error('Model profile id is required.');
+    }
+    return {
+        id,
+        name: profile.name?.trim() || id,
+        description: profile.description?.trim() || '',
+        provider: profile.provider,
+        execution: {
+            ...(profile.execution || {}),
+            profileId: id
+        },
+        tags: profile.tags?.map(tag => tag.trim()).filter(Boolean)
+    };
 }
 
 function clone<T>(value: T): T {

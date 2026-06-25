@@ -105,22 +105,41 @@ interface ModelPickValue {
     custom?: boolean;
 }
 
+interface ReasoningPickValue {
+    label: string;
+    description?: string;
+    value?: string;
+}
+
 type ProviderPreset = 'codex' | 'openrouter' | 'opencode-go' | 'opencode' | 'gemini' | 'claude-code' | 'cursor';
 
 interface ProviderPresetConfig {
     runtime: CodexProviderRuntime;
     provider: string;
     defaultModel?: string;
+    models?: string[];
 }
 
+// Fallback only; live Codex app-server model/list results take precedence.
+const CODEX_MODEL_PRESETS = ['gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark'];
+const STALE_CODEX_MODEL_PRESETS = ['gpt-5-codex', 'gpt-5-mini'];
+
 const PROVIDER_PRESET_CONFIG: Record<ProviderPreset, ProviderPresetConfig> = {
-    codex: { runtime: 'codex-app-server', provider: 'codex' },
-    openrouter: { runtime: 'direct-http', provider: 'openrouter', defaultModel: 'openrouter/openai/gpt-5' },
+    codex: { runtime: 'codex-app-server', provider: 'codex', defaultModel: 'gpt-5.5', models: CODEX_MODEL_PRESETS },
+    openrouter: { runtime: 'direct-http', provider: 'openrouter', defaultModel: 'openrouter/openai/gpt-5.5' },
     'opencode-go': { runtime: 'direct-http', provider: 'opencode-go', defaultModel: 'opencode-go/deepseek-v4-flash' },
-    opencode: { runtime: 'direct-http', provider: 'opencode', defaultModel: 'opencode/gpt-5-codex' },
+    opencode: { runtime: 'direct-http', provider: 'opencode', defaultModel: 'opencode/gpt-5.5' },
     gemini: { runtime: 'gemini-cli', provider: 'gemini' },
     'claude-code': { runtime: 'claude-code-cli', provider: 'claude-code', defaultModel: 'sonnet' },
     cursor: { runtime: 'cursor-cli', provider: 'cursor' }
+};
+
+type ProviderConfigureTarget = ProviderPreset | {
+    provider?: ProviderPreset;
+    providerId?: string;
+    runtime?: CodexProviderRuntime;
+    modelProvider?: string;
+    mode?: 'credentials' | 'provider-model';
 };
 
 @injectable()
@@ -155,7 +174,7 @@ export class CodexProviderCommandContribution implements CommandContribution {
             execute: () => this.outputChannelManager.getChannel(CYBERVINCI_AI_PROVIDERS_OUTPUT_CHANNEL).show()
         });
         commands.registerCommand(CODEX_CLI_CONFIGURE_COMMAND, {
-            execute: () => this.configure()
+            execute: (target?: ProviderConfigureTarget) => this.configure(target)
         });
         commands.registerCommand(CODEX_CLI_USE_FOR_OPEN_CODER_COMMAND, {
             execute: () => this.useForOpenCoder()
@@ -211,7 +230,16 @@ export class CodexProviderCommandContribution implements CommandContribution {
             : nls.localize('theia/ai-providers/restarted', 'AI provider runtime refreshed.'));
     }
 
-    protected async configure(): Promise<void> {
+    protected async configure(target?: ProviderConfigureTarget): Promise<void> {
+        const targetProvider = this.resolveProviderPreset(target);
+        if (targetProvider) {
+            if (typeof target !== 'string' && target?.mode === 'credentials') {
+                await this.configureProviderCredentials(targetProvider, true);
+                return;
+            }
+            await this.configureProviderModel(targetProvider);
+            return;
+        }
         const selected = await this.quickInputService.pick<PickValue>([
             {
                 label: nls.localize('theia/ai-providers/configure/useForCyberVinci', 'Use CyberVinci AI Providers'),
@@ -220,8 +248,8 @@ export class CodexProviderCommandContribution implements CommandContribution {
                 value: CODEX_CLI_LANGUAGE_MODEL_ID
             },
             {
-                label: nls.localize('theia/ai-providers/configure/providerModel', 'Provider / Model'),
-                description: nls.localize('theia/ai-providers/configure/providerModelDescription', 'Choose a provider and model in one searchable flow'),
+                label: nls.localize('theia/ai-providers/configure/providerModel', 'Provider / Model / Reasoning'),
+                description: nls.localize('theia/ai-providers/configure/providerModelDescription', 'Choose provider, model, and reasoning effort in one searchable flow'),
                 preferenceName: '__cybervinci_ai_provider_model',
                 value: undefined
             },
@@ -446,14 +474,17 @@ export class CodexProviderCommandContribution implements CommandContribution {
         this.messageService.info(nls.localize('theia/ai-providers/configured', 'CyberVinci AI Providers setting updated: {0}', selected.preferenceName));
     }
 
-    protected async configureProviderModel(): Promise<void> {
-        const providerPick = await this.quickInputService.pick<ProviderPickValue>(this.providerPickValues(), {
+    protected async configureProviderModel(initialPreset?: ProviderPreset): Promise<void> {
+        const providerPick = initialPreset ? this.providerPickValues().find(candidate => candidate.value === initialPreset) : await this.quickInputService.pick<ProviderPickValue>(this.providerPickValues(), {
             canPickMany: false,
             matchOnDescription: true,
             matchOnDetail: true,
             placeHolder: nls.localize('theia/ai-providers/configure/providerPlaceholder', 'Choose an AI provider')
         });
         if (!providerPick) {
+            return;
+        }
+        if (!await this.configureProviderCredentialIfMissing(providerPick.value)) {
             return;
         }
         await this.applyProviderPreset(providerPick.value, false);
@@ -474,19 +505,31 @@ export class CodexProviderCommandContribution implements CommandContribution {
             model = input.trim();
         }
         await this.preferenceService.set(CODEX_CLI_MODEL_PREF, model?.trim() || undefined, PreferenceScope.User);
+        const reasoningPick = await this.pickReasoningEffort();
+        if (reasoningPick) {
+            await this.preferenceService.set(CODEX_CLI_REASONING_EFFORT_PREF, reasoningPick.value, PreferenceScope.User);
+        }
         this.messageService.info(nls.localize(
             'theia/ai-providers/providerModelApplied',
-            'AI provider/model changed to {0}{1}.',
+            'AI provider/model changed to {0}{1}{2}.',
             this.providerLabel(providerPick.value),
-            model ? ` / ${model}` : ''
+            model ? ` / ${model}` : '',
+            reasoningPick ? ` / ${reasoningPick.label}` : ''
         ));
     }
 
     protected async pickModelForProvider(preset: ProviderPreset, status: CodexProviderStatus): Promise<ModelPickValue | undefined> {
+        const config = PROVIDER_PRESET_CONFIG[preset];
         const currentModel = this.preferenceService.get<string>(CODEX_CLI_MODEL_PREF, '');
+        const currentProviderModel = currentModel && this.modelMatchesProvider(currentModel, preset) && !this.isStaleCodexPreset(currentModel, preset)
+            ? currentModel
+            : undefined;
+        const statusModels = status.runtime === config.runtime && status.modelProvider === config.provider ? status.models ?? [] : [];
         const models = Array.from(new Set([
-            currentModel,
-            ...(status.models ?? [])
+            currentProviderModel,
+            ...statusModels,
+            config.defaultModel,
+            ...(config.models ?? [])
         ].filter((model): model is string => !!model)));
         if (!models.length) {
             const input = await this.quickInputService.input({
@@ -531,12 +574,62 @@ export class CodexProviderCommandContribution implements CommandContribution {
         });
     }
 
+    protected async pickReasoningEffort(): Promise<ReasoningPickValue | undefined> {
+        const current = this.preferenceService.get<string>(CODEX_CLI_REASONING_EFFORT_PREF, '');
+        return this.quickInputService.pick<ReasoningPickValue>([
+            {
+                label: nls.localize('theia/ai-providers/configure/providerDefault', 'Provider default'),
+                description: current ? nls.localize('theia/ai-providers/configure/clearCurrentReasoning', 'Clear current reasoning override') : undefined,
+                value: undefined
+            },
+            { label: 'Reasoning: Low', value: 'low' },
+            { label: 'Reasoning: Medium', value: 'medium' },
+            { label: 'Reasoning: High', value: 'high' },
+            { label: 'Reasoning: X High', value: 'xhigh' }
+        ], {
+            canPickMany: false,
+            matchOnDescription: true,
+            placeHolder: nls.localize('theia/ai-providers/configure/reasoningPlaceholder', 'Choose reasoning effort')
+        });
+    }
+
+    protected async configureProviderCredentialIfMissing(preset: ProviderPreset, force = false): Promise<boolean> {
+        const preferenceName = preset === 'openrouter'
+            ? CODEX_CLI_OPENROUTER_API_KEY_PREF
+            : preset === 'opencode-go' || preset === 'opencode'
+                ? CODEX_CLI_OPENCODE_API_KEY_PREF
+                : undefined;
+        if (!preferenceName || (!force && this.preferenceService.get<string>(preferenceName, ''))) {
+            return true;
+        }
+        const value = await this.quickInputService.input({
+            placeHolder: preset === 'openrouter' ? 'OPENROUTER_API_KEY' : 'OPENCODE_API_KEY',
+            prompt: preset === 'openrouter'
+                ? nls.localize('theia/ai-providers/configure/openRouterApiKey', 'OpenRouter API Key')
+                : nls.localize('theia/ai-providers/configure/openCodeApiKey', 'OpenCode API Key'),
+            password: true
+        });
+        if (value === undefined) {
+            return false;
+        }
+        await this.preferenceService.set(preferenceName, value.trim() || undefined, PreferenceScope.User);
+        return true;
+    }
+
+    protected async configureProviderCredentials(preset: ProviderPreset, force = false): Promise<boolean> {
+        const configured = await this.configureProviderCredentialIfMissing(preset, force);
+        if (configured) {
+            this.messageService.info(nls.localize('theia/ai-providers/providerCredentialsConfigured', 'AI provider credentials updated for {0}.', this.providerLabel(preset)));
+        }
+        return configured;
+    }
+
     protected providerPickValues(): ProviderPickValue[] {
         return [
             {
                 label: 'OpenRouter',
                 description: 'Direct API',
-                detail: 'openrouter/provider-model, for example openrouter/openai/gpt-5',
+                detail: 'openrouter/provider-model, for example openrouter/openai/gpt-5.5',
                 value: 'openrouter'
             },
             {
@@ -548,7 +641,7 @@ export class CodexProviderCommandContribution implements CommandContribution {
             {
                 label: 'OpenCode Zen',
                 description: 'Direct API',
-                detail: 'opencode/model, for example opencode/gpt-5-codex',
+                detail: 'opencode/model, for example opencode/gpt-5.5',
                 value: 'opencode'
             },
             {
@@ -599,7 +692,7 @@ export class CodexProviderCommandContribution implements CommandContribution {
         await this.preferenceService.set(CODEX_CLI_RUNTIME_PREF, config.runtime, PreferenceScope.User);
         await this.preferenceService.set(CODEX_CLI_MODEL_PROVIDER_PREF, config.provider, PreferenceScope.User);
         if (config.defaultModel) {
-            if (!currentModel || previousProvider !== config.provider || !this.modelMatchesProvider(currentModel, preset)) {
+            if (!currentModel || previousProvider !== config.provider || !this.modelMatchesProvider(currentModel, preset) || this.isStaleCodexPreset(currentModel, preset)) {
                 await this.preferenceService.set(CODEX_CLI_MODEL_PREF, config.defaultModel, PreferenceScope.User);
             }
         } else if (previousProvider !== config.provider || !this.modelMatchesProvider(currentModel, preset)) {
@@ -642,7 +735,27 @@ export class CodexProviderCommandContribution implements CommandContribution {
         if (model.startsWith('openrouter/') || model.startsWith('opencode-go/') || model.startsWith('opencode/')) {
             return false;
         }
-        return preset !== 'codex';
+        return true;
+    }
+
+    protected isStaleCodexPreset(model: string, preset: ProviderPreset): boolean {
+        return preset === 'codex' && STALE_CODEX_MODEL_PRESETS.includes(model);
+    }
+
+    protected resolveProviderPreset(target: ProviderConfigureTarget | undefined): ProviderPreset | undefined {
+        if (!target) {
+            return undefined;
+        }
+        if (typeof target === 'string') {
+            return target in PROVIDER_PRESET_CONFIG ? target as ProviderPreset : undefined;
+        }
+        if (target.provider) {
+            return target.provider;
+        }
+        const modelProvider = target.modelProvider ?? target.providerId?.split(':').pop();
+        const runtime = target.runtime ?? (target.providerId?.includes(':') ? target.providerId.split(':')[0] as CodexProviderRuntime : undefined);
+        return Object.entries(PROVIDER_PRESET_CONFIG)
+            .find(([, config]) => config.provider === modelProvider && (!runtime || config.runtime === runtime))?.[0] as ProviderPreset | undefined;
     }
 
     protected runtimeLabel(runtime: CodexProviderRuntime | undefined): string {

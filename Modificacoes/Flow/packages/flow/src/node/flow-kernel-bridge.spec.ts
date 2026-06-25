@@ -111,7 +111,9 @@ function configureHelloWorldSisyphusSmokeWorkflow(workflow: FlowWorkflow): void 
 describe('SimulatedFlowKernelBridge', () => {
 
     it('emits structured workload and gate events', async () => {
-        const bridge = new SimulatedFlowKernelBridge();
+        const bridge = new SimulatedFlowKernelBridge(new StateMappedMockLlmExecutor({
+            review: [workloadOutput('completed', 'Review ready.', [{ path: 'report.md', content: 'Review ready.' }])]
+        }));
         const workflow = sampleWorkflow();
 
         const started = await bridge.startRun(workflow, 'review this', 'empty context');
@@ -428,6 +430,39 @@ describe('FlowKernelBridge external transport', () => {
             expect(run.externalKernelMetadata?.kernelRunId).to.match(/^run_/);
             expect(run.artifacts.map(artifact => artifact.uri)).to.include('final.md');
             expect(run.events.map(event => event.type)).to.include.members(['run.started', 'run.completed']);
+        } finally {
+            await bridge?.shutdownKernelProcess();
+            process.chdir(previousCwd);
+            setEnv('FLOW_KERNEL_HTTP', previousEndpoint);
+            setEnv('FLOW_KERNEL_CLI', previousCli);
+            setEnv('FLOW_KERNEL_MODE', previousMode);
+        }
+    });
+
+    it('auto-detecta o Flow Kernel Go local a partir do cwd aninhado do app', async function () {
+        this.timeout(20000);
+        const repositoryRoot = path.resolve(__dirname, '..', '..', '..', '..');
+        const kernelMain = path.join(repositoryRoot, 'flow-kernel', 'cmd', 'flow-kernel', 'main.go');
+        const nestedAppCwd = path.join(repositoryRoot, 'examples', 'browser');
+        const previousCwd = process.cwd();
+        const previousEndpoint = process.env.FLOW_KERNEL_HTTP;
+        const previousCli = process.env.FLOW_KERNEL_CLI;
+        const previousMode = process.env.FLOW_KERNEL_MODE;
+        let bridge: ExternalFlowKernelBridge | undefined;
+
+        try {
+            await fs.access(kernelMain);
+            await fs.access(nestedAppCwd);
+            process.chdir(nestedAppCwd);
+            setEnv('FLOW_KERNEL_HTTP', undefined);
+            setEnv('FLOW_KERNEL_CLI', undefined);
+            process.env.FLOW_KERNEL_MODE = 'external';
+
+            bridge = new ExternalFlowKernelBridge();
+
+            expect(bridge.available()).to.equal(true);
+            await bridge.checkKernelHealth();
+            expect(await bridge.getBridgeMode()).to.equal('external');
         } finally {
             await bridge?.shutdownKernelProcess();
             process.chdir(previousCwd);

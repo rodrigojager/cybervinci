@@ -11,14 +11,23 @@
 import { ChatResponseContent, ToolCallChatResponseContent } from '@theia/ai-chat/lib/common';
 import { ChatResponsePartRenderer } from '@theia/ai-chat-ui/lib/browser/chat-response-part-renderer';
 import { nls } from '@theia/core';
-import { codicon } from '@theia/core/lib/browser';
-import { injectable } from '@theia/core/shared/inversify';
+import { codicon, OpenerService, open } from '@theia/core/lib/browser';
+import { FileUri } from '@theia/core/lib/common/file-uri';
+import URI from '@theia/core/lib/common/uri';
+import { inject, injectable } from '@theia/core/shared/inversify';
 import * as React from '@theia/core/shared/react';
 import { ReactNode } from '@theia/core/shared/react';
+import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service';
 import { CODEX_CLI_RENDERED_TOOL_CALLS } from '../../common/ai-providers-tool-calls';
 
 @injectable()
 export class CodexProviderToolRenderer implements ChatResponsePartRenderer<ToolCallChatResponseContent> {
+
+    @inject(OpenerService)
+    protected readonly openerService: OpenerService;
+
+    @inject(WorkspaceService)
+    protected readonly workspaceService: WorkspaceService;
 
     canHandle(response: ChatResponseContent): number {
         if (response.kind !== 'toolCall') {
@@ -33,7 +42,7 @@ export class CodexProviderToolRenderer implements ChatResponsePartRenderer<ToolC
         const result = this.parseObject(content.result);
         const item = Object.keys(result).length > 0 ? result : args;
         if (content.name === 'file_change') {
-            return <FileChangeTool item={item} finished={!!content.finished} />;
+            return <FileChangeTool item={item} finished={!!content.finished} openFileChange={change => this.openFileChange(item, change)} />;
         }
         if (content.name === 'mcp_tool_call') {
             return <McpToolCall item={item} finished={!!content.finished} />;
@@ -70,11 +79,95 @@ export class CodexProviderToolRenderer implements ChatResponsePartRenderer<ToolC
             return {};
         }
     }
+
+    protected async openFileChange(item: Record<string, unknown>, change: Record<string, unknown>): Promise<void> {
+        if (stringValue(change.kind) === 'delete') {
+            return;
+        }
+        const uri = this.toFileUri(stringValue(change.path), stringValue(item.cwd) || stringValue(item.workingDirectory));
+        if (!uri) {
+            return;
+        }
+        try {
+            await open(this.openerService, uri, { mode: 'reveal' });
+        } catch {
+            // A provider may report generated, deleted, or non-text paths that the editor cannot open.
+        }
+    }
+
+    protected toFileUri(filePath: string, workingDirectory?: string): URI | undefined {
+        if (!filePath) {
+            return undefined;
+        }
+        if (this.isAbsolutePath(filePath)) {
+            return FileUri.create(filePath);
+        }
+        if (this.isUriString(filePath)) {
+            return new URI(filePath);
+        }
+        const normalizedPath = this.normalizeRelativePath(filePath);
+        if (workingDirectory) {
+            return this.toDirectoryUri(workingDirectory).resolve(normalizedPath);
+        }
+        const roots = this.workspaceService.tryGetRoots();
+        if (roots.length === 1) {
+            return roots[0].resource.resolve(normalizedPath);
+        }
+        for (const root of roots) {
+            const rootName = root.resource.path.base;
+            if (normalizedPath === rootName) {
+                return root.resource;
+            }
+            if (normalizedPath.startsWith(`${rootName}/`)) {
+                return root.resource.resolve(normalizedPath.slice(rootName.length + 1));
+            }
+        }
+        return roots[0]?.resource.resolve(normalizedPath);
+    }
+
+    protected isAbsolutePath(filePath: string): boolean {
+        return /^[a-zA-Z]:[\\/]/.test(filePath) || filePath.startsWith('/') || filePath.startsWith('\\\\');
+    }
+
+    protected isUriString(value: string): boolean {
+        return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value);
+    }
+
+    protected toDirectoryUri(value: string): URI {
+        if (this.isAbsolutePath(value)) {
+            return FileUri.create(value);
+        }
+        if (this.isUriString(value)) {
+            return new URI(value);
+        }
+        return FileUri.create(value);
+    }
+
+    protected normalizeRelativePath(filePath: string): string {
+        return filePath.replace(/\\/g, '/').replace(/^\.?\//, '');
+    }
 }
 
-const FileChangeTool: React.FC<{ item: Record<string, unknown>, finished: boolean }> = ({ item, finished }) => {
+const FileChangeTool: React.FC<{
+    item: Record<string, unknown>,
+    finished: boolean,
+    openFileChange?: (change: Record<string, unknown>) => Promise<void>
+}> = ({ item, finished, openFileChange }) => {
     const [expandedDiff, setExpandedDiff] = React.useState<string | undefined>();
     const changes = Array.isArray(item.changes) ? item.changes as Array<Record<string, unknown>> : [];
+    const changeKey = React.useMemo(() => changes
+        .map(change => `${stringValue(change.kind)}:${stringValue(change.path)}:${stringValue(change.status)}`)
+        .join('|'), [changes]);
+    const openedChangeKey = React.useRef<string | undefined>();
+    React.useEffect(() => {
+        if (!openFileChange || !changeKey || openedChangeKey.current === changeKey) {
+            return;
+        }
+        openedChangeKey.current = changeKey;
+        changes.forEach(change => {
+            openFileChange(change).catch(() => { });
+        });
+    }, [changeKey, changes, openFileChange]);
     const status = stringValue(item.status) || (finished ? nls.localizeByDefault('Done') : nls.localizeByDefault('Running'));
     const title = finished
         ? nls.localize('theia/ai-providers/fileChangesApplied', 'File changes')
@@ -102,8 +195,15 @@ const FileChangeTool: React.FC<{ item: Record<string, unknown>, finished: boolea
                         return (
                             <React.Fragment key={index}>
                                 <div
-                                    className={`ai-providers-tool row ${diff ? 'clickable' : ''}`}
-                                    onClick={() => diff && setExpandedDiff(expanded ? undefined : path)}
+                                    className={`ai-providers-tool row ${diff || path ? 'clickable' : ''}`}
+                                    onClick={() => {
+                                        if (path) {
+                                            openFileChange?.(change).catch(() => { });
+                                        }
+                                        if (diff) {
+                                            setExpandedDiff(expanded ? undefined : path);
+                                        }
+                                    }}
                                 >
                                     {diff && <span className={`${codicon(expanded ? 'chevron-down' : 'chevron-right')} ai-providers-tool icon`} />}
                                     <span className="ai-providers-tool change-kind">{stringValue(change.kind) || nls.localizeByDefault('Change')}</span>
