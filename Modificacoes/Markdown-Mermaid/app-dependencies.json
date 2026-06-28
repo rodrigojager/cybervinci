@@ -1,0 +1,8 @@
+{
+  "examples/browser/package.json": {
+    "@cybervinci/markdown-mermaid-preview": "1.72.0"
+  },
+  "examples/electron/package.json": {
+    "@cybervinci/markdown-mermaid-preview": "1.72.0"
+  }
+}

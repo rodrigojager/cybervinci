@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cybervinci.agent/v1",
+  "title": "CyberVinci Agent",
+  "type": "object",
+  "required": ["id", "name", "kind"],
+  "additionalProperties": true,
+  "$defs": {
+    "toolCapability": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["tool", "guard", "action", "query", "effect", "ai", "flow", "ui"]
+        },
+        "source": { "type": "string" },
+        "description": { "type": "string" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "promptCapability": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "defaultVariant": { "type": "string" },
+        "variants": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "variableCapability": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "usedInPrompt": { "type": "boolean" }
+      }
+    }
+  },
+  "properties": {
+    "version": { "enum": ["cybervinci.agent/v1", 1] },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": ["native", "delegate", "prompt", "markdown", "flow", "external", "profile"]
+    },
+    "sourceAgentId": { "type": "string" },
+    "category": { "type": "string" },
+    "description": { "type": "string" },
+    "iconClass": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "locations": { "type": "array", "items": { "type": "string" } },
+    "aliases": { "type": "array", "items": { "type": "string" } },
+    "showInChat": { "type": "boolean" },
+    "showInAtMenu": { "type": "boolean" },
+    "agentProfile": { "type": "string" },
+    "agencyProfile": { "type": "string" },
+    "prompt": { "type": "string" },
+    "promptVariants": { "type": "array" },
+    "modes": { "type": "array" },
+    "tools": { "type": "array", "items": { "type": "string" } },
+    "defaultPlaybook": { "type": "string" },
+    "playbooks": { "type": "array", "items": { "type": "string" } },
+    "providerDefaults": { "type": "object" },
+    "migrationStatus": {
+      "type": "object",
+      "required": ["strategy"],
+      "additionalProperties": true,
+      "properties": {
+        "strategy": {
+          "enum": ["playbook-overlay-native-delegate", "playbook-autonomous-preferred-native-fallback", "playbook-autonomous"]
+        },
+        "autonomousPlaybook": { "type": "boolean" },
+        "nativeDelegate": { "type": "boolean" },
+        "nativeDelegateFallback": { "type": "boolean" },
+        "nativeDelegateTool": { "type": "string" },
+        "selectedPlaybook": { "type": "string" },
+        "sourceAgentId": { "type": "string" },
+        "deterministicCoverage": { "type": "array", "items": { "type": "string" } },
+        "migrationReady": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "editableUserCopy": { "type": "boolean" },
+            "capabilityProfile": { "type": "boolean" },
+            "replacementStillUsesNativeDelegate": { "type": "boolean" },
+            "fallbackStillUsesNativeDelegate": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "capabilityProfile": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tools": { "type": "array", "items": { "$ref": "#/$defs/toolCapability" } },
+        "guards": { "type": "array", "items": { "$ref": "#/$defs/toolCapability" } },
+        "variables": { "type": "array", "items": { "type": "string" } },
+        "agentSpecificVariables": { "type": "array", "items": { "$ref": "#/$defs/variableCapability" } },
+        "functions": { "type": "array", "items": { "type": "string" } },
+        "promptFunctionRefs": { "type": "array", "items": { "type": "string" } },
+        "mcpPromptRefs": { "type": "array", "items": { "type": "string" } },
+        "modes": { "type": "array", "items": { "type": "string" } },
+        "prompts": { "type": "array", "items": { "type": "string" } },
+        "promptSets": { "type": "array", "items": { "$ref": "#/$defs/promptCapability" } },
+        "languageModels": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "preserveNative": { "type": "object" }
+  }
+}

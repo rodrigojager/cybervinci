@@ -1,0 +1,32 @@
+{
+  "id": "nextjs",
+  "name": "Next.js",
+  "ecosystem": "npm",
+  "package_name": "next",
+  "package_manager": "npm",
+  "homepage": "https://nextjs.org",
+  "repository": "https://github.com/vercel/next.js",
+  "sources": [
+    {
+      "type": "git",
+      "url": "https://github.com/vercel/next.js",
+      "docs_path": ["docs"]
+    },
+    {
+      "type": "llms_txt",
+      "url": "https://nextjs.org/llms.txt"
+    }
+  ],
+  "versioning": {
+    "strategy": "git_tags",
+    "tag_pattern": "v{version}"
+  },
+  "license": {
+    "content_license": "unknown",
+    "redistribution_allowed": false
+  },
+  "update_policy": {
+    "check_interval": "daily",
+    "compare": ["git_tag", "source_commit", "content_hash_sha256"]
+  }
+}

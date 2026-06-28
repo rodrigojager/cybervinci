@@ -1,0 +1,23 @@
+CyberVinci Desktop
+
+This installer copies a prebuilt CyberVinci Desktop payload to this machine.
+
+The required desktop core includes:
+- CyberVinci shell and themes
+- AI Chat with provider/model controls
+- Virtual reasoning and virtual goal
+- Playbooks and agency agents
+- Flow and Flow integration in AI Chat
+- Canvas/OpenPencil
+- Visual HTML/cshtml editing
+- Markdown preview with Mermaid support
+
+Optional components are selected when the payload is built:
+- C# and .NET tooling: C# Kit
+- Codex extension: dedicated Codex sidebar/webview extension
+
+Arena, AI Output Cleaner, Builder, Memory and Library are not included in this
+installer payload.
+
+The exact selected components are recorded in:
+examples/electron/resources/cybervinci-install-profile.json

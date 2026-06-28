@@ -1,0 +1,32 @@
+# Local agent/tool state
+/.agents/
+/.codex/
+/.codex-logs/
+/.codex-run/
+/.codex-screens/
+/.omo/
+/.opencode/
+/.playwright-mcp/
+/.theia/
+
+# Generated release/build outputs
+/dist/
+/full/
+/Temp/
+
+# Feature-local tool state
+/Modificacoes/.codex-run-logs/
+/Modificacoes/.playwright-mcp/
+
+# Logs and transient compiler/cache files
+*.err.log
+*.out.log
+*.tmp
+*.tsbuildinfo
+.eslintcache
+
+# Test and coverage outputs
+coverage/
+.nyc_output/
+test-results/
+allure-results/

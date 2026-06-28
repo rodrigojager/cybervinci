@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberVinci, a alfândega dos modelos bons e a era dos tokens baratos</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #11182d;
+      --panel-2: #151f38;
+      --text: #edf2ff;
+      --muted: #aab6d3;
+      --line: rgba(255,255,255,.12);
+      --accent: #ff5e3a;
+      --accent-2: #83e6c8;
+      --warning: #ffd166;
+      --code: #0a0f1f;
+      --shadow: 0 28px 90px rgba(0,0,0,.35);
+      --radius: 22px;
+      --content: 1120px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(255,94,58,.24), transparent 34rem),
+        radial-gradient(circle at 86% 4%, rgba(131,230,200,.16), transparent 32rem),
+        linear-gradient(180deg, #090d19 0%, #0b1020 38%, #070a12 100%);
+      line-height: 1.64;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { width: min(var(--content), calc(100% - 36px)); margin: 0 auto; }
+    header.hero { padding: 72px 0 42px; }
+    .eyebrow {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      font-size: 13px;
+      letter-spacing: .02em;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 22px var(--accent); }
+    h1 {
+      margin: 24px 0 16px;
+      font-size: clamp(40px, 7vw, 86px);
+      line-height: .95;
+      letter-spacing: -0.07em;
+      max-width: 1080px;
+    }
+    h2 {
+      margin: 0 0 16px;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+    }
+    h3 {
+      margin: 34px 0 10px;
+      font-size: 23px;
+      line-height: 1.2;
+      letter-spacing: -.02em;
+    }
+    p { margin: 0 0 16px; }
+    .lede {
+      max-width: 900px;
+      font-size: clamp(18px, 2vw, 23px);
+      color: #d9e2fb;
+    }
+    .hero-card {
+      margin-top: 34px;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+      box-shadow: var(--shadow);
+    }
+    .grid { display: grid; gap: 18px; }
+    .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .pill {
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 18px;
+    }
+    .pill strong { display: block; color: #fff; margin-bottom: 5px; }
+    .pill span { color: var(--muted); font-size: 14px; }
+    section {
+      margin: 28px 0;
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(17,24,45,.76);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 70px rgba(0,0,0,.22);
+    }
+    .section-kicker {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: .08em;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .callout {
+      margin: 24px 0;
+      padding: 20px 22px;
+      border-left: 4px solid var(--accent);
+      border-radius: 16px;
+      background: rgba(255,94,58,.10);
+      color: #ffe4dc;
+    }
+    .note {
+      margin: 22px 0;
+      padding: 18px 20px;
+      border: 1px solid rgba(255,209,102,.35);
+      border-radius: 16px;
+      background: rgba(255,209,102,.08);
+      color: #fff1c4;
+    }
+    .table-wrap { overflow-x: auto; margin: 24px 0 8px; border-radius: 16px; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; min-width: 880px; background: rgba(5,9,18,.45); }
+    th, td { padding: 13px 14px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    th { color: #fff; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; background: rgba(255,255,255,.06); }
+    td { color: #dfe7fb; font-size: 14px; }
+    tr:last-child td { border-bottom: 0; }
+    .price { white-space: nowrap; font-variant-numeric: tabular-nums; color: #fff; }
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      margin: 2px 4px 2px 0;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: #dbe8ff;
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+    }
+    .satire {
+      font-size: 20px;
+      color: #fff;
+      margin: 28px 0;
+      padding: 24px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,94,58,.20), rgba(131,230,200,.10));
+      border: 1px solid var(--line);
+    }
+    ul { margin-top: 8px; padding-left: 22px; }
+    li { margin: 8px 0; }
+    .feature-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+    .feature {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: rgba(255,255,255,.04);
+    }
+    .feature h3 { margin-top: 0; font-size: 19px; }
+    .feature p { color: var(--muted); font-size: 15px; }
+    .footnotes { margin-bottom: 70px; }
+    .footnotes ol { padding-left: 23px; }
+    .footnotes li { margin: 13px 0; color: var(--muted); }
+    sup a {
+      color: var(--warning);
+      font-weight: 700;
+      padding-left: 2px;
+    }
+    footer {
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      padding: 28px 0 48px;
+      font-size: 14px;
+    }
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 26px 0 0;
+    }
+    .toc a {
+      display: block;
+      padding: 14px 15px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.04);
+      color: #dce6fb;
+    }
+    .toc a:hover { background: rgba(255,255,255,.08); text-decoration: none; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    @media (max-width: 880px) {
+      .grid.cols-3, .feature-list, .toc { grid-template-columns: 1fr; }
+      section { padding: 24px; }
+      header.hero { padding-top: 46px; }
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      section, .hero-card, .pill, .feature, .callout, .note { background: #fff; color: #111; box-shadow: none; }
+      a { color: #0645ad; text-decoration: underline; }
+      .wrap { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow"><span class="dot"></span> Atualizado em 26/06/2026</div>
+      <h1>CyberVinci, a alfândega dos modelos bons e a era dos tokens baratos</h1>
+      <p class="lede">Depender cegamente do modelo frontier da semana é uma péssima arquitetura de produto.</p>
+      <div class="hero-card">
+        <p><strong>IA está virando infraestrutura estratégica.</strong> Infraestrutura estratégica não costuma ser distribuída no estilo “pegue aqui seu modelo mais poderoso, cidadão de qualquer país, e divirta-se”. Para quem está no Brasil, o jogo não é esperar caridade computacional da Microsoft em Redmond, Washington; da OpenAI e da Anthropic em São Francisco; ou da Huawei e da Tencent em Shenzhen. O jogo é construir uma camada própria que use o melhor modelo disponível hoje, troque por outro amanhã, reduza custo quando precisar e não transforme seu fluxo inteiro em refém de uma assinatura, uma API ou uma autorização geopolítica.</p>
+        <div class="toc">
+          <a href="#geopolitica">1. Geopolítica dos modelos</a>
+          <a href="#precos">2. Tokens baratos</a>
+          <a href="#limitacoes">3. Limitações dos modelos</a>
+          <a href="#cybervinci">4. CyberVinci</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="geopolitica">
+      <span class="section-kicker">1. Disponibilidade</span>
+      <h2>Limitação de disponibilidade dos modelos melhores que o Fable por questões geopolíticas</h2>
+      <p>No último mês, a novela dos modelos Claude Mythos 5 e Claude Fable 5 deixou claro que a fronteira da IA saiu da categoria “produto SaaS” e entrou na categoria “software com cheiro de míssil”. A Reuters reportou que o governo dos EUA aprovou a liberação do Claude Mythos 5 apenas para “trusted partners”, revertendo uma suspensão anterior motivada por preocupações de segurança nacional. O mesmo relato aponta que o Fable 5 continuava restrito naquele momento.<sup><a href="#fn1">1</a></sup></p>
+      <p>O acesso aos modelos mais avançados passou a depender de aprovação, vetting, parceiros confiáveis e exceções. Ou seja: se você é uma empresa aprovada, dentro do ecossistema certo, com a bênção certa, talvez entre. Se você é um brasileiro comum tentando usar o modelo para construir software, pesquisar, automatizar trabalho ou simplesmente não enlouquecer em cima de uma stack legada, parabéns: você ganhou o direito de assistir ao benchmark pelo lado de fora do vidro.</p>
+      <p>As próprias páginas da Anthropic também mostram que disponibilidade e restrição estão em movimento: uma página de lançamento dizia que o Fable 5 estaria disponível via API e que o Mythos 5 ficaria limitado a programas aprovados; já uma página posterior do Claude Fable indicava indisponibilidade no momento. Essa oscilação é justamente o ponto: quando o modelo vira ativo estratégico, a disponibilidade deixa de ser só uma decisão de produto.<sup><a href="#fn2">2</a></sup></p>
+      <p>A OpenAI entrou na mesma peça com o GPT‑5.6. O anúncio oficial apresentou os modelos Sol, Terra e Luna, com preview restrito; a Business Insider reportou que o acesso ao GPT‑5.6 foi limitado a pedido do governo dos EUA, com liberação inicial para um grupo pequeno de parceiros confiáveis.<sup><a href="#fn3">3</a></sup></p>
+      <div class="callout">Isso acende um alerta óbvio: qualquer modelo americano que chegue no nível “bom demais para ser só um chatbot” tende a passar por uma catraca política. Modelo melhora, governo olha, release fica restrito, e o resto do mundo recebe uma versão educada de “aguarde, estamos trabalhando para ampliar o acesso”. Tradução corporativa: sente-se ali e não encoste no botão vermelho.</div>
+      <p>Ao mesmo tempo, a própria Anthropic tem reclamado de destilação. A empresa acusou operadores ligados à Alibaba/Qwen de extraírem capacidades do Claude por meio de milhões de interações e contas fraudulentas; antes disso, a Anthropic já havia publicado um texto dizendo ter identificado campanhas industriais de DeepSeek, Moonshot e MiniMax para extrair capacidades do Claude.<sup><a href="#fn4">4</a></sup></p>
+      <p>A ironia é quase artística: empresas que vendem sistemas capazes de replicar aplicativos, gerar interfaces, escrever código, imitar estilos visuais e reconstruir fluxos inteiros de software ficam profundamente ofendidas quando alguém tenta “aprender com as respostas” delas. É como abrir uma copiadora universal e colocar uma placa dizendo: “por favor, não copie a copiadora”.</p>
+      <p>Para nós, brasileiros, a conclusão prática é simples e desagradável: não dá para depender de que o melhor modelo do mundo estará disponível, barato e sem restrição para sempre. O caminho mais inteligente é criar prompts melhores, ferramentas melhores, harnesses melhores e orquestrações melhores para extrair mais qualidade dos modelos que efetivamente chegam até nós.</p>
+      <div class="satire">Se o modelo mais poderoso não atravessa a alfândega, o produto precisa compensar com arquitetura.</div>
+    </section>
+
+    <section id="precos">
+      <span class="section-kicker">2. Economia</span>
+      <h2>Os preços dos modelos estado da arte estão subfaturados — ou pelo menos parecem viver uma fase promocional</h2>
+      <p>Se você compara o preço de uso via API com o que algumas assinaturas fixas entregam, a impressão é que estamos vivendo a era do rodízio de picanha computacional: o buffet custa 20, 100 ou 200 dólares por mês, mas se você fosse pesar cada token na balança da API, a conta poderia virar outra coisa.</p>
+      <p>A assinatura mensal funciona como todo buffet: quem come pouco subsidia quem chega com três pratos, dois copos de refrigerante e um plano de vida. O usuário casual paga a mesa. O usuário pesado tenta comer a GPU.</p>
+
+      <h3>O prejuízo atrás do buffet</h3>
+      <p>OpenAI e Anthropic são empresas privadas, então não existe uma página pública simples, bonitinha e trimestral com “lucro líquido reportado” como em uma companhia listada. O que existe são documentos internos, números para investidores e reportagens em cima deles. E, quando esses números aparecem, a fantasia do token barato fica com menos cara de milagre tecnológico e mais cara de data center tentando engolir o balanço.</p>
+      <p>No caso da OpenAI, demonstrações financeiras vistas e reportadas por Ed Zitron apontam prejuízo líquido atribuível de US$ 5,09 bilhões em 2024 e US$ 38,53 bilhões em 2025. A Business Insider também repercutiu esses números e destacou o tamanho incomum da estrutura de custos frente à receita. Ou seja: o buffet de tokens é ótimo para o usuário pesado, mas alguém está pagando a conta do rodízio de GPU no fundo do restaurante.<sup><a href="#fn5">5</a></sup></p>
+      <p>A Anthropic aparece em outra fotografia: crescimento brutal de receita e expectativa de primeiro lucro operacional, segundo documentos revistos pelo Wall Street Journal. Só que “lucro operacional” não é “lucro líquido” e a mesma cobertura sobre custos de IA aponta que OpenAI e Anthropic esperavam gastar juntas quase US$ 65 bilhões em 2026 apenas para treinar e operar modelos. A máquina pode até imprimir produtividade; antes disso, ela imprime boleto de compute.<sup><a href="#fn6">6</a></sup></p>
+
+      <h3>Tabela 1 — API: preços aproximados por 1 milhão de tokens</h3>
+      <p class="note">Valores em dólar, antes de imposto, roteador, prioridade, batch, tool calls, web search, imagem, áudio e outras formas criativas de transformar “barato” em “fatura”. Preços e disponibilidade mudam rápido; conferir sempre a página oficial antes de estimar custo real.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Modelo</th>
+              <th>Entrada / 1M</th>
+              <th>Cache read / 1M</th>
+              <th>Saída / 1M</th>
+              <th>Exemplo: 1M entrada + 100k saída</th>
+              <th>Observação</th>
+              <th>Fonte</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Claude Fable 5</td>
+              <td class="price">US$ 10,00</td>
+              <td class="price">US$ 1,00</td>
+              <td class="price">US$ 50,00</td>
+              <td class="price">US$ 15,00</td>
+              <td>Premium; disponibilidade variou nas fontes recentes.</td>
+              <td><a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank" rel="noopener">Anthropic pricing</a></td>
+            </tr>
+            <tr>
+              <td>Claude Mythos 5</td>
+              <td class="price">US$ 10,00</td>
+              <td class="price">US$ 1,00</td>
+              <td class="price">US$ 50,00</td>
+              <td class="price">US$ 15,00</td>
+              <td>Disponibilidade limitada/aprovada.</td>
+              <td><a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank" rel="noopener">Anthropic pricing</a></td>
+            </tr>
+            <tr>
+              <td>Claude Opus 4.8</td>
+              <td class="price">US$ 5,00</td>
+              <td class="price">US$ 0,50</td>
+              <td class="price">US$ 25,00</td>
+              <td class="price">US$ 7,50</td>
+              <td>Premium geral; 2x mais barato que Fable/Mythos.</td>
+              <td><a href="https://www.anthropic.com/news/claude-opus-4-8" target="_blank" rel="noopener">Anthropic Opus 4.8</a></td>
+            </tr>
+            <tr>
+              <td>GPT‑5.6 Sol</td>
+              <td class="price">US$ 5,00</td>
+              <td class="price">US$ 0,50*</td>
+              <td class="price">US$ 30,00</td>
+              <td class="price">US$ 8,00</td>
+              <td>Modelo frontier do preview; cache read com desconto de 90%.</td>
+              <td><a href="https://openai.com/index/previewing-gpt-5-6-sol/" target="_blank" rel="noopener">OpenAI GPT‑5.6</a></td>
+            </tr>
+            <tr>
+              <td>GPT‑5.6 Terra</td>
+              <td class="price">US$ 2,50</td>
+              <td class="price">US$ 0,25*</td>
+              <td class="price">US$ 15,00</td>
+              <td class="price">US$ 4,00</td>
+              <td>Intermediário; equilíbrio custo/capacidade.</td>
+              <td><a href="https://openai.com/index/previewing-gpt-5-6-sol/" target="_blank" rel="noopener">OpenAI GPT‑5.6</a></td>
+            </tr>
+            <tr>
+              <td>GPT‑5.6 Luna</td>
+              <td class="price">US$ 1,00</td>
+              <td class="price">US$ 0,10*</td>
+              <td class="price">US$ 6,00</td>
+              <td class="price">US$ 1,60</td>
+              <td>Alto volume/baixo custo relativo.</td>
+              <td><a href="https://openai.com/index/previewing-gpt-5-6-sol/" target="_blank" rel="noopener">OpenAI GPT‑5.6</a></td>
+            </tr>
+            <tr>
+              <td>GPT‑5.5</td>
+              <td class="price">US$ 5,00</td>
+              <td class="price">US$ 0,50</td>
+              <td class="price">US$ 30,00</td>
+              <td class="price">US$ 8,00</td>
+              <td>Modelo forte para coding/trabalho profissional.</td>
+              <td><a href="https://openai.com/api/pricing/" target="_blank" rel="noopener">OpenAI API pricing</a></td>
+            </tr>
+            <tr>
+              <td>Kimi K2.6</td>
+              <td class="price">US$ 0,95</td>
+              <td class="price">US$ 0,16</td>
+              <td class="price">US$ 4,00</td>
+              <td class="price">US$ 1,35</td>
+              <td>Multimodal, coding e agentes; preço agressivo.</td>
+              <td><a href="https://www.kimi.com/resources/kimi-k2-6-pricing" target="_blank" rel="noopener">Kimi pricing</a></td>
+            </tr>
+            <tr>
+              <td>GLM‑5.2</td>
+              <td class="price">US$ 1,40</td>
+              <td class="price">US$ 0,26</td>
+              <td class="price">US$ 4,40</td>
+              <td class="price">US$ 1,84</td>
+              <td>Contexto de 1M; foco em coding/agentes.</td>
+              <td><a href="https://docs.z.ai/guides/overview/pricing" target="_blank" rel="noopener">Z.ai pricing</a></td>
+            </tr>
+            <tr>
+              <td>MiniMax M3 ≤ 512k</td>
+              <td class="price">US$ 0,30</td>
+              <td class="price">US$ 0,06</td>
+              <td class="price">US$ 1,20</td>
+              <td class="price">US$ 0,42</td>
+              <td>Preço Pay‑as‑you‑go com desconto permanente informado.</td>
+              <td><a href="https://platform.minimax.io/docs/guides/pricing-paygo" target="_blank" rel="noopener">MiniMax pay‑go</a></td>
+            </tr>
+            <tr>
+              <td>MiniMax M3 &gt; 512k</td>
+              <td class="price">US$ 0,60</td>
+              <td class="price">US$ 0,12</td>
+              <td class="price">US$ 2,40</td>
+              <td class="price">US$ 0,84</td>
+              <td>Preço maior para entrada acima de 512k.</td>
+              <td><a href="https://platform.minimax.io/docs/guides/pricing-paygo" target="_blank" rel="noopener">MiniMax pay‑go</a></td>
+            </tr>
+            <tr>
+              <td>DeepSeek V4 Flash</td>
+              <td class="price">US$ 0,14</td>
+              <td class="price">US$ 0,0028</td>
+              <td class="price">US$ 0,28</td>
+              <td class="price">US$ 0,168</td>
+              <td>Muito barato para escala; menor performance que Pro.</td>
+              <td><a href="https://api-docs.deepseek.com/quick_start/pricing" target="_blank" rel="noopener">DeepSeek pricing</a></td>
+            </tr>
+            <tr>
+              <td>DeepSeek V4 Pro</td>
+              <td class="price">US$ 0,435</td>
+              <td class="price">US$ 0,003625</td>
+              <td class="price">US$ 0,87</td>
+              <td class="price">US$ 0,522</td>
+              <td>Raciocínio/coding barato; preço após corte permanente.</td>
+              <td><a href="https://api-docs.deepseek.com/quick_start/pricing" target="_blank" rel="noopener">DeepSeek pricing</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mono" style="color:var(--muted);font-size:13px;">* Para GPT‑5.6, a OpenAI informa cache reads com desconto de 90%; cache writes são cobrados a 1,25x do input uncached.</p>
+
+      <h3>Tabela 2 — Planos fixos e o problema do “buffet de tokens”</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Plano / Produto</th>
+              <th>Preço mensal aproximado</th>
+              <th>O que vende na prática</th>
+              <th>Pegadinha</th>
+              <th>Fonte</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ChatGPT Plus</td>
+              <td class="price">US$ 20</td>
+              <td>Acesso ampliado ao ChatGPT web/app.</td>
+              <td>Não é API ilimitada; há limites e políticas de uso.</td>
+              <td><a href="https://help.openai.com/en/articles/6950777-what-is-chatgpt-plus" target="_blank" rel="noopener">OpenAI Help</a></td>
+            </tr>
+            <tr>
+              <td>ChatGPT Pro</td>
+              <td class="price">a partir de US$ 100</td>
+              <td>Mais uso, Codex, reasoning, deep research e recursos avançados.</td>
+              <td>“Unlimited” sujeito a guardrails; não equivale a API sem limite.</td>
+              <td><a href="https://chatgpt.com/pricing/" target="_blank" rel="noopener">ChatGPT pricing</a></td>
+            </tr>
+            <tr>
+              <td>Claude Pro</td>
+              <td class="price">US$ 17 anual / US$ 20 mensal</td>
+              <td>Mais uso que o gratuito.</td>
+              <td>Limites aplicam e variam por demanda.</td>
+              <td><a href="https://claude.com/pricing" target="_blank" rel="noopener">Claude pricing</a></td>
+            </tr>
+            <tr>
+              <td>Claude Max</td>
+              <td class="price">US$ 100 / US$ 200</td>
+              <td>Mais uso para power users e coding.</td>
+              <td>Continua sendo assinatura com teto/limites, não API infinita.</td>
+              <td><a href="https://support.claude.com/en/articles/11049741-what-is-the-max-plan" target="_blank" rel="noopener">Claude Max</a></td>
+            </tr>
+            <tr>
+              <td>MiniMax Token Plan Plus</td>
+              <td class="price">US$ 20</td>
+              <td>~1,7B tokens/mês de M3.</td>
+              <td>Quotas, concorrência e regras de uso importam.</td>
+              <td><a href="https://www.minimax.io/blog/minimax-m3" target="_blank" rel="noopener">MiniMax M3</a></td>
+            </tr>
+            <tr>
+              <td>MiniMax Token Plan Max</td>
+              <td class="price">US$ 50</td>
+              <td>~5,1B tokens/mês de M3.</td>
+              <td>Ótimo no papel; precisa testar no fluxo real.</td>
+              <td><a href="https://www.minimax.io/blog/minimax-m3" target="_blank" rel="noopener">MiniMax M3</a></td>
+            </tr>
+            <tr>
+              <td>MiniMax Token Plan Ultra</td>
+              <td class="price">US$ 120</td>
+              <td>~9,8B tokens/mês de M3.</td>
+              <td>Preço agressivo, mas não elimina validação e fallback.</td>
+              <td><a href="https://www.minimax.io/blog/minimax-m3" target="_blank" rel="noopener">MiniMax M3</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Planos fixos e “uso ampliado” são embalagens comerciais em cima desse buraco termodinâmico. Podem continuar úteis, podem ser ótimos negócios por um tempo, mas não são contrato eterno com a Física. Quando o custo, o abuso ou a pressão de margem apertam, o buffet vira cardápio degustação com segurança na porta.<sup><a href="#fn7">7</a></sup></p>
+      <div class="callout">A conclusão prática: explore o máximo possível essa era de tokens relativamente baratos. Não para ficar viciado em um provedor. Justamente o contrário. Use essa janela para criar ferramentas, rotinas, prompts, avaliações, automações, datasets, templates, skills, testes e workflows que permitam trocar o motor quando a gasolina ficar cara.</div>
+      <p>A mamata não precisa acabar amanhã para ser perigosa. Basta ela acabar depois que você já construiu sua empresa, seu produto e seu cérebro operacional inteiro em cima de um único fornecedor.</p>
+    </section>
+
+    <section id="limitacoes">
+      <span class="section-kicker">3. Técnica</span>
+      <h2>Limitações atuais dos demais modelos</h2>
+      <p>Os modelos chineses estão melhorando rápido e, em muitos casos, entregam muito mais por dólar. Só que ainda não existe almoço grátis; existe almoço subsidiado por outro problema. O preço cai, mas a complexidade aparece em outro lugar: tool calling, JSON quebrado, contexto longo caro de servir, multimodalidade ausente, baixa velocidade, benchmark de fornecedor ou integração que só funciona direito quando a lua, o parser e o endpoint concordam.</p>
+      <p>O ponto não é descobrir qual deles “substitui Claude ou GPT”. Essa pergunta vem com defeito de fábrica. O ponto é saber onde cada um costuma falhar antes de colocar o modelo para mexer em arquivo, rodar ferramenta, revisar UI, tocar agente longo ou tomar decisão cara.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Modelo/família</th>
+              <th>Onde parece fraco</th>
+              <th>Consequência prática</th>
+              <th>Fonte</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Kimi K2.6</td>
+              <td><span class="tag">raciocínio sem ferramenta</span><span class="tag">tool loops</span><span class="tag">histórico longo</span></td>
+              <td>As avaliações destacam que o ganho do K2.6 se concentra em coding agentico e uso de ferramentas, mas ele fica atrás em raciocínio puro sem ferramentas. Na prática operacional, thinking mode restringe `tool_choice`, exige carregar `reasoning_content` entre turnos, pode inflar custo e ainda perde histórico quando o agente passa da janela de 256K. Como cérebro único de problema aberto, já começa pedindo babá.</td>
+              <td><a href="https://kili-technology.com/blog/data-story-kimi-k2-6" target="_blank" rel="noopener">Kili/AA</a> / <a href="https://fireworks.ai/blog/best-llms-for-coding" target="_blank" rel="noopener">Fireworks</a></td>
+            </tr>
+            <tr>
+              <td>GLM‑5.2 / GLM‑5.x</td>
+              <td><span class="tag">tool calling</span><span class="tag">JSON</span><span class="tag">custo de contexto</span></td>
+              <td>O 1M de contexto não é mágica: a própria Z.ai explica que o gargalo migra para KV-cache, kernel de contexto longo e overhead de CPU. Receitas de vLLM pedem branch recente quando tool calling e MTP andam juntos, e a família GLM‑5 já acumula relatos de JSON malformado, tool calls frágeis e drift de idioma. Barato no token pode virar caro em integração, retry e infra.</td>
+              <td><a href="https://huggingface.co/blog/zai-org/glm-52-blog" target="_blank" rel="noopener">Z.ai/HF</a> / <a href="https://recipes.vllm.ai/zai-org/GLM-5.2" target="_blank" rel="noopener">vLLM GLM‑5.2</a> / <a href="https://fireworks.ai/blog/best-llms-for-coding" target="_blank" rel="noopener">Fireworks</a></td>
+            </tr>
+            <tr>
+              <td>MiniMax M3</td>
+              <td><span class="tag">math/algoritmos</span><span class="tag">publicação de scores</span><span class="tag">ecossistema</span></td>
+              <td>Comparações apontam lacunas ou ausência de scores publicados em benchmarks algorítmicos/matemáticos onde DeepSeek aparece mais forte. Também pesa mais em cached input e, dependendo do provedor, tem menos redundância operacional. Para matemática pesada, competitivo de algoritmo e ambiente air-gapped, ele chega com crachá de visitante.</td>
+              <td><a href="https://www.minimax.io/blog/minimax-m3" target="_blank" rel="noopener">MiniMax</a> / <a href="https://codingfleet.com/blog/minimax-m3-vs-deepseek-v4-pro-the-open-weight-chinese-ai-showdown/" target="_blank" rel="noopener">CodingFleet</a></td>
+            </tr>
+            <tr>
+              <td>DeepSeek V4</td>
+              <td><span class="tag">sem multimodal</span><span class="tag">velocidade</span><span class="tag">factual recall</span></td>
+              <td>Mesmo quando vence pela conta de algoritmo/custo, o V4 Pro é texto-texto: nada de imagem, vídeo ou debug visual por screenshot. Fireworks/AA também apontam V4 Pro como lento no tier open-weight, e o V4 Flash perde bastante em tarefas multi-step e recall factual. Como olho do produto, ele está de venda nos dois olhos.</td>
+              <td><a href="https://api-docs.deepseek.com/news/news260424" target="_blank" rel="noopener">DeepSeek</a> / <a href="https://fireworks.ai/blog/best-llms-for-coding" target="_blank" rel="noopener">Fireworks</a> / <a href="https://codingfleet.com/blog/minimax-m3-vs-deepseek-v4-pro-the-open-weight-chinese-ai-showdown/" target="_blank" rel="noopener">CodingFleet</a></td>
+            </tr>
+            <tr>
+              <td>Claude / GPT premium</td>
+              <td><span class="tag">preço</span><span class="tag">limite</span><span class="tag">geopolítica</span></td>
+              <td>A limitação não é só técnica; é econômica e política. Os modelos premium podem ser melhores no conjunto, mas são caros, sujeitos a limite, mudança de plano, fila, autorização, região, política pública e humor da infraestrutura. Modelo excelente que some, encarece ou limita uso no meio do fluxo continua sendo dependência frágil com grife.</td>
+              <td><a href="https://platform.claude.com/docs/en/about-claude/pricing" target="_blank" rel="noopener">Claude</a> / <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener">OpenAI</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Para chegar perto da experiência de usar o melhor modelo fechado, você precisa montar uma salada mista. E não uma salada triste de bandejão. Uma salada bem planejada, com modelo certo para cada etapa.</p>
+      <p>O segredo não é perguntar “qual modelo substitui Claude ou GPT?”. Essa pergunta já vem errada de fábrica.</p>
+      <div class="satire">A pergunta melhor é: qual combinação de modelo, prompt, ferramenta, verificador, cache, fallback e gate determinístico entrega o resultado que eu quero com custo aceitável?</div>
+      <h3>É aqui que entram os harnesses</h3>
+      <p>Um harness bem feito não confia cegamente na IA. Ele trata a IA como um estagiário brilhante, caro, sonolento e eventualmente mitomaníaco. Você deixa ele sugerir, escrever e raciocinar, mas coloca catracas:</p>
+      <ul>
+        <li>teste automatizado;</li>
+        <li>lint;</li>
+        <li>typecheck;</li>
+        <li>execução em sandbox;</li>
+        <li>diff controlado;</li>
+        <li>validação de schema;</li>
+        <li>leitura determinística de arquivos;</li>
+        <li>confirmação de que o arquivo realmente mudou;</li>
+        <li>verificação de objetivo;</li>
+        <li>juiz separado;</li>
+        <li>retries com diagnóstico;</li>
+        <li>fallback para outro modelo;</li>
+        <li>cache de contexto;</li>
+        <li>custo por etapa;</li>
+        <li>limite de loops;</li>
+        <li>resumo incremental;</li>
+        <li>memória do projeto;</li>
+        <li>logs auditáveis.</li>
+      </ul>
+      <p>A IA pode errar. O sistema não pode tratar o erro como se fosse uma personalidade charmosa.</p>
+      <p>Modelos alternativos não precisam ser perfeitos se a orquestração for boa o suficiente. E modelos premium também não deveriam ser usados sem verificação, porque pagar mais caro por uma alucinação continua sendo pagar por uma alucinação. Só muda a etiqueta.</p>
+    </section>
+
+    <section id="cybervinci">
+      <span class="section-kicker">4. Produto</span>
+      <h2>CyberVinci</h2>
+      <p>Pensando nesses pontos, o CyberVinci não é “mais uma IDE com chat”, mas também não precisa fingir que já é o Ministério da IA Soberana com ar-condicionado e orçamento infinito. No estado atual, ele é uma IDE baseada em Theia que junta chat agentico, seleção de provider e modelo, workdir, Flow, OpenPencil/Canvas, edição visual de HTML/Razor, agentes, playbooks, temas e compatibilidade com extensões VS Code testada caso a caso.</p>
+      <p>Isso já ataca a dor real sem vender telepatia embalada em SaaS: usar melhor os modelos disponíveis, trocar de motor quando preço ou acesso mudam, manter contexto do workspace e transformar prompts soltos em processos mais controláveis. O modelo deixa de ser religião. Vira peça substituível dentro de uma bancada que ainda tem botão, freio, log e alguém acordado olhando o painel.</p>
+      <div class="feature-list">
+        <div class="feature">
+          <h3>1. Chat multi-provider</h3>
+          <p>O chat permite alternar provider, modelo, modo, Flow e workdir por rodada. OpenCode Zen, OpenRouter, Codex CLI, Claude Code, Ollama e modelos locais entram conforme configuração disponível. Modelo como peça substituível, não como santinho na carteira.</p>
+        </div>
+        <div class="feature">
+          <h3>2. AI Workdir e contexto operacional</h3>
+          <p>O workspace ativo vira referência explícita para a rodada. Parece detalhe, até você lembrar quantas vezes um chat externo respondeu lindamente sobre o projeto errado, na pasta errada, com a confiança de um gerente que acabou de chegar.</p>
+        </div>
+        <div class="feature">
+          <h3>3. Virtual Tools</h3>
+          <p>Virtual Reasoning e Virtual Goal adicionam ciclos visíveis de rascunho, crítica, revisão e continuação quando o provider não traz isso nativamente. Não transforma modelo barato em oráculo; só coloca trilho, freio e revisão no entusiasmo dele.</p>
+        </div>
+        <div class="feature">
+          <h3>4. Flow visual</h3>
+          <p>Flow organiza etapas com instruções, entradas, saídas, provider, modelo, loops, gates, comandos e relatórios. É o lugar onde “faz aí um processo” deixa de ser um textão no chat e vira uma sequência que dá para inspecionar.</p>
+        </div>
+        <div class="feature">
+          <h3>5. Agents e playbooks</h3>
+          <p>Agentes entram sob demanda como perfis de trabalho; playbooks acrescentam etapas, ferramentas, checagens e critérios de fechamento. Prompt é bom. Processo é melhor. Prompt rezando para ser obedecido é teatro experimental.</p>
+        </div>
+        <div class="feature">
+          <h3>6. Design, OpenPencil e edição visual</h3>
+          <p>O produto já conversa com Canvas/OpenPencil, geração visual por IA e edição WYSIWYG de HTML/cshtml/Razor com preview e diff. Ou seja: menos “copie esse CSS para outro aplicativo” e mais “edite a interface onde o trabalho já está acontecendo”.</p>
+        </div>
+        <div class="feature">
+          <h3>7. Temas e base Theia</h3>
+          <p>Temas próprios, temas inspirados em IDEs populares e integração com menubar, explorer, editor e status bar ajudam a experiência a parecer produto, não protótipo que caiu de uma reunião de hackathon.</p>
+        </div>
+        <div class="feature">
+          <h3>8. Ecossistema e extensões</h3>
+          <p>A base Theia abre espaço para extensões do ecossistema VS Code, incluindo áreas como C#, Roslyn/Razor, Git e formatação, sempre com a ressalva adulta e impopular: compatibilidade não é magia, é teste caso a caso.</p>
+        </div>
+      </div>
+      <h3>Produção visual e trabalho aplicado</h3>
+      <p>Na prática, o recorte atual é código, fluxos de IA, design de interfaces, páginas, HTML/Razor, componentes, automações de trabalho, revisão, documentação, testes e refatorações. É menos “IA resolve tudo” e mais “o trabalho que já mora na IDE ganha trilho, contexto e troca de motor”. O que, convenhamos, já é mais útil do que mais uma tela prometendo produtividade enquanto terceiriza o caos para o usuário.</p>
+      <p>A vantagem é unir IDE, harness, orquestração, visual editing e IA em uma interface única. O usuário não deveria precisar abrir cinco ferramentas, colar contexto em sete chats e rezar para o modelo lembrar em qual arquivo estava mexendo. Rezar continua permitido, mas como fallback espiritual, não como arquitetura.</p>
+      <div class="satire">O CyberVinci é uma resposta prática a um mundo em que os melhores modelos podem ser restringidos por geopolítica, os preços podem subir, planos fixos podem mudar, APIs podem ficar caras, modelos baratos podem ser incompletos e confiar cegamente em qualquer modelo é uma excelente maneira de descobrir novos tipos de arrependimento.</div>
+      <h3>A aposta</h3>
+      <p>O objetivo não é criar dependência de IA. É criar alavancagem com IA.</p>
+      <p><strong>Dependência:</strong> “sem esse modelo específico, eu não consigo trabalhar”.</p>
+      <p><strong>Alavancagem:</strong> “com modelos diferentes, meu ambiente escolhe melhor, organiza contexto, reaproveita processo e troca de motor quando necessário”.</p>
+      <p>Essa é a aposta prática do CyberVinci: não vencer porque usa sempre o melhor modelo, mas porque dá ao usuário uma bancada para usar melhor os modelos que realmente estão disponíveis. Quando o motor muda, o processo continua. Quando o preço sobe, a tarefa pode trocar de rota. Quando o modelo se empolga, o ambiente ainda tem contexto, etapa, validação e freio.</p>
+    </section>
+
+    <section class="footnotes" id="fontes">
+      <span class="section-kicker">Fontes</span>
+      <h2>Links externos usados nas citações</h2>
+      <ol>
+        <li id="fn1"><a href="https://www.reuters.com/technology/us-releases-anthropic-model-mythos-some-us-companies-semafor-reports-2026-06-26/" target="_blank" rel="noopener">Reuters — U.S. allows Anthropic to release Mythos to trusted partners</a>. Reporta liberação limitada do Mythos 5, suspensão anterior por segurança nacional e restrições remanescentes.</li>
+        <li id="fn2"><a href="https://www.anthropic.com/news/claude-fable-5-mythos-5" target="_blank" rel="noopener">Anthropic — Claude Fable 5 and Claude Mythos 5</a>; <a href="https://www.anthropic.com/claude/fable" target="_blank" rel="noopener">Anthropic — Claude Fable</a>; <a href="https://docs.anthropic.com/en/docs/about-claude/models/overview" target="_blank" rel="noopener">Claude docs — models overview</a>. Páginas oficiais sobre disponibilidade e pricing, com sinais de que a situação mudou ao longo de junho.</li>
+        <li id="fn3"><a href="https://openai.com/index/previewing-gpt-5-6-sol/" target="_blank" rel="noopener">OpenAI — Previewing GPT‑5.6 Sol</a>; <a href="https://www.businessinsider.com/openai-gpt-5-6-limited-preview-us-government-ai-security-2026-6" target="_blank" rel="noopener">Business Insider — GPT‑5.6 limited preview at U.S. government request</a>. Fonte oficial para preço/modelos e reportagem sobre acesso limitado.</li>
+        <li id="fn4"><a href="https://www.reuters.com/world/china/anthropic-says-alibaba-illicitly-extracted-claude-ai-model-capabilities-2026-06-24/" target="_blank" rel="noopener">Reuters — Anthropic says Alibaba illicitly extracted Claude capabilities</a>; <a href="https://www.anthropic.com/news/detecting-and-preventing-distillation-attacks" target="_blank" rel="noopener">Anthropic — Detecting and preventing distillation attacks</a>. Acusações e contexto sobre destilação.</li>
+        <li id="fn5"><a href="https://www.wheresyoured.at/exclusive-openai-financials/" target="_blank" rel="noopener">Ed Zitron — OpenAI financials</a>; <a href="https://www.businessinsider.com/openai-ipo-ed-zitron-ai-losses-compute-spending-2026-6" target="_blank" rel="noopener">Business Insider — OpenAI losses and compute spending</a>. Fontes sobre prejuízo líquido atribuível reportado e estrutura de custos da OpenAI.</li>
+        <li id="fn6"><a href="https://www.wsj.com/tech/ai/mind-blowing-growth-is-about-to-propel-anthropic-into-its-first-profitable-quarter-7edbf2f4" target="_blank" rel="noopener">Wall Street Journal — Anthropic first operating profit</a>; <a href="https://www.wsj.com/tech/ai/the-spiraling-cost-of-making-ai-0679bcea" target="_blank" rel="noopener">Wall Street Journal — The spiraling cost of making AI</a>. Fontes sobre lucro operacional projetado da Anthropic e custos de treinar/operar modelos.</li>
+        <li id="fn7"><a href="https://www.businessinsider.com/openai-may-drop-unlimited-chatgpt-plans-exec-says-2026-3" target="_blank" rel="noopener">Business Insider — OpenAI may rethink unlimited plans</a>. Fonte sobre pressão em assinaturas “unlimited” e mudança de pricing conforme compute fica mais caro.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p>CyberVinci — uma camada própria para não transformar trabalho com IA em dependência cega de fornecedor.</p>
+    </div>
+  </footer>
+</body>
+</html>

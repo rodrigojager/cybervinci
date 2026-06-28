@@ -1,0 +1,371 @@
+CYBERVINCI
+Pare de conversar alteracao por alteracao. Monte o processo e reutilize.
+
+CyberVinci e uma IDE agentica para quem quer usar IA como fluxo de trabalho, nao apenas como chat.
+
+Em uma ferramenta comum, voce pede uma coisa, espera a resposta, corrige, pede outra, corrige de novo, explica contexto, troca modelo, cola arquivo, pede revisao, pede teste, pede ajuste visual e repete esse ciclo dezenas de vezes.
+
+Cada pedido vira um novo "shot".
+Cada etapa depende da sua memoria.
+Cada melhoria depende de voce conduzir manualmente a conversa.
+
+No CyberVinci, voce pode transformar esse processo em um fluxo reutilizavel.
+
+Voce monta uma pipeline uma vez, salva, ajusta as entradas e usa de novo sempre que precisar.
+
+
+O PROBLEMA
+
+Hoje, muita gente usa IA como se estivesse gerenciando um funcionario por mensagem:
+
+"Agora planeje."
+"Agora implemente."
+"Agora revise."
+"Agora teste."
+"Agora melhore a UI."
+"Agora corrija o backend."
+"Agora veja se quebrou algo."
+
+Funciona, mas e cansativo.
+
+Voce vira o gerente manual de cada etapa. A IA ate ajuda, mas o processo continua todo na sua cabeca.
+
+CyberVinci resolve isso colocando o processo dentro da IDE.
+
+
+A IDE COM FLUXOS DE TRABALHO DE IA
+
+Com o Flow, voce pode desenhar um fluxo de trabalho visualmente.
+
+Cada etapa pode ter:
+
+- um objetivo claro;
+- um agente responsavel;
+- um modelo diferente;
+- um provider diferente;
+- uma regra de entrada;
+- uma saida esperada;
+- uma revisao;
+- uma aprovacao humana;
+- uma etapa de teste;
+- um loop de melhoria.
+
+Depois de configurado, o fluxo fica salvo.
+
+Na proxima tarefa, voce nao precisa reconstruir a conversa. Basta trocar a entrada.
+
+
+EXEMPLO: PIPELINE DE PROGRAMACAO
+
+Voce pode criar uma pipeline que imita um fluxo real de desenvolvimento:
+
+1. Arquiteto de software
+Define a abordagem, riscos, contratos e plano de implementacao.
+
+2. Especialista de UI/UX
+Revisa a experiencia, layout, estados, responsividade e clareza da interface.
+
+3. Desenvolvedor frontend
+Implementa a parte visual, componentes e interacoes.
+
+4. Desenvolvedor backend
+Implementa APIs, regras de negocio, integracoes e persistencia.
+
+5. Revisor
+Procura bugs, inconsistencias, regressao e codigo fraco.
+
+6. Tester
+Executa testes, confere criterios e aponta falhas.
+
+7. Revisor adversarial
+Tenta encontrar problemas no resultado e pede melhorias ate o fluxo atingir um padrao aceitavel.
+
+Esse fluxo pode ser usado para uma feature hoje, outra amanha e outra na semana que vem.
+
+Voce muda o briefing. O processo continua.
+
+
+NAO SERVE SO PARA PROGRAMACAO
+
+O mesmo sistema pode ser usado para qualquer tipo de trabalho:
+
+- criar landing pages;
+- revisar campanhas;
+- analisar documentos;
+- gerar especificacoes;
+- montar pesquisas;
+- criar fluxos de atendimento;
+- planejar produto;
+- fazer QA de design;
+- preparar propostas comerciais;
+- organizar tarefas de marketing;
+- coordenar agentes especializados.
+
+CyberVinci nao limita a IA a um chat. Ele deixa voce montar processos.
+
+
+FLOW VISUAL OU CRIADO PELA IA
+
+Voce pode montar o fluxo manualmente, de forma visual.
+
+Mas tambem pode deixar a propria IA montar o fluxo para voce.
+
+Voce descreve o que quer:
+
+"Crie uma pipeline para transformar uma ideia de produto em especificacao, prototipo visual, implementacao, revisao e testes."
+
+A IA pode sugerir ou montar um workflow reutilizavel.
+
+Depois voce ajusta, salva e usa direto da janela de chat.
+
+
+DIRETO DO CHAT
+
+O chat continua existindo, mas deixa de ser o unico lugar onde tudo acontece.
+
+Da janela do chat, voce pode:
+
+- escolher um flow salvo;
+- pedir para a IA montar um workflow dinamico;
+- usar um agente especifico;
+- escolher provider e modelo;
+- controlar o nivel de raciocinio;
+- reaproveitar processos ja configurados;
+- executar tarefas com contexto do workspace.
+
+O chat vira a porta de entrada.
+O trabalho acontece em um sistema.
+
+
+ECONOMIA DE TOKENS E CUSTO
+
+Nem toda etapa precisa do modelo mais caro.
+
+No CyberVinci, cada etapa do workflow pode usar um provider e um modelo diferente.
+
+Exemplo:
+
+- usar os melhores modelos do GPT ou do Claude para uma etapa critica de planejamento;
+- transformar o plano em tarefas bem detalhadas;
+- passar a execucao para um modelo mais barato, como um DeepSeek Flash;
+- usar outro modelo como revisor;
+- colocar um revisor adversarial em loop para pedir melhorias;
+- reservar os modelos caros apenas para decisoes que realmente exigem mais cuidado.
+
+Isso reduz custo e melhora o uso dos modelos.
+
+Voce nao precisa gastar o melhor modelo fazendo trabalho mecanico.
+
+Use o modelo forte para pensar.
+Use o modelo barato para executar o que ja esta mastigado.
+Use um revisor para fechar o ciclo.
+
+
+COMPATIVEL COM VARIOS PROVIDERS E MODELOS
+
+CyberVinci foi pensado para nao prender voce em um unico fornecedor.
+
+Ele pode trabalhar com diferentes providers, modelos remotos, runtimes por CLI e modelos locais quando configurados.
+
+Isso significa que cada etapa pode ser otimizada por:
+
+- custo;
+- velocidade;
+- qualidade;
+- contexto;
+- capacidade de raciocinio;
+- capacidade visual;
+- confiabilidade;
+- disponibilidade.
+
+Voce escolhe a ferramenta certa para cada parte do trabalho.
+
+
+MENOS CONTEXTO JOGADO NO PROMPT
+
+CyberVinci tambem ajuda a economizar tokens usando memoria e grafo do projeto.
+
+Em vez de mandar um monte de arquivos para o modelo sem criterio, a ferramenta pode localizar contexto relevante, relacoes, simbolos, decisoes e informacoes do workspace.
+
+O problema resolvido:
+menos prompt gigante, menos ruido, menos custo.
+
+O ganho:
+mais contexto util, com menos tokens.
+
+
+AGENTES EMBARCADOS
+
+CyberVinci inclui agentes em arquivos Markdown.
+
+Eles funcionam como perfis profissionais editaveis:
+
+- arquiteto;
+- engenheiro frontend;
+- engenheiro backend;
+- especialista UI/UX;
+- QA;
+- revisor;
+- estrategista;
+- analista;
+- especialista de marketing;
+- especialista de seguranca;
+- muitos outros.
+
+Voce nao precisa escrever "aja como..." toda vez.
+
+Escolha o agente certo e use.
+
+E como sao arquivos Markdown, fica simples editar, versionar e criar novos perfis.
+
+
+PLAYBOOKS EXTENSIVEIS
+
+Alem dos agentes, CyberVinci permite criar playbooks.
+
+Um playbook é um roteiro de execucao: ele pode misturar etapas deterministicas, chamadas de ferramentas, perguntas ao usuario e respostas de IA.
+
+Isso e mais forte do que apenas "instrucoes no prompt". Um prompt pode acabar sendo esquecido ou ignorado pela IA por alucinação ou perda de contexto. Já o playbook embora também utilize prompts, ele tem várias etapas configuradas em código que são impossíveis de serem ignoradas. Não fica a cargo da IA decidir se vai usar ou não.
+
+O desenvolvedor pode expandir o sistema criando novos playbooks para processos especificos:
+
+- preparar um PR;
+- revisar uma feature;
+- validar um design;
+- testar uma entrega;
+- configurar um ambiente;
+- publicar uma versao;
+- auditar um projeto.
+
+O valor é simples:
+o conhecimento do processo deixa de ficar so na cabeca de alguem e vira uma estrutura reutilizavel.
+
+
+EDITORES VISUAIS INTEGRADOS
+
+CyberVinci tambem traz editores visuais integrados.
+
+Voce pode trabalhar com design e HTML sem sair da ferramenta.
+
+Isso inclui:
+
+- Canvas de design;
+- editor visual de HTML/Razor;
+- Builder de paginas;
+- suporte a geracao e revisao por IA;
+- possibilidade de usar a mesma flexibilidade de providers e modelos.
+
+O problema resolvido:
+voce nao precisa sair da IDE para desenhar, revisar, ajustar e transformar interfaces.
+
+O ganho:
+codigo, design e IA ficam no mesmo ambiente.
+
+
+DESIGN COM MAIS CONTROLE
+
+Gerar tela por IA costuma dar problema:
+
+- elementos sobrepostos;
+- input virando card gigante;
+- layout cortado;
+- rodape ausente;
+- largura errada;
+- responsividade ruim;
+- resultado que parece bom na ideia, mas ruim no canvas.
+
+CyberVinci caminha para resolver isso com validacao visual e estrutural:
+
+- checagem de sobreposicao;
+- ajuste de layers;
+- redimensionamento;
+- verificacao de largura;
+- revisao visual;
+- judge visual opcional;
+- correcao automatizada.
+
+A ideia nao e apenas gerar design.
+
+E gerar, verificar e corrigir.
+
+
+COMPATIBILIDADE COM EXTENSOES DO VS CODE
+
+CyberVinci nasce em uma base compativel com o ecossistema Theia/VS Code.
+
+Isso permite que varias extensoes do Visual Studio Code sejam usadas de forma imediata ou com pouca adaptacao, dependendo da extensao.
+
+O problema resolvido:
+voce nao comeca do zero em um ambiente isolado.
+
+O ganho:
+voce aproveita uma parte grande do ecossistema que desenvolvedores ja conhecem.
+
+
+TEMAS E EXPERIENCIA DE PRODUTO
+
+CyberVinci tambem inclui uma dezena de temas integrados.
+
+O DIFERENCIAL
+
+Outras ferramentas dao um chat.
+
+CyberVinci da um sistema de trabalho.
+
+Outras ferramentas fazem voce conduzir cada resposta.
+
+CyberVinci deixa voce salvar o processo.
+
+Outras ferramentas usam um modelo por vez.
+
+CyberVinci permite usar o melhor modelo para cada etapa.
+
+Outras ferramentas deixam design, codigo, docs e automacao espalhados.
+
+CyberVinci coloca tudo no mesmo workspace.
+
+
+RESUMO EM UMA FRASE
+
+CyberVinci e uma IDE agentica onde voce transforma pedidos de IA em workflows reutilizaveis, com agentes, modelos por etapa, memoria, grafo de projeto, editores visuais e playbooks extensiveis.
+
+
+CHAMADAS DE MARKETING
+
+Monte o fluxo uma vez. Reutilize quantas vezes quiser.
+
+Pare de gerenciar IA por mensagens soltas.
+
+Use modelos caros para pensar e modelos baratos para executar.
+
+Transforme prompts em processos.
+
+Crie pipelines de desenvolvimento com arquiteto, designer, dev, revisor e tester.
+
+Deixe a IA montar workflows reutilizaveis para voce.
+
+Codigo, design, memoria e automacao no mesmo ambiente.
+
+Uma IDE onde a IA trabalha em etapas, nao em palpites.
+
+
+PITCH CURTO
+
+CyberVinci e uma IDE agentica que permite transformar conversas com IA em workflows reutilizaveis.
+
+Em vez de pedir alteracao por alteracao no chat, voce cria uma pipeline com agentes, etapas, modelos, revisao e testes. Cada etapa pode usar o provider e modelo mais adequado, economizando tokens e melhorando o resultado.
+
+O CyberVinci junta Flow, Agents, Playbooks, Memory, grafo de projeto, editores visuais, Canvas, Builder e compatibilidade com extensoes VS Code em um unico ambiente.
+
+
+PITCH DIRETO
+
+Se voce usa IA para trabalhar, provavelmente ja perdeu tempo conduzindo conversas enormes:
+
+planeja, corrige, implementa, revisa, testa, pede melhoria, troca contexto, repete tudo de novo.
+
+CyberVinci existe para transformar esse processo em algo reutilizavel.
+
+Voce pode montar uma pipeline visual, salvar, trocar apenas a entrada e executar novamente. Pode usar modelos diferentes por etapa para reduzir custo. Pode usar agentes especializados em Markdown. Pode deixar a propria IA criar o workflow. Pode revisar design e HTML sem sair da IDE. Pode usar memoria e grafo para gastar menos tokens com contexto.
+
+E a diferenca entre conversar com uma IA e operar um processo com IA.

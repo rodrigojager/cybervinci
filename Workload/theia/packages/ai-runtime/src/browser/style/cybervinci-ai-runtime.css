@@ -1,0 +1,332 @@
+.cv-ai-runtime-execution-picker,
+.cv-ai-runtime-menu {
+    --cybervinci-ai-select-button-background: var(--theia-dropdown-background, var(--theia-input-background));
+    --cybervinci-ai-select-menu-background: var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background)));
+    --cybervinci-ai-select-menu-border: var(--theia-menu-border, var(--theia-panel-border));
+    --cybervinci-ai-select-menu-foreground: var(--theia-menu-foreground, var(--theia-editor-foreground));
+    --cybervinci-ai-select-option-active-background: var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground));
+    --cybervinci-ai-select-option-active-foreground: var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground));
+    --cybervinci-ai-select-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+}
+
+@supports (color: color-mix(in srgb, white, black)) {
+    .cv-ai-runtime-execution-picker,
+    .cv-ai-runtime-menu {
+        --cybervinci-ai-select-button-background: color-mix(in srgb, var(--theia-dropdown-background, var(--theia-input-background)) 94%, var(--theia-editor-foreground, #ffffff) 6%);
+        --cybervinci-ai-select-menu-background: color-mix(in srgb, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))) 94%, var(--theia-editor-foreground, #ffffff) 6%);
+    }
+}
+
+.cv-ai-runtime-button {
+    align-items: center;
+    display: inline-flex;
+    gap: 4px;
+    min-width: 0;
+}
+
+.cv-ai-runtime-button--active {
+    outline: 1px solid var(--theia-focusBorder);
+}
+
+.cv-ai-runtime-prompt-panel {
+    border-top: 1px solid var(--theia-panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+}
+
+.cv-ai-runtime-prompt-panel > header,
+.cv-ai-runtime-prompt-panel > footer {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.cv-ai-runtime-prompt-panel h3 {
+    font-size: var(--theia-ui-font-size1);
+    font-weight: 600;
+    margin: 0;
+}
+
+.cv-ai-runtime-prompt-panel textarea {
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-input-foreground);
+    min-height: 84px;
+    resize: vertical;
+    width: 100%;
+}
+
+.cv-ai-runtime-execution-picker {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+}
+
+.cv-ai-runtime-execution-picker label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cv-ai-runtime-execution-picker label > span {
+    color: var(--theia-descriptionForeground);
+    font-size: var(--theia-ui-font-size0);
+}
+
+.cv-ai-runtime-model-note {
+    color: var(--theia-descriptionForeground);
+    font-size: var(--theia-ui-font-size0);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-ai-runtime-provider-cell {
+    align-items: end;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-width: 0;
+}
+
+.cv-ai-runtime-provider-cell label {
+    min-width: 0;
+}
+
+.cv-ai-runtime-configure-provider {
+    min-width: 76px;
+}
+
+.cv-ai-runtime-provider-message {
+    color: var(--theia-descriptionForeground);
+    font-size: var(--theia-ui-font-size0);
+    grid-column: 1 / -1;
+}
+
+.cv-ai-runtime-execution-picker input,
+.cv-ai-runtime-execution-picker select {
+    min-width: 0;
+    width: 100%;
+}
+
+.cv-ai-runtime-icon-button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--theia-icon-foreground);
+    cursor: pointer;
+    display: inline-flex;
+    height: 24px;
+    justify-content: center;
+    padding: 0;
+    width: 24px;
+}
+
+.cv-ai-runtime-error {
+    color: var(--theia-errorForeground);
+    font-size: var(--theia-ui-font-size0);
+}
+
+@media (max-width: 700px) {
+    .cv-ai-runtime-execution-picker {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+}
+
+.cv-ai-runtime-execution-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: visible;
+}
+
+.cv-ai-runtime-picker-button {
+    display: inline-grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    border: 1px solid var(--theia-dropdown-border, var(--theia-input-border));
+    border-radius: 4px;
+    padding: 0 8px;
+    background: var(--cybervinci-ai-select-button-background, var(--theia-dropdown-background, var(--theia-input-background)));
+    color: var(--theia-dropdown-foreground, var(--theia-input-foreground));
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.cv-ai-runtime-picker-button.has-leading-icon {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.cv-ai-runtime-picker-button.compact {
+    max-width: 180px;
+    min-width: 96px;
+}
+
+.cv-ai-runtime-picker-button.needs-configuration {
+    border-color: var(--theia-warn-foreground);
+    color: var(--theia-warn-foreground);
+}
+
+.cv-ai-runtime-picker-button:focus-visible {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: 1px;
+}
+
+.cv-ai-runtime-picker-button-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-ai-runtime-picker-button > .codicon,
+.cv-ai-runtime-menu-option > .codicon {
+    width: 14px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.cv-ai-runtime-menu {
+    position: fixed;
+    z-index: 10000;
+    display: grid;
+    gap: 2px;
+    min-width: 180px;
+    overflow: auto;
+    padding: 4px;
+    border: 1px solid var(--cybervinci-ai-select-menu-border, var(--theia-menu-border, var(--theia-panel-border)));
+    border-radius: 5px;
+    background: var(--cybervinci-ai-select-menu-background, var(--theia-menu-background, var(--theia-editorWidget-background)));
+    color: var(--cybervinci-ai-select-menu-foreground, var(--theia-menu-foreground, var(--theia-editor-foreground)));
+    font-size: 12px;
+    line-height: 16px;
+    box-shadow: var(--cybervinci-ai-select-shadow, 0 10px 26px rgba(0, 0, 0, 0.36));
+}
+
+.cv-ai-runtime-menu.provider {
+    min-width: 220px;
+}
+
+.cv-ai-runtime-menu.model {
+    min-width: 360px;
+}
+
+.cv-ai-runtime-menu.compact {
+    min-width: 170px;
+}
+
+.cv-ai-runtime-menu-option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 26px;
+    border: 0;
+    border-radius: 4px;
+    padding: 3px 7px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.cv-ai-runtime-menu-option.provider {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1px;
+}
+
+.cv-ai-runtime-menu-option:hover,
+.cv-ai-runtime-menu-option.selected {
+    background: var(--cybervinci-ai-select-option-active-background, var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground)));
+    color: var(--cybervinci-ai-select-option-active-foreground, var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground)));
+}
+
+.cv-ai-runtime-menu-option.unavailable {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-ai-runtime-menu-option-name,
+.cv-ai-runtime-menu-option-detail {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-ai-runtime-menu-option-detail {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.cv-ai-runtime-model-badges {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 0;
+}
+
+.cv-ai-runtime-model-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-ai-runtime-model-icon::before {
+    width: 14px;
+    height: 14px;
+}
+
+.cv-ai-runtime-model-icon.free {
+    color: var(--theia-charts-green);
+}
+
+.cv-ai-runtime-model-icon.paid {
+    color: var(--theia-charts-red);
+}
+
+.cv-ai-runtime-model-icon.vision {
+    color: var(--theia-charts-blue);
+}
+
+.cv-ai-runtime-model-icon.media {
+    color: var(--theia-charts-yellow);
+}
+
+.cv-ai-runtime-model-icon.capability {
+    color: var(--theia-charts-purple);
+}
+
+.cv-ai-runtime-model-icon.unknown {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-ai-runtime-model-icon.muted {
+    color: var(--theia-descriptionForeground);
+    opacity: 0.72;
+}
+
+.cv-ai-runtime-model-input {
+    width: 200px;
+    max-width: 100%;
+    height: 28px;
+    min-width: 0;
+}

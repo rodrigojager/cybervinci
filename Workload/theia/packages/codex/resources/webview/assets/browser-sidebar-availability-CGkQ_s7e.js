@@ -1,0 +1,2 @@
+import{v as e}from"./app-server-manager-signals-B8yJv95l.js";import{R as t,g as n}from"./vscode-api-CjIlXYxl.js";import{n as r}from"./experimental-features-queries-B3mQKhJM.js";var i=`in_app_browser`,a=t(n,({get:t})=>{let{data:n}=t(r,t(e));return n?.find(e=>e.name===i),!1});export{a as t};
+//# sourceMappingURL=browser-sidebar-availability-CGkQ_s7e.js.map

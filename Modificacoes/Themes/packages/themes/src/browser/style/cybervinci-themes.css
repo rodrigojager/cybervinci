@@ -1,0 +1,310 @@
+body.cybervinci-theme {
+  --cybervinci-theme-radius-sm: 3px;
+  --cybervinci-theme-radius-md: 6px;
+  --cybervinci-theme-shadow-soft: 0 10px 32px rgba(0, 0, 0, 0.18);
+  --cybervinci-theme-shadow-dialog: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+
+body.cybervinci-theme :focus-visible {
+  outline-color: var(--theia-focusBorder);
+}
+
+body.cybervinci-theme #theia-app-shell,
+body.cybervinci-theme #theia-main-content-panel,
+body.cybervinci-theme #theia-main-content-panel .lm-Widget.lm-DockPanel-widget {
+  background: var(--theia-editor-background);
+  color: var(--theia-foreground);
+}
+
+body.cybervinci-theme #theia-top-panel,
+body.cybervinci-theme .lm-Widget.lm-MenuBar {
+  background: var(--theia-titleBar-activeBackground);
+  color: var(--theia-titleBar-activeForeground);
+  border-bottom-color: var(--theia-titleBar-border);
+}
+
+body.cybervinci-theme .lm-MenuBar-item {
+  border-radius: var(--cybervinci-theme-radius-sm);
+}
+
+body.cybervinci-theme .lm-MenuBar-item.lm-mod-active,
+body.cybervinci-theme .lm-MenuBar.lm-mod-active .lm-MenuBar-item.lm-mod-active {
+  background: var(--theia-menubar-selectionBackground);
+  color: var(--theia-menubar-selectionForeground);
+  border-color: var(--theia-menubar-selectionBorder);
+}
+
+body.cybervinci-theme .lm-Menu {
+  background: var(--theia-menu-background);
+  color: var(--theia-menu-foreground);
+  border-color: var(--theia-menu-border);
+  border-radius: var(--cybervinci-theme-radius-md);
+  box-shadow: var(--cybervinci-theme-shadow-soft);
+}
+
+body.cybervinci-theme .lm-Menu-item.lm-mod-active {
+  background: var(--theia-menu-selectionBackground);
+  color: var(--theia-menu-selectionForeground);
+}
+
+body.cybervinci-theme .theia-app-sidebar-container,
+body.cybervinci-theme .lm-Widget.theia-sidebar-menu,
+body.cybervinci-theme .lm-Widget.theia-sidebar-menu i {
+  background-color: var(--theia-activityBar-background);
+}
+
+body.cybervinci-theme .lm-TabBar.theia-app-sides {
+  color: var(--theia-activityBar-inactiveForeground);
+}
+
+body.cybervinci-theme .lm-TabBar.theia-app-sides .lm-TabBar-tab.lm-mod-current,
+body.cybervinci-theme .lm-TabBar.theia-app-sides .lm-TabBar-tab:hover {
+  color: var(--theia-activityBar-foreground);
+  background-color: var(--theia-activityBar-activeBackground);
+}
+
+body.cybervinci-theme .lm-TabBar.theia-app-left .lm-TabBar-tab.lm-mod-current {
+  box-shadow: 2px 0 0 var(--theia-activityBar-activeBorder) inset;
+}
+
+body.cybervinci-theme .lm-TabBar.theia-app-right .lm-TabBar-tab.lm-mod-current {
+  box-shadow: -2px 0 0 var(--theia-activityBar-activeBorder) inset;
+}
+
+body.cybervinci-theme #theia-left-content-panel > .lm-Panel,
+body.cybervinci-theme #theia-right-content-panel > .lm-Panel {
+  border-color: var(--theia-activityBar-border);
+}
+
+body.cybervinci-theme .theia-side-panel,
+body.cybervinci-theme .theia-view-container,
+body.cybervinci-theme .theia-Tree {
+  background-color: var(--theia-sideBar-background);
+  color: var(--theia-sideBar-foreground);
+}
+
+body.cybervinci-theme .theia-view-container-part-header,
+body.cybervinci-theme .theia-view-container-drag-image {
+  background: var(--theia-sideBarSectionHeader-background);
+  color: var(--theia-sideBarSectionHeader-foreground);
+  box-shadow: 0 1px 0 var(--theia-sideBarSectionHeader-border) inset;
+}
+
+body.cybervinci-theme .theia-TreeNode:hover {
+  background: var(--theia-list-hoverBackground);
+  color: var(--theia-list-hoverForeground);
+}
+
+body.cybervinci-theme .theia-Tree:focus-within .theia-TreeNode.theia-mod-selected,
+body.cybervinci-theme .theia-Tree .theia-TreeNode.theia-mod-selected {
+  background: var(--theia-list-activeSelectionBackground);
+  color: var(--theia-list-activeSelectionForeground) !important;
+}
+
+body.cybervinci-theme .lm-TabBar.theia-app-centers {
+  background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+body.cybervinci-theme .lm-TabBar.theia-app-centers::after {
+  background-color: var(--theia-editorGroupHeader-tabsBorder);
+}
+
+body.cybervinci-theme #theia-main-content-panel .lm-TabBar .lm-TabBar-tab {
+  background: var(--theia-tab-inactiveBackground);
+  color: var(--theia-tab-inactiveForeground);
+  border-right-color: var(--theia-tab-border);
+}
+
+body.cybervinci-theme #theia-main-content-panel .lm-TabBar .lm-TabBar-tab:hover {
+  background: var(--theia-tab-hoverBackground);
+  color: var(--theia-tab-hoverForeground);
+}
+
+body.cybervinci-theme #theia-main-content-panel .lm-TabBar .lm-TabBar-tab.lm-mod-current {
+  background: var(--theia-tab-activeBackground);
+  color: var(--theia-tab-activeForeground);
+  border-top-color: var(--theia-tab-activeBorderTop);
+}
+
+body.cybervinci-theme #theia-bottom-content-panel {
+  background: var(--theia-panel-background);
+}
+
+body.cybervinci-theme #theia-bottom-content-panel .lm-TabBar {
+  background: var(--theia-panel-background);
+  border-top-color: var(--theia-panel-border);
+}
+
+body.cybervinci-theme #theia-bottom-content-panel .lm-TabBar-tab.lm-mod-current {
+  color: var(--theia-panelTitle-activeForeground);
+  box-shadow: 0 var(--theia-border-width) 0 var(--theia-panelTitle-activeBorder) inset;
+}
+
+body.cybervinci-theme #theia-statusBar {
+  background: var(--theia-statusBar-background);
+  color: var(--theia-statusBar-foreground);
+  border-top-color: var(--theia-statusBar-border);
+}
+
+body.cybervinci-theme #theia-statusBar .area .element.hasCommand:hover {
+  background-color: var(--theia-statusBarItem-hoverBackground);
+}
+
+.cybervinci-theme-dropdown {
+  position: fixed;
+  z-index: 2147483647;
+  isolation: isolate;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--theia-dropdown-listBackground, var(--theia-quickInput-background, var(--theia-editorWidget-background, #1f1f1f)));
+  background-clip: padding-box;
+  color: var(--theia-dropdown-foreground, var(--theia-foreground));
+  border: 1px solid var(--theia-dropdown-border, var(--theia-editorWidget-border, #454545));
+  border-radius: var(--cybervinci-theme-radius-md, 6px);
+  box-shadow: var(--cybervinci-theme-shadow-dialog, 0 18px 60px rgba(0, 0, 0, 0.45));
+  font-size: var(--theia-ui-font-size1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cybervinci-theme-dropdown__group {
+  padding: 7px 8px 4px;
+  color: var(--theia-descriptionForeground);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cybervinci-theme-dropdown__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 28px;
+  gap: 8px;
+  padding: 4px 8px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--cybervinci-theme-radius-sm, 3px);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cybervinci-theme-dropdown__item:hover,
+.cybervinci-theme-dropdown__item:focus,
+.cybervinci-theme-dropdown__item--active {
+  background: var(--theia-list-hoverBackground);
+  color: var(--theia-list-hoverForeground);
+  outline: none;
+}
+
+.cybervinci-theme-dropdown__marker {
+  width: 14px;
+  color: transparent;
+  flex: 0 0 auto;
+}
+
+.cybervinci-theme-dropdown__item--current .cybervinci-theme-dropdown__marker {
+  color: var(--theia-list-activeSelectionIconForeground, var(--theia-focusBorder));
+}
+
+.cybervinci-theme-dropdown__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.cybervinci-theme .theia-input,
+body.cybervinci-theme input,
+body.cybervinci-theme textarea,
+body.cybervinci-theme select {
+  background-color: var(--theia-input-background);
+  color: var(--theia-input-foreground);
+  border-color: var(--theia-input-border);
+}
+
+body.cybervinci-theme .theia-input:focus,
+body.cybervinci-theme input:focus,
+body.cybervinci-theme textarea:focus,
+body.cybervinci-theme select:focus {
+  outline-color: var(--theia-focusBorder);
+}
+
+body.cybervinci-theme .theia-button.main,
+body.cybervinci-theme button.theia-button.main {
+  background-color: var(--theia-button-background);
+  color: var(--theia-button-foreground);
+}
+
+body.cybervinci-theme .theia-button.main:hover,
+body.cybervinci-theme button.theia-button.main:hover {
+  background-color: var(--theia-button-hoverBackground);
+}
+
+body.cybervinci-theme .theia-button.secondary,
+body.cybervinci-theme button.theia-button.secondary {
+  background-color: var(--theia-button-secondaryBackground);
+  color: var(--theia-button-secondaryForeground);
+}
+
+body.cybervinci-theme .theia-button.secondary:hover,
+body.cybervinci-theme button.theia-button.secondary:hover {
+  background-color: var(--theia-button-secondaryHoverBackground);
+}
+
+body.cybervinci-theme .theia-dialog,
+body.cybervinci-theme .dialogBlock {
+  background-color: var(--theia-editorWidget-background);
+  color: var(--theia-editorWidget-foreground);
+  border-color: var(--theia-editorWidget-border);
+  border-radius: var(--cybervinci-theme-radius-md);
+  box-shadow: var(--cybervinci-theme-shadow-dialog);
+}
+
+body.cybervinci-theme .quick-input-widget {
+  background-color: var(--theia-quickInput-background) !important;
+  color: var(--theia-quickInput-foreground);
+  border: 1px solid var(--theia-editorWidget-border);
+  border-radius: var(--cybervinci-theme-radius-md);
+}
+
+body.cybervinci-theme .quick-input-titlebar {
+  background-color: var(--theia-quickInputTitle-background);
+}
+
+body.cybervinci-theme .quick-input-list .monaco-list-row.focused {
+  background-color: var(--theia-quickInputList-focusBackground) !important;
+  color: var(--theia-quickInputList-focusForeground) !important;
+}
+
+body.cybervinci-theme .monaco-scrollable-element > .scrollbar > .slider,
+body.cybervinci-theme .ps__thumb-y,
+body.cybervinci-theme .ps__thumb-x {
+  background: var(--theia-scrollbarSlider-background) !important;
+}
+
+body.cybervinci-theme .monaco-scrollable-element > .scrollbar > .slider:hover,
+body.cybervinci-theme .ps__rail-y:hover > .ps__thumb-y,
+body.cybervinci-theme .ps__rail-x:hover > .ps__thumb-x {
+  background: var(--theia-scrollbarSlider-hoverBackground) !important;
+}
+
+body.cybervinci-theme .chat-view-widget {
+  background-color: color-mix(in srgb, var(--theia-sideBar-background) 92%, #000 8%);
+}
+
+body.cybervinci-theme .chat-view-widget .theia-ChatInput-Editor-Box.cybervinci-codex-input-card {
+  background-color: color-mix(in srgb, var(--theia-input-background) 90%, #000 10%);
+  border-color: color-mix(in srgb, var(--theia-foreground) 11%, transparent);
+}
+
+body.cybervinci-theme-blue-v1,
+body.cybervinci-theme-copper-v1,
+body.cybervinci-theme-emerald-v1,
+body.cybervinci-theme-purple-v1,
+body.cybervinci-theme-arctic-v1,
+body.cybervinci-theme-terminal-v1 {
+  --cybervinci-theme-shadow-soft: 0 10px 32px color-mix(in srgb, var(--theia-focusBorder) 16%, transparent);
+}

@@ -1,0 +1,430 @@
+diff --git a/packages/debug/src/browser/debug-session.tsx b/packages/debug/src/browser/debug-session.tsx
+index 4f2ea17..af44aca 100644
+--- a/packages/debug/src/browser/debug-session.tsx
++++ b/packages/debug/src/browser/debug-session.tsx
+@@ -359,7 +359,7 @@ export class DebugSession implements CompositeTreeElement {
+         try {
+             const response = await this.connection.sendRequest('initialize', {
+                 clientID: 'Theia',
+-                clientName: nls.localize('theia/debug/TheiaIDE', 'Theia IDE'),
++                clientName: nls.localize('theia/debug/TheiaIDE', 'CyberVinci'),
+                 adapterID: this.configuration.type,
+                 locale: 'en-US',
+                 linesStartAt1: true,
+
+diff --git a/packages/debug/src/browser/style/index.css b/packages/debug/src/browser/style/index.css
+index b1439f6..19b5be9 100644
+--- a/packages/debug/src/browser/style/index.css
++++ b/packages/debug/src/browser/style/index.css
+@@ -225,7 +225,7 @@
+ }
+ 
+ .theia-debug-console-variable .value {
+-  margin-left: var(--theia-ui-padding);
++  margin-left: 6px;
+ }
+ 
+ .theia-TreeNode:not(:hover) .theia-debug-console-variable .action-label {
+@@ -240,12 +240,10 @@
+ .theia-debug-console-variable .watch-error {
+   font-style: italic;
+   color: var(--theia-debugConsole-errorForeground);
+-  margin-left: var(--theia-ui-padding);
+ }
+ 
+ .theia-debug-console-variable .watch-not-available {
+   font-style: italic;
+-  margin-left: var(--theia-ui-padding);
+ }
+ 
+ .theia-debug-watch-expression {
+
+diff --git a/packages/filesystem/src/browser/file-tree/file-tree-decorator-adapter.ts b/packages/filesystem/src/browser/file-tree/file-tree-decorator-adapter.ts
+index c957c1a..1baa00b 100644
+--- a/packages/filesystem/src/browser/file-tree/file-tree-decorator-adapter.ts
++++ b/packages/filesystem/src/browser/file-tree/file-tree-decorator-adapter.ts
+@@ -40,7 +40,10 @@ export class FileTreeDecoratorAdapter implements TreeDecorator {
+ 
+     @postConstruct()
+     protected init(): void {
+-        this.decorationsService.onDidChangeDecorations(() => this.fireDidChangeDecorations());
++        this.decorationsService.onDidChangeDecorations(newDecorations => {
++            this.updateDecorations(this.decorationsByUri.keys(), newDecorations.keys());
++            this.fireDidChangeDecorations();
++        });
+     }
+ 
+     decorations(tree: Tree): MaybePromise<Map<string, TreeDecoration.Data>> {
+@@ -48,36 +51,19 @@ export class FileTreeDecoratorAdapter implements TreeDecorator {
+     }
+ 
+     protected collectDecorations(tree: Tree): Map<string, TreeDecoration.Data> {
+-        const decorations = new Map<string, TreeDecoration.Data>();
+-        if (!tree.root) {
+-            return decorations;
+-        }
+-        this.decorationsByUri = new Map<string, TreeDecoration.Data>();
+-        this.parentDecorations = new Map<string, TreeDecoration.Data>();
+-        // Query the decorations service per visible URI so that decorations dropped
+-        // by event truncation (see plugin-ext maxEventSize) are fetched on demand.
+-        for (const node of new TopDownTreeIterator(tree.root)) {
+-            const rawUri = this.getUriForNode(node);
+-            if (!rawUri || this.decorationsByUri.has(rawUri)) {
+-                continue;
+-            }
+-            const uri = new URI(rawUri);
+-            const fetched = this.decorationsService.getDecoration(uri, false);
+-            if (fetched.length) {
+-                this.decorationsByUri.set(rawUri, this.toTheiaDecoration(fetched, false));
+-                this.propagateDecorationsByUri(uri, fetched);
+-            }
+-        }
+-        for (const node of new TopDownTreeIterator(tree.root)) {
+-            const rawUri = this.getUriForNode(node);
+-            if (!rawUri) {
+-                continue;
+-            }
+-            const ownDecoration = this.decorationsByUri.get(rawUri);
+-            const bubbledDecoration = this.parentDecorations.get(rawUri);
+-            const combined = this.mergeDecorations(ownDecoration, bubbledDecoration);
+-            if (combined) {
+-                decorations.set(node.id, combined);
++        const decorations = new Map();
++        if (tree.root) {
++            for (const node of new TopDownTreeIterator(tree.root)) {
++                const uri = this.getUriForNode(node);
++                if (uri) {
++                    const stringified = uri.toString();
++                    const ownDecoration = this.decorationsByUri.get(stringified);
++                    const bubbledDecoration = this.parentDecorations.get(stringified);
++                    const combined = this.mergeDecorations(ownDecoration, bubbledDecoration);
++                    if (combined) {
++                        decorations.set(node.id, combined);
++                    }
++                }
+             }
+         }
+         return decorations;
+@@ -97,6 +83,28 @@ export class FileTreeDecoratorAdapter implements TreeDecorator {
+         }
+     }
+ 
++    protected updateDecorations(oldKeys: IterableIterator<string>, newKeys: IterableIterator<string>): void {
++        this.parentDecorations.clear();
++        const newDecorations = new Map<string, TreeDecoration.Data>();
++        const handleUri = (rawUri: string) => {
++            if (!newDecorations.has(rawUri)) {
++                const uri = new URI(rawUri);
++                const decorations = this.decorationsService.getDecoration(uri, false);
++                if (decorations.length) {
++                    newDecorations.set(rawUri, this.toTheiaDecoration(decorations, false));
++                    this.propagateDecorationsByUri(uri, decorations);
++                }
++            }
++        };
++        for (const rawUri of oldKeys) {
++            handleUri(rawUri);
++        }
++        for (const rawUri of newKeys) {
++            handleUri(rawUri);
++        }
++        this.decorationsByUri = newDecorations;
++    }
++
+     protected toTheiaDecoration(decorations: Decoration[], bubble?: boolean): TreeDecoration.Data {
+         const color = decorations[0].colorId ? `var(${this.colorRegistry.toCssVariableName(decorations[0].colorId)})` : undefined;
+         const fontData = color ? { color } : undefined;
+
+diff --git a/packages/plugin-dev/src/node/hosted-instance-manager.ts b/packages/plugin-dev/src/node/hosted-instance-manager.ts
+index fd69fc0..e9cdb5a 100644
+--- a/packages/plugin-dev/src/node/hosted-instance-manager.ts
++++ b/packages/plugin-dev/src/node/hosted-instance-manager.ts
+@@ -90,7 +90,7 @@ export interface HostedInstanceManager {
+ }
+ 
+ const HOSTED_INSTANCE_START_TIMEOUT_MS = 30000;
+-const THEIA_INSTANCE_REGEX = /.*Theia app listening on (.*).*\./;
++const THEIA_INSTANCE_REGEX = /.*CyberVinci app listening on (.*).*\./;
+ const PROCESS_OPTIONS = {
+     cwd: process.cwd(),
+ };
+
+diff --git a/packages/plugin-ext-vscode/src/node/plugin-vscode-init.ts b/packages/plugin-ext-vscode/src/node/plugin-vscode-init.ts
+index 7982174..244ecbd 100644
+--- a/packages/plugin-ext-vscode/src/node/plugin-vscode-init.ts
++++ b/packages/plugin-ext-vscode/src/node/plugin-vscode-init.ts
+@@ -16,7 +16,6 @@
+ 
+ /* eslint-disable @typescript-eslint/no-explicit-any */
+ 
+-import { register } from 'node:module';
+ import * as theia from '@theia/plugin';
+ import { BackendInitializationFn, PluginAPIFactory, Plugin, emptyPlugin } from '@theia/plugin-ext';
+ import { VSCODE_DEFAULT_API_VERSION } from '../common/plugin-vscode-types';
+@@ -74,72 +73,8 @@ function overrideInternalLoad(): void {
+ 
+         return defaultApi;
+     };
+-
+-    registerESMLoaderHook();
+ }
+ 
+ function findPlugin(filePath: string): Plugin | undefined {
+     return plugins.find(plugin => filePath.startsWith(plugin.pluginFolder));
+ }
+-
+-/**
+- * Register an ESM loader hook so that `import 'vscode'` from an ESM plugin
+- * resolves through the same `module._load` patch above.
+- *
+- * The hook emits a unique synthetic CommonJS module per importing parent.
+- * The synthetic source:
+- *   - looks up the plugin API via `Module._load('vscode', { filename: <parent path> })`,
+- *     reusing the existing `findPlugin(parent.filename)` lookup, and
+- *   - copies the API's top-level namespace into `exports.<name> = __api.<name>` so
+- *     `cjs-module-lexer` exposes them as ESM named exports (required by VS Code
+- *     extensions that do e.g. `import { commands, window } from 'vscode'`).
+- *
+- * Making the synthetic URL unique per importing parent gives each ESM plugin its
+- * own Node module-cache entry, so each plugin receives ITS OWN API rather than
+- * the first plugin's API being captured forever.
+- */
+-function registerESMLoaderHook(): void {
+-    const sampleApi = plugins.length > 0 ? pluginsApiImpl.get(plugins[0].model.id) : undefined;
+-    const apiKeys = sampleApi ? Object.keys(sampleApi) : [];
+-    const loaderSource = `
+-import { fileURLToPath } from 'node:url';
+-const SHIM_URL_PREFIX = 'theia-vscode-shim:///vscode.cjs?parent=';
+-const API_KEYS = ${JSON.stringify(apiKeys)};
+-
+-export async function resolve(specifier, context, nextResolve) {
+-    if (specifier === 'vscode' && context.parentURL && context.parentURL.startsWith('file:')) {
+-        return {
+-            shortCircuit: true,
+-            url: SHIM_URL_PREFIX + encodeURIComponent(context.parentURL),
+-            format: 'commonjs'
+-        };
+-    }
+-    return nextResolve(specifier, context);
+-}
+-
+-export async function load(url, context, nextLoad) {
+-    if (url.startsWith(SHIM_URL_PREFIX)) {
+-        const parentURL = decodeURIComponent(url.slice(SHIM_URL_PREFIX.length));
+-        let parentPath = '';
+-        if (parentURL.startsWith('file:')) {
+-            try { parentPath = fileURLToPath(parentURL); } catch { parentPath = ''; }
+-        }
+-        const namedExports = API_KEYS
+-            .map(k => 'exports[' + JSON.stringify(k) + '] = __api[' + JSON.stringify(k) + '];')
+-            .join('\\n');
+-        const source =
+-            "const Module = require('module');\\n" +
+-            "const __api = Module._load('vscode', { filename: " + JSON.stringify(parentPath) + " }, false);\\n" +
+-            namedExports;
+-        return { format: 'commonjs', shortCircuit: true, source };
+-    }
+-    return nextLoad(url, context);
+-}
+-`;
+-    try {
+-        const dataUrl = 'data:text/javascript;base64,' + Buffer.from(loaderSource, 'utf8').toString('base64');
+-        register(dataUrl);
+-    } catch (e) {
+-        console.error('Failed to register VS Code ESM loader hook; ESM plugins will not load:', e);
+-    }
+-}
+
+diff --git a/packages/plugin-ext/src/common/plugin-protocol.ts b/packages/plugin-ext/src/common/plugin-protocol.ts
+index b0d914e..9b7397f 100644
+--- a/packages/plugin-ext/src/common/plugin-protocol.ts
++++ b/packages/plugin-ext/src/common/plugin-protocol.ts
+@@ -63,7 +63,6 @@ export interface PluginPackage {
+     extensionPack?: string[];
+     l10n?: string;
+     icon?: string;
+-    type?: 'module' | 'commonjs';
+     extensionKind?: Array<'ui' | 'workspace'>;
+     capabilities?: {
+         untrustedWorkspaces?: {
+
+diff --git a/packages/plugin-ext/src/hosted/node/hosted-plugin-localization-service.ts b/packages/plugin-ext/src/hosted/node/hosted-plugin-localization-service.ts
+index bc0dcd0..9f88f60 100644
+--- a/packages/plugin-ext/src/hosted/node/hosted-plugin-localization-service.ts
++++ b/packages/plugin-ext/src/hosted/node/hosted-plugin-localization-service.ts
+@@ -259,6 +259,9 @@ async function loadPluginBundles(l10nUri: URI): Promise<Record<string, LanguageP
+         return result;
+     } catch (err) {
+         // The directory either doesn't exist or its contents cannot be parsed
++        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
++            return undefined;
++        }
+         console.error(`Failed to load plugin localization bundles from ${l10nUri}.`, err);
+         // In any way we should just safely return undefined
+         return undefined;
+
+diff --git a/packages/plugin-ext/src/hosted/node/plugin-host-rpc.ts b/packages/plugin-ext/src/hosted/node/plugin-host-rpc.ts
+index 13f3bcb..8952160 100644
+--- a/packages/plugin-ext/src/hosted/node/plugin-host-rpc.ts
++++ b/packages/plugin-ext/src/hosted/node/plugin-host-rpc.ts
+@@ -16,8 +16,6 @@
+ 
+ /* eslint-disable @typescript-eslint/no-explicit-any */
+ 
+-import * as path from 'path';
+-import { pathToFileURL } from 'node:url';
+ import { dynamicRequire, removeFromCache } from '@theia/core/lib/node/dynamic-require';
+ import { ContainerModule, inject, injectable, postConstruct, unmanaged } from '@theia/core/shared/inversify';
+ import { AbstractPluginManagerExtImpl, PluginHost, PluginManagerExtImpl } from '../../plugin/plugin-manager';
+@@ -71,11 +69,6 @@ export type RpcKeys<EXT extends Partial<ExtInterfaces>> = Partial<Record<keyof E
+     $pluginManager: ProxyIdentifier<any>;
+ };
+ 
+-// Hide the dynamic `import()` inside `new Function` so that bundlers and
+-// transpilers targeting CommonJS (tsc, esbuild, webpack) cannot statically
+-// rewrite it into `Promise.resolve(require(...))`.
+-const importESMPlugin = new Function('url', 'return import(url)') as (url: string) => Promise<any>;
+-
+ export const PluginContainerModuleLoader = Symbol('PluginContainerModuleLoader');
+ /**
+  * A function that loads a `PluginContainerModule` exported by a plugin's entry-point
+@@ -164,24 +157,6 @@ export abstract class AbstractPluginHostRPC<PM extends AbstractPluginManagerExtI
+         return pluginModel.entryPoint.backend;
+     }
+ 
+-    /**
+-     * Determine whether a plugin should be loaded via ESM `import()` instead of
+-     * CommonJS `require()`. Mirrors Node's own rules:
+-     *   - `.mjs` is always ESM
+-     *   - `.cjs` is always CJS
+-     *   - any other extension falls back to the `package.json` `type` field
+-     */
+-    protected isESMPlugin(plugin: Plugin): boolean {
+-        const ext = path.extname(plugin.pluginPath || '').toLowerCase();
+-        if (ext === '.mjs') {
+-            return true;
+-        }
+-        if (ext === '.cjs') {
+-            return false;
+-        }
+-        return plugin.rawModel.type === 'module';
+-    }
+-
+     /**
+      * Create the {@link PluginHost} that is required by my plugin manager ext interface to delegate
+      * critical behaviour such as loading and initializing plugins to me.
+@@ -197,13 +172,9 @@ export abstract class AbstractPluginHostRPC<PM extends AbstractPluginManagerExtI
+                 // https://github.com/eclipse-theia/theia/pull/4931
+                 // https://github.com/nodejs/node/issues/8443
+                 removeFromCache(mod => mod.id.startsWith(plugin.pluginFolder));
+-                if (!plugin.pluginPath) {
+-                    return undefined;
+-                }
+-                if (self.isESMPlugin(plugin)) {
+-                    return importESMPlugin(pathToFileURL(plugin.pluginPath).href);
++                if (plugin.pluginPath) {
++                    return dynamicRequire(plugin.pluginPath);
+                 }
+-                return dynamicRequire(plugin.pluginPath);
+             },
+             async init(raw: PluginMetadata[]): Promise<[Plugin[], Plugin[]]> {
+                 console.log(self.banner, 'PluginManagerExtImpl/init()');
+
+diff --git a/packages/plugin-ext/src/hosted/node/plugin-reader.ts b/packages/plugin-ext/src/hosted/node/plugin-reader.ts
+index cc204e4..d37f85d 100644
+--- a/packages/plugin-ext/src/hosted/node/plugin-reader.ts
++++ b/packages/plugin-ext/src/hosted/node/plugin-reader.ts
+@@ -92,7 +92,6 @@ export class HostedPluginReader implements BackendApplicationContribution {
+         if (!pathExtension) {
+             candidates.push(absolutePath + '.js');
+             candidates.push(absolutePath + '.cjs');
+-            candidates.push(absolutePath + '.mjs');
+         }
+ 
+         for (const candidate of candidates) {
+
+diff --git a/packages/plugin-ext/src/main/browser/tabs/tabs-main.ts b/packages/plugin-ext/src/main/browser/tabs/tabs-main.ts
+index 7ef15bc..d6cabe6 100644
+--- a/packages/plugin-ext/src/main/browser/tabs/tabs-main.ts
++++ b/packages/plugin-ext/src/main/browser/tabs/tabs-main.ts
+@@ -101,10 +101,8 @@ export class TabsMainImpl implements TabsMain, Disposable {
+ 
+         this.connectToSignal(this.toDisposeOnDestroy, this.applicationShell.mainPanel.widgetRemoved, (mainPanel, widget) => {
+             if (!(widget instanceof TabBar)) {
+-                const tabInfo = this.getOrRebuildModel(this.tabInfoLookup, widget.title);
+-                if (tabInfo) {
+-                    this.onTabClosed(tabInfo, widget.title);
+-                }
++                const tabInfo = this.getOrRebuildModel(this.tabInfoLookup, widget.title)!;
++                this.onTabClosed(tabInfo, widget.title);
+                 if (this.tabGroupChanged) {
+                     this.tabGroupChanged = false;
+                     this.createTabsModel();
+@@ -270,12 +268,12 @@ export class TabsMainImpl implements TabsMain, Disposable {
+             a.id === b.id;
+     }
+ 
+-    protected getOrRebuildModel<T, R>(map: Map<T, R>, key: T): R | undefined {
++    protected getOrRebuildModel<T, R>(map: Map<T, R>, key: T): R {
+         // something broke so we rebuild the model
+         let item = map.get(key);
+         if (!item) {
+             this.createTabsModel();
+-            item = map.get(key);
++            item = map.get(key)!;
+         }
+         return item;
+     }
+@@ -283,9 +281,6 @@ export class TabsMainImpl implements TabsMain, Disposable {
+     // #region event listeners
+     private onTabCreated(tabBar: TabBar<Widget>, args: TabBar.ITabActivateRequestedArgs<Widget>): void {
+         const group = this.getOrRebuildModel(this.tabGroupModel, tabBar);
+-        if (!group) {
+-            return;
+-        }
+         this.connectToSignal(this.getTitleDisposables(args.title), args.title.changed, this.onTabTitleChanged);
+         const tabDto = this.createTabDto(args.title, group.groupId, true);
+         this.tabInfoLookup.set(args.title, { group, tab: tabDto, tabIndex: args.index });
+
+diff --git a/packages/plugin-ext/src/plugin/plugin-manager.ts b/packages/plugin-ext/src/plugin/plugin-manager.ts
+index 0c1a27f..8056f9b 100644
+--- a/packages/plugin-ext/src/plugin/plugin-manager.ts
++++ b/packages/plugin-ext/src/plugin/plugin-manager.ts
+@@ -306,7 +306,7 @@ export abstract class AbstractPluginManagerExtImpl<P extends Record<string, any>
+                         }
+                     }
+ 
+-                    let pluginMain = await this.host.loadPlugin(plugin);
++                    let pluginMain = this.host.loadPlugin(plugin);
+                     // see https://github.com/TypeFox/vscode/blob/70b8db24a37fafc77247de7f7cb5bb0195120ed0/src/vs/workbench/api/common/extHostExtensionService.ts#L372-L376
+                     pluginMain = pluginMain || {};
+                     await this.startPlugin(plugin, configStorage, pluginMain);
+
+diff --git a/packages/scanoss/src/common/scanoss-preferences.ts b/packages/scanoss/src/common/scanoss-preferences.ts
+index a8ebc2a..7532b50 100644
+--- a/packages/scanoss/src/common/scanoss-preferences.ts
++++ b/packages/scanoss/src/common/scanoss-preferences.ts
+@@ -23,7 +23,7 @@ export const ScanOSSPreferencesSchema: PreferenceSchema = {
+         [SCAN_OSS_API_KEY_PREF]: {
+             type: 'string',
+             markdownDescription: 'Enter an API Key of your SCANOSS  Account. **Please note:** By using this preference the key will be stored in clear text\
+-            on the machine running Theia. Use the environment variable `SCANOSS_API_KEY` to set the key securely.' + LINUX_ENV_HINT,
++            on the machine running CyberVinci. Use the environment variable `SCANOSS_API_KEY` to set the key securely.' + LINUX_ENV_HINT,
+             title: 'SCANOSS API Key'
+         }
+     }
+
+diff --git a/packages/workspace/src/browser/workspace-frontend-contribution.ts b/packages/workspace/src/browser/workspace-frontend-contribution.ts
+index 3ca2608..8f1eb39 100644
+--- a/packages/workspace/src/browser/workspace-frontend-contribution.ts
++++ b/packages/workspace/src/browser/workspace-frontend-contribution.ts
+@@ -569,7 +569,7 @@ export namespace WorkspaceFrontendContribution {
+      * @deprecated Since 1.39.0 Use `WorkspaceFrontendContribution#getWorkspaceDialogFileFilters` instead.
+      */
+     export const DEFAULT_FILE_FILTER: FileDialogTreeFilters = {
+-        'Theia Workspace (*.theia-workspace)': [THEIA_EXT],
++        'CyberVinci Workspace (*.theia-workspace)': [THEIA_EXT],
+         'VS Code Workspace (*.code-workspace)': [VSCODE_EXT]
+     };
+ }
+

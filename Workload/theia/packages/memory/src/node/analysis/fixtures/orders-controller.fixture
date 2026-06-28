@@ -1,0 +1,24 @@
+import express from "express";
+import { OrderService } from "./order-service";
+
+export interface Order {
+    id: string;
+}
+
+export class OrdersController {
+    constructor(private readonly service: OrderService) {}
+
+    list(): Order[] {
+        return this.service.listOrders();
+    }
+}
+
+const app = express();
+app.get("/orders", (_req, res) => {
+    const controller = new OrdersController(new OrderService());
+    res.json(controller.list());
+});
+
+test("lists orders", () => {
+    expect(new OrdersController(new OrderService()).list()).toEqual([]);
+});

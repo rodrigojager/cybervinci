@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src file:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cybervinci-splash-icon {
+      width: 230px;
+      height: 263px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.32));
+    }
+  </style>
+</head>
+<body>
+  <img
+    id="cybervinci-splash-icon"
+    class="cybervinci-splash-icon"
+    src="cybervinci-icons/dourado-ciano-e-branco.png"
+    alt=""
+  >
+  <script>
+    const iconUrl = new URLSearchParams(window.location.search).get('iconUrl');
+    if (iconUrl && iconUrl.startsWith('file:')) {
+      document.getElementById('cybervinci-splash-icon').src = iconUrl;
+    }
+  </script>
+</body>
+</html>

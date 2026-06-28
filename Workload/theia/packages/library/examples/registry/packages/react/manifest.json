@@ -1,0 +1,27 @@
+{
+  "id": "react",
+  "name": "React",
+  "ecosystem": "npm",
+  "package_name": "react",
+  "package_manager": "npm",
+  "homepage": "https://react.dev",
+  "repository": "https://github.com/reactjs/react.dev",
+  "sources": [
+    {
+      "type": "git",
+      "url": "https://github.com/reactjs/react.dev",
+      "docs_path": ["src/content"]
+    }
+  ],
+  "versioning": {
+    "strategy": "manual"
+  },
+  "license": {
+    "content_license": "CC-BY-4.0",
+    "redistribution_allowed": true
+  },
+  "update_policy": {
+    "check_interval": "weekly",
+    "compare": ["source_commit", "content_hash_sha256"]
+  }
+}

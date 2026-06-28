@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theia-ide.org/schemas/library/crawler-recipe.schema.json",
+  "type": "object",
+  "required": ["id", "source_type"],
+  "properties": {
+    "id": { "type": "string" },
+    "source_type": { "enum": ["git", "llms_txt", "sitemap", "website", "single_url"] },
+    "include": { "type": "array", "items": { "type": "string" } },
+    "exclude": { "type": "array", "items": { "type": "string" } },
+    "content_selectors": { "type": "array", "items": { "type": "string" } },
+    "execute_javascript": { "type": "boolean", "const": false }
+  }
+}

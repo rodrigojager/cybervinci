@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cybervinci.tool/v1",
+  "title": "CyberVinci Tool",
+  "type": "object",
+  "required": ["id", "name"],
+  "additionalProperties": true,
+  "properties": {
+    "version": { "enum": ["cybervinci.tool/v1", 1] },
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": ["tool", "guard", "action", "query", "effect", "ai", "flow", "ui"]
+    },
+    "source": {
+      "enum": ["core", "system", "system-override", "user"]
+    },
+    "description": { "type": "string" },
+    "category": { "type": "string" },
+    "parameters": { "type": "object" },
+    "inputSchema": { "type": "object" },
+    "outputSchema": { "type": "object" },
+    "entry": { "type": "object" },
+    "implementation": {
+      "enum": ["host", "command", "theia-tool", "composite"]
+    },
+    "exposeToModel": { "type": "boolean" },
+    "protected": { "type": "boolean" },
+    "command": { "type": "string" },
+    "theiaToolId": { "type": "string" },
+    "args": { "type": "array", "items": { "type": "string" } },
+    "cwd": { "type": "string" },
+    "env": { "type": "object" },
+    "shell": { "type": "boolean" },
+    "timeoutMs": { "type": "number" },
+    "policy": { "type": "object" },
+    "capabilities": { "type": "object" },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["tool"],
+        "properties": {
+          "id": { "type": "string" },
+          "tool": { "type": "string" },
+          "args": { "type": "object" },
+          "saveAs": { "type": "string" },
+          "stopOnFail": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

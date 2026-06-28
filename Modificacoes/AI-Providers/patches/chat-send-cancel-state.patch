@@ -1,0 +1,783 @@
+diff --git a/packages/ai-chat-ui/src/browser/chat-input-widget.tsx b/packages/ai-chat-ui/src/browser/chat-input-widget.tsx
+index 1ec79f203..7aa261365 100644
+--- a/packages/ai-chat-ui/src/browser/chat-input-widget.tsx
++++ b/packages/ai-chat-ui/src/browser/chat-input-widget.tsx
+@@ -31,14 +31,14 @@ import { ImageContextVariable } from '@theia/ai-chat/lib/common/image-context-va
+ import { AgentCompletionNotificationService, FrontendVariableService, AIActivationService, CompletionNotificationOptions } from '@theia/ai-core/lib/browser';
+ import { AISettingsService, PromptService } from '@theia/ai-core/lib/common';
+ import { ApplicationShell } from '@theia/core/lib/browser/shell/application-shell';
+-import { CommandService, DisposableCollection, Emitter, InMemoryResources, MessageService, URI, nls, Disposable } from '@theia/core';
++import { CommandService, ContributionProvider, DisposableCollection, Emitter, InMemoryResources, MessageService, URI, nls, Disposable } from '@theia/core';
+ import { CommonCommands, ContextMenuRenderer, HoverService, LabelProvider, Message, OpenerService, ReactWidget } from '@theia/core/lib/browser';
+ import { MarkdownString } from '@theia/core/lib/common/markdown-rendering';
+ import { SelectComponent, SelectOption } from '@theia/core/lib/browser/widgets/select-component';
+ import { ContextKey, ContextKeyService } from '@theia/core/lib/browser/context-key-service';
+ import { KeybindingRegistry } from '@theia/core/lib/browser/keybinding';
+ import { Deferred } from '@theia/core/lib/common/promise-util';
+-import { inject, injectable, optional, postConstruct } from '@theia/core/shared/inversify';
++import { inject, injectable, named, optional, postConstruct } from '@theia/core/shared/inversify';
+ import * as React from '@theia/core/shared/react';
+ import { IMouseEvent, Range } from '@theia/monaco-editor-core';
+ import { MonacoEditorProvider } from '@theia/monaco/lib/browser/monaco-editor-provider';
+@@ -82,6 +82,16 @@ type DeleteChangeSet = (requestModel: ChatRequestModel) => void;
+ type DeleteChangeSetElement = (requestModel: ChatRequestModel, index: number) => void;
+ type OpenContextElement = (request: AIVariableResolutionRequest) => unknown;
+ 
++const IMAGE_CONTEXT_REF_REGEX = /#imageContext:(\S+)/g;
++
++interface PendingImageDisplayEntry {
++    shortId: string;
++    name: string;
++    mimeType?: string;
++    data?: string;
++    wsRelativePath?: string;
++}
++
+ export const AIChatInputConfiguration = Symbol('AIChatInputConfiguration');
+ export interface AIChatInputConfiguration {
+     showContext?: boolean;
+@@ -92,6 +102,19 @@ export interface AIChatInputConfiguration {
+     enablePromptHistory?: boolean;
+ }
+ 
++export const AIChatInputOptionsContribution = Symbol('AIChatInputOptionsContribution');
++export interface AIChatInputOptionsContribution {
++    render(context: AIChatInputOptionsContribution.Context): React.ReactNode;
++}
++export namespace AIChatInputOptionsContribution {
++    export interface Context {
++        chatModel: ChatModel;
++        pending: boolean;
++        enabled: boolean;
++        hoverService: HoverService;
++    }
++}
++
+ @injectable()
+ export class AIChatInputWidget extends ReactWidget {
+     public static ID = 'chat-input-widget';
+@@ -192,6 +215,9 @@ export class AIChatInputWidget extends ReactWidget {
+     @inject(CommandService)
+     protected readonly commandService: CommandService;
+ 
++    @inject(ContributionProvider) @named(AIChatInputOptionsContribution) @optional()
++    protected readonly inputOptionsContributions: ContributionProvider<AIChatInputOptionsContribution> | undefined;
++
+     protected tokenUsageEnabled = false;
+     /** Sessions we have already notified for the current warning cycle (re-armed when usage drops below the threshold). */
+     protected readonly notifiedSessions = new Set<string>();
+@@ -743,6 +769,13 @@ export class AIChatInputWidget extends ReactWidget {
+      * These are cleared after the message is sent.
+      */
+     protected pendingImageDisposables = new Map<string, Disposable>();
++
++    protected imageRefDecorationIds: string[] = [];
++
++    protected refreshPendingImageDisplay(): void {
++        this.updateImageRefDecorations();
++        this.update();
++    }
+     set chatModel(chatModel: ChatModel) {
+         this.onDisposeForChatModel.dispose();
+         this.onDisposeForChatModel = new DisposableCollection();
+@@ -1188,6 +1221,8 @@ export class AIChatInputWidget extends ReactWidget {
+                 this.updateCursorPositionKeys();
+             }
+             this.scheduleUpdateReceivingAgent();
++            this.updateImageRefDecorations();
++            this.update();
+         }));
+ 
+         if (editor.hasWidgetFocus()) {
+@@ -1262,6 +1297,27 @@ export class AIChatInputWidget extends ReactWidget {
+         const isEditing = !!(currentRequest && (EditableChatRequestModel.isEditing(currentRequest)));
+         const isPending = () => !!(currentRequest && !isEditing && ChatRequestModel.isInProgress(currentRequest));
+         const pending = isPending();
++        const seenContributionKeys = new Set<React.Key>();
++        const contributedOptions = this.inputOptionsContributions?.getContributions(true)
++            .map(contribution => contribution.render({
++                chatModel: this._chatModel,
++                pending,
++                enabled: this.isEnabled,
++                hoverService: this.hoverService
++            }))
++            .filter((element): element is React.ReactNode => {
++                if (element === undefined || element === null || element === false) {
++                    return false;
++                }
++                if (!React.isValidElement(element) || element.key === null) {
++                    return true;
++                }
++                if (seenContributionKeys.has(element.key)) {
++                    return false;
++                }
++                seenContributionKeys.add(element.key);
++                return true;
++            }) ?? [];
+ 
+         return (
+             <ChatInput
+@@ -1316,6 +1372,7 @@ export class AIChatInputWidget extends ReactWidget {
+                 }}
+                 onResize={() => this.onDidResizeEmitter.fire()}
+                 hoverService={this.hoverService}
++                contributedOptions={contributedOptions}
+                 modeSelectorProps={{
+                     receivingAgentModes: this.receivingAgent?.modes,
+                     currentMode: this.receivingAgent?.currentModeId,
+@@ -1348,6 +1405,8 @@ export class AIChatInputWidget extends ReactWidget {
+                 tokenUsageEnabled={this.tokenUsageEnabled}
+                 tokenUsageWarningThreshold={this.getTokenUsageWarningThreshold()}
+                 contextWindowSize={this.getContextWindowSize()}
++                pendingImages={this.getPendingImagesForDisplay()}
++                onRemovePendingImage={this.removePendingImage.bind(this)}
+             />
+         );
+     }
+@@ -1401,6 +1460,7 @@ export class AIChatInputWidget extends ReactWidget {
+                     text: textsToInsert.join(' ')
+                 }]);
+             }
++            this.refreshPendingImageDisplay();
+         });
+     }
+ 
+@@ -1466,6 +1526,7 @@ export class AIChatInputWidget extends ReactWidget {
+                 text: textsToInsert.join(' ')
+             }]);
+         }
++        this.refreshPendingImageDisplay();
+     }
+ 
+     protected clipboardDataHasImages(clipboardData: DataTransfer | null): boolean {
+@@ -1563,6 +1624,92 @@ export class AIChatInputWidget extends ReactWidget {
+         return shortId;
+     }
+ 
++    getPendingImagesForDisplay(): PendingImageDisplayEntry[] {
++        const editor = this.editorRef?.getControl();
++        const model = editor?.getModel();
++        if (!model) {
++            return [];
++        }
++
++        const scopeUri = this.getScopeUri();
++        const text = model.getValue();
++        const seen = new Set<string>();
++        const entries: PendingImageDisplayEntry[] = [];
++        const regex = new RegExp(IMAGE_CONTEXT_REF_REGEX.source, IMAGE_CONTEXT_REF_REGEX.flags);
++
++        for (const match of text.matchAll(regex)) {
++            const shortId = match[1];
++            if (seen.has(shortId)) {
++                continue;
++            }
++            seen.add(shortId);
++
++            const pendingData = this.pendingImageRegistry.get(scopeUri, shortId)
++                ?? this.pendingImageRegistry.getByShortId(shortId);
++            if (!pendingData) {
++                continue;
++            }
++
++            const imageVariable = pendingData.imageVariable;
++            entries.push({
++                shortId,
++                name: imageVariable.name ?? imageVariable.wsRelativePath?.split('/').pop() ?? shortId,
++                mimeType: imageVariable.mimeType,
++                data: imageVariable.data,
++                wsRelativePath: imageVariable.wsRelativePath,
++            });
++        }
++
++        return entries;
++    }
++
++    removePendingImage(shortId: string): void {
++        const editor = this.editorRef?.getControl();
++        const model = editor?.getModel();
++        if (editor && model) {
++            const escapedShortId = shortId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
++            const nextValue = model.getValue()
++                .replace(new RegExp(`#imageContext:${escapedShortId}`, 'g'), '')
++                .replace(/[ \t]+\n/g, '\n')
++                .replace(/\n[ \t]+/g, '\n')
++                .replace(/[ \t]{2,}/g, ' ')
++                .trim();
++            editor.setValue(nextValue);
++        }
++
++        this.pendingImageDisposables.get(shortId)?.dispose();
++        this.pendingImageDisposables.delete(shortId);
++        this.refreshPendingImageDisplay();
++    }
++
++    protected updateImageRefDecorations(): void {
++        const editor = this.editorRef?.getControl();
++        const model = editor?.getModel();
++        if (!editor || !model) {
++            return;
++        }
++
++        const text = model.getValue();
++        const decorations: IModelDeltaDecoration[] = [];
++        const regex = new RegExp(IMAGE_CONTEXT_REF_REGEX.source, IMAGE_CONTEXT_REF_REGEX.flags);
++
++        for (const match of text.matchAll(regex)) {
++            const startOffset = match.index ?? 0;
++            const endOffset = startOffset + match[0].length;
++            const startPos = model.getPositionAt(startOffset);
++            const endPos = model.getPositionAt(endOffset);
++            decorations.push({
++                range: new Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
++                options: {
++                    description: 'hidden-image-ref',
++                    inlineClassName: 'theia-ChatInput-HiddenImageRef',
++                }
++            });
++        }
++
++        this.imageRefDecorationIds = editor.deltaDecorations(this.imageRefDecorationIds, decorations);
++    }
++
+     /**
+      * Clear all pending image attachments. Called after a message is sent.
+      */
+@@ -1655,6 +1802,7 @@ interface ChatInputProperties {
+     onResponseChanged: () => void;
+     onResize: () => void;
+     hoverService: HoverService;
++    contributedOptions?: React.ReactNode[];
+     modeSelectorProps: {
+         receivingAgentModes?: ChatMode[];
+         currentMode?: string;
+@@ -1687,6 +1835,8 @@ interface ChatInputProperties {
+     tokenUsageEnabled?: boolean;
+     tokenUsageWarningThreshold: number;
+     contextWindowSize: number;
++    pendingImages?: PendingImageDisplayEntry[];
++    onRemovePendingImage?: (shortId: string) => void;
+ }
+ 
+ // Utility to check if we have task context in the chat model
+@@ -1731,7 +1881,7 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+             ? nls.localize('theia/ai/chat-ui/aiDisabled', 'AI features are disabled')
+             : shouldUseTaskPlaceholder
+                 ? taskPlaceholder
+-                : nls.localize('theia/ai/chat-ui/askQuestion', 'Ask a question') +
++                : nls.localize('theia/ai/chat-ui/askQuestion', 'Ask CyberVinci anything...') +
+                 (props.hasPromptHistory && isInputFocused ? nls.localizeByDefault(' ({0} for history)', '⇅') : '');
+         setPlaceholderText(newPlaceholderText);
+     }, [props.isEnabled, shouldUseTaskPlaceholder, taskPlaceholder, props.hasPromptHistory, isInputFocused]);
+@@ -1756,8 +1906,10 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+     React.useEffect(() => {
+         const uri = props.uri;
+         const createInputElement = async () => {
+-            const paddingTop = 6;
++            const paddingTop = 8;
+             const lineHeight = 20;
++            const minEditorLines = 2;
++            const minEditorHeightPx = lineHeight * minEditorLines + paddingTop;
+             const maxHeightPx = (props.heightInLines ?? 12) * lineHeight;
+ 
+             const editor = await props.editorProvider.createSimpleInline(uri, editorContainerRef.current!, {
+@@ -1794,7 +1946,8 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+ 
+             if (editorContainerRef.current) {
+                 editorContainerRef.current.style.overflowY = 'auto'; // ensure vertical scrollbar
+-                editorContainerRef.current.style.height = (lineHeight + (2 * paddingTop)) + 'px';
++                editorContainerRef.current.style.minHeight = minEditorHeightPx + 'px';
++                editorContainerRef.current.style.height = minEditorHeightPx + 'px';
+ 
+                 editorContainerRef.current.addEventListener('wheel', e => {
+                     // Prevent parent from scrolling
+@@ -1804,14 +1957,15 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+ 
+             const updateEditorHeight = () => {
+                 if (editorContainerRef.current) {
+-                    const contentHeight = editor.getControl().getContentHeight() + paddingTop;
++                    const contentHeight = Math.max(minEditorHeightPx, editor.getControl().getContentHeight() + paddingTop);
+                     editorContainerRef.current.style.height = `${Math.min(contentHeight, maxHeightPx)}px`;
+                 }
+             };
+ 
+             editor.getControl().onDidChangeModelContent(() => {
+-                const value = editor.getControl().getValue();
+-                setIsInputEmpty(!value || value.length === 0);
++                const visibleText = editor.getControl().getValue().replace(/#imageContext:\S+/g, '').trim();
++                setIsInputEmpty(!visibleText);
++                syncPlaceholderVisibility();
+                 updateEditorHeight();
+                 handleOnChange();
+             });
+@@ -2014,17 +2168,23 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+         showPlaceholderIfEditorEmpty();
+     };
+ 
+-    const showPlaceholderIfEditorEmpty = () => {
+-        if (!editorRef.current?.getControl().getValue()) {
++    const getVisibleEditorText = (): string =>
++        editorRef.current?.getControl().getValue().replace(/#imageContext:\S+/g, '').trim() ?? '';
++
++    const syncPlaceholderVisibility = (): void => {
++        if (!getVisibleEditorText()) {
+             placeholderRef.current?.classList.remove('hidden');
++        } else {
++            placeholderRef.current?.classList.add('hidden');
+         }
+     };
+ 
++    const showPlaceholderIfEditorEmpty = () => {
++        syncPlaceholderVisibility();
++    };
++
+     const hidePlaceholderIfEditorFilled = () => {
+-        const value = editorRef.current?.getControl().getValue();
+-        if (value && value.length > 0) {
+-            placeholderRef.current?.classList.add('hidden');
+-        }
++        syncPlaceholderVisibility();
+     };
+ 
+     const handlePin = () => {
+@@ -2054,7 +2214,9 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+             : []),
+         ...(props.showPinnedAgent
+             ? [{
+-                title: props.pinnedAgent ? nls.localize('theia/ai/chat-ui/unpinAgent', 'Unpin Agent') : nls.localizeByDefault('Agent'),
++                title: props.pinnedAgent
++                    ? nls.localize('theia/ai/chat-ui/unpinChatAgent', 'Unpin chat agent')
++                    : nls.localize('theia/ai/chat-ui/mentionChatAgent', 'Mention or pin a chat agent'),
+                 handler: props.pinnedAgent ? props.onUnpin : handlePin,
+                 className: 'codicon-mention',
+                 disabled: !props.isEnabled,
+@@ -2075,16 +2237,20 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+         const disposable = latestRequest.response.onDidChange(onResponseChanged);
+         return () => disposable.dispose();
+     }, [latestRequest, onResponseChanged]);
++    const hasPendingImages = (props.pendingImages?.length ?? 0) > 0;
++    const canSend = !isInputEmpty || hasPendingImages;
++    const sendDisabled = (!canSend && !shouldUseTaskPlaceholder) || !props.isEnabled;
++    const sendIcon = 'codicon-send';
+     if (isEditing) {
+         rightOptions = [{
+             title: nls.localize('theia/ai/chat-ui/send', 'Send (Enter)'),
+             handler: () => {
+-                if (props.isEnabled) {
++                if (!sendDisabled) {
+                     submit(editorRef.current?.document.textEditorModel.getValue() || '');
+                 }
+             },
+-            className: 'codicon-send',
+-            disabled: (isInputEmpty && !shouldUseTaskPlaceholder) || !props.isEnabled
++            className: sendIcon,
++            disabled: sendDisabled
+         }];
+     } else if (pending) {
+         rightOptions = [{
+@@ -2100,12 +2266,12 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+         rightOptions = [{
+             title: nls.localize('theia/ai/chat-ui/send', 'Send (Enter)'),
+             handler: () => {
+-                if (props.isEnabled) {
++                if (!sendDisabled) {
+                     submit(editorRef.current?.document.textEditorModel.getValue() || '');
+                 }
+             },
+-            className: 'codicon-send',
+-            disabled: (isInputEmpty && !shouldUseTaskPlaceholder) || !props.isEnabled
++            className: sendIcon,
++            disabled: sendDisabled
+         }];
+     }
+ 
+@@ -2123,13 +2289,13 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+         ? buildBarTooltip(getLatestTokenUsage(props.chatModel), totalTokens, props.tokenUsageWarningThreshold, props.contextWindowSize)
+         : undefined;
+ 
+-    return (
++        return (
+         <div className="theia-ChatInput" data-ai-disabled={!props.isEnabled} onDragOver={props.onDragOver} onDrop={props.onDrop} ref={containerRef}>
+-            {props.showSuggestions !== false && <ChatInputAgentSuggestions suggestions={props.suggestions} opener={props.openerService} />}
+             {props.showChangeSet && changeSetUI?.elements &&
+                 <ChangeSetBox changeSet={changeSetUI} />
+             }
+-            <div className={`theia-ChatInput-Editor-Box${tokenIsWarningOrError ? ` token-usage-border-${tokenColorClass}` : ''}`}>
++            <div className={`theia-ChatInput-Editor-Box cybervinci-codex-input-card${tokenIsWarningOrError ? ` token-usage-border-${tokenColorClass}` : ''}`}>
++                {props.showSuggestions !== false && <ChatInputAgentSuggestions suggestions={props.suggestions} opener={props.openerService} />}
+                 {props.showCapabilities !== false && (
+                     <CapabilitiesBar
+                         isOpen={props.capabilitiesProps.isOpen}
+@@ -2147,6 +2313,12 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+                         onSaveToSettings={props.capabilitiesProps.onSaveToSettings}
+                     />
+                 )}
++                {props.pendingImages && props.pendingImages.length > 0 && (
++                    <ChatInputPendingImages
++                        images={props.pendingImages}
++                        onRemove={props.onRemovePendingImage}
++                    />
++                )}
+                 <div className='theia-ChatInput-Editor' ref={editorContainerRef} onKeyDown={onKeyDown} onFocus={handleInputFocus} onBlur={handleInputBlur}>
+                     <div ref={placeholderRef} className='theia-ChatInput-Editor-Placeholder'>{placeholderText}</div>
+                 </div>
+@@ -2185,6 +2357,7 @@ const ChatInput: React.FunctionComponent<ChatInputProperties> = (props: ChatInpu
+                         onToggle: props.capabilitiesProps.onToggle,
+                         keybindingHint: props.capabilitiesProps.keybindingHint,
+                     }}
++                    contributedOptions={props.contributedOptions}
+                 />
+             </div>
+         </div>
+@@ -2209,6 +2382,7 @@ interface ChatInputOptionsProps {
+     rightOptions: Option[];
+     isEnabled?: boolean;
+     hoverService: HoverService;
++    contributedOptions?: React.ReactNode[];
+     tokenUsage?: {
+         percent: number;
+         colorClass: string;
+@@ -2242,6 +2416,7 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
+     rightOptions,
+     isEnabled,
+     hoverService,
++    contributedOptions,
+     tokenUsage,
+     modeSelectorProps,
+     reasoningSelectorProps,
+@@ -2272,6 +2447,15 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
+                         </span>
+                     </span>
+                 )}
++                {reasoningSelectorProps.show && reasoningSelectorProps.reasoningSupport && (
++                    <ReasoningSelector
++                        reasoningSupport={reasoningSelectorProps.reasoningSupport}
++                        currentLevel={reasoningSelectorProps.currentLevel}
++                        onReasoningChange={reasoningSelectorProps.onReasoningChange}
++                        disabled={!isEnabled}
++                        hoverService={hoverService}
++                    />
++                )}
+                 {rightOptions.map((option, index) => (
+                     <span
+                         key={index}
+@@ -2294,6 +2478,7 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
+                 ))}
+             </div>
+             <div className="theia-ChatInputOptions-left">
++                {contributedOptions}
+                 {leftOptions.map((option, index) => (
+                     <span
+                         key={index}
+@@ -2315,14 +2500,16 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
+                     </span>
+                 ))}
+                 {modeSelectorProps.show && modeSelectorProps.modes && (
+-                    <ChatModeSelector
+-                        modes={modeSelectorProps.modes}
+-                        currentMode={modeSelectorProps.currentMode}
+-                        onModeChange={modeSelectorProps.onModeChange}
+-                        disabled={!isEnabled}
+-                        keybindingHint={modeSelectorProps.keybindingHint}
+-                        hoverService={hoverService}
+-                    />
++                    <span className='theia-ChatInputOptions-mode-selector-wrapper'>
++                        <ChatModeSelector
++                            modes={modeSelectorProps.modes}
++                            currentMode={modeSelectorProps.currentMode}
++                            onModeChange={modeSelectorProps.onModeChange}
++                            disabled={!isEnabled}
++                            keybindingHint={modeSelectorProps.keybindingHint}
++                            hoverService={hoverService}
++                        />
++                    </span>
+                 )}
+                 {capabilitiesToggle.show && (
+                     <span
+@@ -2347,15 +2534,6 @@ const ChatInputOptions: React.FunctionComponent<ChatInputOptionsProps> = ({
+                         )}
+                     </span>
+                 )}
+-                {reasoningSelectorProps.show && reasoningSelectorProps.reasoningSupport && (
+-                    <ReasoningSelector
+-                        reasoningSupport={reasoningSelectorProps.reasoningSupport}
+-                        currentLevel={reasoningSelectorProps.currentLevel}
+-                        onReasoningChange={reasoningSelectorProps.onReasoningChange}
+-                        disabled={!isEnabled}
+-                        hoverService={hoverService}
+-                    />
+-                )}
+             </div>
+         </div>
+     );
+@@ -2797,6 +2975,31 @@ interface ChatContextUI {
+     }[];
+ }
+ 
++const ChatInputPendingImages: React.FunctionComponent<{
++    images: PendingImageDisplayEntry[];
++    onRemove?: (shortId: string) => void;
++}> = ({ images, onRemove }) => (
++    <div className="theia-ChatInput-PendingImages" aria-label={nls.localize('theia/ai/chat-ui/pendingImages', 'Attached images')}>
++        {images.map(image => {
++            const hasPreview = !!image.data && !!image.mimeType;
++            return (
++                <div key={image.shortId} className="theia-ChatInput-PendingImage" title={image.name}>
++                    {hasPreview
++                        ? <img src={`data:${image.mimeType};base64,${image.data}`} alt={image.name} />
++                        : <span className="theia-ChatInput-PendingImage-placeholder codicon codicon-file-media" />}
++                    <button
++                        type="button"
++                        className="theia-ChatInput-PendingImage-remove codicon codicon-close"
++                        title={nls.localizeByDefault('Remove')}
++                        aria-label={nls.localizeByDefault('Remove')}
++                        onClick={() => onRemove?.(image.shortId)}
++                    />
++                </div>
++            );
++        })}
++    </div>
++);
++
+ const ChatContext: React.FunctionComponent<ChatContextUI> = ({ context }) => (
+     <div className="theia-ChatInput-ChatContext">
+         <ul>
+diff --git a/packages/ai-chat/src/common/chat-agents.ts b/packages/ai-chat/src/common/chat-agents.ts
+index 5118a8d0f..b050a714c 100644
+--- a/packages/ai-chat/src/common/chat-agents.ts
++++ b/packages/ai-chat/src/common/chat-agents.ts
+@@ -265,11 +265,23 @@ export abstract class AbstractChatAgent implements ChatAgent {
+                 systemMessageDescription?.isPromptVariantCustomized
+             );
+ 
++            if (request.response.isCanceled) {
++                return;
++            }
+             await this.addContentsToResponse(languageModelResponse, request);
++            if (request.response.isCanceled) {
++                return;
++            }
+             await this.recordTokenUsageFromResponse(request, languageModel);
++            if (request.response.isCanceled) {
++                return;
++            }
+             await this.onResponseComplete(request);
+ 
+         } catch (e) {
++            if (request.response.isCanceled) {
++                return;
++            }
+             this.handleError(request, e);
+         }
+     }
+@@ -383,6 +395,9 @@ export abstract class AbstractChatAgent implements ChatAgent {
+         model: ChatModel, includeResponseInProgress = false
+     ): Promise<LanguageModelMessage[]> {
+         const requestMessages = model.getRequests().flatMap(request => {
++            if (request.response.isCanceled) {
++                return [];
++            }
+             const messages: LanguageModelMessage[] = [];
+             const text = request.message.parts.map(part => part.promptText).join('');
+             if (text.length > 0) {
+@@ -576,8 +591,17 @@ export abstract class AbstractTextToModelParsingChatAgent<T> extends AbstractCha
+ 
+     protected async addContentsToResponse(languageModelResponse: LanguageModelResponse, request: MutableChatRequestModel): Promise<void> {
+         const responseAsText = await getTextOfResponse(languageModelResponse);
++        if (request.response.isCanceled) {
++            return;
++        }
+         const parsedCommand = await this.parseTextResponse(responseAsText);
++        if (request.response.isCanceled) {
++            return;
++        }
+         const content = this.createResponseContent(parsedCommand, request);
++        if (request.response.isCanceled) {
++            return;
++        }
+         request.response.response.addContent(content);
+         if ('usage' in languageModelResponse && languageModelResponse.usage) {
+             request.response.setTokenUsage(this.mapUsageResponsePart(languageModelResponse.usage));
+@@ -625,6 +649,9 @@ export abstract class AbstractStreamParsingChatAgent extends AbstractChatAgent {
+     protected override async addContentsToResponse(languageModelResponse: LanguageModelResponse, request: MutableChatRequestModel): Promise<void> {
+         if (isLanguageModelTextResponse(languageModelResponse)) {
+             const contents = this.parseContents(languageModelResponse.text, request);
++            if (request.response.isCanceled) {
++                return;
++            }
+             request.response.response.addContents(contents);
+             if (languageModelResponse.usage) {
+                 request.response.setTokenUsage(this.mapUsageResponsePart(languageModelResponse.usage));
+@@ -633,6 +660,9 @@ export abstract class AbstractStreamParsingChatAgent extends AbstractChatAgent {
+         }
+         if (isLanguageModelParsedResponse(languageModelResponse)) {
+             const contents = this.parseContents(languageModelResponse.content, request);
++            if (request.response.isCanceled) {
++                return;
++            }
+             request.response.response.addContents(contents);
+             if (languageModelResponse.usage) {
+                 request.response.setTokenUsage(this.mapUsageResponsePart(languageModelResponse.usage));
+@@ -657,12 +687,18 @@ export abstract class AbstractStreamParsingChatAgent extends AbstractChatAgent {
+         let completeTextBuffer = '';
+         let startIndex = request.response.response.content.length;
+         for await (const token of languageModelResponse.stream) {
++            if (request.response.isCanceled) {
++                break;
++            }
+             // Skip unknown tokens. For example OpenAI sends empty tokens around tool calls
+             if (!isLanguageModelStreamResponsePart(token)) {
+                 console.debug(`Unknown token: '${JSON.stringify(token)}'. Skipping`);
+                 continue;
+             }
+             const newContent = this.parse(token, request);
++            if (request.response.isCanceled) {
++                break;
++            }
+             if (!isTextResponsePart(token)) {
+                 // For non-text tokens (like tool calls), add them directly
+                 if (isArray(newContent)) {
+@@ -683,6 +719,9 @@ export abstract class AbstractStreamParsingChatAgent extends AbstractChatAgent {
+                     ? request.response.response.content.slice(0, startIndex)
+                     : [];
+ 
++                if (request.response.isCanceled) {
++                    break;
++                }
+                 request.response.response.clearContent();
+                 request.response.response.addContents(contentBeforeMarker);
+                 request.response.response.addContents(parsedContents);
+diff --git a/packages/ai-chat/src/common/chat-model.ts b/packages/ai-chat/src/common/chat-model.ts
+index a7fb17c2b..21c67cfc5 100644
+--- a/packages/ai-chat/src/common/chat-model.ts
++++ b/packages/ai-chat/src/common/chat-model.ts
+@@ -2790,7 +2790,7 @@ class ChatResponseImpl implements ChatResponse {
+     protected _responseRepresentation: string;
+     protected _responseRepresentationForDisplay: string;
+ 
+-    constructor() {
++    constructor(protected readonly acceptsContent: () => boolean = () => true) {
+         this._content = [];
+     }
+ 
+@@ -2799,17 +2799,38 @@ class ChatResponseImpl implements ChatResponse {
+     }
+ 
+     clearContent(): void {
++        if (!this.acceptsContent()) {
++            return;
++        }
++        this.doClearContent();
++    }
++
++    forceClearContent(): void {
++        this.doClearContent();
++    }
++
++    protected doClearContent(): void {
+         this._content = [];
+         this._updateResponseRepresentation();
+         this._onDidChangeEmitter.fire();
+     }
+ 
+     addContents(contents: ChatResponseContent[]): void {
++        if (!this.acceptsContent()) {
++            return;
++        }
+         contents.forEach(c => this.doAddContent(c));
+         this._onDidChangeEmitter.fire();
+     }
+ 
+     addContent(nextContent: ChatResponseContent): void {
++        if (!this.acceptsContent()) {
++            return;
++        }
++        this.forceAddContent(nextContent);
++    }
++
++    forceAddContent(nextContent: ChatResponseContent): void {
+         // TODO: Support more complex merges affecting different content than the last, e.g. via some kind of ProcessorRegistry
+         // TODO: Support more of the built-in VS Code behavior, see
+         //   https://github.com/microsoft/vscode/blob/a2cab7255c0df424027be05d58e1b7b941f4ea60/src/vs/workbench/contrib/chat/common/chatModel.ts#L188-L244
+@@ -2853,6 +2874,9 @@ class ChatResponseImpl implements ChatResponse {
+     }
+ 
+     responseContentChanged(): void {
++        if (!this.acceptsContent()) {
++            return;
++        }
+         this._updateResponseRepresentation();
+         this._onDidChangeEmitter.fire();
+     }
+@@ -2940,7 +2964,7 @@ export class MutableChatResponseModel implements ChatResponseModel {
+             this._isError = false;
+         }
+ 
+-        const response = new ChatResponseImpl();
++        const response = new ChatResponseImpl(() => !this.isCanceled);
+         response.onDidChange(() => this._onDidChangeEmitter.fire());
+         this._response = response;
+     }
+@@ -3092,6 +3116,8 @@ export class MutableChatResponseModel implements ChatResponseModel {
+             // best-effort: ignore errors while canceling confirmations
+         }
+ 
++        this._response.forceClearContent();
++        this._response.forceAddContent(new InformationalChatResponseContentImpl('Response canceled and discarded.'));
+         this._onDidChangeEmitter.fire();
+     }
+ 
+diff --git a/packages/ai-claude-code/src/browser/claude-code-chat-agent.ts b/packages/ai-claude-code/src/browser/claude-code-chat-agent.ts
+index 23a19a976..512ecd9cd 100644
+--- a/packages/ai-claude-code/src/browser/claude-code-chat-agent.ts
++++ b/packages/ai-claude-code/src/browser/claude-code-chat-agent.ts
+@@ -254,6 +254,9 @@ export class ClaudeCodeChatAgent implements ChatAgent {
+ 
+             let hasAssistantMessage = false;
+             for await (const message of streamResult) {
++                if (request.response.isCanceled) {
++                    return;
++                }
+                 if (ToolApprovalRequestMessage.is(message)) {
+                     this.handleToolApprovalRequest(message, request);
+                 } else {
+@@ -269,8 +272,14 @@ export class ClaudeCodeChatAgent implements ChatAgent {
+                 }
+             }
+ 
++            if (request.response.isCanceled) {
++                return;
++            }
+             return request.response.complete();
+         } catch (error) {
++            if (request.response.isCanceled) {
++                return;
++            }
+             this.logger.error('Error handling chat interaction:', error);
+             request.response.response.addContent(new ErrorChatResponseContentImpl(error));
+             request.response.error(error);
+diff --git a/packages/ai-codex/src/browser/codex-chat-agent.ts b/packages/ai-codex/src/browser/codex-chat-agent.ts
+index 3f78e7a3c..3eb207f1b 100644
+--- a/packages/ai-codex/src/browser/codex-chat-agent.ts
++++ b/packages/ai-codex/src/browser/codex-chat-agent.ts
+@@ -113,11 +113,20 @@ export class CodexChatAgent implements ChatAgent {
+             );
+ 
+             for await (const event of streamResult) {
++                if (request.response.isCanceled) {
++                    return;
++                }
+                 await this.handleEvent(event, request);
+             }
+ 
++            if (request.response.isCanceled) {
++                return;
++            }
+             request.response.complete();
+         } catch (error) {
++            if (request.response.isCanceled) {
++                return;
++            }
+             console.error('Codex error:', error);
+             request.response.response.addContent(
+                 new ErrorChatResponseContentImpl(error)

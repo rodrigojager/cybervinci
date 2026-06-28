@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theia-ide.org/schemas/library/skill.schema.json",
+  "type": "object",
+  "required": ["id", "name", "applies_to", "preferred_docs", "rules"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "applies_to": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "package": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "preferred_docs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "package": { "type": "string" },
+          "version_source": { "type": "string" }
+        }
+      }
+    },
+    "rules": { "type": "array", "items": { "type": "string" } }
+  }
+}

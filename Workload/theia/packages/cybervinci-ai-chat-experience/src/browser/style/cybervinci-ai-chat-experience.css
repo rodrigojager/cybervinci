@@ -1,0 +1,1406 @@
+.theia-ChatInput-AiProviderSelector,
+.theia-ChatInput-AiProviderMenu,
+.theia-ChatInput-AgencyAgentMenu,
+.theia-ChatInput-PlaybookMenu {
+  --cybervinci-ai-select-button-background: var(--theia-dropdown-background, var(--theia-input-background));
+  --cybervinci-ai-select-menu-background: var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background)));
+  --cybervinci-ai-select-search-background: var(--theia-input-background, var(--theia-editor-background));
+  --cybervinci-ai-select-menu-border: var(--theia-menu-border, var(--theia-panel-border));
+  --cybervinci-ai-select-menu-foreground: var(--theia-menu-foreground, var(--theia-editor-foreground));
+  --cybervinci-ai-select-option-active-background: var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground));
+  --cybervinci-ai-select-option-active-foreground: var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground));
+  --cybervinci-ai-select-shadow: 0 10px 26px rgba(0, 0, 0, 0.36);
+}
+
+@supports (color: color-mix(in srgb, white, black)) {
+  .theia-ChatInput-AiProviderSelector,
+  .theia-ChatInput-AiProviderMenu,
+  .theia-ChatInput-AgencyAgentMenu,
+  .theia-ChatInput-PlaybookMenu {
+    --cybervinci-ai-select-button-background: color-mix(in srgb, var(--theia-dropdown-background, var(--theia-input-background)) 94%, var(--theia-editor-foreground, #ffffff) 6%);
+    --cybervinci-ai-select-menu-background: color-mix(in srgb, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))) 94%, var(--theia-editor-foreground, #ffffff) 6%);
+    --cybervinci-ai-select-search-background: color-mix(in srgb, var(--theia-input-background, var(--theia-editor-background)) 96%, var(--theia-editor-foreground, #ffffff) 4%);
+  }
+}
+
+.cybervinci-chat-experience-controls {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.chat-input-widget .theia-ChatInput-ModeSelector {
+  display: none;
+}
+
+.chat-input-widget .theia-ChatInputOptions-mode-selector-wrapper {
+  display: none;
+}
+
+.chat-input-widget .theia-ChatInput-Editor-Box .chat-agent-suggestions {
+  display: none;
+}
+
+.chat-input-widget .theia-ChatInputOptions-left > .cybervinci-chat-experience-controls ~ .cybervinci-chat-experience-controls {
+  display: none;
+}
+
+.chat-input-widget .theia-ChatInputOptions {
+  height: auto;
+  min-height: 25px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.chat-input-widget .theia-ChatInputOptions .theia-ChatInputOptions-left {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  row-gap: 4px;
+}
+
+.chat-input-widget .theia-ChatInputOptions .theia-ChatInputOptions-right {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.chat-input-widget .theia-capabilities-collapsed-bar {
+  display: none;
+  max-width: 100%;
+  padding-right: calc(var(--theia-ui-padding) * 4 / 3);
+}
+
+.chat-input-widget .theia-capabilities-collapsed-scrollbar {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-height: unset;
+  overflow: visible;
+  row-gap: 4px;
+}
+
+.chat-input-widget .theia-capabilities-collapsed-scrollbar .theia-ChatInput-CapabilityChip {
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.theia-ChatInput-AgentProfileSelector.theia-select-component,
+.theia-ChatInput-PlaybookSelector.theia-select-component,
+.theia-ChatInput-SavedWorkflowSelector.theia-select-component {
+  min-width: unset;
+  min-height: unset;
+  max-width: 180px;
+  height: calc(var(--theia-icon-size) + var(--theia-ui-padding) - 1px);
+  padding: 0 calc(var(--theia-ui-padding) / 2);
+  border: var(--theia-border-width) solid transparent;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.theia-ChatInput-AgentProfileSelector.theia-select-component {
+  max-width: 180px;
+}
+
+.theia-ChatInput-PlaybookSelector.theia-select-component,
+.theia-ChatInput-SavedWorkflowSelector.theia-select-component {
+  width: max-content;
+  max-width: min(420px, calc(100vw - 24px));
+}
+
+.theia-ChatInput-AgentProfileSelector.theia-select-component::before,
+.theia-ChatInput-PlaybookSelector.theia-select-component::before,
+.theia-ChatInput-SavedWorkflowSelector.theia-select-component::before {
+  font-family: codicon;
+  font-size: var(--theia-ui-font-size1);
+  margin-right: calc(var(--theia-ui-padding) / 3);
+  opacity: 0.85;
+}
+
+.theia-ChatInput-AgentProfileSelector.theia-select-component::before {
+  content: '\eb99';
+}
+
+.theia-ChatInput-PlaybookSelector.theia-select-component::before,
+.theia-ChatInput-SavedWorkflowSelector.theia-select-component::before {
+  content: none;
+  display: none;
+}
+
+.theia-ChatInput-AgentProfileSelector.theia-select-component:hover,
+.theia-ChatInput-PlaybookSelector.theia-select-component:hover,
+.theia-ChatInput-SavedWorkflowSelector.theia-select-component:hover {
+  background-color: var(--theia-toolbar-hoverBackground);
+}
+
+.theia-ChatInput-AgentProfileSelector.disabled,
+.theia-ChatInput-PlaybookSelector.disabled,
+.theia-ChatInput-SavedWorkflowSelector.disabled {
+  cursor: default;
+  opacity: var(--theia-mod-disabled-opacity);
+}
+
+.theia-ChatInput-AiProviderSelector {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  position: relative;
+  min-width: 0;
+}
+
+.theia-ChatInput-AiProviderSelector.disabled {
+  opacity: var(--theia-mod-disabled-opacity);
+}
+
+.theia-ChatInput-AiProviderButton {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  gap: 4px;
+  width: auto;
+  height: 24px;
+  max-width: min(260px, 100%);
+  min-width: 0;
+  padding: 0 7px;
+  color: var(--theia-dropdown-foreground, var(--theia-foreground));
+  background: var(--cybervinci-ai-select-button-background, var(--theia-dropdown-background, var(--theia-input-background)));
+  border: 1px solid var(--theia-dropdown-border, var(--theia-panel-border));
+  border-radius: 5px;
+  font: inherit;
+  font-size: var(--theia-ui-font-size0);
+}
+
+.theia-ChatInput-AiProviderButton.model {
+  max-width: min(360px, 100%);
+}
+
+.theia-ChatInput-AiProviderButton.compact {
+  max-width: min(240px, 100%);
+}
+
+.theia-ChatInput-AgentProfileButton.theia-ChatInput-AiProviderButton.compact {
+  max-width: min(460px, 100%);
+}
+
+.theia-ChatInput-AgentProfileControl,
+.theia-ChatInput-CompactControl {
+  display: inline-flex;
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.theia-ChatInput-AgentProfileControl .theia-ChatInput-AgentProfileButton {
+  width: fit-content;
+  max-width: min(460px, 100%);
+}
+
+.theia-ChatInput-ChatModeButton.theia-ChatInput-AiProviderButton.compact,
+.theia-ChatInput-FlowModeButton.theia-ChatInput-AiProviderButton.compact {
+  max-width: min(260px, 100%);
+}
+
+.theia-ChatInput-PlaybookButton.theia-ChatInput-AiProviderButton.compact {
+  max-width: min(420px, 100%);
+}
+
+.theia-ChatInput-PlaybookButton.theia-ChatInput-AiProviderButton.selected {
+  color: var(--theia-inputOption-activeForeground, var(--theia-foreground));
+  background-color: var(--theia-inputOption-activeBackground, var(--theia-dropdown-background));
+  border-color: var(--theia-inputOption-activeBorder, var(--theia-focusBorder));
+}
+
+.theia-ChatInput-PlaybookButton.theia-ChatInput-AiProviderButton.selected .codicon-list-tree {
+  color: var(--theia-inputOption-activeBorder, var(--theia-focusBorder));
+}
+
+.theia-ChatInput-SavedWorkflowButton.theia-ChatInput-AiProviderButton.compact {
+  max-width: min(360px, 100%);
+}
+
+.theia-ChatInput-AiProviderButton.toggled,
+.theia-ChatInput-VirtualReasoningButton.toggled {
+  border-color: var(--theia-inputOption-activeBorder, var(--theia-focusBorder));
+  background-color: var(--theia-inputOption-activeBackground, var(--theia-dropdown-background));
+}
+
+.theia-ChatInput-AiProviderButton:not(:disabled):hover,
+.theia-ChatInput-AiProviderButton.needs-configuration {
+  border-color: var(--theia-focusBorder);
+}
+
+.theia-ChatInput-AiProviderButton.needs-configuration {
+  color: var(--theia-editorWarning-foreground, var(--theia-foreground));
+}
+
+.theia-ChatInput-AiProviderButton:disabled {
+  cursor: default;
+}
+
+.theia-ChatInput-AiProviderButtonLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-AiProviderButton > .codicon-chevron-down {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.theia-ChatInput-AiProviderBadges {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+  min-width: 0;
+}
+
+.theia-ChatInput-AiModelIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  line-height: 1;
+}
+
+.theia-ChatInput-AiModelIcon.codicon::before {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.theia-ChatInput-AiModelIcon.cybervinci-product-icon::before {
+  width: 16px;
+  height: 16px;
+  -webkit-mask-size: 16px 16px;
+  mask-size: 16px 16px;
+}
+
+.cybervinci-product-icon-sparkles {
+  --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M9.937%2015.5A2%202%200%200%200%208.5%2014.063l-6.135-1.582a.5.5%200%200%201%200-.962L8.5%209.936A2%202%200%200%200%209.937%208.5l1.582-6.135a.5.5%200%200%201%20.962%200L14.064%208.5A2%202%200%200%200%2015.5%209.937l6.135%201.582a.5.5%200%200%201%200%20.962L15.5%2014.064a2%202%200%200%200-1.437%201.437l-1.582%206.135a.5.5%200%200%201-.962%200z%27%2F%3E%3Cpath%20d%3D%27M20%203v4%27%2F%3E%3Cpath%20d%3D%27M22%205h-4%27%2F%3E%3Cpath%20d%3D%27M4%2017v2%27%2F%3E%3Cpath%20d%3D%27M5%2018H3%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-virtual-cube {
+  --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Cpath%20d%3D%27M12%204%2018%207.5v7L12%2018l-6-3.5v-7z%27%2F%3E%3Cpath%20d%3D%27M12%204v7%27%2F%3E%3Cpath%20d%3D%27m6%207.5%206%203.5%206-3.5%27%2F%3E%3Cpath%20d%3D%27M12%2011v7%27%2F%3E%3Cpath%20d%3D%27M4%204H2v2%27%2F%3E%3Cpath%20d%3D%27M20%204h2v2%27%2F%3E%3Cpath%20d%3D%27M4%2020H2v-2%27%2F%3E%3Cpath%20d%3D%27M20%2020h2v-2%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.cybervinci-product-icon-target {
+  --cybervinci-product-icon-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27black%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%2710%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%276%27%2F%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%2712%27%20r%3D%272%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+.theia-ChatInput-AiModelIcon.free {
+  color: var(--theia-charts-green, #89d185);
+}
+
+.theia-ChatInput-AiModelIcon.paid,
+.theia-ChatInput-AiModelIcon.unavailable {
+  color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
+}
+
+.theia-ChatInput-AiModelIcon.vision,
+.theia-ChatInput-AiModelIcon.media {
+  color: var(--theia-charts-blue, #75beff);
+}
+
+.theia-ChatInput-AiModelIcon.capability {
+  color: var(--theia-charts-purple, #b180d7);
+}
+
+.theia-ChatInput-VirtualToolsButton .theia-ChatInput-AiModelIcon:not(.capability),
+.theia-ChatInput-AiProviderButton[data-cybervinci-control='variant'] .theia-ChatInput-AiModelIcon:not(.capability) {
+  color: var(--theia-foreground);
+}
+
+.theia-ChatInput-AiModelIcon.unknown {
+  color: var(--theia-editorWarning-foreground, #cca700);
+}
+
+.theia-ChatInput-AiProviderMenu {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(420px, calc(100vh - 120px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  color: var(--cybervinci-ai-select-menu-foreground, var(--theia-menu-foreground, var(--theia-editor-foreground)));
+  background: var(--cybervinci-ai-select-menu-background, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))));
+  border: 1px solid var(--cybervinci-ai-select-menu-border, var(--theia-menu-border, var(--theia-panel-border)));
+  border-radius: 5px;
+  box-shadow: var(--cybervinci-ai-select-shadow, 0 10px 26px rgba(0, 0, 0, 0.36));
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.theia-ChatInput-AiProviderMenu.provider {
+  width: min(240px, calc(100vw - 24px));
+}
+
+.theia-ChatInput-AiProviderMenu.model {
+  width: min(420px, calc(100vw - 24px));
+}
+
+.theia-ChatInput-AiProviderMenu.compact {
+  width: 190px;
+}
+
+.theia-ChatInput-VirtualToolsMenu {
+  width: min(320px, calc(100vw - 24px));
+  gap: 4px;
+}
+
+.theia-ChatInput-VirtualToolsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 2px 0 4px;
+}
+
+.theia-ChatInput-VirtualToolsSection + .theia-ChatInput-VirtualToolsSection {
+  border-top: 1px solid var(--theia-panel-border);
+  padding-top: 6px;
+}
+
+.theia-ChatInput-VirtualToolsSectionTitle {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 24px;
+  padding: 2px 8px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: var(--theia-ui-font-size0);
+}
+
+.theia-ChatInput-VirtualToolsSectionTitle > span:not(.theia-ChatInput-AiModelIcon) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-VirtualToolsSectionMeta {
+  opacity: 0.78;
+  font-size: calc(var(--theia-ui-font-size0) - 1px);
+  white-space: pre;
+}
+
+.theia-ChatInput-VirtualToolsGoalSummary {
+  margin: 0 8px 3px 31px;
+  overflow: hidden;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: var(--theia-ui-font-size0);
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-AiProviderMenuOption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 26px;
+  padding: 3px 7px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+}
+
+.theia-ChatInput-AiProviderMenuOption.provider {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.theia-ChatInput-AiProviderMenuOption:hover,
+.theia-ChatInput-AiProviderMenuOption.selected {
+  color: var(--cybervinci-ai-select-option-active-foreground, var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground)));
+  background: var(--cybervinci-ai-select-option-active-background, var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground)));
+}
+
+.theia-ChatInput-AiProviderMenuOption.unavailable {
+  color: var(--theia-editorWarning-foreground, var(--theia-foreground));
+}
+
+.theia-ChatInput-AiProviderMenuOption:disabled {
+  cursor: default;
+  opacity: var(--theia-mod-disabled-opacity);
+}
+
+.theia-ChatInput-AiProviderOptionName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-AiProviderOptionDetail {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-AiProviderMenuOption.selected .theia-ChatInput-AiProviderOptionDetail,
+.theia-ChatInput-AiProviderMenuOption:hover .theia-ChatInput-AiProviderOptionDetail {
+  color: inherit;
+  opacity: 0.82;
+}
+
+.theia-ChatInput-AgencyAgentMenu {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(460px, calc(100vh - 120px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  color: var(--cybervinci-ai-select-menu-foreground, var(--theia-menu-foreground, var(--theia-editor-foreground)));
+  background: var(--cybervinci-ai-select-menu-background, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))));
+  border: 1px solid var(--cybervinci-ai-select-menu-border, var(--theia-menu-border, var(--theia-panel-border)));
+  border-radius: 5px;
+  box-shadow: var(--cybervinci-ai-select-shadow, 0 10px 26px rgba(0, 0, 0, 0.36));
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.theia-ChatInput-PlaybookMenu {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 24px));
+  max-height: min(460px, calc(100vh - 120px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+  color: var(--cybervinci-ai-select-menu-foreground, var(--theia-menu-foreground, var(--theia-editor-foreground)));
+  background: var(--cybervinci-ai-select-menu-background, var(--theia-menu-background, var(--theia-editorWidget-background, var(--theia-editor-background))));
+  border: 1px solid var(--cybervinci-ai-select-menu-border, var(--theia-menu-border, var(--theia-panel-border)));
+  border-radius: 5px;
+  box-shadow: var(--cybervinci-ai-select-shadow, 0 10px 26px rgba(0, 0, 0, 0.36));
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.theia-ChatInput-SavedWorkflowMenu {
+  width: min(420px, calc(100vw - 24px));
+}
+
+.theia-ChatInput-PlaybookMenuHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.theia-ChatInput-PlaybookActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 2px;
+}
+
+.theia-ChatInput-PlaybookAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--theia-dropdown-foreground, var(--theia-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.theia-ChatInput-PlaybookAction:hover {
+  color: var(--theia-list-activeSelectionForeground, var(--theia-foreground));
+  background: var(--theia-list-hoverBackground);
+}
+
+.theia-ChatInput-PlaybookAction:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.theia-ChatInput-AgencyAgentSearch {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  margin: 2px 2px 6px;
+  padding: 4px 6px;
+  color: var(--theia-input-foreground, var(--theia-foreground));
+  background: var(--cybervinci-ai-select-search-background, var(--theia-input-background, var(--theia-editor-background)));
+  border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+  border-radius: 4px;
+}
+
+.theia-ChatInput-AgencyAgentSearch:focus-within {
+  border-color: var(--theia-focusBorder);
+}
+
+.theia-ChatInput-AgencyAgentSearchInput {
+  min-width: 0;
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  font-size: 12px;
+}
+
+.theia-ChatInput-AgencyAgentSearchClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.theia-ChatInput-AgencyAgentSearchClear:hover {
+  color: var(--theia-list-activeSelectionForeground, var(--theia-foreground));
+  background: var(--theia-list-hoverBackground);
+}
+
+.theia-ChatInput-AgencyAgentEmpty {
+  padding: 8px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: 12px;
+}
+
+.theia-ChatInput-AgencyAgentGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.theia-ChatInput-PlaybookGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.theia-ChatInput-AgencyAgentGroupHeader,
+.theia-ChatInput-AgencyAgentOption {
+  width: 100%;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+}
+
+.theia-ChatInput-AgencyAgentGroupHeader {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 26px;
+  gap: 6px;
+  padding: 3px 7px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+}
+
+.theia-ChatInput-AgencyAgentGroupCount {
+  opacity: 0.72;
+  font-size: 11px;
+}
+
+.theia-ChatInput-AgencyAgentOption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 26px;
+  gap: 2px;
+  padding: 3px 7px 3px 30px;
+}
+
+.theia-ChatInput-AgencyAgentOptionRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+}
+
+.theia-ChatInput-AgencyAgentOptionRow .theia-ChatInput-AgencyAgentOption {
+  padding-right: 2px;
+}
+
+.theia-ChatInput-AgencyAgentOption.no-agent {
+  padding-left: 8px;
+  margin-bottom: 3px;
+}
+
+.theia-ChatInput-AgencyAgentGroupHeader:hover,
+.theia-ChatInput-AgencyAgentOption:hover,
+.theia-ChatInput-AgencyAgentOption.selected,
+.theia-ChatInput-AgencyAgentOptionRow:hover,
+.theia-ChatInput-AgencyAgentOptionRow.selected {
+  color: var(--cybervinci-ai-select-option-active-foreground, var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground)));
+  background: var(--cybervinci-ai-select-option-active-background, var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground)));
+}
+
+.theia-ChatInput-AgencyAgentName,
+.theia-ChatInput-AgencyAgentGroupLabel,
+.theia-ChatInput-AgencyAgentDetail,
+.theia-ChatInput-AgencyAgentOrigin {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-AgencyAgentDetail {
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: 11px;
+}
+
+.theia-ChatInput-AgencyAgentOption:hover .theia-ChatInput-AgencyAgentDetail,
+.theia-ChatInput-AgencyAgentOption.selected .theia-ChatInput-AgencyAgentDetail,
+.theia-ChatInput-AgencyAgentOptionRow:hover .theia-ChatInput-AgencyAgentDetail,
+.theia-ChatInput-AgencyAgentOptionRow.selected .theia-ChatInput-AgencyAgentDetail {
+  color: inherit;
+  opacity: 0.82;
+}
+
+.theia-ChatInput-AgencyAgentOrigin {
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: 11px;
+  opacity: 0.82;
+}
+
+.theia-ChatInput-AgencyAgentActions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.theia-ChatInput-AgencyAgentAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.theia-ChatInput-AgencyAgentAction:hover,
+.theia-ChatInput-AgencyAgentAction.active {
+  color: var(--theia-list-activeSelectionForeground, var(--theia-foreground));
+  background: color-mix(in srgb, var(--theia-list-hoverBackground) 82%, transparent);
+}
+
+.theia-ChatInput-PlaybookOption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 26px;
+  gap: 2px 8px;
+  width: 100%;
+  padding: 3px 7px 3px 30px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+}
+
+.theia-ChatInput-PlaybookOption:hover,
+.theia-ChatInput-PlaybookOption.selected {
+  color: var(--cybervinci-ai-select-option-active-foreground, var(--theia-menu-selectionForeground, var(--theia-list-hoverForeground)));
+  background: var(--cybervinci-ai-select-option-active-background, var(--theia-menu-selectionBackground, var(--theia-list-hoverBackground)));
+}
+
+.theia-ChatInput-PlaybookOption.disabled {
+  opacity: var(--theia-mod-disabled-opacity);
+}
+
+.theia-ChatInput-PlaybookName,
+.theia-ChatInput-PlaybookDetail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.theia-ChatInput-PlaybookDetail {
+  grid-column: 1 / -1;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: 11px;
+}
+
+.theia-ChatInput-SavedWorkflowOption .theia-ChatInput-PlaybookDetail {
+  white-space: normal;
+}
+
+.theia-ChatInput-PlaybookOption:hover .theia-ChatInput-PlaybookDetail,
+.theia-ChatInput-PlaybookOption.selected .theia-ChatInput-PlaybookDetail {
+  color: inherit;
+  opacity: 0.82;
+}
+
+.theia-ChatInput-PlaybookBadges {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-width: 0;
+}
+
+.theia-ChatInput-PlaybookBadge {
+  max-width: 120px;
+  padding: 1px 5px;
+  overflow: hidden;
+  color: var(--theia-badge-foreground, var(--theia-foreground));
+  background: var(--theia-badge-background, var(--theia-inputOption-activeBackground));
+  border-radius: 999px;
+  font-size: calc(var(--theia-ui-font-size0) - 1px);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-flow-gate-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: calc(100% - 16px);
+  margin: 0 8px 8px;
+  padding: 10px;
+  color: var(--theia-foreground);
+  background: var(--theia-sideBar-background, var(--theia-editorWidget-background));
+  border: 1px solid var(--theia-inputOption-activeBorder, var(--theia-focusBorder));
+  border-radius: 8px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--theia-widget-shadow, #000) 24%, transparent);
+}
+
+.cybervinci-flow-gate-panel-header,
+.cybervinci-flow-gate-title-row,
+.cybervinci-flow-gate-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cybervinci-flow-gate-panel-header {
+  min-height: 22px;
+}
+
+.cybervinci-flow-gate-panel-header strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--theia-ui-font-size1);
+}
+
+.cybervinci-flow-gate-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.cybervinci-flow-gate-icon-button:hover {
+  background: var(--theia-toolbar-hoverBackground);
+  border-color: var(--theia-panel-border);
+}
+
+.cybervinci-flow-gate-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--theia-editor-background);
+  border: 1px solid var(--theia-panel-border);
+  border-radius: 6px;
+}
+
+.cybervinci-flow-gate-title-row {
+  justify-content: space-between;
+}
+
+.cybervinci-flow-gate-title-row > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cybervinci-flow-gate-title-row strong,
+.cybervinci-flow-gate-title-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-flow-gate-title-row span {
+  color: var(--theia-descriptionForeground);
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-flow-gate-title-row code {
+  flex: 0 0 auto;
+  color: var(--theia-descriptionForeground);
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-flow-gate-card p {
+  margin: 0;
+  color: var(--theia-descriptionForeground);
+  line-height: 1.35;
+}
+
+.cybervinci-flow-gate-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.cybervinci-flow-gate-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cybervinci-flow-gate-controls label.disabled {
+  opacity: var(--theia-mod-disabled-opacity);
+}
+
+.cybervinci-flow-gate-controls span {
+  color: var(--theia-descriptionForeground);
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-flow-gate-controls select,
+.cybervinci-flow-gate-card textarea {
+  width: 100%;
+  min-width: 0;
+  color: var(--theia-input-foreground);
+  background: var(--theia-input-background);
+  border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+  border-radius: 4px;
+  font: inherit;
+}
+
+.cybervinci-flow-gate-controls select {
+  height: 24px;
+}
+
+.cybervinci-flow-gate-card textarea {
+  min-height: 54px;
+  padding: 6px;
+  resize: vertical;
+}
+
+.cybervinci-flow-gate-actions {
+  justify-content: flex-end;
+}
+
+.cybervinci-flow-gate-actions button {
+  min-height: 24px;
+  padding: 0 10px;
+  color: var(--theia-button-foreground);
+  background: var(--theia-button-background);
+  border: 1px solid var(--theia-button-border, transparent);
+  border-radius: 4px;
+  font: inherit;
+}
+
+.cybervinci-flow-gate-actions button:not(:disabled):hover {
+  background: var(--theia-button-hoverBackground);
+}
+
+.cybervinci-flow-gate-error {
+  color: var(--theia-errorForeground);
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-chat-goal-bar {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 16px);
+  min-height: 34px;
+  margin: 0 8px 6px;
+  padding: 6px 8px;
+  color: var(--theia-foreground);
+  background: var(--theia-sideBar-background, var(--theia-editorWidget-background));
+  border: 1px solid var(--theia-inputOption-activeBorder, var(--theia-focusBorder));
+  border-radius: 6px;
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-chat-goal-bar.status-paused,
+.cybervinci-chat-goal-bar.status-budget_limited,
+.cybervinci-chat-goal-bar.status-usage_limited {
+  border-color: var(--theia-editorWarning-foreground, var(--theia-panel-border));
+}
+
+.cybervinci-chat-goal-bar.status-blocked {
+  border-color: var(--theia-errorForeground, var(--theia-panel-border));
+}
+
+.cybervinci-chat-goal-bar.status-complete {
+  border-color: var(--theia-charts-green, var(--theia-panel-border));
+}
+
+.cybervinci-chat-goal-bar__icon::before {
+  width: 16px;
+  height: 16px;
+  -webkit-mask-size: 16px 16px;
+  mask-size: 16px 16px;
+}
+
+.cybervinci-chat-goal-bar__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cybervinci-chat-goal-bar__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cybervinci-chat-goal-bar__status > strong,
+.cybervinci-chat-goal-bar__status > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.cybervinci-chat-goal-bar__status > span::before {
+  content: "·";
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+.cybervinci-chat-goal-bar__objective {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-chat-goal-bar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cybervinci-chat-goal-bar__actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.cybervinci-chat-goal-bar__actions button:hover {
+  color: var(--theia-list-activeSelectionForeground, var(--theia-foreground));
+  background: var(--theia-list-hoverBackground);
+}
+
+.cybervinci-goal-dialog__body {
+  width: min(520px, calc(100vw - 80px));
+}
+
+.cybervinci-goal-dialog__label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-goal-dialog__textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 7px;
+  color: var(--theia-input-foreground, var(--theia-foreground));
+  background: var(--theia-input-background, var(--theia-editor-background));
+  border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+  border-radius: 4px;
+  font: inherit;
+  resize: vertical;
+}
+
+.cybervinci-goal-dialog__textarea:focus {
+  border-color: var(--theia-focusBorder);
+  outline: 0;
+}
+
+.cybervinci-goal-widget {
+  color: var(--theia-foreground);
+  background: var(--theia-sideBar-background, var(--theia-editor-background));
+}
+
+.cybervinci-goal-root {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cybervinci-goal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.cybervinci-goal-toolbar .theia-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 7px;
+}
+
+.cybervinci-goal-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 160px;
+  padding: 18px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  text-align: center;
+}
+
+.cybervinci-goal-empty .cybervinci-product-icon::before {
+  width: 22px;
+  height: 22px;
+  -webkit-mask-size: 22px 22px;
+  mask-size: 22px 22px;
+}
+
+.cybervinci-goal-current {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.cybervinci-goal-heading {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.cybervinci-goal-heading .cybervinci-product-icon::before {
+  width: 18px;
+  height: 18px;
+  -webkit-mask-size: 18px 18px;
+  mask-size: 18px 18px;
+}
+
+.cybervinci-goal-status {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
+.cybervinci-goal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 7px;
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: var(--theia-ui-font-size0);
+  line-height: 1.35;
+}
+
+.cybervinci-goal-meta span + span::before {
+  content: "·";
+  margin-right: 7px;
+  opacity: 0.7;
+}
+
+.cybervinci-goal-objective {
+  max-height: 160px;
+  overflow: auto;
+  padding: 9px;
+  color: var(--theia-foreground);
+  background: var(--theia-editor-background);
+  border: 1px solid var(--theia-panel-border);
+  border-radius: 6px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.cybervinci-goal-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cybervinci-goal-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cybervinci-goal-details span {
+  color: var(--theia-descriptionForeground, var(--theia-foreground));
+  font-size: var(--theia-ui-font-size0);
+}
+
+.cybervinci-goal-details code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--theia-textCodeBlock-foreground, var(--theia-foreground));
+  font-size: var(--theia-ui-font-size0);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-goal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cybervinci-goal-actions .theia-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+}
+
+.cybervinci-workdir-dropdown {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--theia-foreground);
+  background: var(--theia-quickInput-background, var(--theia-editorWidget-background));
+  border: 1px solid var(--theia-quickInput-border, var(--theia-panel-border));
+  border-radius: 6px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--theia-widget-shadow, #000) 32%, transparent);
+  font-family: var(--theia-ui-font-family);
+  font-size: var(--theia-ui-font-size1);
+  line-height: 1.35;
+}
+
+.cybervinci-workdir-dropdown__header {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.cybervinci-workdir-dropdown__title-row,
+.cybervinci-workdir-dropdown__actions,
+.cybervinci-workdir-dropdown__item {
+  display: flex;
+  align-items: center;
+}
+
+.cybervinci-workdir-dropdown__title-row {
+  gap: 8px;
+}
+
+.cybervinci-workdir-dropdown__title-row strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-workdir-dropdown__header code {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--theia-descriptionForeground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-workdir-dropdown__actions {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cybervinci-workdir-dropdown__actions button,
+.cybervinci-workdir-dropdown__icon-button {
+  min-height: 22px;
+  color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+  background: var(--theia-button-secondaryBackground, transparent);
+  border: 1px solid var(--theia-button-border, var(--theia-panel-border));
+  border-radius: 4px;
+  font: inherit;
+}
+
+.cybervinci-workdir-dropdown__actions button {
+  padding: 0 8px;
+}
+
+.cybervinci-workdir-dropdown__actions button:hover,
+.cybervinci-workdir-dropdown__icon-button:hover,
+.cybervinci-workdir-dropdown__item:hover,
+.cybervinci-workdir-dropdown__item:focus {
+  background: var(--theia-list-hoverBackground);
+}
+
+.cybervinci-workdir-dropdown__actions .cybervinci-workdir-dropdown__primary {
+  color: var(--theia-button-foreground);
+  background: var(--theia-button-background);
+  border-color: var(--theia-button-border, transparent);
+}
+
+.cybervinci-workdir-dropdown__actions .cybervinci-workdir-dropdown__primary:hover {
+  background: var(--theia-button-hoverBackground);
+}
+
+.cybervinci-workdir-dropdown__icon-button {
+  display: inline-flex;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+}
+
+.cybervinci-workdir-dropdown__list {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  gap: 2px;
+  padding: 5px 0;
+}
+
+.cybervinci-workdir-dropdown__item {
+  gap: 7px;
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 9px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.cybervinci-workdir-dropdown__item:focus {
+  outline: 1px solid var(--theia-focusBorder);
+  outline-offset: -1px;
+}
+
+.cybervinci-workdir-dropdown__item-icon {
+  flex: 0 0 16px;
+  color: var(--theia-descriptionForeground);
+}
+
+.cybervinci-workdir-dropdown__item-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cybervinci-workdir-dropdown__item--single-line {
+  min-height: 26px;
+  padding-block: 3px;
+}
+
+.cybervinci-workdir-dropdown__item-label,
+.cybervinci-workdir-dropdown__item-detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cybervinci-workdir-dropdown__item-detail {
+  color: var(--theia-descriptionForeground);
+  font-size: var(--theia-ui-font-size0);
+  line-height: 1.25;
+}
+
+.cybervinci-workdir-dropdown__message {
+  padding: 7px 9px;
+  color: var(--theia-descriptionForeground);
+}
+
+.cybervinci-workdir-dropdown__message--error {
+  color: var(--theia-errorForeground);
+}

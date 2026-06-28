@@ -1,0 +1,58 @@
+{
+  "name": "@cybervinci/codex",
+  "version": "1.72.0",
+  "description": "Codex extension for CyberVinci — 100% parity with VS Code OpenAI.chatgpt via official webview host bridge",
+  "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eclipse-theia/theia.git"
+  },
+  "keywords": [
+    "theia-extension",
+    "cybervinci",
+    "codex",
+    "openai"
+  ],
+  "dependencies": {
+    "@cybervinci/ai-providers": "1.72.0",
+    "@cybervinci/flow": "1.72.0",
+    "@theia/core": "1.72.0",
+    "@cybervinci/branding": "1.72.0",
+    "@theia/editor": "1.72.0",
+    "@theia/filesystem": "1.72.0",
+    "@theia/monaco": "1.72.0",
+    "@theia/plugin-ext": "1.72.0",
+    "@theia/output": "1.72.0",
+    "@theia/workspace": "1.72.0",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@theia/ext-scripts": "1.72.0"
+  },
+  "theiaExtensions": [
+    {
+      "frontend": "lib/browser/codex-frontend-module",
+      "frontendElectron": "lib/electron-browser/codex-electron-frontend-module",
+      "preload": "lib/electron-browser/codex-electron-preload",
+      "backend": "lib/node/codex-backend-module",
+      "electronMain": "lib/electron-main/codex-electron-main-module"
+    }
+  ],
+  "files": [
+    "lib",
+    "resources",
+    "src"
+  ],
+  "scripts": {
+    "build": "npm run copy:webview && theiaext build",
+    "clean": "theiaext clean",
+    "compile": "npm run copy:webview && theiaext compile",
+    "copy:webview": "node scripts/copy-codex-webview.js",
+    "lint": "theiaext lint",
+    "test": "theiaext test",
+    "watch": "theiaext watch"
+  },
+  "nyc": {
+    "extends": "../../configs/nyc.json"
+  }
+}

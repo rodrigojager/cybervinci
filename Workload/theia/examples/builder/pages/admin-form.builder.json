@@ -1,0 +1,357 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "admin-form-example",
+    "name": "Administrative User Form",
+    "createdBy": "CyberVinci UI Builder Extension",
+    "createdAt": "2026-05-20T00:00:00.000Z",
+    "updatedAt": "2026-05-20T00:00:00.000Z"
+  },
+  "page": {
+    "id": "admin-user-form",
+    "title": "Create User",
+    "route": "/admin/users/new",
+    "layout": "admin"
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "indigo",
+    "radius": "sm",
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#f7f7fb",
+      "textPrimary": "#1f2937",
+      "brandAccent": "#4f46e5"
+    }
+  },
+  "actions": {
+    "submitUser": {
+      "type": "submitForm",
+      "params": {
+        "formId": "user-create-form"
+      }
+    },
+    "cancelUser": {
+      "type": "navigate",
+      "params": {
+        "to": "/admin/users"
+      }
+    }
+  },
+  "tree": {
+    "id": "admin-form-root",
+    "type": "Page",
+    "props": {
+      "title": "Create User",
+      "background": "#f7f7fb"
+    },
+    "children": [
+      {
+        "id": "admin-form-section",
+        "type": "Section",
+        "props": {
+          "paddingY": "lg",
+          "background": "#f7f7fb"
+        },
+        "children": [
+          {
+            "id": "admin-form-container",
+            "type": "Container",
+            "props": {
+              "size": "lg"
+            },
+            "children": [
+              {
+                "id": "admin-form-stack",
+                "type": "Stack",
+                "props": {
+                  "gap": "lg"
+                },
+                "children": [
+                  {
+                    "id": "admin-breadcrumbs",
+                    "type": "Breadcrumbs",
+                    "props": {
+                      "items": [
+                        {
+                          "label": "Admin",
+                          "href": "/admin"
+                        },
+                        {
+                          "label": "Users",
+                          "href": "/admin/users"
+                        },
+                        {
+                          "label": "Create user"
+                        }
+                      ],
+                      "separator": "/"
+                    }
+                  },
+                  {
+                    "id": "admin-form-header",
+                    "type": "Group",
+                    "props": {
+                      "justify": "space-between",
+                      "align": "flex-start"
+                    },
+                    "children": [
+                      {
+                        "id": "admin-form-heading",
+                        "type": "Stack",
+                        "props": {
+                          "gap": "xs"
+                        },
+                        "children": [
+                          {
+                            "id": "admin-form-title",
+                            "type": "Title",
+                            "props": {
+                              "order": 1,
+                              "children": "Create user"
+                            }
+                          },
+                          {
+                            "id": "admin-form-description",
+                            "type": "Text",
+                            "props": {
+                              "children": "Provision an internal user, assign a role and set access controls.",
+                              "size": "md",
+                              "color": "dimmed"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "id": "admin-required-badge",
+                        "type": "Badge",
+                        "props": {
+                          "children": "Requires admin approval",
+                          "variant": "light",
+                          "color": "indigo"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "admin-form-card",
+                    "type": "Card",
+                    "props": {
+                      "shadow": "sm",
+                      "padding": "lg",
+                      "radius": "sm",
+                      "withBorder": true
+                    },
+                    "children": [
+                      {
+                        "id": "user-create-form",
+                        "type": "DynamicForm",
+                        "props": {
+                          "title": "User details",
+                          "description": "Fields are declarative Builder form nodes and can be edited through JSON, visual editor or property panel.",
+                          "submitLabel": "Create user",
+                          "resetLabel": "Reset",
+                          "layout": "grid",
+                          "gap": "md"
+                        },
+                        "children": [
+                          {
+                            "id": "field-full-name",
+                            "type": "TextInput",
+                            "props": {
+                              "name": "fullName",
+                              "label": "Full name",
+                              "placeholder": "Maria Oliveira",
+                              "required": true,
+                              "type": "text"
+                            }
+                          },
+                          {
+                            "id": "field-email",
+                            "type": "TextInput",
+                            "props": {
+                              "name": "email",
+                              "label": "Work email",
+                              "placeholder": "maria@example.com",
+                              "required": true,
+                              "type": "email"
+                            }
+                          },
+                          {
+                            "id": "field-role",
+                            "type": "Select",
+                            "props": {
+                              "name": "role",
+                              "label": "Role",
+                              "placeholder": "Select a role",
+                              "required": true,
+                              "data": [
+                                {
+                                  "label": "Admin",
+                                  "value": "admin"
+                                },
+                                {
+                                  "label": "Editor",
+                                  "value": "editor"
+                                },
+                                {
+                                  "label": "Viewer",
+                                  "value": "viewer"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "id": "field-department",
+                            "type": "Select",
+                            "props": {
+                              "name": "department",
+                              "label": "Department",
+                              "placeholder": "Select a department",
+                              "data": [
+                                {
+                                  "label": "Operations",
+                                  "value": "operations"
+                                },
+                                {
+                                  "label": "Engineering",
+                                  "value": "engineering"
+                                },
+                                {
+                                  "label": "Finance",
+                                  "value": "finance"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "id": "field-seat-limit",
+                            "type": "NumberInput",
+                            "props": {
+                              "name": "seatLimit",
+                              "label": "Seat limit",
+                              "description": "Optional quota for managed workspaces.",
+                              "min": 1,
+                              "max": 50,
+                              "step": 1,
+                              "defaultValue": 5
+                            }
+                          },
+                          {
+                            "id": "field-start-date",
+                            "type": "DateInput",
+                            "props": {
+                              "name": "startDate",
+                              "label": "Start date",
+                              "placeholder": "2026-06-01",
+                              "required": true,
+                              "clearable": true
+                            }
+                          },
+                          {
+                            "id": "field-access-level",
+                            "type": "RadioGroup",
+                            "props": {
+                              "name": "accessLevel",
+                              "label": "Access level",
+                              "orientation": "horizontal",
+                              "defaultValue": "standard",
+                              "data": [
+                                {
+                                  "label": "Standard",
+                                  "value": "standard"
+                                },
+                                {
+                                  "label": "Elevated",
+                                  "value": "elevated"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "id": "field-notes",
+                            "type": "Textarea",
+                            "props": {
+                              "name": "notes",
+                              "label": "Internal notes",
+                              "placeholder": "Reason for access, approvals or temporary constraints.",
+                              "minRows": 4,
+                              "autosize": true
+                            }
+                          },
+                          {
+                            "id": "field-send-invite",
+                            "type": "Checkbox",
+                            "props": {
+                              "name": "sendInvite",
+                              "label": "Send invitation email after creation",
+                              "defaultChecked": true
+                            }
+                          }
+                        ],
+                        "slots": {
+                          "actions": [
+                            {
+                              "id": "admin-submit-button",
+                              "type": "Button",
+                              "props": {
+                                "children": "Create user",
+                                "variant": "filled",
+                                "type": "submit"
+                              },
+                              "events": {
+                                "onClick": {
+                                  "actionId": "submitUser"
+                                }
+                              }
+                            },
+                            {
+                              "id": "admin-cancel-button",
+                              "type": "Button",
+                              "props": {
+                                "children": "Cancel",
+                                "variant": "subtle",
+                                "type": "button"
+                              },
+                              "events": {
+                                "onClick": {
+                                  "actionId": "cancelUser"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "events": {
+                          "onSubmit": {
+                            "actionId": "submitUser",
+                            "preventDefault": true
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "admin-form-alert",
+                    "type": "Alert",
+                    "props": {
+                      "title": "Validation is registry-driven",
+                      "children": "Every field props object must validate against the registered JSON Schema before the document is saved.",
+                      "color": "indigo",
+                      "variant": "light"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "aiHints": {
+    "intent": "Demonstrate an administrative form assembled from Builder form components",
+    "tone": "precise and operational",
+    "audience": "administrators and internal tool builders",
+    "context": "Administrative form example with DynamicForm, field components, form actions and validation-friendly props"
+  }
+}

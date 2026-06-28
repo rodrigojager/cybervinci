@@ -1,0 +1,2 @@
+import{g as e,z as t}from"./vscode-api-CjIlXYxl.js";import{i as n}from"./git-current-branch-query-VINOGSny.js";var r=n({method:`submodule-paths`,getParams:e=>({operationSource:e.operationSource,root:e.root}),getOptions:e=>({refetchOnWindowFocus:e.refetchOnWindowFocus,select:e=>e.paths,staleTime:e.staleTime})}).fromCwd$,i=t(e,(e,{get:t})=>t(r,e).data??null);export{i as n,r as t};
+//# sourceMappingURL=git-submodule-paths-query-CUJYD3Xc.js.map

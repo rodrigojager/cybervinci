@@ -1,0 +1,61 @@
+{
+  "extends": "../../configs/base.tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "lib"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../ai-core"
+    },
+    {
+      "path": "../branding"
+    },
+    {
+      "path": "../callhierarchy"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../debug"
+    },
+    {
+      "path": "../filesystem"
+    },
+    {
+      "path": "../markers"
+    },
+    {
+      "path": "../memory"
+    },
+    {
+      "path": "../memory-roslyn"
+    },
+    {
+      "path": "../monaco"
+    },
+    {
+      "path": "../navigator"
+    },
+    {
+      "path": "../task"
+    },
+    {
+      "path": "../terminal"
+    },
+    {
+      "path": "../test"
+    },
+    {
+      "path": "../typehierarchy"
+    },
+    {
+      "path": "../workspace"
+    }
+  ]
+}

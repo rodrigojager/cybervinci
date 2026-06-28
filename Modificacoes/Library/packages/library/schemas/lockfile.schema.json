@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theia-ide.org/schemas/library/lockfile.schema.json",
+  "type": "object",
+  "required": ["version", "generated_at", "docs"],
+  "properties": {
+    "version": { "const": 1 },
+    "generated_at": { "type": "string" },
+    "docs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "package", "requested_version", "resolved_version", "source_type", "source_url", "installed_at"],
+        "properties": {
+          "id": { "type": "string" },
+          "package": { "type": "string" },
+          "requested_version": { "type": "string" },
+          "resolved_version": { "type": "string" },
+          "source_type": { "type": "string" },
+          "source_url": { "type": "string" },
+          "source_ref": { "type": "string" },
+          "source_commit": { "type": "string" },
+          "artifact_sha256": { "type": "string" },
+          "installed_at": { "type": "string" }
+        }
+      }
+    }
+  }
+}

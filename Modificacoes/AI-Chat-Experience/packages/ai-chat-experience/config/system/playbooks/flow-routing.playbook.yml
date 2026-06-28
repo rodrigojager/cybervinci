@@ -1,0 +1,67 @@
+version: cybervinci.catalog/v1
+playbooks:
+  - version: cybervinci.playbook/v1
+    id: ai-chat-flow-route
+    name: AI Chat Flow Route
+    category: Flow
+    source: system
+    enabled: true
+    description: Routes an AI Chat prompt into a saved Flow workflow or a dynamic workflow using Playbook flow states.
+    entry: decide-route
+    tools:
+      - core.flow.startRun
+      - core.flow.listPendingGates
+      - core.flow.approveGate
+      - core.flow.runDynamicWorkflow
+      - core.flow.runAiAuthoredDynamicWorkflow
+    tags: [Flow, Chat, Routing, Playbooks]
+    states:
+      - id: decide-route
+        type: condition
+        cases:
+          - if:
+              equals: ['${input.flowMode}', saved]
+            next: run-saved-flow
+          - if:
+              equals: ['${input.flowMode}', dynamic]
+            next: run-dynamic-workflow
+          - if:
+              equals: ['${input.flowMode}', authoring]
+            next: run-ai-authored-workflow
+        default: direct-chat-response
+      - id: run-saved-flow
+        type: flow
+        mode: saved
+        workflowId: ${input.workflowId}
+        prompt: ${input.prompt}
+        saveAs: flowRun
+        transitions:
+          - to: done
+      - id: run-dynamic-workflow
+        type: flow
+        mode: dynamic
+        prompt: ${input.prompt}
+        preferSaved: true
+        saveAs: flowRun
+        transitions:
+          - to: done
+      - id: run-ai-authored-workflow
+        type: flow
+        mode: authoring
+        prompt: ${input.prompt}
+        authoringDraft: ${input.authoringDraft}
+        saveAs: flowRun
+        transitions:
+          - to: done
+      - id: direct-chat-response
+        type: response
+        text: Flow route was not selected. Continue with Direct Chat.
+        transitions:
+          - to: end
+      - id: done
+        type: response
+        text: Flow route started.
+        transitions:
+          - to: end
+      - id: end
+        type: end

@@ -1,0 +1,4612 @@
+import { expect } from 'chai';
+import { OpenPencilDocumentService } from '../common/openpencil-document-service';
+import {
+    OpenPencilAiDesignProvider,
+    OpenPencilAiDesignRequest,
+    OpenPencilAiSkillContext,
+    OpenPencilCyberVinciAiDesignProvider,
+    OpenPencilDesignCommandServiceImpl
+} from './openpencil-design-command-service';
+import { OpenPencilDesignOperation, OpenPencilExportFormat, OpenPencilNode } from '../common/openpencil-types';
+
+describe('OpenPencilDesignCommandService', () => {
+
+    const service = new OpenPencilDesignCommandServiceImpl();
+
+    it('persists structured command edits through serialize, deserialize, and export', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Acceptance persistence flow');
+        const edited = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'updateNode',
+                nodeId: 'hero-title',
+                changes: {
+                    content: 'Persisted acceptance title',
+                    fontSize: 44,
+                    x: 148
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'acceptance-cta-label',
+                    type: 'text',
+                    name: 'Acceptance CTA label',
+                    x: 180,
+                    y: 330,
+                    width: 220,
+                    height: 32,
+                    content: 'Persisted CTA',
+                    fontSize: 20,
+                    fill: [{ type: 'solid', color: '#0f172a' }]
+                }
+            },
+            {
+                operation: 'setSelection',
+                nodeIds: ['hero-title', 'acceptance-cta-label']
+            }
+        ]);
+
+        const serialized = documents.serialize(edited.document);
+        const reloaded = documents.deserialize(serialized);
+        const summary = service.getDocumentSummary(reloaded);
+        const reloadedTitle = summary.nodes.find(node => node.id === 'hero-title');
+        const cta = documents.findNode(reloaded, 'acceptance-cta-label');
+        const html = service.exportDocument(reloaded, [], 'html-css');
+        const svg = service.exportDocument(reloaded, [], 'svg');
+        const reactSelection = service.exportDocument(reloaded, ['acceptance-cta-label'], 'react-tailwind', true);
+
+        expect(edited.changed).to.equal(true);
+        expect(edited.selection).to.deep.equal(['hero-title', 'acceptance-cta-label']);
+        expect(serialized).to.contain('"content": "Persisted acceptance title"');
+        expect(summary.name).to.equal('Acceptance persistence flow');
+        expect(reloadedTitle?.text).to.equal('Persisted acceptance title');
+        expect(cta?.content).to.equal('Persisted CTA');
+        expect(cta?.x).to.equal(180);
+        expect(html).to.contain('Persisted acceptance title');
+        expect(svg).to.contain('Persisted CTA');
+        expect(reactSelection).to.contain('Persisted CTA');
+        expect(reactSelection).not.to.contain('Persisted acceptance title');
+    });
+
+    it('stabilizes AI operations by retrying missing node references after later create operations', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('AI operation stabilization test');
+        const operations: OpenPencilDesignOperation[] = [
+            {
+                operation: 'updateNode',
+                nodeId: 'ai-late-copy',
+                changes: {
+                    content: 'Late copy was updated after creation'
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'ai-late-copy',
+                    type: 'text',
+                    name: 'AI late copy',
+                    content: 'Initial late copy',
+                    x: 80,
+                    y: 96,
+                    width: 320,
+                    height: 32
+                }
+            }
+        ];
+
+        const stabilized = service.stabilizeAiOperationsForDocument(document, [], operations);
+        const result = service.applyOperationsToDocument(document, [], stabilized.operations);
+        const node = documents.findNode(result.document, 'ai-late-copy');
+
+        expect(stabilized.skipped).to.equal(0);
+        expect(stabilized.reordered).to.equal(true);
+        expect(stabilized.operations.map(operation => operation.operation)).to.deep.equal(['addNode', 'updateNode']);
+        expect(node?.content).to.equal('Late copy was updated after creation');
+    });
+
+    it('skips unresolved AI operations whose missing targets never become available', () => {
+        const document = service.createDesign('AI operation skip test');
+        const stabilized = service.stabilizeAiOperationsForDocument(document, [], [
+            {
+                operation: 'updateNode',
+                nodeId: 'ai-never-created-copy',
+                changes: {
+                    content: 'This target never exists'
+                }
+            }
+        ]);
+
+        expect(stabilized.operations).to.deep.equal([]);
+        expect(stabilized.skipped).to.equal(1);
+        expect(stabilized.diagnostics.join('\n')).to.contain("Node 'ai-never-created-copy' was not found.");
+    });
+
+    it('exports front-first top-level nodes in back-to-front paint order for HTML and SVG', () => {
+        const document = service.createDesign('Export paint order test');
+        const page = document.pages![0];
+        page.children = [
+            createPaintOrderTextNode('paint-front-node', 'Front paint node'),
+            createPaintOrderTextNode('paint-back-node', 'Back paint node')
+        ];
+
+        const html = service.exportDocument(document, [], 'html-css');
+        const svg = service.exportDocument(document, [], 'svg');
+
+        expect(html.indexOf('Back paint node')).to.be.lessThan(html.indexOf('Front paint node'));
+        expect(svg.indexOf('Back paint node')).to.be.lessThan(svg.indexOf('Front paint node'));
+        expect(page.children.map(node => node.id)).to.deep.equal(['paint-front-node', 'paint-back-node']);
+    });
+
+    it('exports front-first nested children in back-to-front paint order', () => {
+        const document = service.createDesign('Nested export paint order test');
+        const page = document.pages![0];
+        page.children = [{
+            id: 'paint-order-frame',
+            type: 'frame',
+            name: 'Paint order frame',
+            x: 0,
+            y: 0,
+            width: 240,
+            height: 160,
+            children: [
+                createPaintOrderTextNode('nested-front-node', 'Nested front node'),
+                createPaintOrderTextNode('nested-back-node', 'Nested back node')
+            ]
+        }];
+
+        const html = service.exportDocument(document, [], 'html-css');
+        const svg = service.exportDocument(document, [], 'svg');
+
+        expect(html.indexOf('Nested back node')).to.be.lessThan(html.indexOf('Nested front node'));
+        expect(svg.indexOf('Nested back node')).to.be.lessThan(svg.indexOf('Nested front node'));
+        expect(page.children[0].children?.map(node => node.id)).to.deep.equal(['nested-front-node', 'nested-back-node']);
+    });
+
+    it('updates nodes through structured commands', () => {
+        const document = service.createDesign('Command test');
+        const result = service.applyToDocument(document, [], {
+            operation: 'updateNode',
+            nodeId: 'hero-title',
+            changes: {
+                content: 'Updated by AI',
+                fontSize: 48,
+                width: 640
+            }
+        });
+
+        const summary = service.getDocumentSummary(result.document);
+        const updated = result.document.pages![0].children.find(node => node.id === 'hero-title');
+
+        expect(result.changed).to.equal(true);
+        expect(summary.nodes.find(node => node.id === 'hero-title')?.text).to.equal('Updated by AI');
+        expect(updated?.width).to.equal(640);
+    });
+
+    it('generates in-process AI operations from prompt, document, selection, and pen-ai-skills context', async () => {
+        const document = service.createDesign('AI generation test');
+        const prompt = 'Create a content panel for enterprise analytics with blue CTA';
+        const generated = await service.generateAiOperations({
+            prompt,
+            document,
+            selection: []
+        });
+        const result = service.applyOperationsToDocument(document, [], generated.operations);
+        const section = result.document.pages![0].children.find(node => node.id === result.selection[0]);
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.context.adapter).to.equal('pen-ai-skills-in-process');
+        expect(generated.context.phase).to.equal('generation');
+        expect(generated.context.operationFormat).to.equal('OpenPencilDesignOperation[]');
+        expect(generated.context.responseContract.guidance).to.contain('never browser DOM');
+        expect(generated.context.operationExamples.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
+        expect(generated.context.skills.map(skill => skill.name)).to.include.members(['jsonl-format', 'schema', 'layout', 'text-rules']);
+        expect(generated.context.skills.every(skill => skill.sourcePath.includes('Skills/System/OpenPencil/pen-ai-skills'))).to.equal(true);
+        const skillsByName = new Map(generated.context.skills.map(skill => [skill.name, skill]));
+        expect(skillsByName.get('schema')?.content).to.contain('PenNode types (the ONLY format you output for designs)');
+        expect(skillsByName.get('layout')?.content).to.contain('HORIZONTAL ROW WIDTH MATH');
+        expect(skillsByName.get('text-rules')?.content).to.contain('TEXT RULES');
+        expect(generated.context.skills.some(skill => skill.name === 'style-defaults' || skill.sourcePath.includes('/style-guides/'))).to.equal(true);
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
+        expect(result.changed).to.equal(true);
+        expect(section?.type).to.equal('frame');
+        expect(section?.children?.some(node => node.type === 'text' && node.content === prompt)).to.equal(false);
+        expect(section?.children?.some(node => node.type === 'text' && node.content === 'Analytics that teams can act on')).to.equal(true);
+        expect(section?.children?.find(node => node.role === 'button')?.fill?.[0]?.color).to.equal('#2563eb');
+    });
+
+    it('uses the system style-defaults skill when no style guide tags match', async () => {
+        const document = service.createDesign('AI style defaults test');
+        const generated = await service.generateAiOperations({
+            prompt: 'Create a simple content panel',
+            document,
+            selection: []
+        });
+        const styleDefaults = generated.context.skills.find(skill => skill.name === 'style-defaults');
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(styleDefaults?.sourcePath).to.equal('Skills/System/OpenPencil/pen-ai-skills/phases/generation/style-defaults.md');
+        expect(styleDefaults?.content).to.contain('VISUAL STYLE POLICY');
+        expect(generated.context.skills.some(skill => skill.sourcePath.includes('/style-guides/'))).to.equal(false);
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
+    });
+
+    it('selects a system style guide from inferred prompt tags', async () => {
+        const document = service.createDesign('AI tagged style guide test');
+        const generated = await service.generateAiOperations({
+            prompt: 'Create a dark analytics panel with cyan metrics',
+            document,
+            selection: []
+        });
+        const styleGuide = generated.context.skills.find(skill => skill.name === 'dashboard-analytics-dark');
+
+        expect(styleGuide?.sourcePath).to.equal('Skills/System/OpenPencil/pen-ai-skills/style-guides/dashboard-analytics-dark.md');
+        expect(styleGuide?.content).to.contain('A data-driven dark interface optimized for analytics dashboards');
+        expect(styleGuide?.tags).to.include.members(['dashboard', 'data-focused', 'dark-mode', 'cyan-accent']);
+        expect(generated.context.skills.map(skill => skill.name)).not.to.include('style-defaults');
+    });
+
+    it('includes full landing skill content, selected style guide content, and contrast rules in CyberVinci prompts', async () => {
+        class CapturingPromptProvider extends OpenPencilCyberVinciAiDesignProvider {
+            lastPrompt = '';
+
+            override async generateOperations(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): Promise<{ operations: OpenPencilDesignOperation[] }> {
+                this.lastPrompt = this.createPrompt(request, context);
+                return {
+                    operations: [
+                        {
+                            operation: 'createNode',
+                            parentId: null,
+                            node: {
+                                id: 'ai-captured-landing',
+                                type: 'frame',
+                                name: 'Captured landing',
+                                width: 420,
+                                height: 220,
+                                children: []
+                            }
+                        },
+                        {
+                            operation: 'setSelection',
+                            nodeIds: ['ai-captured-landing']
+                        }
+                    ]
+                };
+            }
+        }
+        const provider = new CapturingPromptProvider();
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI prompt content test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Create a landing page using the saas-modern-light style guide',
+            document,
+            selection: []
+        });
+
+        expect(generated.source).to.equal('provider');
+        expect(provider.lastPrompt).to.contain('Readability and contrast are mandatory');
+        expect(provider.lastPrompt).to.contain('never place dark text on dark backgrounds or light text on light backgrounds');
+        expect(provider.lastPrompt).to.contain('LANDING PAGE DESIGN PATTERNS');
+        expect(provider.lastPrompt).to.contain('## Headline Hierarchy');
+        expect(provider.lastPrompt).to.contain('ANTI-SLOP RULES');
+        expect(provider.lastPrompt).to.contain('A clean, refined SaaS product interface');
+        expect(provider.lastPrompt).to.contain('Source: Skills/System/OpenPencil/pen-ai-skills/style-guides/saas-modern-light.md');
+    });
+
+    it('captures continuation prompt context and layout guidance for provider continuation requests', async () => {
+        class CapturingPromptProvider extends OpenPencilCyberVinciAiDesignProvider {
+            lastPrompt = '';
+
+            override async generateOperations(request: OpenPencilAiDesignRequest, context: OpenPencilAiSkillContext): Promise<{ operations: OpenPencilDesignOperation[] }> {
+                this.lastPrompt = this.createPrompt(request, context);
+                return {
+                    operations: [
+                        {
+                            operation: 'createNode',
+                            parentId: null,
+                            node: {
+                                id: 'ai-continuation-section',
+                                type: 'frame',
+                                name: 'Continuation section',
+                                x: 120,
+                                y: 392,
+                                width: 520,
+                                height: 180,
+                                children: []
+                            }
+                        },
+                        {
+                            operation: 'setSelection',
+                            nodeIds: ['ai-continuation-section']
+                        }
+                    ]
+                };
+            }
+        }
+
+        const provider = new CapturingPromptProvider();
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI continuation prompt test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Continue the current design by adding the missing sections below the existing content',
+            document,
+            selection: [],
+            mode: 'continuation'
+        });
+        const heroCard = generated.context.documentContext.activePageLayout.topLevelNodes.find(node => node.id === 'hero-card');
+
+        expect(generated.source).to.equal('provider');
+        expect(provider.lastPrompt).to.contain('Continuation mode: preserve the current design, all existing nodes, and all existing node IDs.');
+        expect(provider.lastPrompt).to.contain('Continuation mode: do not remove, replace, or recreate existing page content; only add missing sections, missing states, or supporting elements.');
+        expect(provider.lastPrompt).to.contain('Continuation mode: place new top-level content below the current content bottom or inside visible empty space described by the active-page layout summary; avoid covering existing nodes.');
+        expect(provider.lastPrompt).to.contain('Continuation mode: finish with setSelection for the newly-created root node IDs so the user can inspect the continuation.');
+        expect(generated.context.documentContext.requestMode).to.equal('continuation');
+        expect(generated.context.documentContext.activePageLayout.contentBottom).to.be.at.least(356);
+        expect(heroCard?.childCount).to.equal(0);
+        expect(heroCard?.x).to.equal(120);
+        expect(heroCard?.y).to.equal(96);
+        expect(heroCard?.width).to.equal(520);
+        expect(heroCard?.height).to.equal(260);
+    });
+
+    it('preserves continuation-created root frame positions below existing content', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'createNode',
+                        parentId: null,
+                        node: {
+                            id: 'ai-continuation-panel-a',
+                            type: 'frame',
+                            name: 'Continuation panel A',
+                            x: 80,
+                            y: 432,
+                            width: 320,
+                            height: 180,
+                            children: []
+                        }
+                    },
+                    {
+                        operation: 'createNode',
+                        parentId: null,
+                        node: {
+                            id: 'ai-continuation-panel-b',
+                            type: 'frame',
+                            name: 'Continuation panel B',
+                            x: 440,
+                            y: 624,
+                            width: 320,
+                            height: 180,
+                            children: []
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-continuation-panel-a', 'ai-continuation-panel-b']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI continuation positions test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Continue the current design with two new sections below the existing content',
+            document,
+            selection: [],
+            mode: 'continuation'
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations, { mode: 'continuation' });
+        const validation = providerService.validateDocument(result.document);
+        const page = result.document.pages![0];
+        const panels = page.children.filter(node => node.id.startsWith('ai-continuation-panel'));
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.diagnostics?.join('\n') ?? '').to.not.contain('preview application reported a partial failure');
+        expect(panels.map(node => node.x)).to.deep.equal([80, 440]);
+        expect(panels.map(node => node.y)).to.deep.equal([432, 624]);
+        expect(panels.every(node => Number(node.y) > 356)).to.equal(true);
+        expect(page.children.map(node => node.id).slice(-2)).to.deep.equal(['ai-continuation-panel-a', 'ai-continuation-panel-b']);
+        expect(validation.valid).to.equal(true);
+    });
+
+    it('rejects provider previews that partially fail after earlier changes', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-title',
+                        changes: {
+                            content: 'Updated before failure'
+                        }
+                    },
+                    {
+                        operation: 'createNode',
+                        parentId: 'missing-parent',
+                        node: {
+                            id: 'ai-broken-section',
+                            type: 'frame',
+                            width: 360,
+                            height: 180,
+                            children: []
+                        }
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI partial preview failure test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Update the selected node and add a missing section',
+            document,
+            selection: ['hero-title']
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n') ?? '').to.contain('preview application reported a partial failure');
+        expect(generated.diagnostics?.join('\n') ?? '').to.contain("Parent node 'missing-parent' was not found");
+    });
+
+    it('rejects continuation providers that try to update existing nodes', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-card',
+                        changes: {
+                            content: 'Should not replace existing continuation content'
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['hero-card']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI continuation rejection test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Continue the current design with another section',
+            document,
+            selection: [],
+            mode: 'continuation'
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join('\n')).to.contain('continuation mode must preserve existing nodes and layout');
+    });
+
+    it('accepts continuation providers that only expand an existing container before appending content', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-card',
+                        changes: {
+                            height: 340,
+                            clipContent: false
+                        }
+                    },
+                    {
+                        operation: 'createNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'continuation-safe-card',
+                            type: 'frame',
+                            name: 'Continuation safe card',
+                            role: 'section',
+                            x: 40,
+                            y: 230,
+                            width: 560,
+                            height: 80,
+                            children: [
+                                {
+                                    id: 'continuation-safe-card-copy',
+                                    type: 'text',
+                                    name: 'Continuation copy',
+                                    content: 'Continuation content appended below existing material.',
+                                    x: 18,
+                                    y: 18,
+                                    width: 420,
+                                    height: 28
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['continuation-safe-card']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI continuation safe expansion test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Continue the current design with another section',
+            document,
+            selection: [],
+            mode: 'continuation'
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations, { mode: 'continuation', normalizeVisibleBounds: true });
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.diagnostics?.join('\n') ?? '').not.to.contain('continuation mode must preserve existing nodes and layout');
+        expect(result.selection).to.deep.equal(['continuation-safe-card']);
+        expect(new OpenPencilDocumentService().findNode(result.document, 'continuation-safe-card')).to.not.equal(undefined);
+    });
+
+    it('uses the deterministic in-process AI adapter for selected node maintenance edits', async () => {
+        const document = service.createDesign('AI maintenance test');
+        const generated = await service.generateAiOperations({
+            prompt: 'Atualize para uma promessa mais direta em verde',
+            document,
+            selection: ['hero-title']
+        });
+        const result = service.applyOperationsToDocument(document, ['hero-title'], generated.operations);
+        const title = result.document.pages![0].children.find(node => node.id === 'hero-title');
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.context.phase).to.equal('maintenance');
+        expect(generated.context.skills.map(skill => skill.name)).to.include.members(['local-edit', 'style-consistency']);
+        expect(generated.context.documentContext.selectedNodeIds).to.deep.equal(['hero-title']);
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['updateNode', 'setSelection']);
+        expect(title?.content).to.equal('Atualize para uma promessa mais direta em verde');
+        expect(title?.fill?.[0]?.color).to.equal('#16a34a');
+        expect(result.selection).to.deep.equal(['hero-title']);
+    });
+
+    it('creates requested shapes inside the selected container instead of generating a new section', async () => {
+        const document = service.createDesign('AI contained shape test');
+        const generated = await service.generateAiOperations({
+            prompt: 'adicione um retangulo vermelho dentro do retangulo verde',
+            document,
+            selection: ['hero-card']
+        });
+        const result = service.applyOperationsToDocument(document, ['hero-card'], generated.operations);
+        const card = result.document.pages![0].children.find(node => node.id === 'hero-card');
+        const child = card?.children?.find(node => node.id === result.selection[0]);
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['addNode', 'setSelection']);
+        expect(child?.type).to.equal('rectangle');
+        expect(child?.fill?.[0]?.color).to.equal('#dc2626');
+        expect(result.selection[0]).to.contain('rectangle');
+    });
+
+    it('finds the requested colored container when no node is selected', async () => {
+        const document = service.createDesign('AI colored container test');
+        const card = document.pages![0].children.find(node => node.id === 'hero-card');
+        if (card) {
+            card.name = 'Retangulo verde';
+            card.fill = [{ type: 'solid', color: '#166534' }];
+        }
+        const generated = await service.generateAiOperations({
+            prompt: 'adicione um retangulo vermelho dentro do retangulo verde',
+            document,
+            selection: []
+        });
+        const result = service.applyOperationsToDocument(document, [], generated.operations);
+        const updatedCard = result.document.pages![0].children.find(node => node.id === 'hero-card');
+        const child = updatedCard?.children?.find(node => node.id === result.selection[0]);
+
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['addNode', 'setSelection']);
+        expect(child?.type).to.equal('rectangle');
+        expect(child?.fill?.[0]?.color).to.equal('#dc2626');
+    });
+
+    it('lets an in-process AI provider replace the deterministic fallback without external processes', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            generateOperations: (_request, context) => [
+                {
+                    operation: 'updateNode',
+                    nodeId: context.documentContext.selectedNodeIds[0],
+                    changes: {
+                        content: `Provider edited via ${context.skills[0].name}`
+                    }
+                },
+                {
+                    operation: 'setSelection',
+                    nodeIds: context.documentContext.selectedNodeIds
+                }
+            ]
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI provider test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Use the configured provider',
+            document,
+            selection: ['hero-title']
+        });
+        const result = providerService.applyOperationsToDocument(document, ['hero-title'], generated.operations);
+
+        expect(generated.source).to.equal('provider');
+        expect(result.document.pages![0].children.find(node => node.id === 'hero-title')?.content).to.equal('Provider edited via local-edit');
+        expect(result.selection).to.deep.equal(['hero-title']);
+    });
+
+    it('normalizes provider-generated layout trees before inserting them into the page', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'large-layout-provider',
+            label: 'Large layout provider',
+            priority: 10,
+            generateOperations: request => ({
+                operations: [
+                    {
+                        operation: 'createNode',
+                        parentId: request.document.activePageId,
+                        node: {
+                            id: 'ai-enterprise-automation-hero',
+                            type: 'frame',
+                            name: 'Enterprise automation hero',
+                            x: 80,
+                            y: 80,
+                            width: 1280,
+                            height: 720,
+                            layout: 'vertical',
+                            padding: { top: 24, right: 24, bottom: 24, left: 24 } as never,
+                            gap: 16,
+                            fill: '#f8fafc' as never,
+                            stroke: '#334155' as never,
+                            borderRadius: 28,
+                            children: [{
+                                id: 'ai-generated-title',
+                                type: 'text',
+                                width: 520,
+                                height: 64,
+                                content: 'Automate enterprise operations'
+                            }, {
+                                id: 'ai-generated-panel',
+                                type: 'frame',
+                                width: 680,
+                                height: 180,
+                                layout: 'horizontal',
+                                gap: 12,
+                                children: [{
+                                    id: 'ai-generated-card',
+                                    type: 'rectangle',
+                                    width: 120,
+                                    height: 80
+                                }]
+                            }]
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-enterprise-automation-hero']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI oversized layout test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Create a landing hero for enterprise automation',
+            document,
+            selection: []
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations);
+        const page = result.document.pages![0];
+        const hero = page.children.find(node => node.id === 'ai-enterprise-automation-hero');
+        const title = hero?.children?.find(node => node.id === 'ai-generated-title');
+        const panel = hero?.children?.find(node => node.id === 'ai-generated-panel');
+        const card = panel?.children?.find(node => node.id === 'ai-generated-card');
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.operations.slice(0, 3).map(operation => operation.operation)).to.deep.equal(['removeNode', 'removeNode', 'removeNode']);
+        expect(generated.operations.find(operation => operation.operation === 'createNode')).to.deep.include({ parentId: null });
+        expect(page.children.map(node => node.id)).to.deep.equal(['ai-enterprise-automation-hero']);
+        expect(hero?.width).to.equal(820);
+        expect(hero?.height).to.equal(461.25);
+        expect(hero?.x).to.equal(51.25);
+        expect(hero?.y).to.equal(51.25);
+        expect(hero?.cornerRadius).to.equal(17.94);
+        expect(hero?.fill).to.deep.equal([{ type: 'solid', color: '#f8fafc' }]);
+        expect(hero?.stroke).to.deep.include({ color: '#334155', width: 0.64, thickness: 0.64 });
+        expect(title?.fill).to.deep.equal([{ type: 'solid', color: '#1d1d1f' }]);
+        expect(title?.x).to.equal(15.38);
+        expect(title?.y).to.equal(15.38);
+        expect(panel?.x).to.equal(15.38);
+        expect(panel?.y).to.equal(41);
+        expect(card?.x).to.equal(0);
+        expect(card?.y).to.equal(0);
+    });
+
+    it('omits unsafe duplicate provider sibling indexes so AI adds preserve visual stacking order', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'duplicate-index-provider',
+            label: 'Duplicate index provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-card-background-layer',
+                            type: 'rectangle',
+                            name: 'AI card background layer',
+                            width: 280,
+                            height: 160
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-card-label-layer',
+                            type: 'text',
+                            name: 'AI card label layer',
+                            content: 'Generated label',
+                            width: 180,
+                            height: 24
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-card-button-layer',
+                            type: 'rectangle',
+                            role: 'button',
+                            name: 'AI card button layer',
+                            width: 160,
+                            height: 44
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-card-button-layer']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI duplicate index test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Add generated card layers',
+            document,
+            selection: ['hero-card']
+        });
+        const result = providerService.applyOperationsToDocument(document, ['hero-card'], generated.operations);
+        const card = result.document.pages![0].children.find(node => node.id === 'hero-card');
+        const generatedOrder = card?.children
+            ?.map(node => node.id)
+            .filter(id => id.startsWith('ai-card-'));
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.index)).to.deep.equal([undefined, undefined, undefined]);
+        expect(generatedOrder).to.deep.equal(['ai-card-button-layer', 'ai-card-label-layer', 'ai-card-background-layer']);
+    });
+
+    it('sorts unindexed flat provider siblings front-to-back within the same parent', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'flat-z-order-provider',
+            label: 'Flat z order provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-flat-button-layer',
+                            type: 'rectangle',
+                            role: 'button',
+                            name: 'AI flat foreground button',
+                            width: 160,
+                            height: 44
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-flat-title-layer',
+                            type: 'text',
+                            name: 'AI flat title label',
+                            content: 'Generated title',
+                            width: 180,
+                            height: 24
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-flat-background-layer',
+                            type: 'rectangle',
+                            name: 'AI flat background layer',
+                            width: 280,
+                            height: 160
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-flat-button-layer']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI flat z order test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Add generated flat card layers',
+            document,
+            selection: ['hero-card']
+        });
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+        const result = providerService.applyOperationsToDocument(document, ['hero-card'], generated.operations);
+        const card = result.document.pages![0].children.find(node => node.id === 'hero-card');
+        const generatedOrder = card?.children
+            ?.map(node => node.id)
+            .filter(id => id.startsWith('ai-flat-'));
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.node.id)).to.deep.equal([
+            'ai-flat-button-layer',
+            'ai-flat-title-layer',
+            'ai-flat-background-layer'
+        ]);
+        expect(generatedOrder).to.deep.equal([
+            'ai-flat-button-layer',
+            'ai-flat-title-layer',
+            'ai-flat-background-layer'
+        ]);
+    });
+
+    it('does not treat manual overlay role as foreground z-order by itself', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'manual-overlay-z-order-provider',
+            label: 'Manual overlay z order provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-overlay-manual-frame',
+                            type: 'frame',
+                            role: 'overlay',
+                            name: 'AI manual positioned frame',
+                            width: 260,
+                            height: 120,
+                            fill: [{ type: 'solid', color: '#e5e7eb' }]
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-overlay-title-layer',
+                            type: 'text',
+                            role: 'overlay',
+                            name: 'AI overlay title',
+                            content: 'Visible title',
+                            width: 220,
+                            height: 32
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        node: {
+                            id: 'ai-overlay-background-layer',
+                            type: 'rectangle',
+                            name: 'AI background base',
+                            width: 280,
+                            height: 160
+                        }
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI manual overlay z order test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Add a manually positioned card with a text label',
+            document,
+            selection: ['hero-card']
+        });
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.node.id)).to.deep.equal([
+            'ai-overlay-title-layer',
+            'ai-overlay-manual-frame',
+            'ai-overlay-background-layer'
+        ]);
+    });
+
+    it('inserts streamed provider siblings by z-order as each operation is applied', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'stream-z-order-provider',
+            label: 'Stream z order provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-stream-background-layer',
+                            type: 'rectangle',
+                            name: 'AI stream background layer',
+                            width: 280,
+                            height: 160
+                        }
+                    }
+                };
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-stream-title-layer',
+                            type: 'text',
+                            name: 'AI stream title label',
+                            content: 'Streamed title',
+                            width: 180,
+                            height: 24
+                        }
+                    }
+                };
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-stream-button-layer',
+                            type: 'rectangle',
+                            role: 'button',
+                            name: 'AI stream foreground button',
+                            width: 160,
+                            height: 44
+                        }
+                    }
+                };
+                yield { type: 'complete' };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI streamed z order test');
+        let currentDocument = document;
+        let currentSelection = ['hero-card'];
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Add streamed generated card layers',
+            document: currentDocument,
+            selection: currentSelection
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, { mode: 'maintenance' });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+        const card = currentDocument.pages![0].children.find(node => node.id === 'hero-card');
+        const generatedOrder = card?.children
+            ?.map(node => node.id)
+            .filter(id => id.startsWith('ai-stream-'));
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.node.id)).to.deep.equal([
+            'ai-stream-background-layer',
+            'ai-stream-title-layer',
+            'ai-stream-button-layer'
+        ]);
+        expect(generatedOrder).to.deep.equal([
+            'ai-stream-title-layer',
+            'ai-stream-button-layer',
+            'ai-stream-background-layer'
+        ]);
+    });
+
+    it('times out a hanging streaming provider instead of waiting indefinitely', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-stream-provider',
+            label: 'Hanging stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                await new Promise<void>(() => undefined);
+            }
+        };
+        const providerService = new FastStreamTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI hanging stream timeout test');
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Create a streamed design',
+            document,
+            selection: []
+        }, async () => {
+            throw new Error('The hanging stream should not apply operations.');
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('Hanging stream provider streaming did not produce a usable OpenPencil operation');
+    });
+
+    it('does not let diagnostic-only stream events extend the first operation timeout', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'diagnostic-only-stream-provider',
+            label: 'Diagnostic-only stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                for (let index = 0; index < 20; index++) {
+                    yield { type: 'diagnostic', message: `still thinking ${index}` };
+                    await new Promise(resolve => globalThis.setTimeout(resolve, 2));
+                }
+            }
+        };
+        const providerService = new FastStreamTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI diagnostic-only stream timeout test');
+        const startedAt = Date.now();
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Create a streamed design',
+            document,
+            selection: []
+        }, async () => {
+            throw new Error('The diagnostic-only stream should not apply operations.');
+        });
+
+        expect(Date.now() - startedAt).to.be.lessThan(120);
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('Diagnostic-only stream provider streaming did not produce a usable OpenPencil operation');
+    });
+
+    it('recovers a stream with no usable operations by asking the same provider for one structured batch result', async () => {
+        let recoveryPrompt = '';
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'empty-stream-recovery-provider',
+            label: 'Empty stream recovery provider',
+            priority: 10,
+            generateOperations: request => {
+                recoveryPrompt = request.prompt;
+                return {
+                    operations: [
+                        {
+                            operation: 'createNode',
+                            parentId: null,
+                            node: {
+                                id: 'ai-recovered-screen',
+                                type: 'frame',
+                                name: 'AI recovered screen',
+                                role: 'screen',
+                                x: 0,
+                                y: 0,
+                                width: 360,
+                                height: 640,
+                                children: [
+                                    {
+                                        id: 'ai-recovered-title',
+                                        type: 'text',
+                                        name: 'AI recovered title',
+                                        content: 'Recovered structured screen',
+                                        x: 32,
+                                        y: 48,
+                                        width: 240,
+                                        height: 32
+                                    }
+                                ]
+                            }
+                        },
+                        { operation: 'setSelection', nodeIds: ['ai-recovered-screen'] }
+                    ]
+                };
+            },
+            async *streamOperations() {
+                yield { type: 'diagnostic', message: 'model produced reasoning only' };
+                yield { type: 'complete' };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        let currentDocument = providerService.createDesign('AI empty stream recovery test');
+        let currentSelection: string[] = [];
+        const generated = await providerService.streamAiOperations({
+            prompt: 'Create a compact app screen',
+            document: currentDocument,
+            selection: currentSelection
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, {
+                mode: 'generation',
+                normalizeVisibleBounds: true,
+                requireVisibleContent: true
+            });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+
+        expect(generated.source).to.equal('provider');
+        expect(recoveryPrompt).to.contain('Canvas streaming recovery retry');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['createNode', 'setSelection']);
+        expect(currentDocument.pages![0].children.some(node => node.id === 'ai-recovered-screen')).to.equal(true);
+    });
+
+    it('uses longer operation timeouts for direct HTTP router models that can queue or reason before emitting Canvas operations', () => {
+        const providerService = new InspectableTimeoutOpenPencilDesignCommandService();
+        const document = providerService.createDesign('AI OpenCode router timeout profile test');
+        const request: OpenPencilAiDesignRequest = {
+            prompt: 'Create a streamed design',
+            document,
+            selection: [],
+            execution: {
+                providerId: 'direct-http:opencode',
+                runtime: 'direct-http',
+                modelProvider: 'opencode',
+                model: 'opencode/deepseek-v4-flash'
+            }
+        };
+
+        expect(providerService.generateTimeout(request)).to.equal(120000);
+        expect(providerService.streamTimeouts(request)).to.deep.equal({
+            firstOperationMs: 45000,
+            idleMs: 45000,
+            totalMs: 180000
+        });
+    });
+
+    it('does not materialize a local skeleton when the batch provider hangs', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-generate-provider',
+            label: 'Hanging generate provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI hanging generate timeout test');
+        const startedAt = Date.now();
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Create a marketplace page skeleton',
+            document,
+            selection: []
+        });
+
+        expect(Date.now() - startedAt).to.be.lessThan(120);
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('Hanging generate provider generation did not return OpenPencil operations');
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
+    });
+
+    it('does not force the commerce skeleton for generic known-site homepage clone prompts', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-generic-homepage-provider',
+            label: 'Hanging generic homepage provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI generic homepage clone fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma copia da pagina inicial do Studio Aurora com o nome Studio Aurora.',
+            document,
+            selection: []
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
+    });
+
+    it('does not treat a reference brand name as commerce intent by itself', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-reference-brand-provider',
+            label: 'Hanging reference brand provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI reference brand fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma copia da pagina inicial do Portal Aurora com o nome Portal Controlado.',
+            document,
+            selection: []
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
+    });
+
+    it('does not materialize a local generic page starter when the incremental foundation batch stage times out', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-incremental-skeleton-provider',
+            label: 'Hanging incremental skeleton provider',
+            priority: 10,
+            generateOperations: async () => new Promise(() => undefined)
+        };
+        const providerService = new FastGenerateTimeoutOpenPencilDesignCommandService(provider);
+        const document = providerService.createDesign('AI incremental skeleton fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: [
+                'Crie uma homepage completa de loja online com o nome Nova Market.',
+                'Incremental stage 1/3: create the root view frame and the first meaningful populated regions of the requested artifact.',
+                'Do not return a bare skeleton. The canvas should immediately show the intended artifact type.'
+            ].join('\n'),
+            document,
+            selection: [],
+            mode: 'generation'
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(generated.diagnostics?.join(' ')).to.contain('No design was generated');
+    });
+
+    it('does not apply a local generic page starter when the incremental foundation stream stage times out', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'hanging-incremental-skeleton-stream-provider',
+            label: 'Hanging incremental skeleton stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations() {
+                await new Promise<void>(() => undefined);
+            }
+        };
+        const providerService = new FastStreamTimeoutOpenPencilDesignCommandService(provider);
+        let currentDocument = providerService.createDesign('AI incremental skeleton stream fallback test');
+        let currentSelection: string[] = [];
+        let appliedTotal = 0;
+        const generated = await providerService.streamAiOperations({
+            prompt: [
+                'Crie uma homepage completa de loja online com o nome Nova Market.',
+                'Incremental stage 1/3: create the root view frame and the first meaningful populated regions of the requested artifact.',
+                'Do not return a bare skeleton. The canvas should immediately show the intended artifact type.'
+            ].join('\n'),
+            document: currentDocument,
+            selection: currentSelection,
+            mode: 'generation'
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, {
+                mode: 'generation',
+                normalizeVisibleBounds: true,
+                preservePageWidth: true,
+                targetPageWidth: 1200,
+                requireVisibleContent: true
+            });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            appliedTotal += result.changed ? streamed.operations.length : 0;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.operations).to.deep.equal([]);
+        expect(appliedTotal).to.equal(0);
+        expect(generated.diagnostics?.join(' ')).to.contain('streaming recovery returned no OpenPencil operations');
+    });
+
+    it('expands streamed provider containers so later children remain visible', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'visible-bounds-stream-provider',
+            label: 'Visible bounds stream provider',
+            priority: 10,
+            generateOperations: () => ({ operations: [] }),
+            async *streamOperations(request) {
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'createNode',
+                        parentId: request.document.activePageId,
+                        node: {
+                            id: 'ai-visible-screen',
+                            type: 'frame',
+                            name: 'AI visible screen',
+                            width: 320,
+                            height: 180,
+                            clipContent: true,
+                            fill: [{ type: 'solid', color: '#ffffff' }]
+                        }
+                    }
+                };
+                yield {
+                    type: 'operation',
+                    operation: {
+                        operation: 'addNode',
+                        parentId: 'ai-visible-screen',
+                        node: {
+                            id: 'ai-visible-offscreen-card',
+                            type: 'frame',
+                            name: 'AI visible offscreen card',
+                            x: 360,
+                            y: 140,
+                            width: 180,
+                            height: 96,
+                            fill: [{ type: 'solid', color: '#f8fafc' }]
+                        }
+                    }
+                };
+                yield { type: 'complete' };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI streamed visible bounds test');
+        let currentDocument = document;
+        let currentSelection: string[] = [];
+
+        await providerService.streamAiOperations({
+            prompt: 'Create a streamed design where every element remains visible',
+            document: currentDocument,
+            selection: currentSelection
+        }, async streamed => {
+            const result = providerService.applyOperationsToDocument(currentDocument, currentSelection, streamed.operations, {
+                mode: 'maintenance',
+                normalizeVisibleBounds: true
+            });
+            currentDocument = result.document;
+            currentSelection = result.selection;
+            return {
+                document: currentDocument,
+                selection: currentSelection,
+                applied: result.changed ? streamed.operations.length : 0
+            };
+        });
+
+        const page = currentDocument.pages![0];
+        const root = page.children.find(node => node.id === 'ai-visible-screen');
+
+        expect(root).to.exist;
+        expect(root?.clipContent).to.equal(false);
+        expect(Number(root?.width)).to.be.greaterThan(539);
+        expect(Number(root?.height)).to.be.greaterThan(235);
+        expect(Number(page.width)).to.be.at.least(Number(root?.x ?? 0) + Number(root?.width ?? 0));
+    });
+
+    it('preserves homepage page width and wraps overflowing generated rows vertically', () => {
+        const document = service.createDesign('Homepage width preservation test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = Array.from({ length: 5 }, (_, index) => ({
+            id: `homepage-product-card-${index + 1}`,
+            type: 'frame',
+            name: `Homepage product card ${index + 1}`,
+            role: 'card',
+            x: index * 310,
+            y: 420,
+            width: 280,
+            height: 160,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            children: []
+        }));
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const normalizedPage = result.document.pages![0];
+        const cards = normalizedPage.children;
+
+        expect(result.changed).to.equal(true);
+        expect(normalizedPage.width).to.equal(1200);
+        expect(cards[4].x).to.equal(0);
+        expect(Number(cards[4].y)).to.be.greaterThan(420);
+        expect(Number(normalizedPage.height)).to.be.greaterThan(700);
+        expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
+    });
+
+    it('stacks homepage sections vertically instead of leaving lateralized section blocks', () => {
+        const document = service.createDesign('Homepage section flow test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 800;
+        page.children = [
+            createHomepageSection('marketplace-hero-section', 'Marketplace Hero Section', 0, 0, 1200, 220),
+            createHomepageSection('marketplace-offers-section', 'Marketplace Offers Section', 1240, 0, 980, 260),
+            createHomepageSection('marketplace-recommendations-section', 'Marketplace Recommendations Section', 0, 80, 980, 260),
+            createHomepageSection('marketplace-footer-section', 'Marketplace Footer Section', 1240, 120, 980, 180)
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const sections = result.document.pages![0].children;
+
+        expect(result.changed).to.equal(true);
+        expect(result.document.pages![0].width).to.equal(1200);
+        expect(sections.map(node => node.x)).to.deep.equal([0, 110, 110, 110]);
+        expect(Number(sections[1].y)).to.be.greaterThan(Number(sections[0].y) + Number(sections[0].height));
+        expect(Number(sections[2].y)).to.be.greaterThan(Number(sections[1].y) + Number(sections[1].height));
+        expect(Number(sections[3].y)).to.be.greaterThan(Number(sections[2].y) + Number(sections[2].height));
+        expect(Math.max(...sections.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(1200);
+    });
+
+    it('stacks page-like auto-layout containers with lateralized section children', () => {
+        const document = service.createDesign('Generic page-like auto-layout flow test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 800;
+        page.children = [
+            {
+                id: 'reference-page-root',
+                type: 'frame',
+                name: 'Website reference composition',
+                role: 'main',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 520,
+                layout: 'horizontal',
+                children: [
+                    createHomepageSection('reference-header', 'Reference header section', 0, 0, 1200, 110),
+                    createHomepageSection('reference-hero', 'Reference hero section', 1240, 0, 980, 220),
+                    createHomepageSection('reference-body', 'Reference content section', 0, 80, 980, 260)
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const root = result.document.pages![0].children[0];
+        const sections = root.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(root.layout).to.equal('none');
+        expect(sections.map(node => node.x)).to.deep.equal([0, 110, 110]);
+        expect(Number(sections[1].y)).to.be.greaterThan(Number(sections[0].y) + Number(sections[0].height));
+        expect(Number(sections[2].y)).to.be.greaterThan(Number(sections[1].y) + Number(sections[1].height));
+        expect(Math.max(...sections.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(root.width));
+    });
+
+    it('repairs overlapping foreground text inside compact cards before final AI layout validation', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Compact card overlap repair test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 360;
+        page.children = [
+            {
+                id: 'compact-page-root',
+                type: 'frame',
+                name: 'Generic page composition',
+                role: 'page',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 260,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'compact-feature-card',
+                        type: 'frame',
+                        name: 'Feature card',
+                        role: 'card',
+                        x: 82,
+                        y: 40,
+                        width: 180,
+                        height: 96,
+                        layout: 'none',
+                        children: [
+                            {
+                                id: 'compact-title',
+                                type: 'text',
+                                name: 'Primary value',
+                                role: 'overlay',
+                                x: 18,
+                                y: 18,
+                                width: 140,
+                                height: 42,
+                                content: 'Primary value',
+                                fontSize: 16
+                            },
+                            {
+                                id: 'compact-copy',
+                                type: 'text',
+                                name: 'Supporting copy',
+                                role: 'overlay',
+                                x: 18,
+                                y: 24,
+                                width: 140,
+                                height: 56,
+                                content: 'Short supporting copy for this visual block.',
+                                fontSize: 13
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const validation = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const title = documents.findNode(result.document, 'compact-title');
+        const copy = documents.findNode(result.document, 'compact-copy');
+        const card = documents.findNode(result.document, 'compact-feature-card');
+
+        expect(result.changed).to.equal(true);
+        expect(validation.valid).to.equal(true);
+        expect(Number(copy?.y)).to.be.greaterThan(Number(title?.y) + Number(title?.height) - 1);
+        expect(Number(card?.height)).to.be.greaterThan(96);
+    });
+
+    it('does not reflow visual, title, and copy inside a manually positioned feature card as one row', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Feature card row isolation test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 360;
+        page.children = [
+            {
+                id: 'feature-card-root',
+                type: 'frame',
+                name: 'Generic page composition',
+                role: 'page',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 320,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'feature-card-row',
+                        type: 'frame',
+                        name: 'Feature card row',
+                        role: 'section',
+                        x: 82,
+                        y: 40,
+                        width: 1036,
+                        height: 230,
+                        layout: 'none',
+                        children: [
+                            {
+                                id: 'feature-card-a',
+                                type: 'frame',
+                                name: 'Feature card',
+                                role: 'card',
+                                x: 0,
+                                y: 0,
+                                width: 389,
+                                height: 230,
+                                layout: 'none',
+                                children: [
+                                    {
+                                        id: 'feature-card-a-visual',
+                                        type: 'image',
+                                        name: 'Feature visual',
+                                        role: 'overlay',
+                                        x: 22,
+                                        y: 34,
+                                        width: 46,
+                                        height: 46
+                                    },
+                                    {
+                                        id: 'feature-card-a-title',
+                                        type: 'text',
+                                        name: 'Feature title',
+                                        role: 'overlay',
+                                        x: 88,
+                                        y: 28,
+                                        width: 224,
+                                        height: 52,
+                                        content: 'Feature title',
+                                        fontSize: 17
+                                    },
+                                    {
+                                        id: 'feature-card-a-copy',
+                                        type: 'text',
+                                        name: 'Feature copy',
+                                        role: 'overlay',
+                                        x: 88,
+                                        y: 96,
+                                        width: 224,
+                                        height: 86,
+                                        content: 'Supporting copy should stay below the feature title.',
+                                        fontSize: 13
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const validation = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const title = documents.findNode(result.document, 'feature-card-a-title');
+        const copy = documents.findNode(result.document, 'feature-card-a-copy');
+
+        expect(validation.valid).to.equal(true);
+        expect(Number(title?.y)).to.be.greaterThan(0);
+        expect(Number(copy?.y)).to.be.greaterThan(Number(title?.y) + Number(title?.height));
+    });
+
+    it('does not collapse repaired card internals when parent rows are normalized repeatedly', () => {
+        const documents = new OpenPencilDocumentService();
+        const document = service.createDesign('Repeated parent card normalization test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 760;
+        page.children = [
+            {
+                id: 'repair-page-root',
+                type: 'frame',
+                name: 'Generic page composition',
+                role: 'page',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 700,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'repair-feature-row',
+                        type: 'frame',
+                        name: 'Feature card row',
+                        role: 'section',
+                        x: 0,
+                        y: 0,
+                        width: 1200,
+                        height: 132,
+                        layout: 'none',
+                        children: [0, 1, 2].map(index => ({
+                            id: `repair-feature-card-${index + 1}`,
+                            type: 'frame',
+                            name: `Feature card ${index + 1}`,
+                            role: 'card',
+                            x: index * 405,
+                            y: 0,
+                            width: 389,
+                            height: 132,
+                            layout: 'none',
+                            children: [
+                                {
+                                    id: `repair-feature-card-${index + 1}-visual`,
+                                    type: 'image',
+                                    name: 'Feature visual',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 0,
+                                    width: 46,
+                                    height: 46
+                                },
+                                {
+                                    id: `repair-feature-card-${index + 1}-title`,
+                                    type: 'text',
+                                    name: 'Feature title',
+                                    role: 'overlay',
+                                    x: 67,
+                                    y: 0,
+                                    width: 224,
+                                    height: 22,
+                                    content: 'Feature title'
+                                },
+                                {
+                                    id: `repair-feature-card-${index + 1}-copy`,
+                                    type: 'text',
+                                    name: 'Feature copy',
+                                    role: 'overlay',
+                                    x: 67,
+                                    y: 0,
+                                    width: 224,
+                                    height: 33,
+                                    content: 'Feature supporting copy.'
+                                }
+                            ]
+                        }))
+                    },
+                    {
+                        id: 'repair-product-grid-row',
+                        type: 'frame',
+                        name: 'Product offers grid row',
+                        role: 'section',
+                        x: 0,
+                        y: 170,
+                        width: 1200,
+                        height: 181,
+                        layout: 'none',
+                        children: [0, 1, 2].map(index => ({
+                            id: `repair-product-card-${index + 1}`,
+                            type: 'frame',
+                            name: `Product offer card ${index + 1}`,
+                            role: 'card',
+                            x: index * 303,
+                            y: 0,
+                            width: 291,
+                            height: 82,
+                            layout: 'none',
+                            children: [
+                                {
+                                    id: `repair-product-card-${index + 1}-visual`,
+                                    type: 'image',
+                                    name: 'Product image',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 0,
+                                    width: 291,
+                                    height: 82
+                                },
+                                {
+                                    id: `repair-product-card-${index + 1}-title`,
+                                    type: 'text',
+                                    name: 'Product title',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 56,
+                                    width: 291,
+                                    height: 26,
+                                    content: 'Product title'
+                                },
+                                {
+                                    id: `repair-product-card-${index + 1}-copy`,
+                                    type: 'text',
+                                    name: 'Product copy',
+                                    role: 'overlay',
+                                    x: 0,
+                                    y: 65,
+                                    width: 291,
+                                    height: 17,
+                                    content: 'Product supporting copy.'
+                                }
+                            ]
+                        }))
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const validation = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const featureCard = documents.findNode(result.document, 'repair-feature-card-1');
+        const productCard = documents.findNode(result.document, 'repair-product-card-1');
+        const productRow = documents.findNode(result.document, 'repair-product-grid-row');
+
+        expect(result.changed).to.equal(true);
+        expect(validation.valid).to.equal(true);
+        expect(childrenOverlap(featureCard?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(productCard?.children ?? [])).to.equal(false);
+        expect(Number(featureCard?.height)).to.be.greaterThan(132);
+        expect(Number(productCard?.height)).to.be.greaterThan(82);
+        expect(maxRight(productRow?.children ?? [])).to.be.at.most(Number(productRow?.width));
+    });
+
+    it('wraps overflowing horizontal homepage shelves inside the preserved page width', () => {
+        const document = service.createDesign('Homepage shelf wrap test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [
+            createHomepageSection('commerce-homepage', 'Commerce Homepage', 0, 0, 1200, 260)
+        ];
+        page.children[0].children = [
+            {
+                id: 'ultimas-ofertas-shelf',
+                type: 'frame',
+                name: 'Ultimas ofertas shelf',
+                role: 'section',
+                x: 0,
+                y: 40,
+                width: 971,
+                height: 150,
+                layout: 'horizontal',
+                gap: 12,
+                padding: [16, 16, 16, 16],
+                fill: [{ type: 'solid', color: '#ffffff' }],
+                children: Array.from({ length: 4 }, (_, index) => ({
+                    id: `oferta-card-${index + 1}`,
+                    type: 'frame',
+                    name: `Oferta card ${index + 1}`,
+                    role: 'card',
+                    width: 300,
+                    height: 120,
+                    fill: [{ type: 'solid', color: '#ffffff' }],
+                    children: []
+                }))
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const homepage = result.document.pages![0].children.find(node => node.id === 'commerce-homepage');
+        const shelf = homepage?.children?.find(node => node.id === 'ultimas-ofertas-shelf');
+        const cards = shelf?.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(result.document.pages![0].width).to.equal(1200);
+        expect(shelf?.layout).to.equal('none');
+        expect(cards[3].x).to.equal(16);
+        expect(Number(cards[3].y)).to.be.greaterThan(16);
+        expect(Number(shelf?.height)).to.be.greaterThan(150);
+        expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(shelf?.width));
+    });
+
+    it('converts oversized marketplace offer shelves into desktop grid columns', () => {
+        const document = service.createDesign('Homepage oversized shelf grid test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 640;
+        page.children = [
+            createHomepageSection('commerce-offers-section', 'Commerce ofertas do dia shelf', 0, 0, 971, 260)
+        ];
+        page.children[0].children = Array.from({ length: 5 }, (_, index) => ({
+            id: `wide-offer-card-${index + 1}`,
+            type: 'frame',
+            name: `Wide offer card ${index + 1}`,
+            role: 'card',
+            x: 16,
+            y: 24 + index * 136,
+            width: 820,
+            height: 120,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            children: []
+        }));
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const shelf = result.document.pages![0].children.find(node => node.id === 'commerce-offers-section');
+        const cards = shelf?.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(cards[0].width).to.equal(315);
+        expect(cards[0].x).to.equal(0);
+        expect(cards[1].x).to.equal(327);
+        expect(cards[2].x).to.equal(654);
+        expect(cards[3].x).to.equal(0);
+        expect(Number(cards[3].y)).to.be.greaterThan(Number(cards[0].y));
+        expect(Math.max(...cards.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(971);
+    });
+
+    it('keeps card child text and shapes inside the card bounds during visible normalization', () => {
+        const document = service.createDesign('Homepage card child clamp test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [
+            {
+                id: 'offer-card',
+                type: 'frame',
+                name: 'Offer card',
+                role: 'card',
+                x: 80,
+                y: 80,
+                width: 300,
+                height: 140,
+                fill: [{ type: 'solid', color: '#ffffff' }],
+                children: [
+                    {
+                        id: 'escaping-offer-title',
+                        type: 'text',
+                        name: 'Escaping offer title',
+                        x: 250,
+                        y: 20,
+                        width: 180,
+                        height: 24,
+                        content: 'Texto da oferta'
+                    },
+                    {
+                        id: 'escaping-offer-shape',
+                        type: 'rectangle',
+                        name: 'Escaping offer shape',
+                        x: 320,
+                        y: 56,
+                        width: 120,
+                        height: 40,
+                        fill: [{ type: 'solid', color: '#f5f5f5' }]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'offer-card');
+        const children = card?.children ?? [];
+
+        expect(result.changed).to.equal(true);
+        expect(Math.max(...children.map(node => Number(node.x) + Number(node.width)))).to.be.at.most(Number(card?.width));
+        expect(children.find(node => node.id === 'escaping-offer-title')?.x).to.equal(120);
+        expect(children.find(node => node.id === 'escaping-offer-shape')?.x).to.equal(180);
+    });
+
+    it('repairs generic overlapping text children before AI layout quality validation', () => {
+        const document = service.createDesign('Generic text overlap repair test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [{
+            id: 'feature-summary-panel',
+            type: 'frame',
+            name: 'Feature summary panel',
+            role: 'section',
+            x: 120,
+            y: 80,
+            width: 360,
+            height: 120,
+            fill: [{ type: 'solid', color: '#ffffff' }],
+            children: [{
+                id: 'feature-value',
+                type: 'text',
+                name: 'Valor claro',
+                x: 18,
+                y: 18,
+                width: 260,
+                height: 24,
+                content: 'Valor claro',
+                fontSize: 16
+            }, {
+                id: 'feature-copy',
+                type: 'text',
+                name: 'Texto curto para completar a narrativa visual',
+                x: 18,
+                y: 18,
+                width: 300,
+                height: 24,
+                content: 'Texto curto para completar a narrativa visual',
+                fontSize: 14
+            }, {
+                id: 'feature-support',
+                type: 'text',
+                name: 'Suporte visivel',
+                x: 18,
+                y: 18,
+                width: 280,
+                height: 24,
+                content: 'Suporte visivel',
+                fontSize: 14
+            }]
+        }];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const panel = result.document.pages![0].children.find(node => node.id === 'feature-summary-panel');
+        const children = panel?.children ?? [];
+        const quality = service.validateAiLayoutQuality(result.document, {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(result.changed).to.equal(true);
+        expect(children.map(node => node.x)).to.deep.equal([16, 16, 16]);
+        expect(Number(children[1].y)).to.be.greaterThan(Number(children[0].y));
+        expect(Number(children[2].y)).to.be.greaterThan(Number(children[1].y));
+        expect(quality.valid).to.equal(true);
+    });
+
+    it('normalizes oversized media overlays inside streamed marketplace cards', () => {
+        const document = service.createDesign('Homepage media overlay clamp test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 600;
+        page.children = [
+            {
+                id: 'notebook-offer-card',
+                type: 'frame',
+                name: 'Oferta notebook',
+                role: 'card',
+                x: 80,
+                y: 80,
+                width: 312,
+                height: 280,
+                layout: 'vertical',
+                gap: 10,
+                padding: 0,
+                children: [
+                    {
+                        id: 'notebook-offer-image',
+                        type: 'rectangle',
+                        name: 'Imagem notebook',
+                        role: 'overlay',
+                        x: 2,
+                        y: -3,
+                        width: 1200,
+                        height: 150,
+                        fill: [{ type: 'solid', color: '#f8f8f8' }]
+                    },
+                    {
+                        id: 'notebook-offer-info',
+                        type: 'frame',
+                        name: 'Info notebook',
+                        x: 0,
+                        y: 0,
+                        width: 1200,
+                        height: 118,
+                        layout: 'vertical',
+                        gap: 6,
+                        padding: [0, 16, 18, 16],
+                        children: [
+                            {
+                                id: 'notebook-offer-desc',
+                                type: 'text',
+                                name: 'Descrição notebook',
+                                content: 'Notebook leve para trabalho e estudo',
+                                x: 16,
+                                y: 59,
+                                width: 1168,
+                                height: 20
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'notebook-offer-card');
+        const image = card?.children?.find(node => node.id === 'notebook-offer-image');
+        const info = card?.children?.find(node => node.id === 'notebook-offer-info');
+        const desc = info?.children?.find(node => node.id === 'notebook-offer-desc');
+
+        expect(result.changed).to.equal(true);
+        expect(image?.role).to.equal(undefined);
+        expect(image?.x).to.equal(0);
+        expect(image?.y).to.equal(0);
+        expect(image?.width).to.equal(312);
+        expect(info?.width).to.equal(312);
+        expect(desc?.width).to.equal(280);
+    });
+
+    it('repairs broken marketplace feature-card strips into stable columns', () => {
+        const document = service.createDesign('Homepage feature cards grid test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'benefits-strip',
+                type: 'frame',
+                name: 'Beneficios Nova Market',
+                role: 'section',
+                x: 40,
+                y: 80,
+                width: 1120,
+                height: 494,
+                layout: 'none',
+                children: [
+                    createFeatureCard('payment-benefit', 'Pagamento seguro', 0, 0, 1120, 152, 1080),
+                    createFeatureCard('installment-benefit', 'Parcelamento', 526, 174, 68, 320, 28),
+                    createFeatureCard('shipping-benefit', 'Envio rápido', 76, 160, 'fill_container', 152, 1160)
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const strip = result.document.pages![0].children.find(node => node.id === 'benefits-strip');
+        const cards = strip?.children ?? [];
+        const installment = cards.find(node => node.id === 'installment-benefit');
+        const installmentTitle = installment?.children?.find(node => node.id === 'installment-benefit-title');
+        const installmentDesc = installment?.children?.find(node => node.id === 'installment-benefit-desc');
+
+        expect(result.changed).to.equal(true);
+        expect(cards.map(node => node.width)).to.deep.equal([362, 362, 362]);
+        expect(cards.map(node => node.x)).to.deep.equal([0, 378, 756]);
+        expect(cards.map(node => node.y)).to.deep.equal([0, 0, 0]);
+        expect(strip?.height).to.equal(180);
+        expect(installmentTitle?.width).to.equal(322);
+        expect(installmentDesc?.width).to.equal(322);
+        expect(Number(installmentDesc?.height)).to.be.lessThan(80);
+    });
+
+    it('removes internal editor placeholders from AI-normalized designs', () => {
+        const document = service.createDesign('Homepage placeholder removal test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'embedded-editor-placeholder',
+                type: 'text',
+                name: 'Hero copy',
+                x: 410,
+                y: 232,
+                width: 380,
+                height: 48,
+                content: 'Edit this embedded .op design inside Theia.'
+            },
+            {
+                id: 'hero-card',
+                type: 'rectangle',
+                name: 'Hero card',
+                x: 340,
+                y: 564,
+                width: 520,
+                height: 260,
+                fill: [{ type: 'solid', color: '#f8fafc' }]
+            },
+            {
+                id: 'hero-title',
+                type: 'text',
+                name: 'Hero title',
+                x: 380,
+                y: 848,
+                width: 440,
+                height: 64,
+                content: 'OpenPencil Design'
+            },
+            createHomepageSection('marketplace-homepage-root', 'Marketplace homepage root', 0, 304, 1120, 620)
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const pageNodes = result.document.pages![0].children;
+
+        expect(result.changed).to.equal(true);
+        expect(pageNodes.map(node => node.id)).to.deep.equal(['marketplace-homepage-root']);
+        expect(JSON.stringify(result.document)).not.to.contain('Edit this embedded .op design inside Theia.');
+        expect(JSON.stringify(result.document)).not.to.contain('OpenPencil Design');
+    });
+
+    it('does not shrink long page roots to fit the current viewport height', () => {
+        const document = service.createDesign('Long homepage root test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+
+        const result = service.applyOperationsToDocument(document, [], [{
+            operation: 'createNode',
+            node: {
+                id: 'marketplace-homepage-root',
+                type: 'frame',
+                name: 'Marketplace homepage root',
+                role: 'section',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 2400,
+                children: [
+                    createHomepageSection('marketplace-header', 'Marketplace header', 0, 0, 1200, 140),
+                    createHomepageSection('marketplace-products', 'Marketplace products', 0, 180, 1200, 520)
+                ]
+            }
+        }], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const root = result.document.pages![0].children.find(node => node.id === 'marketplace-homepage-root');
+
+        expect(result.changed).to.equal(true);
+        expect(root?.width).to.equal(1200);
+        expect(root?.height).to.equal(2400);
+        expect(root?.x).to.equal(0);
+    });
+
+    it('normalizes overflowing marketplace header rows without overlapping search and navigation text', () => {
+        const document = service.createDesign('Homepage header row normalize test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-header-root',
+                type: 'frame',
+                name: 'Marketplace header',
+                role: 'navbar',
+                x: 0,
+                y: 0,
+                width: 1120,
+                height: 204,
+                layout: 'vertical',
+                children: [
+                    {
+                        id: 'marketplace-header-search-row',
+                        type: 'frame',
+                        name: 'Header search row',
+                        role: 'row',
+                        x: 72,
+                        y: 12,
+                        width: 976,
+                        height: 48,
+                        layout: 'horizontal',
+                        gap: 12,
+                        children: [
+                            {
+                                id: 'marketplace-logo',
+                                type: 'text',
+                                name: 'Marketplace logo',
+                                role: 'heading',
+                                x: 0,
+                                y: 8,
+                                width: 976,
+                                height: 32,
+                                content: 'Nova Market',
+                                fontSize: 28
+                            },
+                            {
+                                id: 'marketplace-search',
+                                type: 'frame',
+                                name: 'Search bar',
+                                role: 'search-bar',
+                                x: 208,
+                                y: 4,
+                                width: 560,
+                                height: 40,
+                                children: []
+                            },
+                            {
+                                id: 'marketplace-offer-link',
+                                type: 'text',
+                                name: 'Subscription offer',
+                                role: 'label',
+                                x: 0,
+                                y: 15,
+                                width: 976,
+                                height: 14,
+                                content: 'Assine o Clube Plus com beneficios exclusivos',
+                                fontSize: 14
+                            }
+                        ]
+                    },
+                    {
+                        id: 'marketplace-header-nav-row',
+                        type: 'frame',
+                        name: 'Header navigation row',
+                        role: 'row',
+                        x: 72,
+                        y: 70,
+                        width: 976,
+                        height: 120,
+                        layout: 'horizontal',
+                        gap: 18,
+                        children: [
+                            createHomepageSection('marketplace-location', 'Location selector', 0, 47, 210, 26),
+                            createHomepageSection('marketplace-primary-links', 'Primary links', 84, 51, 738, 18),
+                            createHomepageSection('marketplace-account-links', 'Account links', 696, 50, 280, 21)
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const header = result.document.pages![0].children.find(node => node.id === 'marketplace-header-root');
+        const searchRow = header?.children?.find(node => node.id === 'marketplace-header-search-row');
+        const navRow = header?.children?.find(node => node.id === 'marketplace-header-nav-row');
+
+        expect(result.changed).to.equal(true);
+        expect(searchRow?.layout).to.equal('none');
+        expect(navRow?.layout).to.equal('none');
+        expect(maxRight(searchRow?.children ?? [])).to.be.at.most(Number(searchRow?.width));
+        expect(maxRight(navRow?.children ?? [])).to.be.at.most(Number(navRow?.width));
+        expect(childrenOverlap(searchRow?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(navRow?.children ?? [])).to.equal(false);
+    });
+
+    it('grids collapsed fill-container marketplace cards and clamps oversized card images', () => {
+        const document = service.createDesign('Homepage collapsed shelf grid test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-offers-shelf',
+                type: 'frame',
+                name: 'Ofertas do dia shelf',
+                role: 'section',
+                x: 0,
+                y: 80,
+                width: 976,
+                height: 292,
+                layout: 'none',
+                children: Array.from({ length: 5 }, (_, index) => ({
+                    id: `marketplace-offer-card-${index + 1}`,
+                    type: 'frame',
+                    name: `Offer card ${index + 1}`,
+                    role: 'card',
+                    x: index * 16,
+                    y: 0,
+                    width: 'fill_container',
+                    height: 292,
+                    layout: 'vertical',
+                    children: [
+                        {
+                            id: `marketplace-offer-image-${index + 1}`,
+                            type: 'image',
+                            name: `Offer image ${index + 1}`,
+                            x: 0,
+                            y: 0,
+                            width: 1200,
+                            height: 150
+                        },
+                        {
+                            id: `marketplace-offer-info-${index + 1}`,
+                            type: 'frame',
+                            name: `Offer info ${index + 1}`,
+                            x: 0,
+                            y: 152,
+                            width: 1200,
+                            height: 120,
+                            layout: 'vertical',
+                            children: []
+                        }
+                    ]
+                }))
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const shelf = result.document.pages![0].children.find(node => node.id === 'marketplace-offers-shelf');
+        const cards = shelf?.children ?? [];
+        const firstImage = cards[0].children?.find(node => node.id === 'marketplace-offer-image-1');
+        const firstInfo = cards[0].children?.find(node => node.id === 'marketplace-offer-info-1');
+
+        expect(result.changed).to.equal(true);
+        expect(cards.map(node => node.width)).to.deep.equal([315, 315, 315, 315, 315]);
+        expect(cards.map(node => node.x)).to.deep.equal([0, 327, 654, 0, 327]);
+        expect(Number(cards[3].y)).to.be.greaterThan(Number(cards[0].y));
+        expect(firstImage?.width).to.equal(315);
+        expect(firstInfo?.width).to.equal(315);
+        expect(maxRight(cards)).to.be.at.most(Number(shelf?.width));
+    });
+
+    it('keeps banner row media and actions inside their card bounds', () => {
+        const document = service.createDesign('Homepage banner row containment test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-banner-card',
+                type: 'frame',
+                name: 'Fashion promo banner card',
+                role: 'card',
+                x: 72,
+                y: 80,
+                width: 976,
+                height: 228,
+                layout: 'horizontal',
+                gap: 12,
+                children: [
+                    {
+                        id: 'marketplace-banner-copy',
+                        type: 'frame',
+                        name: 'Fashion banner copy',
+                        role: 'column',
+                        x: 32,
+                        y: 57,
+                        width: 912,
+                        height: 114,
+                        layout: 'vertical',
+                        children: [
+                            {
+                                id: 'marketplace-banner-title',
+                                type: 'text',
+                                name: 'Banner title',
+                                content: 'Looks novos com ate 45% OFF',
+                                width: 912,
+                                height: 35
+                            }
+                        ]
+                    },
+                    {
+                        id: 'marketplace-banner-image',
+                        type: 'image',
+                        name: 'Fashion sale image',
+                        x: 968,
+                        y: 28,
+                        width: 330,
+                        height: 168
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'marketplace-banner-card');
+        const copy = card?.children?.find(node => node.id === 'marketplace-banner-copy');
+        const image = card?.children?.find(node => node.id === 'marketplace-banner-image');
+        const title = copy?.children?.find(node => node.id === 'marketplace-banner-title');
+
+        expect(result.changed).to.equal(true);
+        expect(card?.layout).to.equal('none');
+        expect(Number(copy?.x) + Number(copy?.width)).to.be.lessThan(Number(image?.x));
+        expect(Number(image?.x) + Number(image?.width)).to.be.at.most(Number(card?.width));
+        expect(title?.width).to.equal(copy?.width);
+    });
+
+    it('normalizes manual row children that overlap at the same origin', () => {
+        const document = service.createDesign('Manual row overlap normalization test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'marketplace-header-row',
+                type: 'frame',
+                name: 'Linha principal do cabeçalho',
+                role: 'row',
+                x: 40,
+                y: 40,
+                width: 1088,
+                height: 40,
+                layout: 'none',
+                children: [
+                    createHomepageSection('header-logo', 'Marca Nova Market', 0, 0, 260, 40),
+                    createHomepageSection('header-search', 'Busca', 276, 0, 520, 40),
+                    createHomepageSection('header-location', 'Localização', 0, 0, 170, 40),
+                    createHomepageSection('header-actions', 'Ações da conta', 0, 0, 200, 40)
+                ]
+            },
+            {
+                id: 'offers-title-row',
+                type: 'frame',
+                name: 'Título últimas ofertas',
+                role: 'row',
+                x: 40,
+                y: 120,
+                width: 1056,
+                height: 40,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'offers-heading',
+                        type: 'text',
+                        name: 'Título',
+                        role: 'heading',
+                        content: 'Últimas ofertas do dia',
+                        x: 0,
+                        y: 0,
+                        width: 1056,
+                        height: 27
+                    },
+                    {
+                        id: 'offers-link',
+                        type: 'text',
+                        name: 'Ver todas',
+                        role: 'label',
+                        content: 'Ver todas',
+                        x: 326,
+                        y: 0,
+                        width: 89,
+                        height: 18
+                    }
+                ]
+            },
+            {
+                id: 'footer-links-row',
+                type: 'frame',
+                name: 'Links do rodapé',
+                role: 'row',
+                x: 40,
+                y: 200,
+                width: 1048,
+                height: 120,
+                layout: 'none',
+                children: [
+                    createHomepageSection('footer-brand', 'Marca rodapé', 0, 0, 423, 77),
+                    createHomepageSection('footer-buy', 'Comprar', 447, 0, 601, 60),
+                    createHomepageSection('footer-help', 'Ajuda', 0, 0, 'fill_container', 60),
+                    createHomepageSection('footer-company', 'Institucional', 0, 0, 'fill_container', 60)
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const header = result.document.pages![0].children.find(node => node.id === 'marketplace-header-row');
+        const title = result.document.pages![0].children.find(node => node.id === 'offers-title-row');
+        const footer = result.document.pages![0].children.find(node => node.id === 'footer-links-row');
+
+        expect(result.changed).to.equal(true);
+        expect(childrenOverlap(header?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(title?.children ?? [])).to.equal(false);
+        expect(childrenOverlap(footer?.children ?? [])).to.equal(false);
+        expect(maxRight(header?.children ?? [])).to.be.at.most(Number(header?.width));
+        expect(maxRight(title?.children ?? [])).to.be.at.most(Number(title?.width));
+        expect(maxRight(footer?.children ?? [])).to.be.at.most(Number(footer?.width));
+        expect(footer?.children?.every(child => typeof child.width === 'number')).to.equal(true);
+    });
+
+    it('stacks overlapping card visuals and copy blocks instead of covering text', () => {
+        const document = service.createDesign('Overlapping guide card normalization test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 700;
+        page.children = [
+            {
+                id: 'guide-card',
+                type: 'frame',
+                name: 'Guia celular card',
+                role: 'card',
+                x: 80,
+                y: 80,
+                width: 340,
+                height: 170,
+                layout: 'none',
+                children: [
+                    {
+                        id: 'guide-icon-strip',
+                        type: 'frame',
+                        name: 'Ícone celular',
+                        x: 18,
+                        y: 18,
+                        width: 260,
+                        height: 52,
+                        layout: 'horizontal',
+                        children: []
+                    },
+                    {
+                        id: 'guide-copy',
+                        type: 'frame',
+                        name: 'Texto guia celular',
+                        role: 'column',
+                        x: 0,
+                        y: 18,
+                        width: 340,
+                        height: 70,
+                        layout: 'vertical',
+                        children: [
+                            {
+                                id: 'guide-copy-title',
+                                type: 'text',
+                                name: 'Título guia',
+                                content: 'Compare celulares',
+                                x: 0,
+                                y: 0,
+                                width: 340,
+                                height: 24
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = service.applyOperationsToDocument(document, [], [], {
+            normalizeVisibleBounds: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+        const card = result.document.pages![0].children.find(node => node.id === 'guide-card');
+        const icon = card?.children?.find(node => node.id === 'guide-icon-strip');
+        const copy = card?.children?.find(node => node.id === 'guide-copy');
+        const title = copy?.children?.find(node => node.id === 'guide-copy-title');
+
+        expect(result.changed).to.equal(true);
+        expect(childrenOverlap(card?.children ?? [])).to.equal(false);
+        expect(Number(copy?.y)).to.be.greaterThan(Number(icon?.y) + Number(icon?.height));
+        expect(copy?.width).to.equal(308);
+        expect(title?.width).to.equal(308);
+    });
+
+    it('fails AI layout quality when a page-level result has no visible content', () => {
+        const document = service.createDesign('No visible AI result quality test');
+        document.pages![0].children = [];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(quality.valid).to.equal(false);
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('no visible renderable canvas content');
+    });
+
+    it('reports AI layout quality errors for foreground overlap and escaped children', () => {
+        const document = service.createDesign('AI layout quality overlap and overflow test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 620;
+        page.children = [
+            {
+                id: 'quality-section',
+                type: 'frame',
+                name: 'Quality section',
+                x: 0,
+                y: 0,
+                width: 360,
+                height: 160,
+                children: [
+                    {
+                        id: 'quality-title',
+                        type: 'text',
+                        name: 'Quality title',
+                        content: 'Nova Market',
+                        x: 16,
+                        y: 20,
+                        width: 180,
+                        height: 40
+                    },
+                    {
+                        id: 'quality-subtitle',
+                        type: 'text',
+                        name: 'Quality subtitle',
+                        content: 'Assine com beneficios exclusivos',
+                        x: 16,
+                        y: 28,
+                        width: 220,
+                        height: 40
+                    },
+                    {
+                        id: 'quality-image',
+                        type: 'image',
+                        name: 'Imagem smartphone oferta',
+                        x: 330,
+                        y: 70,
+                        width: 120,
+                        height: 70
+                    }
+                ]
+            }
+        ];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(quality.valid).to.equal(false);
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('overlap');
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('escapes its parent width');
+    });
+
+    it('reports AI layout quality errors for page-like auto-layout sections that still use broken coordinates', () => {
+        const document = service.createDesign('AI layout quality page-like auto-layout test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 900;
+        page.children = [
+            {
+                id: 'reference-page-root',
+                type: 'frame',
+                name: 'Website reference page',
+                role: 'main',
+                x: 0,
+                y: 0,
+                width: 1200,
+                height: 520,
+                layout: 'horizontal',
+                children: [
+                    createHomepageSection('reference-header', 'Reference header section', 0, 0, 1200, 110),
+                    createHomepageSection('reference-hero', 'Reference hero section', 1240, 0, 980, 220)
+                ]
+            }
+        ];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true,
+            preservePageWidth: true,
+            targetPageWidth: 1200
+        });
+
+        expect(quality.valid).to.equal(false);
+        expect(quality.issues.map(issue => issue.message).join(' ')).to.contain('escapes its parent width');
+    });
+
+    it('allows intentional card surfaces behind foreground text in AI layout quality', () => {
+        const document = service.createDesign('AI layout quality surface allowance test');
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true
+        });
+
+        expect(quality.valid).to.equal(true);
+    });
+
+    it('does not report AI layout overlap for flow children inside auto-layout parents', () => {
+        const document = service.createDesign('AI layout quality auto-layout test');
+        const page = document.pages![0];
+        page.width = 1200;
+        page.height = 620;
+        page.children = [
+            {
+                id: 'auto-layout-section',
+                type: 'frame',
+                name: 'Auto layout section',
+                x: 80,
+                y: 80,
+                width: 420,
+                height: 180,
+                layout: 'vertical',
+                gap: 12,
+                padding: [20, 24, 20, 24],
+                children: [
+                    {
+                        id: 'auto-layout-title',
+                        type: 'text',
+                        name: 'Auto layout title',
+                        content: 'Nova Market',
+                        x: 0,
+                        y: 0,
+                        width: 320,
+                        height: 34
+                    },
+                    {
+                        id: 'auto-layout-copy',
+                        type: 'text',
+                        name: 'Auto layout copy',
+                        content: 'Auto-layout will position this below the title.',
+                        x: 0,
+                        y: 0,
+                        width: 340,
+                        height: 44
+                    }
+                ]
+            }
+        ];
+
+        const quality = service.validateAiLayoutQuality(document, {
+            requireVisibleContent: true
+        });
+
+        expect(quality.valid).to.equal(true);
+    });
+
+    it('preserves provider parent-before-child order while sorting flat child siblings', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'flat-child-z-order-provider',
+            label: 'Flat child z order provider',
+            priority: 10,
+            generateOperations: request => ({
+                operations: [
+                    {
+                        operation: 'createNode',
+                        parentId: request.document.activePageId,
+                        node: {
+                            id: 'ai-flat-parent-screen',
+                            type: 'frame',
+                            name: 'AI flat parent screen',
+                            width: 640,
+                            height: 420,
+                            children: []
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'ai-flat-parent-screen',
+                        node: {
+                            id: 'ai-flat-parent-button',
+                            type: 'rectangle',
+                            role: 'button',
+                            name: 'AI flat parent foreground button',
+                            width: 160,
+                            height: 44
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'ai-flat-parent-screen',
+                        node: {
+                            id: 'ai-flat-parent-background',
+                            type: 'rectangle',
+                            name: 'AI flat parent background',
+                            width: 640,
+                            height: 420
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-flat-parent-screen']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI flat child z order test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Create a selected container with flat child layers',
+            document,
+            selection: ['hero-card']
+        });
+        const result = providerService.applyOperationsToDocument(document, ['hero-card'], generated.operations);
+        const screen = result.document.pages![0].children.find(node => node.id === 'ai-flat-parent-screen');
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['createNode', 'addNode', 'addNode', 'setSelection']);
+        expect(generated.operations
+            .filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'createNode' | 'addNode' }> => operation.operation === 'createNode' || operation.operation === 'addNode')
+            .map(operation => operation.node.id)
+        ).to.deep.equal(['ai-flat-parent-screen', 'ai-flat-parent-button', 'ai-flat-parent-background']);
+        expect(screen?.children?.map(node => node.id)).to.deep.equal(['ai-flat-parent-button', 'ai-flat-parent-background']);
+    });
+
+    it('preserves clearly increasing provider sibling indexes', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'increasing-index-provider',
+            label: 'Increasing index provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 0,
+                        node: {
+                            id: 'ai-valid-index-background',
+                            type: 'rectangle',
+                            name: 'AI valid index background',
+                            width: 240,
+                            height: 120
+                        }
+                    },
+                    {
+                        operation: 'addNode',
+                        parentId: 'hero-card',
+                        index: 1,
+                        node: {
+                            id: 'ai-valid-index-title',
+                            type: 'text',
+                            name: 'AI valid index title',
+                            content: 'Indexed title',
+                            width: 200,
+                            height: 28
+                        }
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI increasing index test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Add indexed layers',
+            document,
+            selection: ['hero-card']
+        });
+        const addOperations = generated.operations.filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'addNode' }> => operation.operation === 'addNode');
+
+        expect(generated.source).to.equal('provider');
+        expect(addOperations.map(operation => operation.index)).to.deep.equal([0, 1]);
+    });
+
+    it('sorts provider-generated non-auto-layout children front-to-back while preserving auto-layout order', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'z-order-provider',
+            label: 'Z order provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'createNode',
+                        parentId: null,
+                        node: {
+                            id: 'ai-z-order-screen',
+                            type: 'frame',
+                            name: 'AI z-order screen',
+                            width: 760,
+                            height: 520,
+                            children: [
+                                {
+                                    id: 'ai-z-title',
+                                    type: 'text',
+                                    name: 'Foreground title',
+                                    content: 'Welcome back',
+                                    width: 260,
+                                    height: 42
+                                },
+                                {
+                                    id: 'ai-z-background',
+                                    type: 'rectangle',
+                                    name: 'Screen background',
+                                    width: 760,
+                                    height: 520
+                                },
+                                {
+                                    id: 'ai-z-form-card',
+                                    type: 'frame',
+                                    name: 'Login form card',
+                                    layout: 'vertical',
+                                    width: 320,
+                                    height: 180,
+                                    children: [
+                                        {
+                                            id: 'ai-z-email-label',
+                                            type: 'text',
+                                            name: 'Email label',
+                                            content: 'Email',
+                                            width: 120,
+                                            height: 24
+                                        },
+                                        {
+                                            id: 'ai-z-email-field',
+                                            type: 'rectangle',
+                                            name: 'Email field',
+                                            width: 260,
+                                            height: 44
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: 'ai-z-primary-button',
+                                    type: 'rectangle',
+                                    role: 'button',
+                                    name: 'Primary button',
+                                    width: 180,
+                                    height: 44
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-z-order-screen']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI z order test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Create a login page with background card title and button',
+            document,
+            selection: []
+        });
+        const createOperation = generated.operations.find((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'createNode' }> => operation.operation === 'createNode');
+        const formCard = createOperation?.node.children?.find(node => node.id === 'ai-z-form-card');
+
+        expect(generated.source).to.equal('provider');
+        expect(createOperation?.node.children?.map(node => node.id)).to.deep.equal([
+            'ai-z-title',
+            'ai-z-primary-button',
+            'ai-z-form-card',
+            'ai-z-background'
+        ]);
+        expect(formCard?.children?.map(node => node.id)).to.deep.equal(['ai-z-email-label', 'ai-z-email-field']);
+    });
+
+    it('arranges multiple provider-generated root views side by side instead of overlapping them', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'multi-view-provider',
+            label: 'Multi view provider',
+            priority: 10,
+            generateOperations: request => ({
+                operations: [
+                    {
+                        operation: 'createNode',
+                        parentId: request.document.activePageId,
+                        node: {
+                            id: 'ai-desktop-view',
+                            type: 'frame',
+                            name: 'Desktop login view',
+                            x: 40,
+                            y: 40,
+                            width: 820,
+                            height: 520,
+                            children: []
+                        }
+                    },
+                    {
+                        operation: 'createNode',
+                        parentId: request.document.activePageId,
+                        node: {
+                            id: 'ai-mobile-view',
+                            type: 'frame',
+                            name: 'Mobile login view',
+                            x: 650,
+                            y: 60,
+                            width: 250,
+                            height: 540,
+                            children: []
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['ai-desktop-view', 'ai-mobile-view']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI multi-view layout test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma tela de login desktop e mobile lado a lado',
+            document,
+            selection: []
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations);
+        const page = result.document.pages![0];
+        const desktop = page.children.find(node => node.id === 'ai-desktop-view')!;
+        const mobile = page.children.find(node => node.id === 'ai-mobile-view')!;
+
+        expect(desktop.x! + Number(desktop.width)).to.be.lessThan(mobile.x!);
+        expect(mobile.x! + Number(mobile.width)).to.be.at.most(page.width!);
+        expect(Number(desktop.width)).to.be.lessThan(820);
+        expect(Number(mobile.width)).to.be.lessThan(250);
+        expect(result.selection).to.deep.equal(['ai-desktop-view', 'ai-mobile-view']);
+    });
+
+    it('falls back with diagnostics when a provider returns non-contract operations', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'invalid-provider',
+            label: 'Invalid test provider',
+            priority: 10,
+            generateOperations: () => [
+                {
+                    operation: 'updateNode',
+                    changes: {
+                        content: 'Missing node id'
+                    }
+                } as unknown as OpenPencilDesignOperation
+            ]
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI provider fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Use a provider result that cannot be applied',
+            document,
+            selection: ['hero-title']
+        });
+        const result = providerService.applyOperationsToDocument(document, ['hero-title'], generated.operations);
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n')).to.contain('Invalid test provider returned operations');
+        expect(result.document.pages![0].children.find(node => node.id === 'hero-title')?.content).to.equal('Use a provider result that cannot be applied');
+    });
+
+    it('falls back with diagnostics when provider operations cannot preview against the document', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'missing-node-provider',
+            label: 'Missing node provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'missing-node',
+                        changes: {
+                            content: 'This cannot apply'
+                        }
+                    }
+                ],
+                diagnostics: ['model returned a syntactically valid edit']
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI provider preview validation test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Use a provider result that targets a missing node',
+            document,
+            selection: ['hero-title']
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n')).to.contain('Missing node provider: model returned a syntactically valid edit');
+        expect(generated.diagnostics?.join('\n')).to.contain('operations were rejected because they did not change the preview');
+    });
+
+    it('repairs page-level provider operations that update generated IDs before creating them', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'missing-generated-id-provider',
+            label: 'Missing generated ID provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-card',
+                        changes: {
+                            width: 760,
+                            height: 320,
+                            fill: [{ type: 'solid', color: '#ffffff' }]
+                        }
+                    },
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-title',
+                        changes: {
+                            content: 'Nova Market',
+                            fontSize: 44,
+                            fontWeight: 700
+                        }
+                    },
+                    {
+                        operation: 'updateNode',
+                        nodeId: 'hero-copy',
+                        changes: {
+                            content: 'Ofertas claras em uma pagina organizada.',
+                            fontSize: 18
+                        }
+                    },
+                    {
+                        operation: 'setSelection',
+                        nodeIds: ['hero-card']
+                    }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI generated ID repair test');
+        document.pages![0].children = [];
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Crie uma landing page com um hero para Nova Market',
+            document,
+            selection: []
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations);
+        const documents = new OpenPencilDocumentService();
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.operations.map(operation => operation.operation)).to.include.members(['createNode', 'setSelection']);
+        expect(documents.findNode(result.document, 'hero-card')?.type).to.equal('frame');
+        expect(documents.findNode(result.document, 'hero-title')?.content).to.equal('Nova Market');
+        expect(documents.findNode(result.document, 'hero-copy')?.content).to.equal('Ofertas claras em uma pagina organizada.');
+        expect(result.message).to.equal(undefined);
+    });
+
+    it('uses a prompt-specific local screen when page-level provider operations are rejected', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'bad-page-provider',
+            label: 'Bad page provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [{
+                    operation: 'createNode',
+                    parentId: 'missing-parent',
+                    node: {
+                        id: 'bad-login-screen',
+                        type: 'frame',
+                        width: 900,
+                        height: 620
+                    }
+                }]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('AI page failure test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'crie uma tela de login inspirada no site da apple para mobile e desktop',
+            document,
+            selection: []
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations);
+        const screen = result.document.pages![0].children.find(node => node.id === result.selection[0]);
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n')).to.contain('OpenPencil AI page generation did not run a usable AI result');
+        expect(generated.diagnostics?.join('\n')).to.contain('operations were invalid or failed preview validation');
+        expect(generated.diagnostics?.join('\n')).to.contain("Parent node 'missing-parent' was not found");
+        expect(screen?.name).to.equal('AI mobile banking login screen');
+        expect(screen?.children?.some(node => node.name === 'Login form card')).to.equal(true);
+    });
+
+    it('uses CyberVinci language-model responses when they contain structured operations JSON', async () => {
+        const provider = new OpenPencilCyberVinciAiDesignProvider();
+        const mutableProvider = provider as unknown as {
+            languageModelRegistry: unknown;
+            languageModelService: unknown;
+            lastPrompt?: string;
+            lastRequest?: {
+                response_format?: {
+                    type: string;
+                    json_schema?: {
+                        schema?: {
+                            properties?: {
+                                operations?: {
+                                    items?: {
+                                        properties?: {
+                                            operation?: {
+                                                enum?: string[];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            selectedPurposes?: string[];
+        };
+        mutableProvider.selectedPurposes = [];
+        mutableProvider.languageModelRegistry = {
+            selectLanguageModel: async (selector: { purpose: string }) => {
+                mutableProvider.selectedPurposes?.push(selector.purpose);
+                return selector.purpose === 'chat'
+                    ? { id: 'mock-cybervinci-model', status: { status: 'ready' } }
+                    : undefined;
+            }
+        };
+        mutableProvider.languageModelService = {
+            sendRequest: async (_model: unknown, request: {
+                messages: Array<{ text: string }>;
+                response_format?: {
+                    type: string;
+                    json_schema?: {
+                        schema?: {
+                            properties?: {
+                                operations?: {
+                                    items?: {
+                                        properties?: {
+                                            operation?: {
+                                                enum?: string[];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+            }) => {
+                mutableProvider.lastRequest = request;
+                mutableProvider.lastPrompt = request.messages.map(message => message.text).join('\n');
+                return {
+                    text: [
+                        'Here is the edit:',
+                        '```json',
+                        '{"contract":"openpencil.design-operations.v1","operations":[{"operation":"updateNode","nodeId":"hero-title","changes":{"content":"Model generated title"}},{"operation":"setSelection","nodeIds":["hero-title"]}]}',
+                        '```'
+                    ].join('\n')
+                };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('CyberVinci provider test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Update the selected headline',
+            document,
+            selection: ['hero-title']
+        });
+        const result = providerService.applyOperationsToDocument(document, ['hero-title'], generated.operations);
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.providerLabel).to.equal('CyberVinci language model');
+        expect(generated.diagnostics?.join('\n')).to.contain("No Theia AI model selected for purpose 'openpencil-design'");
+        expect(mutableProvider.selectedPurposes).to.deep.equal(['openpencil-design', 'chat']);
+        expect(mutableProvider.lastPrompt).to.contain('Do not return DOM selectors');
+        expect(mutableProvider.lastPrompt).to.contain('prompt-to-design generation');
+        expect(mutableProvider.lastRequest?.response_format?.type).to.equal('json_schema');
+        expect(mutableProvider.lastRequest?.response_format?.json_schema?.schema?.properties?.operations?.items?.properties?.operation?.enum).to.include('updateNode');
+        expect(result.document.pages![0].children.find(node => node.id === 'hero-title')?.content).to.equal('Model generated title');
+        expect(result.selection).to.deep.equal(['hero-title']);
+    });
+
+    it('accepts Codex-style single operation JSON and ignores earlier non-operation JSON', async () => {
+        const provider = new OpenPencilCyberVinciAiDesignProvider();
+        const mutableProvider = provider as unknown as {
+            languageModelRegistry: unknown;
+            languageModelService: unknown;
+            lastPrompt?: string;
+        };
+        mutableProvider.languageModelRegistry = {
+            selectLanguageModel: async () => ({ id: 'codex-provider', status: { status: 'ready' } })
+        };
+        mutableProvider.languageModelService = {
+            sendRequest: async (_model: unknown, request: { messages: Array<{ text: string }> }) => {
+                mutableProvider.lastPrompt = request.messages.map(message => message.text).join('\n');
+                return {
+                    text: [
+                        '{"status":"not-the-design-contract"}',
+                        '```json',
+                        '{"operation":"updateNode","nodeId":"hero-title","changes":{"content":"Single operation title"}}',
+                        '```'
+                    ].join('\n')
+                };
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('CyberVinci Codex single op test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Update the selected headline',
+            document,
+            selection: ['hero-title']
+        });
+
+        expect(generated.source).to.equal('provider');
+        expect(mutableProvider.lastPrompt).to.contain('not a coding assistant');
+        expect(generated.operations).to.deep.equal([
+            { operation: 'updateNode', nodeId: 'hero-title', changes: { content: 'Single operation title' } }
+        ]);
+    });
+
+    it('reports CyberVinci diagnostics and falls back when no Theia AI model is configured', async () => {
+        const provider = new OpenPencilCyberVinciAiDesignProvider();
+        const mutableProvider = provider as unknown as {
+            languageModelRegistry: unknown;
+            languageModelService: unknown;
+        };
+        mutableProvider.languageModelRegistry = {
+            selectLanguageModel: async () => undefined
+        };
+        mutableProvider.languageModelService = {
+            sendRequest: async () => {
+                throw new Error('sendRequest should not be called without a model');
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('CyberVinci missing model test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'Update the selected headline',
+            document,
+            selection: ['hero-title']
+        });
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n')).to.contain('No configured Theia AI language model is available');
+    });
+
+    it('creates a local page-level screen with diagnostics when no Theia AI model is configured', async () => {
+        const provider = new OpenPencilCyberVinciAiDesignProvider();
+        const mutableProvider = provider as unknown as {
+            languageModelRegistry: unknown;
+            languageModelService: unknown;
+        };
+        mutableProvider.languageModelRegistry = {
+            selectLanguageModel: async () => undefined
+        };
+        mutableProvider.languageModelService = {
+            sendRequest: async () => {
+                throw new Error('sendRequest should not be called without a model');
+            }
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('CyberVinci page fallback test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'crie uma tela de login mobile',
+            document,
+            selection: []
+        });
+        const result = providerService.applyOperationsToDocument(document, [], generated.operations);
+        const screen = result.document.pages![0].children.find(node => node.id === result.selection[0]);
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n')).to.contain('OpenPencil AI page generation did not run a usable AI result');
+        expect(generated.diagnostics?.join('\n')).to.contain('No configured Theia AI language model is available');
+        expect(generated.diagnostics?.join('\n')).to.contain("purpose 'openpencil-design' or 'chat'");
+        expect(screen?.name).to.equal('AI mobile banking login screen');
+    });
+
+    it('creates a local page-level screen with configuration guidance when no AI provider is registered', async () => {
+        const document = service.createDesign('OpenPencil missing provider page test');
+        const generated = await service.generateAiOperations({
+            prompt: 'Faça uma página web para desktop e para mobile de login de uma plataforma de jogos',
+            document,
+            selection: []
+        });
+        const result = service.applyOperationsToDocument(document, [], generated.operations);
+        const screen = result.document.pages![0].children.find(node => node.id === result.selection[0]);
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(generated.diagnostics?.join('\n')).to.contain('requires a configured AI provider');
+        expect(generated.diagnostics?.join('\n')).to.contain('no OpenPencil AI provider is registered');
+        expect(generated.diagnostics?.join('\n')).to.contain("purpose 'openpencil-design' or 'chat'");
+        expect(screen?.name).to.equal('AI mobile banking login screen');
+    });
+
+    it('builds a Figma-like mobile banking login design from the prompt locally', async () => {
+        const document = service.createDesign('OpenPencil local prompt design test');
+        const generated = await service.generateAiOperations({
+            prompt: 'Create a mobile banking login screen with dark blue gradient, card, email field, password field, and primary button',
+            document,
+            selection: []
+        });
+        const result = service.applyOperationsToDocument(document, [], generated.operations);
+        const screen = result.document.pages![0].children.find(node => node.id === result.selection[0]);
+        const card = screen?.children?.find(node => node.name === 'Login form card');
+        const labels = service.getDocumentSummary(result.document).nodes.map(node => `${node.name ?? ''} ${node.text ?? ''}`).join('\n');
+
+        expect(generated.source).to.equal('deterministic-fallback');
+        expect(screen?.name).to.equal('AI mobile banking login screen');
+        expect(screen?.fill?.[0]?.type).to.equal('linear_gradient');
+        expect(card?.role).to.equal('card');
+        expect(labels).to.contain('CyberBank secure access');
+        expect(labels).to.contain('Email address');
+        expect(labels).to.contain('Sign in securely');
+        expect(labels).not.to.contain('Automatize seus processos com IA');
+    });
+
+    it('accepts real provider output for page-level prompts without using the deterministic fallback', async () => {
+        const provider: OpenPencilAiDesignProvider = {
+            id: 'page-provider',
+            label: 'Page provider',
+            priority: 10,
+            generateOperations: () => ({
+                operations: [
+                    {
+                        operation: 'createNode',
+                        parentId: null,
+                        node: {
+                            id: 'ai-login-page',
+                            type: 'frame',
+                            name: 'AI generated login page',
+                            width: 760,
+                            height: 520,
+                            children: [
+                                {
+                                    id: 'ai-login-title',
+                                    type: 'text',
+                                    name: 'Login title',
+                                    content: 'Entre no LudoJoy',
+                                    width: 300,
+                                    height: 42
+                                }
+                            ]
+                        }
+                    },
+                    { operation: 'setSelection', nodeIds: ['ai-login-page'] }
+                ]
+            })
+        };
+        const providerService = new OpenPencilDesignCommandServiceImpl(provider);
+        const document = providerService.createDesign('CyberVinci page provider test');
+        const generated = await providerService.generateAiOperations({
+            prompt: 'crie uma tela de login mobile',
+            document,
+            selection: []
+        });
+
+        expect(generated.source).to.equal('provider');
+        expect(generated.providerLabel).to.equal('Page provider');
+        expect(generated.operations.map(operation => operation.operation)).to.deep.equal(['removeNode', 'removeNode', 'removeNode', 'createNode', 'setSelection']);
+    });
+
+    it('exports documents to HTML', () => {
+        const document = service.createDesign('Export test');
+        const html = service.exportDocument(document, [], 'html-css');
+
+        expect(html).to.contain('<!DOCTYPE html>');
+        expect(html).to.contain('width:900px');
+        expect(html).to.contain('min-height:620px');
+        expect(html).to.contain('OpenPencil Design');
+    });
+
+    it('exports documents to standalone SVG', () => {
+        const document = service.createDesign('SVG export test');
+        const svg = service.exportDocument(document, [], 'svg');
+
+        expect(svg).to.contain('<svg xmlns="http://www.w3.org/2000/svg"');
+        expect(svg).to.contain('viewBox="0 0 900 620"');
+        expect(svg).to.contain('<rect width="900" height="620" fill="#ffffff"');
+        expect(svg).to.contain('OpenPencil Design');
+    });
+
+    it('exports richer visual nodes to HTML and React', () => {
+        const document = service.createDesign('Rich export test');
+        const enriched = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'brand-mark',
+                    type: 'ellipse',
+                    name: 'Brand mark',
+                    x: 80,
+                    y: 80,
+                    width: 72,
+                    height: 72,
+                    fill: [{ type: 'solid', color: '#dcfce7' }],
+                    stroke: { color: '#16a34a', width: 2 }
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'trend-line',
+                    type: 'line',
+                    name: 'Trend line',
+                    x: 80,
+                    y: 180,
+                    width: 240,
+                    height: 48,
+                    stroke: { color: '#334155', width: 3 }
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'preview-image',
+                    type: 'image',
+                    name: 'Preview image',
+                    x: 360,
+                    y: 80,
+                    width: 180,
+                    height: 120,
+                    src: 'https://example.com/image.png'
+                }
+            }
+        ]);
+
+        const html = service.exportDocument(enriched.document, [], 'html-css');
+        const react = service.exportDocument(enriched.document, ['preview-image'], 'react-tailwind', true);
+
+        expect(html).to.contain('<ellipse');
+        expect(html).to.contain('<line');
+        expect(html).to.contain('<img src="https://example.com/image.png"');
+        expect(react).to.contain('<img');
+        expect(react).to.contain('https://example.com/image.png');
+        expect(react).to.contain('style={{');
+        expect(react).not.to.contain('style={{{');
+    });
+
+    it('exports icon font nodes and fill opacity across web and SVG targets', () => {
+        const document = service.createDesign('Icon export test');
+        const enriched = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'status-icon',
+                    type: 'icon_font',
+                    name: 'Status icon',
+                    x: 44,
+                    y: 48,
+                    width: 32,
+                    height: 32,
+                    content: 'check_circle',
+                    fontFamily: 'Material Icons',
+                    fontSize: 28,
+                    fill: [{ type: 'solid', color: '#16a34a', opacity: 0.6 }]
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'soft-card',
+                    type: 'rectangle',
+                    x: 96,
+                    y: 48,
+                    width: 120,
+                    height: 64,
+                    fill: [{ type: 'solid', color: '#2563eb', opacity: 0.25 }],
+                    stroke: { color: '#1d4ed8', width: 2, opacity: 0.5 }
+                }
+            }
+        ]);
+
+        const html = service.exportDocument(enriched.document, [], 'html-css');
+        const svg = service.exportDocument(enriched.document, [], 'svg');
+        const reactNative = service.exportDocument(enriched.document, ['status-icon'], 'react-native', true);
+
+        expect(html).to.contain('font-family:Material Icons');
+        expect(html).to.contain('color:rgba(22, 163, 74, 0.6)');
+        expect(html).to.contain('background-color:rgba(37, 99, 235, 0.25)');
+        expect(svg).to.contain('fill-opacity="0.25"');
+        expect(svg).to.contain('stroke-opacity="0.5"');
+        expect(svg).to.contain('check_circle');
+        expect(reactNative).to.contain('<Text');
+        expect(reactNative).to.contain('check_circle');
+    });
+
+    it('exports documents to Vue and Svelte components', () => {
+        const document = service.createDesign('Component export test');
+        const vue = service.exportDocument(document, [], 'vue');
+        const svelte = service.exportDocument(document, [], 'svelte');
+
+        expect(vue).to.contain('<template>');
+        expect(vue).to.contain('<script setup lang="ts">');
+        expect(vue).to.contain('OpenPencil Design');
+        expect(svelte).to.contain('<main style="position:relative;width:900px;min-height:620px;background:#ffffff;">');
+        expect(svelte).to.contain('OpenPencil Design');
+    });
+
+    it('exports documents to native application targets', () => {
+        const document = service.createDesign('Native export test');
+        const enriched = service.applyToDocument(document, [], {
+            operation: 'addNode',
+            node: {
+                id: 'native-image',
+                type: 'image',
+                name: 'Native image',
+                x: 280,
+                y: 96,
+                width: 180,
+                height: 120,
+                src: 'https://example.com/native.png'
+            }
+        });
+
+        const reactNative = service.exportDocument(enriched.document, [], 'react-native');
+        const flutter = service.exportDocument(enriched.document, [], 'flutter');
+        const swiftui = service.exportDocument(enriched.document, [], 'swiftui');
+        const compose = service.exportDocument(enriched.document, [], 'jetpack-compose');
+
+        expect(reactNative).to.contain("import { Image, Text, View } from 'react-native';");
+        expect(reactNative).to.contain('OpenPencil Design');
+        expect(reactNative).to.contain("uri: 'https://example.com/native.png'");
+        expect(flutter).to.contain("import 'package:flutter/material.dart';");
+        expect(flutter).to.contain('class OpenPencilDesign extends StatelessWidget');
+        expect(flutter).to.contain("Image.network('https://example.com/native.png'");
+        expect(swiftui).to.contain('import SwiftUI');
+        expect(swiftui).to.contain('struct OpenPencilDesign: View');
+        expect(swiftui).to.contain('AsyncImage(url: URL(string: "https://example.com/native.png"))');
+        expect(compose).to.contain('fun OpenPencilDesign()');
+        expect(compose).to.contain('coil.compose.AsyncImage');
+        expect(compose).to.contain('model = "https://example.com/native.png"');
+    });
+
+    it('keeps every advertised export and codegen target wired to a non-empty product generator', () => {
+        const document = service.createDesign('Target parity test');
+        const formats: Array<{ format: OpenPencilExportFormat; markers: string[] }> = [
+            { format: 'openpencil-json', markers: ['"version": "0.7.6"', '"pages"'] },
+            { format: 'openpencil-summary-json', markers: ['"name": "Target parity test"', '"nodes"'] },
+            { format: 'react-tailwind', markers: ['export function OpenPencilDesign()', 'OpenPencil Design'] },
+            { format: 'html-css', markers: ['<!DOCTYPE html>', 'OpenPencil Design'] },
+            { format: 'svg', markers: ['<svg xmlns="http://www.w3.org/2000/svg"', 'OpenPencil Design'] },
+            { format: 'vue', markers: ['<template>', 'OpenPencil Design'] },
+            { format: 'svelte', markers: ['<main style=', 'OpenPencil Design'] },
+            { format: 'react-native', markers: ["import React from 'react';", 'OpenPencil Design'] },
+            { format: 'flutter', markers: ["import 'package:flutter/material.dart';", 'OpenPencil Design'] },
+            { format: 'swiftui', markers: ['import SwiftUI', 'OpenPencil Design'] },
+            { format: 'jetpack-compose', markers: ['fun OpenPencilDesign()', 'OpenPencil Design'] }
+        ];
+
+        for (const { format, markers } of formats) {
+            const output = service.exportDocument(document, [], format);
+
+            expect(output.trim(), format).not.to.equal('');
+            for (const marker of markers) {
+                expect(output, format).to.contain(marker);
+            }
+        }
+    });
+
+    it('preserves selection-only codegen across web, component, and native targets', () => {
+        const document = service.createDesign('Selection codegen parity test');
+        const formats: OpenPencilExportFormat[] = [
+            'react-tailwind',
+            'html-css',
+            'vue',
+            'svelte',
+            'react-native',
+            'flutter',
+            'swiftui',
+            'jetpack-compose'
+        ];
+
+        for (const format of formats) {
+            const output = service.exportDocument(document, ['hero-title'], format, true);
+
+            expect(output, format).to.contain('OpenPencil Design');
+            expect(output, format).not.to.contain('Hero copy');
+        }
+    });
+
+    it('supports the core AI mutation contract for add, move, duplicate, remove, and selection', () => {
+        const document = service.createDesign('AI mutation contract test');
+        const result = service.applyOperationsToDocument(document, ['hero-title'], [
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'agent-button',
+                    type: 'rectangle',
+                    name: 'Agent button',
+                    x: 300,
+                    y: 360,
+                    width: 180,
+                    height: 48,
+                    fill: [{ type: 'solid', color: '#2563eb' }]
+                }
+            },
+            {
+                operation: 'moveNode',
+                nodeId: 'agent-button',
+                x: 320,
+                y: 372
+            },
+            {
+                operation: 'duplicateNode',
+                nodeId: 'agent-button'
+            },
+            {
+                operation: 'removeNode',
+                nodeId: 'hero-copy'
+            },
+            {
+                operation: 'setSelection',
+                nodeIds: ['agent-button']
+            }
+        ]);
+        const pageNodes = result.document.pages![0].children;
+        const button = pageNodes.find(node => node.id === 'agent-button');
+        const duplicate = pageNodes.find(node => node.name === 'Agent button copy');
+
+        expect(result.changed).to.equal(true);
+        expect(result.selection).to.deep.equal(['agent-button']);
+        expect(button?.x).to.equal(320);
+        expect(button?.y).to.equal(372);
+        expect(duplicate?.id).not.to.equal(undefined);
+        expect(duplicate?.x).to.equal(344);
+        expect(duplicate?.y).to.equal(396);
+        expect(pageNodes.some(node => node.id === 'hero-copy')).to.equal(false);
+    });
+
+    it('groups and ungroups sibling nodes while preserving visual positions', () => {
+        const document = service.createDesign('Group test');
+        const grouped = service.applyToDocument(document, ['hero-card', 'hero-title'], {
+            operation: 'groupNodes',
+            nodeIds: ['hero-card', 'hero-title']
+        });
+        const group = grouped.document.pages![0].children.find(node => node.type === 'group');
+
+        expect(group?.x).to.equal(120);
+        expect(group?.y).to.equal(96);
+        expect(group?.children).to.have.length(2);
+        expect(grouped.selection).to.deep.equal([group!.id]);
+        expect(group!.children!.find(node => node.id === 'hero-title')?.x).to.equal(40);
+
+        const ungrouped = service.applyToDocument(grouped.document, grouped.selection, {
+            operation: 'ungroupNode',
+            nodeId: group!.id
+        });
+        const title = ungrouped.document.pages![0].children.find(node => node.id === 'hero-title');
+
+        expect(ungrouped.selection).to.include('hero-title');
+        expect(title?.x).to.equal(160);
+        expect(title?.y).to.equal(144);
+    });
+
+    it('applies boolean operations to compatible sibling shapes with safe path fallback', () => {
+        const document = service.createDesign('Boolean command test');
+        const setup = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'bool-a',
+                    type: 'rectangle',
+                    x: 10,
+                    y: 20,
+                    width: 100,
+                    height: 80,
+                    fill: [{ type: 'solid', color: '#2563eb' }]
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'bool-b',
+                    type: 'rectangle',
+                    x: 60,
+                    y: 40,
+                    width: 100,
+                    height: 80,
+                    fill: [{ type: 'solid', color: '#16a34a' }]
+                }
+            }
+        ]);
+
+        const union = service.applyToDocument(setup.document, ['bool-a', 'bool-b'], {
+            operation: 'booleanNodes',
+            nodeIds: ['bool-a', 'bool-b'],
+            booleanOperation: 'union'
+        });
+        const result = union.document.pages![0].children.find(node => node.id === union.selection[0]);
+        const svg = service.exportDocument(union.document, union.selection, 'svg', true);
+
+        expect(union.changed).to.equal(true);
+        expect(result?.type).to.equal('path');
+        expect(result?.role).to.equal('boolean-union');
+        expect(result?.x).to.equal(10);
+        expect(result?.y).to.equal(20);
+        expect(result?.width).to.equal(150);
+        expect(result?.height).to.equal(100);
+        expect(svg).to.contain('<path');
+        expect(svg).to.contain('fill="#2563eb"');
+    });
+
+    it('converts shapes to editable paths and updates anchors', () => {
+        const document = service.createDesign('Path command test');
+        const setup = service.applyToDocument(document, [], {
+            operation: 'addNode',
+            node: {
+                id: 'path-rect',
+                type: 'rectangle',
+                x: 24,
+                y: 32,
+                width: 80,
+                height: 40
+            }
+        });
+
+        const converted = service.applyToDocument(setup.document, ['path-rect'], {
+            operation: 'convertToPath',
+            nodeIds: ['path-rect']
+        });
+        const updated = service.applyToDocument(converted.document, converted.selection, {
+            operation: 'updatePathAnchors',
+            nodeId: 'path-rect',
+            closed: false,
+            anchors: [
+                { x: 0, y: 0, handleIn: null, handleOut: { x: 20, y: 0 } },
+                { x: 80, y: 40, handleIn: { x: -20, y: 0 }, handleOut: null }
+            ]
+        });
+        const path = updated.document.pages![0].children.find(node => node.id === 'path-rect');
+
+        expect(converted.selection).to.deep.equal(['path-rect']);
+        expect(path?.type).to.equal('path');
+        expect(path?.closed).to.equal(false);
+        expect(path?.anchors).to.have.length(2);
+        expect(path?.d).to.equal('M 0 0 C 20 0 60 40 80 40');
+    });
+
+    it('applies structured resize and granular path handle operations', () => {
+        const document = service.createDesign('Canvas parity command test');
+        const setup = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'resize-target',
+                    type: 'rectangle',
+                    x: 50,
+                    y: 60,
+                    width: 120,
+                    height: 80
+                }
+            },
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'curve-target',
+                    type: 'path',
+                    x: 0,
+                    y: 0,
+                    anchors: [
+                        { x: 0, y: 0, handleIn: null, handleOut: { x: 20, y: 0 } },
+                        { x: 80, y: 40, handleIn: { x: -20, y: 0 }, handleOut: null }
+                    ],
+                    closed: false
+                }
+            }
+        ]);
+        const result = service.applyOperationsToDocument(setup.document, [], [
+            {
+                operation: 'resizeNode',
+                nodeId: 'resize-target',
+                x: 32,
+                y: 44,
+                width: 180,
+                height: 96
+            },
+            {
+                operation: 'updatePathAnchor',
+                nodeId: 'curve-target',
+                anchorIndex: 1,
+                anchor: { x: 100, y: 50, handleIn: { x: -24, y: -4 }, handleOut: null },
+                closed: false
+            },
+            {
+                operation: 'updatePathHandle',
+                nodeId: 'curve-target',
+                anchorIndex: 0,
+                handle: 'out',
+                value: { x: 36, y: -12 },
+                mirror: true,
+                closed: false
+            },
+            {
+                operation: 'insertPathAnchor',
+                nodeId: 'curve-target',
+                anchorIndex: 1,
+                anchor: { x: 48, y: 16, handleIn: null, handleOut: null }
+            },
+            {
+                operation: 'removePathAnchor',
+                nodeId: 'curve-target',
+                anchorIndex: 1
+            }
+        ]);
+        const resized = result.document.pages![0].children.find(node => node.id === 'resize-target');
+        const curve = result.document.pages![0].children.find(node => node.id === 'curve-target');
+
+        expect(resized?.x).to.equal(32);
+        expect(resized?.y).to.equal(44);
+        expect(resized?.width).to.equal(180);
+        expect(resized?.height).to.equal(96);
+        expect(curve?.anchors?.[0].handleOut).to.deep.equal({ x: 36, y: -12 });
+        expect(curve?.anchors?.[0].handleIn).to.deep.equal({ x: -36, y: 12 });
+        expect(curve?.anchors?.[1]).to.deep.include({ x: 100, y: 50 });
+        expect(curve?.d).to.equal('M 0 0 C 36 -12 76 46 100 50');
+        expect(result.selection).to.deep.equal(['curve-target']);
+    });
+
+    it('exports selected nested nodes', () => {
+        const document = service.createDesign('Nested export test');
+        const grouped = service.applyToDocument(document, [], {
+            operation: 'groupNodes',
+            nodeIds: ['hero-card', 'hero-title']
+        });
+        const exported = service.exportDocument(grouped.document, ['hero-title'], 'react-tailwind', true);
+
+        expect(exported).to.contain('OpenPencil Design');
+        expect(exported).not.to.contain('Hero card');
+    });
+
+    it('applies structured operation batches as one document transition', () => {
+        const document = service.createDesign('Batch command test');
+        const result = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'addNode',
+                node: {
+                    id: 'batch-cta',
+                    type: 'rectangle',
+                    name: 'Batch CTA',
+                    x: 200,
+                    y: 320,
+                    width: 180,
+                    height: 48,
+                    fill: [{ type: 'solid', color: '#2563eb' }]
+                }
+            },
+            {
+                operation: 'updateNode',
+                nodeId: 'batch-cta',
+                changes: {
+                    cornerRadius: 12,
+                    stroke: { color: '#1d4ed8', width: 2 }
+                }
+            },
+            {
+                operation: 'setSelection',
+                nodeIds: ['batch-cta']
+            }
+        ]);
+        const node = result.document.pages![0].children.find(item => item.id === 'batch-cta');
+
+        expect(result.changed).to.equal(true);
+        expect(result.selection).to.deep.equal(['batch-cta']);
+        expect(node?.cornerRadius).to.equal(12);
+        expect(node?.stroke?.width).to.equal(2);
+    });
+
+    it('sets, updates, removes, and resolves variables through structured commands', () => {
+        const document = service.createDesign('Variable command test');
+        const result = service.applyOperationsToDocument(document, ['hero-title'], [
+            {
+                operation: 'setVariable',
+                name: 'brand',
+                variable: { type: 'color', value: '#2563eb' }
+            },
+            {
+                operation: 'setVariable',
+                name: 'space',
+                variable: { type: 'number', value: 18 }
+            },
+            {
+                operation: 'updateVariable',
+                name: 'space',
+                changes: { value: 24 }
+            },
+            {
+                operation: 'updateNode',
+                nodeId: 'hero-card',
+                changes: {
+                    layout: 'vertical',
+                    gap: '$space',
+                    padding: '$space',
+                    fill: [{ type: 'solid', color: '$brand' }],
+                    effects: [{ type: 'shadow', offsetX: 0, offsetY: '$space', blur: '$space', spread: 0, color: '$brand' }]
+                }
+            }
+        ]);
+        const html = service.exportDocument(result.document, [], 'html-css');
+
+        expect(result.document.variables?.space.value).to.equal(24);
+        expect(result.selection).to.deep.equal(['hero-card']);
+        expect(html).to.contain('background-color:#2563eb');
+        expect(html).to.contain('gap:24px');
+        expect(html).to.contain('padding:24px');
+        expect(html).to.contain('box-shadow:0px 24px 24px 0px #2563eb');
+
+        const removed = service.applyToDocument(result.document, result.selection, {
+            operation: 'removeVariable',
+            name: 'space'
+        });
+
+        expect(removed.changed).to.equal(true);
+        expect(removed.document.variables?.space).to.equal(undefined);
+        expect(removed.selection).to.deep.equal(['hero-card']);
+    });
+
+    it('applies AI-friendly create, replace, delete, theme, and layout operations', () => {
+        const document = service.createDesign('AI operations test');
+        const result = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'createNode',
+                parentId: null,
+                node: {
+                    id: 'ai-stack',
+                    type: 'frame',
+                    x: 32,
+                    y: 40,
+                    width: 320,
+                    height: 180,
+                    children: [
+                        { id: 'ai-title', type: 'text', width: 220, height: 32, content: 'Draft' },
+                        { id: 'ai-copy', type: 'text', width: 240, height: 32, content: 'Body' }
+                    ]
+                }
+            },
+            {
+                operation: 'autoLayoutNode',
+                nodeId: 'ai-stack',
+                direction: 'vertical',
+                gap: 12,
+                padding: 16
+            },
+            {
+                operation: 'replaceNode',
+                nodeId: 'ai-copy',
+                node: {
+                    type: 'text',
+                    content: 'Ready',
+                    width: 240,
+                    height: 32
+                }
+            },
+            {
+                operation: 'setThemes',
+                themes: { Mode: ['Light', 'Dark'] }
+            },
+            {
+                operation: 'setNodeTheme',
+                nodeId: 'ai-stack',
+                theme: { Mode: 'Dark' }
+            },
+            {
+                operation: 'deleteNode',
+                nodeId: 'hero-copy'
+            }
+        ]);
+        const stack = result.document.pages![0].children.find(node => node.id === 'ai-stack');
+        const copy = stack?.children?.find(node => node.id === 'ai-copy');
+
+        expect(result.changed).to.equal(true);
+        expect(stack?.layout).to.equal('vertical');
+        expect(stack?.gap).to.equal(12);
+        expect(stack?.padding).to.equal(16);
+        expect(stack?.theme).to.deep.equal({ Mode: 'Dark' });
+        expect(stack?.children?.map(node => node.y)).to.deep.equal([16, 52]);
+        expect(copy?.content).to.equal('Ready');
+        expect(result.document.themes).to.deep.equal({ Mode: ['Light', 'Dark'] });
+        expect(result.document.pages![0].children.some(node => node.id === 'hero-copy')).to.equal(false);
+    });
+
+    it('preserves parent/index insertion and upstream layout normalization for structured operations', () => {
+        const document = service.createDesign('Parent index layout test');
+        const result = service.applyOperationsToDocument(document, [], [
+            {
+                operation: 'createNode',
+                parentId: null,
+                node: {
+                    id: 'indexed-frame',
+                    type: 'frame',
+                    width: 260,
+                    height: 160,
+                    children: [
+                        { id: 'first-child', type: 'rectangle', width: 40, height: 20 },
+                        { id: 'last-child', type: 'rectangle', width: 40, height: 20 }
+                    ]
+                }
+            },
+            {
+                operation: 'createNode',
+                parentId: 'indexed-frame',
+                index: 1,
+                node: { id: 'middle-child', type: 'text', content: 'Middle', width: 80, height: 20 }
+            },
+            {
+                operation: 'setNodeLayout',
+                nodeId: 'indexed-frame',
+                normalizeChildren: true,
+                layout: {
+                    layout: 'horizontal',
+                    gap: 10,
+                    padding: [8, 16, 8, 16],
+                    alignItems: 'center'
+                }
+            }
+        ]);
+        const frame = result.document.pages![0].children.find(node => node.id === 'indexed-frame');
+
+        expect(result.changed).to.equal(true);
+        expect(frame?.children?.map(node => node.id)).to.deep.equal(['first-child', 'middle-child', 'last-child']);
+        expect(frame?.children?.map(node => node.x)).to.deep.equal([16, 66, 156]);
+        expect(frame?.children?.map(node => node.y)).to.deep.equal([70, 68, 70]);
+    });
+
+    it('exports normalized OpenPencil JSON and validates document structure', () => {
+        const document = service.createDesign('JSON export test');
+        const exported = service.exportDocument(document, ['hero-title'], 'openpencil-json', true);
+        const summary = service.exportDocument(document, ['hero-title'], 'openpencil-summary-json', true);
+        const parsed = new OpenPencilDocumentService().deserialize(exported);
+        const validation = service.validateDocument(parsed);
+
+        expect(parsed.pages![0].children.map(node => node.id)).to.deep.equal(['hero-title']);
+        expect(summary).to.contain('"nodes"');
+        expect(validation.valid).to.equal(true);
+    });
+
+    it('resolves themed variables in SVG exports', () => {
+        const document = service.createDesign('Themed variable export test');
+        document.themes = { Mode: ['Light', 'Dark'] };
+        document.variables = {
+            surface: {
+                type: 'color',
+                value: [
+                    { value: '#f8fafc', theme: { Mode: 'Light' } },
+                    { value: '#020617', theme: { Mode: 'Dark' } }
+                ]
+            },
+            strokeSize: { type: 'number', value: 3 }
+        };
+        document.pages![0].children[0].fill = [{ type: 'solid', color: '$surface' }];
+        document.pages![0].children[0].theme = { Mode: 'Dark' };
+        document.pages![0].children[0].stroke = { color: '$surface', thickness: '$strokeSize' };
+
+        const svg = service.exportDocument(document, [], 'svg');
+
+        expect(svg).to.contain('fill="#020617"');
+        expect(svg).to.contain('stroke="#020617"');
+        expect(svg).to.contain('stroke-width="3"');
+    });
+
+    it('imports SVG markup into an adaptable OpenPencil document', () => {
+        const imported = service.importDocument(`
+            <svg width="640" height="360" viewBox="0 0 640 360">
+                <rect width="640" height="360" fill="#f8fafc" />
+                <rect x="40" y="32" width="180" height="96" rx="12" fill="#2563eb" fill-opacity="0.35" stroke="#1d4ed8" stroke-width="2" />
+                <text x="56" y="88" font-size="24" font-weight="700" fill="#0f172a">Imported title</text>
+                <image href="https://example.com/imported.png" x="260" y="40" width="120" height="80" />
+                <ellipse cx="480" cy="90" rx="42" ry="24" fill="#dcfce7" />
+            </svg>
+        `, 'Imported SVG');
+        const page = imported.pages![0];
+        const exported = service.exportDocument(imported, [], 'html-css');
+
+        expect(imported.name).to.equal('Imported SVG');
+        expect(page.width).to.equal(640);
+        expect(page.height).to.equal(360);
+        expect(page.background).to.equal('#f8fafc');
+        expect(page.children.map(node => node.type)).to.deep.equal(['rectangle', 'text', 'image', 'ellipse']);
+        expect(page.children[0].fill?.[0].opacity).to.equal(0.35);
+        expect(page.children[0].stroke?.width).to.equal(2);
+        expect(page.children[1].content).to.equal('Imported title');
+        expect(exported).to.contain('https://example.com/imported.png');
+    });
+
+    it('imports embedded OpenPencil JSON from markup', () => {
+        const imported = service.importDocument(`
+            <html>
+                <body>
+                    <script type="application/openpencil+json">
+                        {&quot;version&quot;:&quot;0.7.6&quot;,&quot;name&quot;:&quot;Embedded&quot;,&quot;children&quot;:[{&quot;id&quot;:&quot;embedded-title&quot;,&quot;type&quot;:&quot;text&quot;,&quot;text&quot;:&quot;Embedded JSON&quot;}]}
+                    </script>
+                </body>
+            </html>
+        `);
+
+        expect(imported.name).to.equal('Embedded');
+        expect(imported.pages![0].children[0].id).to.equal('embedded-title');
+        expect(imported.pages![0].children[0].content).to.equal('Embedded JSON');
+    });
+
+    it('imports HTML export-like markup into editable nodes', () => {
+        const imported = service.importDocument(`
+            <!DOCTYPE html>
+            <main style="position:relative;width:720px;min-height:420px;background:#ffffff;">
+                <div style="position:absolute;left:24px;top:32px;width:160px;height:80px;background-color:#e0f2fe;border-radius:10px;border:2px solid #0284c7;"></div>
+                <p style="position:absolute;left:48px;top:60px;width:220px;height:36px;color:#0f172a;font-size:22px;font-weight:700;text-align:center;">HTML title</p>
+                <img src="https://example.com/html.png" alt="HTML image" style="position:absolute;left:320px;top:44px;width:140px;height:100px;">
+            </main>
+        `, 'Imported HTML');
+        const page = imported.pages![0];
+        const html = service.exportDocument(imported, [], 'html-css');
+
+        expect(page.width).to.equal(720);
+        expect(page.height).to.equal(420);
+        expect(page.children.map(node => node.type)).to.deep.equal(['rectangle', 'text', 'image']);
+        expect(page.children[0].cornerRadius).to.equal(10);
+        expect(page.children[0].stroke?.color).to.equal('#0284c7');
+        expect(page.children[1].content).to.equal('HTML title');
+        expect(page.children[1].textAlign).to.equal('center');
+        expect(page.children[2].src).to.equal('https://example.com/html.png');
+        expect(html).to.contain('HTML title');
+    });
+
+    it('parses and applies batch design DSL commands', () => {
+        const document = service.createDesign('DSL batch test');
+        const dsl = `
+            frame=I(root,{id:'dsl-frame',type:'frame',name:'DSL Frame',x:10,y:10,width:300,height:200})
+            label=I(frame,{id:'dsl-label',type:'text',content:'Draft',x:12,y:16,width:120,height:32})
+            U(label,{content:'Ready',fontSize:20,id:'ignored'})
+            copy=C(label,root,{id:'dsl-copy',content:'Copied',x:420,y:20})
+            M(copy,frame,0)
+            R(label,{type:'rectangle',name:'Replacement',x:30,y:40,width:80,height:40,fill:[{type:'solid',color:'#000000'}]})
+            D(hero-copy)
+        `;
+
+        const commands = service.parseBatchDesignDsl(dsl);
+        const result = service.applyBatchDesignDsl(document, [], dsl);
+        const pageNodes = result.document.pages![0].children;
+        const frame = pageNodes.find(node => node.id === 'dsl-frame');
+        const replacement = frame?.children?.find(node => node.id === 'dsl-label');
+        const copy = frame?.children?.find(node => node.id === 'dsl-copy');
+
+        expect(commands).to.have.length(7);
+        expect(commands[0].binding).to.equal('frame');
+        expect(result.changed).to.equal(true);
+        expect(result.selection).to.deep.equal(['dsl-label']);
+        expect(frame?.children?.map(node => node.id)).to.deep.equal(['dsl-copy', 'dsl-label']);
+        expect(copy?.content).to.equal('Copied');
+        expect(replacement?.type).to.equal('rectangle');
+        expect(replacement?.name).to.equal('Replacement');
+        expect(replacement?.fill?.[0]?.color).to.equal('#000000');
+        expect(pageNodes.some(node => node.id === 'hero-copy')).to.equal(false);
+    });
+
+    it('returns controlled errors for invalid batch design DSL references', () => {
+        const document = service.createDesign('DSL error test');
+        const result = service.applyBatchDesignDsl(document, ['hero-title'], `
+            created=I(root,{id:'should-not-commit',type:'rectangle'})
+            U(missing-node,{content:'Nope'})
+        `);
+
+        expect(result.changed).to.equal(false);
+        expect(result.document).to.equal(document);
+        expect(result.selection).to.deep.equal(['hero-title']);
+        expect(result.message).to.contain("Line 3: Node 'missing-node' was not found.");
+        expect(document.pages![0].children.some(node => node.id === 'should-not-commit')).to.equal(false);
+    });
+
+    it('reorders layers through structured commands', () => {
+        const document = service.createDesign('Layer order test');
+        const front = service.applyToDocument(document, [], {
+            operation: 'bringToFront',
+            nodeId: 'hero-card'
+        });
+
+        expect(front.changed).to.equal(true);
+        expect(front.document.pages![0].children.map(node => node.id)).to.deep.equal([
+            'hero-card',
+            'hero-title',
+            'hero-copy'
+        ]);
+        expect(front.selection).to.deep.equal(['hero-card']);
+
+        const back = service.applyToDocument(front.document, front.selection, {
+            operation: 'sendToBack',
+            nodeId: 'hero-card'
+        });
+
+        expect(back.document.pages![0].children.map(node => node.id)).to.deep.equal([
+            'hero-title',
+            'hero-copy',
+            'hero-card'
+        ]);
+
+        const reordered = service.applyToDocument(back.document, back.selection, {
+            operation: 'reorderNode',
+            nodeId: 'hero-card',
+            index: 1
+        });
+
+        expect(reordered.document.pages![0].children.map(node => node.id)).to.deep.equal([
+            'hero-title',
+            'hero-card',
+            'hero-copy'
+        ]);
+    });
+
+    it('nudges selected nodes through structured commands', () => {
+        const document = service.createDesign('Nudge command test');
+        const result = service.applyToDocument(document, ['hero-title', 'hero-copy'], {
+            operation: 'nudgeNodes',
+            nodeIds: ['hero-title', 'hero-copy'],
+            dx: 12,
+            dy: -8
+        });
+        const title = result.document.pages![0].children.find(node => node.id === 'hero-title');
+        const copy = result.document.pages![0].children.find(node => node.id === 'hero-copy');
+
+        expect(result.changed).to.equal(true);
+        expect(result.selection).to.deep.equal(['hero-title', 'hero-copy']);
+        expect(title?.x).to.equal(172);
+        expect(title?.y).to.equal(136);
+        expect(copy?.x).to.equal(174);
+        expect(copy?.y).to.equal(218);
+    });
+
+    it('aligns and distributes nodes through structured commands', () => {
+        const document = service.createDesign('Align command test');
+        const setup = service.applyToDocument(document, [], {
+            operation: 'addPage',
+            page: {
+                id: 'layout-page',
+                name: 'Layout',
+                children: [
+                    { id: 'box-a', type: 'rectangle', x: 10, y: 0, width: 50, height: 50 },
+                    { id: 'box-b', type: 'rectangle', x: 80, y: 100, width: 50, height: 50 },
+                    { id: 'box-c', type: 'rectangle', x: 160, y: 300, width: 50, height: 50 }
+                ]
+            },
+            makeActive: true
+        });
+        const aligned = service.applyToDocument(setup.document, [], {
+            operation: 'alignNodes',
+            nodeIds: ['box-a', 'box-b', 'box-c'],
+            alignment: 'left'
+        });
+
+        expect(aligned.changed).to.equal(true);
+        expect(aligned.document.pages![1].children.map(node => node.x)).to.deep.equal([10, 10, 10]);
+        expect(aligned.selection).to.deep.equal(['box-a', 'box-b', 'box-c']);
+
+        const distributed = service.applyToDocument(aligned.document, aligned.selection, {
+            operation: 'distributeNodes',
+            nodeIds: ['box-a', 'box-b', 'box-c'],
+            direction: 'vertical'
+        });
+        const nodes = distributed.document.pages![1].children;
+
+        expect(distributed.changed).to.equal(true);
+        expect(nodes.map(node => node.y)).to.deep.equal([0, 150, 300]);
+    });
+
+    it('adds, switches, renames, and removes pages through structured commands', () => {
+        const document = service.createDesign('Pages command test');
+        const firstPageId = document.activePageId!;
+        const added = service.applyToDocument(document, ['hero-title'], {
+            operation: 'addPage',
+            page: {
+                id: 'details-page',
+                name: 'Details'
+            },
+            makeActive: true
+        });
+
+        expect(added.changed).to.equal(true);
+        expect(added.document.pages).to.have.length(2);
+        expect(added.document.activePageId).to.equal('details-page');
+        expect(added.selection).to.deep.equal([]);
+
+        const renamed = service.applyToDocument(added.document, [], {
+            operation: 'updatePage',
+            pageId: 'details-page',
+            changes: { name: 'Details Updated', width: 1200, height: 800, background: '#f1f5f9', gridSize: 12, showGrid: false, snapToGrid: true }
+        });
+        const summary = service.getDocumentSummary(renamed.document);
+
+        expect(summary.activePageId).to.equal('details-page');
+        const detailsSummary = summary.pages.find(page => page.id === 'details-page');
+        expect(detailsSummary?.name).to.equal('Details Updated');
+        expect(detailsSummary?.width).to.equal(1200);
+        expect(detailsSummary?.height).to.equal(800);
+        expect(detailsSummary?.background).to.equal('#f1f5f9');
+        expect(detailsSummary?.gridSize).to.equal(12);
+        expect(detailsSummary?.showGrid).to.equal(false);
+        expect(detailsSummary?.snapToGrid).to.equal(true);
+
+        const switched = service.applyToDocument(renamed.document, ['details-node'], {
+            operation: 'setActivePage',
+            pageId: firstPageId
+        });
+
+        expect(switched.document.activePageId).to.equal(firstPageId);
+        expect(switched.selection).to.deep.equal([]);
+
+        const removed = service.applyToDocument(switched.document, [], {
+            operation: 'removePage',
+            pageId: 'details-page'
+        });
+
+        expect(removed.document.pages).to.have.length(1);
+        expect(removed.document.pages![0].id).to.equal(firstPageId);
+    });
+
+    it('does not remove the final page', () => {
+        const document = service.createDesign('Last page test');
+        const result = service.applyToDocument(document, [], {
+            operation: 'removePage',
+            pageId: document.activePageId!
+        });
+
+        expect(result.changed).to.equal(false);
+        expect(result.message).to.contain('last OpenPencil page');
+        expect(result.document.pages).to.have.length(1);
+    });
+});
+
+function createPaintOrderTextNode(id: string, content: string): OpenPencilNode {
+    return {
+        id,
+        type: 'text',
+        name: content,
+        x: 24,
+        y: 24,
+        width: 180,
+        height: 32,
+        content,
+        fontSize: 18,
+        fill: [{ type: 'solid', color: '#111827' }]
+    };
+}
+
+function createHomepageSection(id: string, name: string, x: number, y: number, width: OpenPencilNode['width'], height: number): OpenPencilNode {
+    return {
+        id,
+        type: 'frame',
+        name,
+        role: 'section',
+        x,
+        y,
+        width,
+        height,
+        fill: [{ type: 'solid', color: '#ffffff' }],
+        children: []
+    };
+}
+
+function createFeatureCard(id: string, name: string, x: number, y: number, width: OpenPencilNode['width'], height: number, textWidth: number): OpenPencilNode {
+    return {
+        id,
+        type: 'frame',
+        name,
+        role: 'feature-card',
+        x,
+        y,
+        width,
+        height,
+        layout: 'vertical',
+        gap: 10,
+        padding: 20,
+        fill: [{ type: 'solid', color: '#ffffff' }],
+        children: [
+            {
+                id: `${id}-icon`,
+                type: 'icon_font',
+                name: 'Feature icon',
+                role: 'overlay',
+                x: 20,
+                y: 24,
+                width: 28,
+                height: 28
+            },
+            {
+                id: `${id}-title`,
+                type: 'text',
+                name: 'Título benefício',
+                content: name === 'Parcelamento' ? 'Pague em parcelas' : name,
+                x: 20,
+                y: 69,
+                width: textWidth,
+                height: 24
+            },
+            {
+                id: `${id}-desc`,
+                type: 'text',
+                name: 'Descrição benefício',
+                content: name === 'Parcelamento' ? 'Use cartão ou saldo da carteira digital.' : 'Receba vantagens da assinatura no marketplace.',
+                x: 20,
+                y: 103,
+                width: textWidth,
+                height: name === 'Parcelamento' ? 208 : 18
+            }
+        ]
+    };
+}
+
+function maxRight(nodes: OpenPencilNode[]): number {
+    return Math.max(...nodes.map(node => Number(node.x ?? 0) + Number(node.width ?? 0)));
+}
+
+function childrenOverlap(nodes: OpenPencilNode[]): boolean {
+    for (let index = 0; index < nodes.length; index++) {
+        for (let other = index + 1; other < nodes.length; other++) {
+            const left = nodes[index];
+            const right = nodes[other];
+            const leftX = Number(left.x ?? 0);
+            const leftY = Number(left.y ?? 0);
+            const leftWidth = Number(left.width ?? 0);
+            const leftHeight = Number(left.height ?? 0);
+            const rightX = Number(right.x ?? 0);
+            const rightY = Number(right.y ?? 0);
+            const rightWidth = Number(right.width ?? 0);
+            const rightHeight = Number(right.height ?? 0);
+            if (leftX < rightX + rightWidth
+                && leftX + leftWidth > rightX
+                && leftY < rightY + rightHeight
+                && leftY + leftHeight > rightY) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+class FastStreamTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
+    protected override readonly providerStreamFirstOperationTimeoutMs = 10;
+    protected override readonly providerStreamIdleTimeoutMs = 10;
+    protected override readonly providerStreamTotalTimeoutMs = 20;
+}
+
+class FastGenerateTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
+    protected override readonly providerGenerateTimeoutMs = 10;
+}
+
+class InspectableTimeoutOpenPencilDesignCommandService extends OpenPencilDesignCommandServiceImpl {
+    generateTimeout(request: OpenPencilAiDesignRequest): number {
+        return this.resolveProviderGenerateTimeoutMs(request);
+    }
+
+    streamTimeouts(request: OpenPencilAiDesignRequest): { firstOperationMs: number; idleMs: number; totalMs: number } {
+        return this.resolveProviderStreamTimeouts(request);
+    }
+}

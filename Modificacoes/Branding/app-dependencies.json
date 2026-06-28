@@ -1,0 +1,8 @@
+{
+  "examples/browser/package.json": {
+    "@cybervinci/branding": "1.72.0"
+  },
+  "examples/electron/package.json": {
+    "@cybervinci/branding": "1.72.0"
+  }
+}

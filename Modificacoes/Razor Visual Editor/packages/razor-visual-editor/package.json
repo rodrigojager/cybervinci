@@ -1,0 +1,50 @@
+{
+  "name": "@cybervinci/razor-visual-editor",
+  "version": "1.72.0",
+  "description": "CyberVinci visual HTML/Razor editor powered by GrapesJS",
+  "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+  "main": "lib/common",
+  "types": "lib/common/index.d.ts",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "dependencies": {
+    "@cybervinci/ai-runtime": "1.72.0",
+    "@theia/core": "1.72.0",
+    "@theia/editor": "1.72.0",
+    "@theia/filesystem": "1.72.0",
+    "@theia/monaco-editor-core": "1.108.201",
+    "@theia/navigator": "1.72.0",
+    "@theia/workspace": "1.72.0",
+    "font-awesome": "^4.7.0",
+    "grapesjs": "0.23.1",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@theia/ext-scripts": "1.72.0"
+  },
+  "theiaExtensions": [
+    {
+      "frontend": "lib/browser/razor-visual-editor-frontend-module"
+    }
+  ],
+  "keywords": [
+    "theia-extension",
+    "cybervinci",
+    "grapesjs",
+    "razor",
+    "html"
+  ],
+  "scripts": {
+    "build": "theiaext build",
+    "clean": "theiaext clean",
+    "compile": "theiaext compile",
+    "lint": "theiaext lint",
+    "test": "theiaext test",
+    "watch": "theiaext watch"
+  },
+  "nyc": {
+    "extends": "../../configs/nyc.json"
+  }
+}

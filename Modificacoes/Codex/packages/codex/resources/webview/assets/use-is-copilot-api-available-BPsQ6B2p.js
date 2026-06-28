@@ -1,0 +1,2 @@
+import{t as e}from"./compiler-runtime-b9_ems4H.js";import{L as t,a as n,g as r,j as i,r as a,u as o}from"./vscode-api-CjIlXYxl.js";var s=e(),c=n(r,`is-copilot-api-available`,{staleTime:o.INFINITE});function l(){let e=(0,s.c)(2),t=i(),n;return e[0]===t?n=e[1]:(n=()=>{t.invalidateQueries({queryKey:a(`is-copilot-api-available`)})},e[0]=t,e[1]=n),n}function u(){let{data:e}=t(c);return e?.available??!1}export{u as n,l as r,c as t};
+//# sourceMappingURL=use-is-copilot-api-available-BPsQ6B2p.js.map

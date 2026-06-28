@@ -1,0 +1,43 @@
+{
+  "extends": "../../configs/base.tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "lib"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../ai-chat"
+    },
+    {
+      "path": "../ai-chat-ui"
+    },
+    {
+      "path": "../ai-core"
+    },
+    {
+      "path": "../ai-providers"
+    },
+    {
+      "path": "../ai-runtime"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../flow"
+    },
+    {
+      "path": "../memory"
+    },
+    {
+      "path": "../openpencil-cybervinci-extension"
+    },
+    {
+      "path": "../workspace"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+var e=`ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace`;export{e as t};
+//# sourceMappingURL=font-settings-XCQa3o4g.js.map

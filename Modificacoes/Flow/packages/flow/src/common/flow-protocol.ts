@@ -1,0 +1,315 @@
+import { JsonRpcServer } from '@theia/core';
+import { FlowGateStatus, FlowMemoryScope, FlowModelProfile, FlowPipelinePreset, FlowPipelinePresetAgentMarkdown, FlowPipelinePresetAgentNodeConfiguration, FlowRun, FlowRunWorkspaceOptions, FlowCapabilities, FlowSnapshot, FlowValidationResult, FlowWorkflow, FlowWorkflowVersion } from './flow-types';
+import { FlowPatternCompileRequest, FlowWorkflowPattern } from './flow-patterns';
+import { FlowDynamicWorkflowPlan } from './flow-dynamic-workflow';
+import { FlowWorkflowTemplate } from './flow-templates';
+import { FlowAiAuthoringDraft, FlowAiAuthoringSpec } from './flow-authoring-spec';
+
+export const FLOW_SERVICE_PATH = '/services/flow';
+export const LEGACY_FLOW_SERVICE_PATH = '/services/agency-studio';
+
+export const FlowService = Symbol('FlowService');
+
+export interface FlowWorkspaceRequest {
+    workspaceRootUri?: string;
+}
+
+export interface FlowWorkflowRequest extends FlowWorkspaceRequest {
+    workflowId: string;
+}
+
+export interface FlowSaveWorkflowRequest extends FlowWorkspaceRequest {
+    workflow: FlowWorkflow;
+    filePath?: string;
+    fileUri?: string;
+    author?: string;
+    origin?: string;
+    message?: string;
+}
+
+export interface FlowWorkflowVersionRequest extends FlowWorkflowRequest {
+    versionId: string;
+    author?: string;
+    message?: string;
+}
+
+export interface FlowWorkflowFileRequest extends FlowWorkspaceRequest {
+    workflowId?: string;
+    filePath?: string;
+    fileUri?: string;
+}
+
+export interface FlowImportWorkflowRequest extends FlowWorkspaceRequest {
+    filePath?: string;
+    fileUri?: string;
+}
+
+export interface FlowExportWorkflowRequest extends FlowWorkspaceRequest {
+    workflowId: string;
+    targetPath?: string;
+    targetUri?: string;
+}
+
+export interface FlowWorkflowExportResult {
+    path: string;
+    uri: string;
+    workflowId: string;
+    manifestPath: string;
+    files: string[];
+    missingAgents: string[];
+    missingContracts: string[];
+}
+
+export interface FlowExportRunRequest extends FlowWorkspaceRequest {
+    runId: string;
+    targetPath?: string;
+    targetUri?: string;
+}
+
+export interface FlowRunExportResult {
+    path: string;
+    uri: string;
+    runId: string;
+    manifestPath: string;
+    files: string[];
+    missingArtifacts: string[];
+}
+
+export interface FlowImportRunRequest extends FlowWorkspaceRequest {
+    filePath?: string;
+    fileUri?: string;
+}
+
+export interface FlowAgentMarkdownRequest extends FlowWorkspaceRequest {
+    relativePath: string;
+    title?: string;
+    createIfMissing?: boolean;
+}
+
+export interface FlowCreateAgentMarkdownRequest extends FlowWorkspaceRequest {
+    relativePath: string;
+    title?: string;
+    content?: string;
+}
+
+export interface FlowDuplicateAgentMarkdownRequest extends FlowWorkspaceRequest {
+    sourceRelativePath: string;
+    targetRelativePath: string;
+    title?: string;
+}
+
+export interface FlowRenameAgentMarkdownRequest extends FlowWorkspaceRequest {
+    sourceRelativePath: string;
+    targetRelativePath: string;
+}
+
+export interface FlowAgentMarkdownFile {
+    path: string;
+    uri: string;
+    relativePath: string;
+    content: string;
+    updatedAt: string;
+    source?: 'workspace' | 'catalog';
+}
+
+export interface FlowAgentMarkdownSummary {
+    path: string;
+    uri: string;
+    relativePath: string;
+    updatedAt: string;
+    source?: 'workspace' | 'catalog';
+}
+
+export interface FlowCreateWorkflowFromTemplateRequest extends FlowWorkspaceRequest {
+    templateId: string;
+    workflowId?: string;
+    name?: string;
+    description?: string;
+}
+
+export interface FlowListPipelinePresetsRequest extends FlowWorkspaceRequest {
+    includeBuiltIn?: boolean;
+    includeWorkspace?: boolean;
+}
+
+export interface FlowCreateWorkflowFromPresetRequest extends FlowWorkspaceRequest {
+    presetId: string;
+    workflowId?: string;
+    name?: string;
+    description?: string;
+    agentNodeOverrides?: Record<string, FlowPipelinePresetAgentNodeConfiguration>;
+}
+
+export interface FlowCreateWorkflowFromPatternRequest extends FlowWorkspaceRequest, FlowPatternCompileRequest {
+}
+
+export interface FlowRunWorkflowPatternRequest extends FlowCreateWorkflowFromPatternRequest {
+    prompt: string;
+    persist?: boolean;
+}
+
+export interface FlowCreateWorkflowFromAiAuthoringDraftRequest extends FlowWorkspaceRequest {
+    draft: FlowAiAuthoringDraft;
+}
+
+export interface FlowPlanDynamicWorkflowRequest extends FlowWorkspaceRequest {
+    prompt: string;
+    preferSaved?: boolean;
+}
+
+export interface FlowRunDynamicWorkflowRequest extends FlowPlanDynamicWorkflowRequest {
+    parameters?: Record<string, unknown>;
+    roleOverrides?: FlowPatternCompileRequest['roleOverrides'];
+    authoringDraft?: FlowAiAuthoringDraft;
+}
+
+export interface FlowSavePipelinePresetRequest extends FlowWorkspaceRequest {
+    id?: string;
+    name?: string;
+    description?: string;
+    workflow: FlowWorkflow;
+    agentMarkdown?: FlowPipelinePresetAgentMarkdown[];
+    tags?: string[];
+    overwrite?: boolean;
+}
+
+export interface FlowSaveModelProfileRequest extends FlowWorkspaceRequest {
+    profile: FlowModelProfile;
+}
+
+export interface FlowStartRunRequest extends FlowWorkspaceRequest {
+    workflowId: string;
+    prompt: string;
+    workspace?: FlowRunWorkspaceOptions;
+}
+
+export interface FlowRunRequest extends FlowWorkspaceRequest {
+    runId: string;
+}
+
+export interface FlowRunLifecycleRequest extends FlowRunRequest {
+    reason?: string;
+}
+
+export interface FlowRunStreamRequest extends FlowRunRequest {
+    intervalMs?: number;
+}
+
+export interface FlowGateDecisionRequest extends FlowRunRequest {
+    gateId: string;
+    decision: Exclude<FlowGateStatus, 'pending'>;
+    decisionId?: string;
+    targetStateId?: string;
+    note?: string;
+    approvedBy?: string;
+}
+
+export interface FlowCleanupRunsRequest extends FlowWorkspaceRequest {
+    runIds?: string[];
+    workflowId?: string;
+    olderThanDays?: number;
+    includeArtifacts?: boolean;
+    includeWorktrees?: boolean;
+}
+
+export interface FlowCleanupRunsResult {
+    removedRuns: string[];
+    removedPaths: string[];
+    failed: Array<{ id?: string; path?: string; message: string }>;
+}
+
+export interface FlowMemoryWriteRequest extends FlowRunRequest {
+    candidateId: string;
+    decision?: 'approved' | 'rejected';
+    content?: string;
+    approvedBy?: string;
+    scope?: FlowMemoryScope;
+    target?: string;
+}
+
+export interface FlowEffectDecisionRequest extends FlowRunRequest {
+    effectId: string;
+    decision: 'approved' | 'rejected' | 'applied';
+    note?: string;
+    approvedBy?: string;
+}
+
+export interface FlowSecondRunApprovalRequest extends FlowRunRequest {
+    suggestionId: string;
+    approvedBy?: string;
+}
+
+export interface FlowSecondRunDecisionRequest extends FlowRunRequest {
+    suggestionId: string;
+    decision: 'approved' | 'dismissed';
+    approvedBy?: string;
+    note?: string;
+}
+
+export const FlowClient = Symbol('FlowClient');
+
+export interface FlowRunUpdate {
+    workspaceRootUri?: string;
+    run: FlowRun;
+    reason: 'started' | 'snapshot' | 'tick' | 'approval' | 'memory' | 'lifecycle' | 'stream' | 'poll' | 'error';
+}
+
+export interface FlowClient {
+    onRunUpdated(update: FlowRunUpdate): void;
+    onRunStreamError(error: { workspaceRootUri?: string; runId: string; message: string }): void;
+    onRunUpdate?(listener: (update: FlowRunUpdate) => void): () => void;
+    onRunError?(listener: (error: { workspaceRootUri?: string; runId: string; message: string }) => void): () => void;
+}
+
+export interface FlowService extends JsonRpcServer<FlowClient> {
+    getCapabilities(): Promise<FlowCapabilities>;
+    getAiAuthoringSpec(): Promise<FlowAiAuthoringSpec>;
+    getSnapshot(request: FlowWorkspaceRequest): Promise<FlowSnapshot>;
+    listWorkflows(request: FlowWorkspaceRequest): Promise<FlowWorkflow[]>;
+    listWorkflowTemplates(): Promise<FlowWorkflowTemplate[]>;
+    listWorkflowPatterns(): Promise<FlowWorkflowPattern[]>;
+    listModelProfiles(request?: FlowWorkspaceRequest): Promise<FlowModelProfile[]>;
+    listPipelinePresets(request: FlowListPipelinePresetsRequest): Promise<FlowPipelinePreset[]>;
+    listAgentMarkdownFiles(request: FlowWorkspaceRequest): Promise<FlowAgentMarkdownSummary[]>;
+    getAgentMarkdownFile(request: FlowAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
+    createAgentMarkdownFile(request: FlowCreateAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
+    duplicateAgentMarkdownFile(request: FlowDuplicateAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
+    renameAgentMarkdownFile(request: FlowRenameAgentMarkdownRequest): Promise<FlowAgentMarkdownFile>;
+    createWorkflowFromTemplate(request: FlowCreateWorkflowFromTemplateRequest): Promise<FlowWorkflow>;
+    createWorkflowFromPreset(request: FlowCreateWorkflowFromPresetRequest): Promise<FlowWorkflow>;
+    createWorkflowFromPattern(request: FlowCreateWorkflowFromPatternRequest): Promise<FlowWorkflow>;
+    createWorkflowFromAiAuthoringDraft(request: FlowCreateWorkflowFromAiAuthoringDraftRequest): Promise<FlowWorkflow>;
+    runWorkflowPattern(request: FlowRunWorkflowPatternRequest): Promise<FlowRun>;
+    planDynamicWorkflow(request: FlowPlanDynamicWorkflowRequest): Promise<FlowDynamicWorkflowPlan>;
+    runDynamicWorkflow(request: FlowRunDynamicWorkflowRequest): Promise<FlowRun>;
+    savePipelinePreset(request: FlowSavePipelinePresetRequest): Promise<FlowPipelinePreset>;
+    saveModelProfile(request: FlowSaveModelProfileRequest): Promise<FlowModelProfile>;
+    getWorkflow(request: FlowWorkflowRequest): Promise<FlowWorkflow>;
+    openWorkflowFile(request: FlowWorkflowFileRequest): Promise<FlowWorkflow>;
+    importWorkflow(request: FlowImportWorkflowRequest): Promise<FlowWorkflow>;
+    exportWorkflow(request: FlowExportWorkflowRequest): Promise<FlowWorkflowExportResult>;
+    exportRun(request: FlowExportRunRequest): Promise<FlowRunExportResult>;
+    importRun(request: FlowImportRunRequest): Promise<FlowRun>;
+    reloadWorkflow(request: FlowWorkflowRequest): Promise<FlowWorkflow>;
+    saveWorkflow(request: FlowSaveWorkflowRequest): Promise<FlowValidationResult>;
+    saveWorkflowFile(request: FlowSaveWorkflowRequest): Promise<FlowValidationResult>;
+    listWorkflowVersions(request: FlowWorkflowRequest): Promise<FlowWorkflowVersion[]>;
+    restoreWorkflowVersion(request: FlowWorkflowVersionRequest): Promise<FlowWorkflow>;
+    validateWorkflow(workflow: FlowWorkflow): Promise<FlowValidationResult>;
+    listRuns(request: FlowWorkspaceRequest): Promise<FlowRun[]>;
+    startRun(request: FlowStartRunRequest): Promise<FlowRun>;
+    getRun(request: FlowRunRequest): Promise<FlowRun>;
+    tickRun(request: FlowRunRequest): Promise<FlowRun>;
+    pauseRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
+    resumeRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
+    cancelRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
+    finalizeRun(request: FlowRunLifecycleRequest): Promise<FlowRun>;
+    approveGate(request: FlowGateDecisionRequest): Promise<FlowRun>;
+    cleanupRuns(request: FlowCleanupRunsRequest): Promise<FlowCleanupRunsResult>;
+    decideEffect(request: FlowEffectDecisionRequest): Promise<FlowRun>;
+    approveMemoryCandidate(request: FlowMemoryWriteRequest): Promise<FlowRun>;
+    approveSecondRunSuggestion(request: FlowSecondRunApprovalRequest): Promise<FlowRun>;
+    decideSecondRunSuggestion(request: FlowSecondRunDecisionRequest): Promise<FlowRun>;
+    subscribeRunEvents(request: FlowRunStreamRequest): Promise<FlowRun>;
+    unsubscribeRunEvents(request: FlowRunRequest): Promise<void>;
+}

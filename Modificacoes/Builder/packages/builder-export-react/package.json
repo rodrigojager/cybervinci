@@ -1,0 +1,31 @@
+{
+  "name": "@cybervinci/builder-export-react",
+  "version": "1.72.0",
+  "description": "React TSX exporter for CyberVinci UI Schema",
+  "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+  "main": "lib/common",
+  "types": "lib/common/index.d.ts",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "dependencies": {
+    "@cybervinci/builder-registry": "1.72.0",
+    "@cybervinci/builder-schema": "1.72.0",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@theia/ext-scripts": "1.72.0"
+  },
+  "scripts": {
+    "build": "theiaext build",
+    "clean": "theiaext clean",
+    "compile": "theiaext compile",
+    "lint": "theiaext lint",
+    "test": "theiaext test",
+    "watch": "theiaext watch"
+  },
+  "nyc": {
+    "extends": "../../configs/nyc.json"
+  }
+}

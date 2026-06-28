@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://theia-ide.org/schemas/library/package-version.schema.json",
+  "type": "object",
+  "required": ["package_id", "version", "source_type", "source_url"],
+  "properties": {
+    "package_id": { "type": "string" },
+    "version": { "type": "string" },
+    "source_type": {
+      "enum": [
+        "git",
+        "llms_txt",
+        "sitemap",
+        "website",
+        "local_folder",
+        "artifact",
+        "single_url",
+        "npm",
+        "nuget",
+        "pip",
+        "maven",
+        "openapi",
+        "swagger",
+        "confluence",
+        "notion",
+        "markdown_zip"
+      ]
+    },
+    "source_url": { "type": "string" },
+    "source_ref": { "type": "string" },
+    "source_commit": { "type": "string" },
+    "fetched_at": { "type": "string" },
+    "artifact": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["sqlite", "json_index", "archive"] },
+        "url": { "type": "string" },
+        "sha256": { "type": "string" },
+        "size_bytes": { "type": "number" },
+        "archive_root": { "type": "string" }
+      }
+    },
+    "checksums": {
+      "type": "object",
+      "properties": {
+        "package_db_hash_sha256": { "type": "string" },
+        "normalized_content_hash_sha256": { "type": "string" }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "properties": {
+        "document_count": { "type": "number" },
+        "section_count": { "type": "number" },
+        "token_count": { "type": "number" }
+      }
+    }
+  }
+}

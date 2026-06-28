@@ -1,0 +1,1690 @@
+.builder-widget {
+    height: 100%;
+    color: var(--theia-foreground);
+    background: var(--theia-editor-background);
+    container-type: inline-size;
+}
+
+.builder-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+}
+
+.builder-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-sideBar-background);
+}
+
+.builder-toolbar div:first-child {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.builder-toolbar strong {
+    flex: 0 0 auto;
+}
+
+.builder-toolbar span {
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-actions {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+}
+
+.builder-actions button {
+    height: 28px;
+    max-width: 100%;
+    border: 1px solid var(--theia-button-border, transparent);
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-actions button:disabled {
+    opacity: 0.5;
+}
+
+.builder-workbench {
+    display: grid;
+    grid-template-columns: 56px minmax(280px, 360px) minmax(360px, 1fr);
+    grid-template-rows: minmax(340px, 1fr) minmax(210px, 30%);
+    grid-template-areas:
+        "rail panel preview"
+        "rail panel json";
+    flex: 1;
+    gap: 0;
+    min-height: 0;
+}
+
+.builder-area {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid var(--theia-border-color0);
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-sideBar-background);
+}
+
+.builder-area h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.builder-tool-rail {
+    grid-area: rail;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    min-height: 0;
+    padding: 8px 5px;
+    overflow: auto;
+    border-right: 1px solid var(--theia-border-color0);
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-activityBar-background, var(--theia-sideBar-background));
+}
+
+.builder-tool-rail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 0 8px;
+    border: 1px solid transparent;
+    border-bottom: 1px solid var(--theia-border-color0);
+}
+
+.builder-tool-rail-group.active {
+    border-left-color: var(--theia-focusBorder);
+}
+
+.builder-tool-rail-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 18px;
+    color: var(--theia-descriptionForeground);
+    font-size: 9px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.builder-tool-rail-label span:last-child {
+    max-width: 44px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-tool-rail-buttons {
+    display: grid;
+    gap: 4px;
+}
+
+.builder-tool-rail-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    min-width: 44px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: 1px solid transparent;
+    color: var(--theia-descriptionForeground);
+    background: transparent;
+    border-radius: 4px;
+    transition: all 0.15s ease-in-out;
+}
+
+.builder-tool-rail button.active {
+    color: var(--theia-foreground);
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+}
+
+.builder-tool-rail-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.builder-area-panel {
+    grid-area: panel;
+    overflow: hidden;
+}
+
+.builder-area-preview {
+    grid-area: preview;
+    padding: 12px;
+    background: var(--theia-editor-background);
+}
+
+.builder-area-json {
+    grid-area: json;
+    overflow: hidden;
+    background: var(--theia-editor-background);
+}
+
+.builder-active-panel {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+    min-height: 0;
+}
+
+.builder-active-panel-header {
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-editor-background);
+}
+
+.builder-active-panel-header-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px 6px;
+    border-bottom: 1px solid var(--theia-border-color0);
+}
+
+.builder-active-panel-header-group h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.builder-active-panel-header-group .codicon {
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-active-panel-header-group > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-panel-navigation {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px;
+}
+
+.builder-panel-navigation button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 5px 7px;
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-foreground);
+    background: var(--theia-input-background);
+    overflow: hidden;
+}
+
+.builder-panel-navigation button span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-panel-navigation button.active {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+}
+
+.builder-workflow-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 8px;
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-sideBar-background);
+}
+
+.builder-workflow-switch button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: 32px;
+    padding: 5px 7px;
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-foreground);
+    background: var(--theia-input-background);
+    text-align: left;
+}
+
+.builder-workflow-switch button.active {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+}
+
+.builder-workflow-switch button > span:nth-child(2) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-workflow-switch small,
+.builder-context-target small {
+    min-width: 0;
+    padding: 1px 5px;
+    color: var(--theia-badge-foreground);
+    background: var(--theia-badge-background);
+    border-radius: 999px;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.builder-context-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-sideBar-background);
+}
+
+.builder-context-target {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.builder-context-target strong,
+.builder-context-target code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-context-target code {
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+}
+
+.builder-context-actions,
+.builder-layers-quick-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+}
+
+.builder-context-actions button,
+.builder-layers-quick-nav button,
+.builder-insert-tools button,
+.builder-properties-actions button,
+.builder-style-header button,
+.builder-style-presets button,
+.builder-theme-presets button,
+.builder-theme-preset-tokens button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.builder-panel-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.builder-panel-toolbar button {
+    margin-top: 0;
+}
+
+.builder-panel-toolbar--padded {
+    margin: 0 0 8px;
+}
+
+.builder-json,
+.builder-preview,
+.builder-inspector,
+.builder-component-list,
+.builder-active-panel-body,
+.builder-panel {
+    min-width: 0;
+    min-height: 0;
+}
+
+.builder-active-panel-body {
+    overflow: auto;
+    padding: 12px;
+}
+
+.builder-json {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(180px, 1fr) auto;
+}
+
+.builder-pane-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 32px;
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid var(--theia-border-color0);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-pane-heading h3 {
+    margin: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.builder-pane-heading span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-monaco-json-editor {
+    width: 100%;
+    height: 100%;
+    background: var(--theia-editor-background);
+    overflow: hidden;
+}
+
+.builder-validation {
+    min-width: 0;
+    margin-bottom: 14px;
+}
+
+.builder-json-sidebar {
+    max-height: 170px;
+    overflow: auto;
+    padding: 10px;
+    border-top: 1px solid var(--theia-border-color0);
+    background: var(--theia-sideBar-background);
+}
+
+.builder-json-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.builder-json-actions button {
+    min-height: 28px;
+    border: 1px solid var(--theia-button-border, transparent);
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+}
+
+.builder-json-actions button:disabled {
+    opacity: 0.5;
+}
+
+.builder-validation h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.builder-validation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.builder-validation-issue {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--theia-inputValidation-errorBorder, var(--theia-errorForeground));
+    background: var(--theia-inputValidation-errorBackground, transparent);
+}
+
+.builder-validation-issue div {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 8px;
+}
+
+.builder-validation-issue strong {
+    color: var(--theia-descriptionForeground);
+    font-weight: 600;
+}
+
+.builder-validation-issue code,
+.builder-validation-issue span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.builder-preview {
+    overflow: auto;
+    padding: 16px;
+}
+
+.builder-preview-surface {
+    min-width: 0;
+    min-height: 100%;
+    padding: 20px;
+    overflow: auto;
+    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--theia-border-color0);
+    border-radius: 6px;
+}
+
+.builder-preview-surface * {
+    max-width: 100%;
+}
+
+.builder-preview-surface [data-builder-node-id] {
+    cursor: pointer;
+}
+
+.builder-preview-surface [data-builder-selected='true'] {
+    outline: 2px solid var(--theia-focusBorder);
+    outline-offset: 2px;
+}
+
+.builder-state {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    margin: 8px 0;
+    padding: 10px;
+    border: 1px solid var(--theia-border-color0);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+    color: var(--theia-foreground);
+    line-height: 1.4;
+}
+
+.builder-state-icon {
+    width: 10px;
+    height: 10px;
+    margin-top: 4px;
+    border-radius: 50%;
+    background: var(--theia-descriptionForeground);
+}
+
+.builder-state strong {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.builder-state p {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-state pre {
+    max-height: 120px;
+    margin: 8px 0 0;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+.builder-state dl {
+    margin-top: 8px;
+}
+
+.builder-state-action {
+    margin-top: 8px;
+}
+
+.builder-state-error {
+    border-color: var(--theia-inputValidation-errorBorder, var(--theia-errorForeground));
+    background: var(--theia-inputValidation-errorBackground, transparent);
+}
+
+.builder-state-error .builder-state-icon {
+    background: var(--theia-errorForeground);
+}
+
+.builder-state-warning {
+    border-color: var(--theia-inputValidation-warningBorder, var(--theia-editorWarning-foreground));
+    background: var(--theia-inputValidation-warningBackground, transparent);
+}
+
+.builder-state-warning .builder-state-icon {
+    background: var(--theia-editorWarning-foreground, var(--theia-descriptionForeground));
+}
+
+.builder-state-success .builder-state-icon {
+    background: var(--theia-testing-iconPassed, var(--theia-charts-green));
+}
+
+.builder-state-loading .builder-state-icon {
+    border: 2px solid var(--theia-descriptionForeground);
+    border-top-color: var(--theia-focusBorder);
+    background: transparent;
+    animation: builder-spin 0.8s linear infinite;
+}
+
+@keyframes builder-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.builder-unknown-component {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    border: 1px dashed var(--theia-inputValidation-warningBorder, var(--theia-editorWarning-foreground));
+    background: var(--theia-inputValidation-warningBackground, transparent);
+}
+
+.builder-unknown-component span {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.builder-unknown-component p {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-inspector {
+    overflow: auto;
+    padding: 12px;
+    border-right: 0;
+    background: var(--theia-sideBar-background);
+}
+
+.builder-component-list,
+.builder-layers-panel,
+.builder-panel {
+    overflow: auto;
+    padding: 12px;
+    background: var(--theia-sideBar-background);
+}
+
+.builder-layer-context {
+    margin: 0 0 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-layer-context strong,
+.builder-layer-context span {
+    display: block;
+}
+
+.builder-layer-context span {
+    margin-top: 2px;
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+.builder-layers-toolbar,
+.builder-layers-toolbar-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.builder-layers-toolbar {
+    margin-bottom: 8px;
+    padding: 2px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+}
+
+.builder-layers-quick-nav {
+    justify-content: stretch;
+    margin-bottom: 8px;
+}
+
+.builder-layers-quick-nav button {
+    flex: 1 1 116px;
+    min-width: 0;
+}
+
+.builder-layers-toolbar button,
+.builder-layers-toolbar-sub button {
+    margin-top: 0;
+    min-height: 24px;
+    padding: 2px 6px;
+    border: 1px solid var(--theia-button-border, transparent);
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+}
+
+.builder-layers-toolbar button[aria-selected='true'] {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+}
+
+.builder-layer-quick-insert {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+}
+
+.builder-layer-quick-insert > span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.builder-layer-quick-insert > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.builder-layer-quick-insert button {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    padding: 2px 8px;
+    border: 1px solid var(--theia-button-border, transparent);
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+}
+
+.builder-insert-panel {
+    display: grid;
+    gap: 10px;
+}
+
+.builder-insert-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.builder-insert-tools button {
+    flex: 1 1 112px;
+    margin-top: 0;
+}
+
+.builder-insert-separator {
+    height: 1px;
+    margin: 6px 0 0;
+    background: var(--theia-border-color0);
+}
+
+.builder-component-list,
+.builder-layers-panel {
+    flex: 1;
+}
+
+.builder-panel {
+    height: 100%;
+    border-right: 0;
+}
+
+.builder-inspector h3,
+.builder-component-list h3,
+.builder-style-editor h3,
+.builder-theme-panel h3,
+.builder-record-summary h3,
+.builder-panel h3,
+.builder-document-status h3 {
+    margin: 14px 0 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.builder-inspector dl,
+.builder-panel dl,
+.builder-document-status dl {
+    display: grid;
+    grid-template-columns: minmax(58px, 72px) minmax(0, 1fr);
+    gap: 6px 10px;
+    margin: 0;
+}
+
+.builder-inspector dt,
+.builder-document-status dt {
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-inspector dd,
+.builder-document-status dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.builder-document-status {
+    flex: 0 0 auto;
+    padding: 12px;
+    border-top: 1px solid var(--theia-border-color0);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-toolbox {
+    display: grid;
+    gap: 10px;
+}
+
+.builder-toolbox-search {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 4px 6px;
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+}
+
+.builder-toolbox-search input {
+    min-width: 0;
+    border: none;
+    outline: none;
+    color: inherit;
+    background: transparent;
+}
+
+.builder-toolbox-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    color: var(--theia-descriptionForeground);
+    background: transparent;
+    cursor: pointer;
+}
+
+.builder-toolbox-category {
+    display: grid;
+    gap: 6px;
+}
+
+.builder-toolbox-category h4 {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.builder-toolbox-category h4 span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-toolbox-category h4 small {
+    color: var(--theia-badge-foreground);
+    background: var(--theia-badge-background);
+    border-radius: 999px;
+    min-width: 18px;
+    padding: 1px 5px;
+    text-align: center;
+}
+
+.builder-toolbox-items {
+    display: grid;
+    gap: 6px;
+}
+
+.builder-toolbox-items button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+    padding: 5px 7px;
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-foreground);
+    background: var(--theia-input-background);
+    text-align: left;
+    cursor: grab;
+}
+
+.builder-toolbox-items button:hover {
+    border-color: var(--theia-focusBorder);
+}
+
+.builder-toolbox-items button:active {
+    cursor: grabbing;
+}
+
+.builder-toolbox-icon {
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-toolbox-label,
+.builder-toolbox-items button code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-toolbox-items button code {
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+}
+
+.builder-toolbox-empty {
+    padding: 10px;
+    border: 1px dashed var(--theia-border-color0);
+    color: var(--theia-descriptionForeground);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+    line-height: 1.4;
+}
+
+.builder-blocks {
+    display: grid;
+    gap: 8px;
+}
+
+.builder-block-template {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+}
+
+.builder-block-template > div {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    min-width: 0;
+}
+
+.builder-block-template h4,
+.builder-block-template p {
+    margin: 0;
+}
+
+.builder-block-template p {
+    margin-top: 3px;
+    color: var(--theia-descriptionForeground);
+    line-height: 1.35;
+}
+
+.builder-block-template > span {
+    justify-self: start;
+    padding: 1px 6px;
+    color: var(--theia-badge-foreground);
+    background: var(--theia-badge-background);
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.builder-block-template button {
+    justify-self: start;
+}
+
+.builder-drop-target {
+    outline: 1px dashed transparent;
+    outline-offset: -6px;
+}
+
+.builder-drop-target:has(.builder-preview-surface) {
+    outline-color: var(--theia-border-color0);
+}
+
+.builder-tree-node {
+    margin-top: 4px;
+    padding-left: 10px;
+}
+
+.builder-tree-toolbar,
+.builder-tree-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.builder-tree-toolbar-label {
+    margin-right: auto;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.builder-tree-toolbar {
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.builder-tree-toolbar button,
+.builder-tree-row-actions button {
+    min-height: 24px;
+    padding: 2px 6px;
+    border: 1px solid var(--theia-button-border, transparent);
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    font-size: 11px;
+}
+
+.builder-tree-toolbar button:disabled,
+.builder-tree-row-actions button:disabled {
+    opacity: 0.5;
+}
+
+.builder-tree-select {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    min-height: 26px;
+    padding: 3px 6px;
+    border: 1px solid transparent;
+    color: var(--theia-foreground);
+    background: transparent;
+    text-align: left;
+}
+
+.builder-tree-row.selected .builder-tree-select {
+    border-color: var(--theia-focusBorder);
+    background: var(--theia-list-activeSelectionBackground);
+    color: var(--theia-list-activeSelectionForeground);
+}
+
+.builder-tree-row-actions {
+    display: none;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.builder-tree-rename {
+    flex: 0 0 96px;
+    min-width: 72px;
+    height: 24px;
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    font-size: 11px;
+}
+
+.builder-tree-name,
+.builder-tree-select code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-tree-select code {
+    color: var(--theia-descriptionForeground);
+    font-size: 10px;
+}
+
+.builder-tree-slot-label {
+    color: var(--theia-foreground);
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.builder-tree-icon {
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-tree-children {
+    margin-left: 10px;
+    margin-top: 2px;
+    padding-left: 8px;
+    border-left: 1px dashed var(--theia-border-color0);
+}
+
+.builder-tree-slot > .builder-tree-row {
+    margin-top: 4px;
+}
+
+.builder-tree-row:hover .builder-tree-row-actions,
+.builder-tree-row:focus-within .builder-tree-row-actions,
+.builder-tree-row.selected .builder-tree-row-actions {
+    display: flex;
+}
+
+.builder-tree-select span,
+.builder-tree-slot > span {
+    color: var(--theia-descriptionForeground);
+}
+
+.builder-tree-slot {
+    margin-top: 6px;
+    padding-left: 10px;
+}
+
+.builder-inspector pre,
+.builder-panel pre {
+    overflow: auto;
+    max-height: 260px;
+    padding: 8px;
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-border-color0);
+    font-size: 11px;
+}
+
+.builder-label {
+    display: block;
+    margin: 10px 0 6px;
+    min-width: 0;
+}
+
+.builder-label > span {
+    display: block;
+    margin-bottom: 4px;
+    overflow-wrap: anywhere;
+}
+
+.builder-label input,
+.builder-label select,
+.builder-label textarea,
+.builder-rjsf-property-panel input,
+.builder-rjsf-property-panel select,
+.builder-rjsf-property-panel textarea {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.builder-rjsf-form {
+    display: grid;
+    gap: 8px;
+}
+
+.builder-rjsf-form fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.builder-rjsf-form .form-group,
+.builder-rjsf-form .field {
+    min-width: 0;
+    margin-bottom: 10px;
+}
+
+.builder-rjsf-form label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.builder-rjsf-form .help-block,
+.builder-rjsf-form .error-detail {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.builder-rjsf-form .errors {
+    color: var(--theia-errorForeground);
+}
+
+.builder-rjsf-color-widget,
+.builder-style-editor,
+.builder-theme-panel {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.builder-rjsf-color-row,
+.builder-style-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+    min-width: 0;
+}
+
+.builder-style-field--color,
+.builder-rjsf-color-row {
+    grid-template-columns: minmax(0, 1fr) 34px auto;
+}
+
+.builder-rjsf-color-row input[type='color'],
+.builder-style-field input[type='color'] {
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+}
+
+.builder-style-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+    min-height: 26px;
+    margin-top: 0;
+    padding: 0;
+    border: 1px solid var(--theia-input-border);
+    color: var(--theia-descriptionForeground);
+    background: transparent;
+}
+
+.builder-color-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
+    gap: 4px;
+}
+
+.builder-color-swatches button {
+    width: 100%;
+    min-width: 18px;
+    height: 18px;
+    min-height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--theia-border-color0);
+    background-clip: padding-box;
+}
+
+.builder-style-grid,
+.builder-theme-spacing,
+.builder-data-panel {
+    display: grid;
+    gap: 8px;
+}
+
+.builder-style-editor .builder-style-grid {
+    margin-top: 6px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+}
+
+.builder-properties-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-properties-header h3,
+.builder-properties-header strong {
+    margin: 0;
+}
+
+.builder-properties-header strong,
+.builder-properties-header code {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-properties-header code {
+    margin-top: 4px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.builder-properties-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.builder-properties-meta {
+    margin-bottom: 12px;
+}
+
+.builder-style-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-style-header h3,
+.builder-style-header span,
+.builder-style-presets h4 {
+    margin: 0;
+}
+
+.builder-style-header span {
+    display: block;
+    margin-top: 3px;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.builder-style-presets {
+    display: grid;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+}
+
+.builder-style-presets > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    gap: 6px;
+}
+
+.builder-style-presets button {
+    min-width: 0;
+    margin-top: 0;
+    text-align: left;
+}
+
+.builder-style-presets button span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-style-group {
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-style-editor-note {
+    margin-bottom: 4px;
+}
+
+.builder-style-editor-note p {
+    margin: 0;
+}
+
+.builder-style-group h4 {
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.builder-style-group .builder-style-grid {
+    margin-top: 0;
+}
+
+.builder-style-custom-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: end;
+}
+
+.builder-style-action {
+    margin-top: 0;
+}
+
+.builder-theme-token-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.builder-theme-token-header h3 {
+    margin: 0;
+}
+
+.builder-theme-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+
+.builder-theme-section,
+.builder-theme-presets {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-editorGroupHeader-tabsBackground);
+}
+
+.builder-theme-presets > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px;
+}
+
+.builder-theme-presets button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    justify-content: stretch;
+    min-width: 0;
+    margin-top: 0;
+    padding: 7px;
+    text-align: left;
+}
+
+.builder-theme-presets button strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-theme-preset-swatches {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.builder-theme-preset-swatches span,
+.builder-theme-token-swatch {
+    display: inline-block;
+    width: 100%;
+    min-width: 18px;
+    height: 16px;
+    border: 1px solid var(--theia-border-color0);
+}
+
+.builder-theme-preset-tokens {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 6px;
+}
+
+.builder-theme-preset-tokens button {
+    justify-content: flex-start;
+    margin-top: 0;
+}
+
+.builder-theme-preset-tokens .builder-theme-token-swatch {
+    width: 18px;
+    flex: 0 0 18px;
+}
+
+.builder-theme-tokens pre,
+.builder-record-summary {
+    min-width: 0;
+}
+
+.builder-record-summary article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--theia-border-color0);
+}
+
+.builder-record-summary strong,
+.builder-record-summary code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-props-editor,
+.builder-props-json,
+.builder-ai-prompt {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 160px;
+    resize: vertical;
+    padding: 8px;
+    color: var(--theia-editor-foreground);
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-input-border);
+    font-family: var(--theia-ui-font-family), monospace;
+}
+
+.builder-panel button,
+.builder-active-panel-body button {
+    min-height: 28px;
+    max-width: 100%;
+    margin-top: 8px;
+    border: 1px solid var(--theia-button-border, transparent);
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    overflow-wrap: anywhere;
+}
+
+.builder-ai-decision-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.builder-ai-diff {
+    margin-top: 12px;
+}
+
+.builder-ai-rendered-preview {
+    margin-top: 12px;
+}
+
+.builder-ai-rendered-preview .builder-preview-surface {
+    max-height: 260px;
+    overflow: auto;
+}
+
+.builder-export-preview {
+    margin-top: 14px;
+}
+
+.builder-export-preview > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.builder-export-preview h4 {
+    margin: 0;
+    font-size: 12px;
+}
+
+.builder-export-preview span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.builder-export-preview iframe {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 220px;
+    border: 1px solid var(--theia-border-color0);
+    background: #fff;
+}
+
+.builder-error {
+    color: var(--theia-errorForeground);
+    white-space: pre-wrap;
+}
+
+.builder-ok,
+.builder-panel-note,
+.builder-empty {
+    color: var(--theia-descriptionForeground);
+    overflow-wrap: anywhere;
+}
+
+@container (max-width: 1120px) {
+    .builder-workbench {
+        grid-template-columns: 56px minmax(260px, 320px) minmax(320px, 1fr);
+        grid-template-rows: minmax(280px, 1fr) minmax(220px, 38%);
+        grid-template-areas:
+            "rail panel preview"
+            "rail panel json";
+    }
+}
+
+@container (max-width: 760px) {
+    .builder-toolbar {
+        align-items: stretch;
+    }
+
+    .builder-toolbar div:first-child,
+    .builder-actions {
+        flex-basis: 100%;
+    }
+
+    .builder-actions {
+        justify-content: flex-start;
+    }
+
+    .builder-workbench {
+        grid-template-columns: 52px minmax(0, 1fr);
+        grid-template-rows:
+            minmax(240px, 36vh)
+            minmax(260px, 42vh)
+            minmax(280px, 46vh);
+        grid-template-areas:
+            "rail panel"
+            "rail preview"
+            "rail json";
+        overflow: auto;
+    }
+
+    .builder-area {
+        border-right: 0;
+    }
+
+    .builder-area-preview,
+    .builder-component-list,
+    .builder-layers-panel,
+    .builder-panel,
+    .builder-inspector {
+        padding: 10px;
+    }
+
+    .builder-preview-surface {
+        padding: 12px;
+    }
+
+    .builder-validation-issue div {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3px;
+    }
+
+    .builder-inspector dl,
+    .builder-panel dl,
+    .builder-document-status dl {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@container (max-width: 420px) {
+    .builder-toolbar {
+        padding: 8px;
+    }
+
+    .builder-actions button,
+    .builder-json-actions button,
+    .builder-panel button,
+    .builder-active-panel-body button {
+        width: 100%;
+    }
+
+    .builder-tree-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .builder-tree-row-actions,
+    .builder-tree-row:hover .builder-tree-row-actions,
+    .builder-tree-row:focus-within .builder-tree-row-actions,
+    .builder-tree-row.selected .builder-tree-row-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .builder-tree-row-actions button {
+        width: 100%;
+    }
+
+    .builder-toolbox-items button {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .builder-toolbox-items button code {
+        grid-column: 2;
+    }
+}

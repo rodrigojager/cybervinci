@@ -1,0 +1,580 @@
+version: cybervinci.catalog/v1
+agents:
+  - version: cybervinci.agent/v1
+    kind: native
+    id: OpenCoder
+    sourceAgentId: OpenCoder
+    defaultPlaybook: native-agent.OpenCoder
+    playbooks:
+      - native-agent.OpenCoder
+    name: CyberVinci
+    iconClass: codicon codicon-hubot
+    tags:
+      - Chat
+      - Coding
+      - Workspace
+      - Provider Runtime
+    description: >-
+      Provider-neutral coding agent with CyberVinci AI Providers runtime, file changes, sandbox controls, and validation
+      workflows.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.OpenCoder
+      sourceAgentId: OpenCoder
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: Coder
+    sourceAgentId: Coder
+    defaultPlaybook: native-agent.Coder
+    playbooks:
+      - native-agent.Coder
+    name: Coder
+    iconClass: codicon codicon-code
+    tags:
+      - Chat
+      - Coding
+      - Workspace
+    description: Software-development chat agent that can inspect workspace files and suggest file changes.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.Coder
+      sourceAgentId: Coder
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: Architect
+    sourceAgentId: Architect
+    defaultPlaybook: native-agent.Architect
+    playbooks:
+      - native-agent.Architect
+    name: Architect
+    iconClass: codicon codicon-map
+    tags:
+      - Chat
+      - Planning
+      - Workspace
+    description: Planning and project-understanding agent for codebase questions and implementation plans.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.Architect
+      sourceAgentId: Architect
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: GitHub
+    sourceAgentId: GitHub
+    defaultPlaybook: native-agent.GitHub
+    playbooks:
+      - native-agent.GitHub
+    name: GitHub
+    iconClass: codicon codicon-github
+    tags:
+      - Chat
+      - GitHub
+      - MCP
+    description: GitHub workflow agent that configures and starts the GitHub MCP server when needed.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs:
+        - mcp_github_tools
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.GitHub
+      sourceAgentId: GitHub
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - mcp.configureOrStartDecision
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: AppTester
+    sourceAgentId: AppTester
+    defaultPlaybook: native-agent.AppTester
+    playbooks:
+      - native-agent.AppTester
+    name: AppTester
+    iconClass: codicon codicon-beaker
+    tags:
+      - Chat
+      - Testing
+      - Browser
+      - MCP
+    description: UI testing agent that can start browser automation MCP servers and verify application scenarios.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs:
+        - mcp_chrome-devtools_tools
+        - mcp_playwright_tools
+        - mcp_playwright-visual_tools
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.AppTester
+      sourceAgentId: AppTester
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - mcp.configureOrStartDecision
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: code-reviewer
+    sourceAgentId: code-reviewer
+    defaultPlaybook: native-agent.code-reviewer
+    playbooks:
+      - native-agent.code-reviewer
+    name: Code Reviewer
+    iconClass: codicon codicon-code-review
+    tags:
+      - Chat
+      - Review
+      - Coding
+    description: Code review agent for finding defects, regressions, and missing tests.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.code-reviewer
+      sourceAgentId: code-reviewer
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: pr-reviewer
+    sourceAgentId: pr-reviewer
+    defaultPlaybook: native-agent.pr-reviewer
+    playbooks:
+      - native-agent.pr-reviewer
+    name: PR Reviewer
+    iconClass: codicon codicon-git-pull-request-go-to-changes
+    tags:
+      - Chat
+      - Review
+      - GitHub
+    description: Pull-request review agent for GitHub-oriented review workflows.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs:
+        - mcp_github_tools
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.pr-reviewer
+      sourceAgentId: pr-reviewer
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - mcp.configureOrStartDecision
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: explore
+    sourceAgentId: explore
+    defaultPlaybook: native-agent.explore
+    playbooks:
+      - native-agent.explore
+    name: Explore
+    iconClass: codicon codicon-compass
+    tags:
+      - Chat
+      - Research
+      - Workspace
+    description: Exploration agent for discovering project structure and answering workspace questions.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.explore
+      sourceAgentId: explore
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: ProjectInfo
+    sourceAgentId: ProjectInfo
+    defaultPlaybook: native-agent.ProjectInfo
+    playbooks:
+      - native-agent.ProjectInfo
+    name: ProjectInfo
+    iconClass: codicon codicon-info
+    tags:
+      - Chat
+      - Workspace
+    description: Project information agent for summarizing and explaining the current workspace.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.ProjectInfo
+      sourceAgentId: ProjectInfo
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: CreateSkill
+    sourceAgentId: CreateSkill
+    defaultPlaybook: native-agent.CreateSkill
+    playbooks:
+      - native-agent.CreateSkill
+    name: CreateSkill
+    iconClass: codicon codicon-tools
+    tags:
+      - Chat
+      - Skills
+    description: Skill creation agent for authoring reusable AI workflow instructions.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.CreateSkill
+      sourceAgentId: CreateSkill
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: Orchestrator
+    sourceAgentId: Orchestrator
+    defaultPlaybook: native-agent.Orchestrator
+    playbooks:
+      - native-agent.Orchestrator
+    name: Orchestrator
+    iconClass: codicon codicon-organization
+    tags:
+      - Chat
+      - Delegation
+    description: Routing agent that delegates to other chat agents.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.Orchestrator
+      sourceAgentId: Orchestrator
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: Universal
+    sourceAgentId: Universal
+    defaultPlaybook: native-agent.Universal
+    playbooks:
+      - native-agent.Universal
+    name: Universal
+    iconClass: codicon codicon-copilot
+    tags:
+      - Chat
+    description: General-purpose fallback chat agent.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.Universal
+      sourceAgentId: Universal
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true
+  - version: cybervinci.agent/v1
+    kind: native
+    id: Command
+    sourceAgentId: Command
+    defaultPlaybook: native-agent.Command
+    playbooks:
+      - native-agent.Command
+    name: Command
+    iconClass: codicon codicon-terminal
+    tags:
+      - Chat
+      - Commands
+    description: Command-oriented chat agent for command generation and execution-related workflows.
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    capabilityProfile:
+      mcpPromptRefs: []
+    migrationStatus:
+      strategy: playbook-autonomous
+      autonomousPlaybook: true
+      nativeDelegate: false
+      nativeDelegateFallback: false
+      selectedPlaybook: native-agent.Command
+      sourceAgentId: Command
+      deterministicCoverage:
+        - agent.describe
+        - agent.preflight
+        - agent.nativeMcpRequirements
+        - ai.autonomousResponse
+      migrationReady:
+        editableUserCopy: true
+        capabilityProfile: true
+        replacementStillUsesNativeDelegate: false
+        fallbackStillUsesNativeDelegate: false
+    preserveNative:
+      invoke: false
+      modes: true
+      prompts: true
+      variables: true
+      functions: true
+      languageModelRequirements: true

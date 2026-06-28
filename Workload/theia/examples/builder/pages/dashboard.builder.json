@@ -1,0 +1,344 @@
+{
+  "schemaVersion": "0.1.0",
+  "metadata": {
+    "id": "dashboard-example",
+    "name": "Revenue Operations Dashboard",
+    "createdBy": "CyberVinci UI Builder Extension",
+    "createdAt": "2026-05-20T00:00:00.000Z",
+    "updatedAt": "2026-05-20T00:00:00.000Z"
+  },
+  "page": {
+    "id": "revenue-dashboard",
+    "title": "Revenue Operations",
+    "route": "/dashboard/revenue",
+    "layout": "dashboard"
+  },
+  "theme": {
+    "mode": "light",
+    "primaryColor": "teal",
+    "radius": "sm",
+    "tokens": {
+      "surface": "#ffffff",
+      "surfaceMuted": "#f1f5f9",
+      "textPrimary": "#111827",
+      "brandAccent": "#0f766e"
+    }
+  },
+  "dataSources": {
+    "pipelineSummary": {
+      "type": "static",
+      "description": "Dashboard KPI data for local preview",
+      "config": {
+        "data": {
+          "revenue": 284500,
+          "activeAccounts": 1284,
+          "conversionRate": "8.4%",
+          "openRisks": 17
+        }
+      }
+    },
+    "recentDeals": {
+      "type": "static",
+      "description": "Recent deal table rows",
+      "config": {
+        "data": [
+          {
+            "company": "Northwind Labs",
+            "owner": "Ana Souza",
+            "stage": "Negotiation",
+            "amount": "$42,000",
+            "closeDate": "2026-06-05"
+          },
+          {
+            "company": "Contoso Health",
+            "owner": "Rafael Lima",
+            "stage": "Proposal",
+            "amount": "$31,500",
+            "closeDate": "2026-06-12"
+          },
+          {
+            "company": "Fabrikam Cloud",
+            "owner": "Mina Carter",
+            "stage": "Discovery",
+            "amount": "$18,900",
+            "closeDate": "2026-06-21"
+          }
+        ]
+      }
+    }
+  },
+  "actions": {
+    "refreshDashboard": {
+      "type": "submitForm",
+      "params": {
+        "formId": "dashboard-filters"
+      }
+    },
+    "openDealReview": {
+      "type": "openModal",
+      "params": {
+        "modalId": "deal-review-modal"
+      }
+    }
+  },
+  "tree": {
+    "id": "dashboard-root",
+    "type": "Page",
+    "props": {
+      "title": "Revenue Operations",
+      "background": "#f8fafc"
+    },
+    "children": [
+      {
+        "id": "dashboard-shell",
+        "type": "Section",
+        "props": {
+          "paddingY": "lg",
+          "background": "#f8fafc"
+        },
+        "children": [
+          {
+            "id": "dashboard-container",
+            "type": "Container",
+            "props": {
+              "size": "xl"
+            },
+            "children": [
+              {
+                "id": "dashboard-stack",
+                "type": "Stack",
+                "props": {
+                  "gap": "lg"
+                },
+                "children": [
+                  {
+                    "id": "dashboard-header",
+                    "type": "DashboardHeader",
+                    "props": {
+                      "title": "Revenue Operations",
+                      "description": "Track pipeline health, forecast movement and account activity.",
+                      "periodLabel": "Last 30 days"
+                    },
+                    "slots": {
+                      "actions": [
+                        {
+                          "id": "dashboard-period",
+                          "type": "Select",
+                          "props": {
+                            "name": "period",
+                            "label": "Period",
+                            "defaultValue": "30d",
+                            "data": [
+                              {
+                                "label": "Last 7 days",
+                                "value": "7d"
+                              },
+                              {
+                                "label": "Last 30 days",
+                                "value": "30d"
+                              },
+                              {
+                                "label": "Quarter to date",
+                                "value": "qtd"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "id": "dashboard-refresh",
+                          "type": "Button",
+                          "props": {
+                            "children": "Refresh",
+                            "variant": "outline"
+                          },
+                          "events": {
+                            "onClick": {
+                              "actionId": "refreshDashboard"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "dashboard-metrics",
+                    "type": "MetricGrid",
+                    "props": {
+                      "columns": 4,
+                      "spacing": "md"
+                    },
+                    "children": [
+                      {
+                        "id": "metric-revenue",
+                        "type": "MetricCard",
+                        "props": {
+                          "label": "Booked revenue",
+                          "value": "$284.5k",
+                          "description": "Closed-won this period",
+                          "trend": "up",
+                          "trendLabel": "+12.8%"
+                        },
+                        "data": {
+                          "sourceId": "pipelineSummary",
+                          "path": "data",
+                          "fields": {
+                            "value": {
+                              "path": "revenue",
+                              "format": "currency",
+                              "fallback": 0
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "id": "metric-accounts",
+                        "type": "MetricCard",
+                        "props": {
+                          "label": "Active accounts",
+                          "value": "1,284",
+                          "description": "Accounts with activity",
+                          "trend": "up",
+                          "trendLabel": "+4.1%"
+                        }
+                      },
+                      {
+                        "id": "metric-conversion",
+                        "type": "MetricCard",
+                        "props": {
+                          "label": "Conversion rate",
+                          "value": "8.4%",
+                          "description": "Lead to opportunity",
+                          "trend": "neutral",
+                          "trendLabel": "flat"
+                        }
+                      },
+                      {
+                        "id": "metric-risks",
+                        "type": "MetricCard",
+                        "props": {
+                          "label": "Open risks",
+                          "value": 17,
+                          "description": "Deals needing review",
+                          "trend": "down",
+                          "trendLabel": "-3"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "dashboard-grid",
+                    "type": "SimpleGrid",
+                    "props": {
+                      "cols": 2,
+                      "spacing": "lg"
+                    },
+                    "children": [
+                      {
+                        "id": "pipeline-chart",
+                        "type": "ChartPlaceholder",
+                        "props": {
+                          "title": "Pipeline by stage",
+                          "description": "Expected chart adapter target for grouped opportunity totals.",
+                          "chartType": "bar",
+                          "height": 320
+                        }
+                      },
+                      {
+                        "id": "forecast-chart",
+                        "type": "ChartPlaceholder",
+                        "props": {
+                          "title": "Forecast trend",
+                          "description": "Weekly forecast movement for the selected period.",
+                          "chartType": "line",
+                          "height": 320
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "recent-deals-table",
+                    "type": "DataTable",
+                    "props": {
+                      "title": "Recent deals",
+                      "description": "Highest-priority opportunities updated this week.",
+                      "columns": [
+                        {
+                          "key": "company",
+                          "label": "Company",
+                          "sortable": true
+                        },
+                        {
+                          "key": "owner",
+                          "label": "Owner"
+                        },
+                        {
+                          "key": "stage",
+                          "label": "Stage",
+                          "sortable": true
+                        },
+                        {
+                          "key": "amount",
+                          "label": "Amount",
+                          "align": "right"
+                        },
+                        {
+                          "key": "closeDate",
+                          "label": "Close date"
+                        }
+                      ],
+                      "rows": [
+                        {
+                          "company": "Northwind Labs",
+                          "owner": "Ana Souza",
+                          "stage": "Negotiation",
+                          "amount": "$42,000",
+                          "closeDate": "2026-06-05"
+                        },
+                        {
+                          "company": "Contoso Health",
+                          "owner": "Rafael Lima",
+                          "stage": "Proposal",
+                          "amount": "$31,500",
+                          "closeDate": "2026-06-12"
+                        },
+                        {
+                          "company": "Fabrikam Cloud",
+                          "owner": "Mina Carter",
+                          "stage": "Discovery",
+                          "amount": "$18,900",
+                          "closeDate": "2026-06-21"
+                        }
+                      ],
+                      "pageSize": 10,
+                      "searchable": true,
+                      "sortable": true,
+                      "striped": true,
+                      "highlightOnHover": true
+                    },
+                    "data": {
+                      "repeat": {
+                        "sourceId": "recentDeals",
+                        "path": "data"
+                      }
+                    },
+                    "events": {
+                      "onRowClick": {
+                        "actionId": "openDealReview"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "aiHints": {
+    "intent": "Show a realistic analytics dashboard for revenue operations",
+    "tone": "operational and concise",
+    "audience": "sales and customer operations teams",
+    "context": "Dashboard example using MetricGrid, ChartPlaceholder, DataTable, static dataSources and action bindings"
+  }
+}

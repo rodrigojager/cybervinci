@@ -1,0 +1,345 @@
+.cv-csharp-kit-widget {
+  min-width: 360px;
+}
+
+.cv-csharp-kit {
+  box-sizing: border-box;
+  height: 100%;
+  overflow: auto;
+  padding: 12px;
+  color: var(--theia-foreground);
+  background: var(--theia-editor-background);
+}
+
+.cv-csharp-kit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cv-csharp-kit-header h2,
+.cv-csharp-kit-section h3 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.cv-csharp-kit-header h2 {
+  font-size: 16px;
+}
+
+.cv-csharp-kit-header span,
+.cv-csharp-kit-muted {
+  color: var(--theia-descriptionForeground);
+  font-size: 12px;
+}
+
+.cv-csharp-kit button {
+  border: 1px solid var(--theia-button-border, transparent);
+  background: var(--theia-button-secondaryBackground);
+  color: var(--theia-button-secondaryForeground);
+  border-radius: 4px;
+  min-height: 28px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.cv-csharp-kit button:hover:not(:disabled),
+.cv-csharp-kit-project-list button.is-selected {
+  background: var(--theia-button-background);
+  color: var(--theia-button-foreground);
+}
+
+.cv-csharp-kit button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.cv-csharp-kit-band,
+.cv-csharp-kit-section,
+.cv-csharp-kit-actions {
+  border-top: 1px solid var(--theia-sideBarSectionHeader-border);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.cv-csharp-kit-status,
+.cv-csharp-kit-actions,
+.cv-csharp-kit-project-list,
+.cv-csharp-kit-solution-tree,
+.cv-csharp-kit-capabilities,
+.cv-csharp-kit-map {
+  display: grid;
+  gap: 8px;
+}
+
+.cv-csharp-kit-status {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.cv-csharp-kit-status span {
+  grid-column: 2;
+  color: var(--theia-descriptionForeground);
+}
+
+.cv-csharp-kit-inline-path {
+  display: block;
+  margin-top: 6px;
+  color: var(--theia-textLink-foreground);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cv-csharp-kit-status.is-ready i {
+  color: var(--theia-testing-iconPassed);
+}
+
+.cv-csharp-kit-status.is-missing i,
+.cv-csharp-kit-error {
+  color: var(--theia-errorForeground);
+}
+
+.cv-csharp-kit-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cv-csharp-kit-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cv-csharp-kit-project-list button {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  background: var(--theia-list-inactiveSelectionBackground);
+  color: var(--theia-foreground);
+}
+
+.cv-csharp-kit-project-list small,
+.cv-csharp-kit-list small {
+  color: var(--theia-descriptionForeground);
+}
+
+.cv-csharp-kit-solution-node {
+  border: 1px solid var(--theia-sideBarSectionHeader-border);
+  border-radius: 6px;
+  padding: 8px;
+  background: var(--theia-sideBar-background);
+}
+
+.cv-csharp-kit-tree-title {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-bottom: 6px;
+}
+
+.cv-csharp-kit-tree-title strong,
+.cv-csharp-kit-project-node button span,
+.cv-csharp-kit-tree-group-title,
+.cv-csharp-kit-file,
+.cv-csharp-kit-tree-group code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cv-csharp-kit-tree-title small,
+.cv-csharp-kit-project-node button small,
+.cv-csharp-kit-tree-group-title small,
+.cv-csharp-kit-tree-empty {
+  color: var(--theia-descriptionForeground);
+  font-size: 11px;
+}
+
+.cv-csharp-kit-project-node {
+  border-left: 1px solid var(--theia-sideBarSectionHeader-border);
+  margin: 6px 0 0 7px;
+  padding-left: 8px;
+}
+
+.cv-csharp-kit-project-node button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 6px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--theia-foreground);
+}
+
+.cv-csharp-kit-missing-project {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 6px;
+  padding: 4px 8px;
+  color: var(--theia-descriptionForeground);
+  border: 1px dashed var(--theia-sideBarSectionHeader-border);
+  border-radius: 4px;
+}
+
+.cv-csharp-kit-missing-project i {
+  color: var(--theia-editorWarning-foreground);
+}
+
+.cv-csharp-kit-missing-project small {
+  grid-column: 2;
+  font-size: 11px;
+}
+
+.cv-csharp-kit-project-node.is-selected button {
+  background: var(--theia-button-background);
+  color: var(--theia-button-foreground);
+}
+
+.cv-csharp-kit-project-node button small {
+  grid-column: 2;
+}
+
+.cv-csharp-kit-project-details {
+  display: grid;
+  gap: 6px;
+  padding: 6px 0 0 22px;
+}
+
+.cv-csharp-kit-tree-group {
+  display: grid;
+  gap: 4px;
+}
+
+.cv-csharp-kit-tree-group-title {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cv-csharp-kit-tree-group code,
+.cv-csharp-kit-file {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding-left: 18px;
+  color: var(--theia-descriptionForeground);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cv-csharp-kit-file i {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.cv-csharp-kit-file.is-csharp i {
+  color: var(--theia-symbolIcon-classForeground);
+}
+
+.cv-csharp-kit-file.is-razor i {
+  color: var(--theia-symbolIcon-eventForeground);
+}
+
+.cv-csharp-kit-razor-summary {
+  display: grid;
+  gap: 3px;
+  padding-left: 18px;
+  color: var(--theia-descriptionForeground);
+  font-size: 12px;
+}
+
+.cv-csharp-kit-razor-summary span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+
+.cv-csharp-kit-razor-summary code {
+  padding-left: 18px;
+}
+
+.cv-csharp-kit-capabilities {
+  grid-template-columns: 1fr;
+}
+
+.cv-csharp-kit-capability,
+.cv-csharp-kit-map article {
+  border: 1px solid var(--theia-sideBarSectionHeader-border);
+  border-radius: 6px;
+  padding: 8px;
+  background: var(--theia-sideBar-background);
+}
+
+.cv-csharp-kit-capability {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 8px;
+}
+
+.cv-csharp-kit-capability p,
+.cv-csharp-kit-map p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--theia-descriptionForeground);
+  font-size: 12px;
+}
+
+.cv-csharp-kit-capability span {
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.cv-csharp-kit-capability.is-ready span {
+  color: var(--theia-testing-iconPassed);
+}
+
+.cv-csharp-kit-capability.is-partial span,
+.cv-csharp-kit-capability.is-external span {
+  color: var(--theia-notificationsWarningIcon-foreground);
+}
+
+.cv-csharp-kit-capability.is-missing span {
+  color: var(--theia-errorForeground);
+}
+
+.cv-csharp-kit-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.cv-csharp-kit-list li {
+  margin: 4px 0;
+}
+
+.cv-csharp-kit-map article {
+  display: grid;
+  gap: 4px;
+}
+
+.cv-csharp-kit-map code {
+  color: var(--theia-textLink-foreground);
+}
+
+.cv-csharp-kit-output {
+  max-height: 260px;
+  overflow: auto;
+  margin-top: 10px;
+  padding: 8px;
+  white-space: pre-wrap;
+  background: var(--theia-terminal-background);
+  color: var(--theia-terminal-foreground);
+  border-radius: 4px;
+}
+
+.cv-csharp-kit-loading {
+  color: var(--theia-progressBar-background);
+}

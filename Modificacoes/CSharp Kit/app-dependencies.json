@@ -1,0 +1,12 @@
+{
+  "examples/browser/package.json": {
+    "@theia/callhierarchy": "1.72.0",
+    "@theia/typehierarchy": "1.72.0",
+    "@cybervinci/csharp-kit": "1.72.0"
+  },
+  "examples/electron/package.json": {
+    "@theia/callhierarchy": "1.72.0",
+    "@theia/typehierarchy": "1.72.0",
+    "@cybervinci/csharp-kit": "1.72.0"
+  }
+}

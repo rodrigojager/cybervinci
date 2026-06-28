@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Flow Workload Output Envelope",
+  "type": "object",
+  "required": ["status", "result", "artifacts", "effects", "signals", "issues", "report"],
+  "properties": {
+    "status": {
+      "type": "string"
+    },
+    "result": {
+      "type": "object",
+      "required": ["status", "summary", "artifacts", "signals", "issues"],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "artifacts": {
+          "type": "array"
+        },
+        "signals": {
+          "type": "object"
+        },
+        "issues": {
+          "type": "array"
+        }
+      },
+      "additionalProperties": true
+    },
+    "artifacts": {
+      "type": "array"
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "signals": {
+      "type": "object"
+    },
+    "issues": {
+      "type": "array"
+    },
+    "report": {
+      "type": "string"
+    },
+    "memoryCandidates": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,35 @@
+.cybervinci-markdown-mermaid-enabled .cybervinci-mermaid-preview {
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    margin: 16px 0;
+    padding: 12px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    background: var(--theia-editor-background);
+}
+
+.cybervinci-markdown-mermaid-enabled .cybervinci-mermaid-preview svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.cybervinci-markdown-mermaid-enabled .cybervinci-mermaid-rendering {
+    min-height: 72px;
+}
+
+.cybervinci-markdown-mermaid-enabled .cybervinci-mermaid-error {
+    display: block;
+    border-color: var(--theia-errorForeground);
+}
+
+.cybervinci-markdown-mermaid-enabled .cybervinci-mermaid-error-label {
+    margin-bottom: 8px;
+    color: var(--theia-errorForeground);
+    font-weight: 600;
+}
+
+.cybervinci-markdown-mermaid-enabled .cybervinci-mermaid-error pre {
+    margin: 0;
+    white-space: pre-wrap;
+}

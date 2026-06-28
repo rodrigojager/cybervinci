@@ -1,0 +1,142 @@
+version: cybervinci.catalog/v1
+tools:
+  - version: cybervinci.tool/v1
+    id: system.canvas.captureCurrentDocument
+    name: Capture Canvas Document
+    kind: tool
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host tool for capturing the current Canvas document structure.
+  - version: cybervinci.tool/v1
+    id: system.canvas.captureScreenshot
+    name: Capture Canvas Screenshot
+    kind: tool
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host tool for capturing a visual snapshot of the current Canvas viewport.
+  - version: cybervinci.tool/v1
+    id: system.canvas.collectLayoutDiagnostics
+    name: Collect Canvas Layout Diagnostics
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host guard for detecting overlaps, off-canvas nodes, text overflow, and width issues.
+  - version: cybervinci.tool/v1
+    id: system.canvas.detectOverlaps
+    name: Detect Canvas Overlaps
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host guard for checking incoherent overlapping Canvas elements.
+  - version: cybervinci.tool/v1
+    id: system.canvas.detectOffCanvasNodes
+    name: Detect Off-Canvas Nodes
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host guard for checking nodes that exceed the expected Canvas bounds.
+  - version: cybervinci.tool/v1
+    id: system.canvas.detectTextOverflow
+    name: Detect Text Overflow
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host guard for checking clipped or overflowing text in Canvas nodes.
+  - version: cybervinci.tool/v1
+    id: system.canvas.applyOperations
+    name: Apply Canvas Operations
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host action for applying approved Canvas operation patches.
+  - version: cybervinci.tool/v1
+    id: system.canvas.reorderLayers
+    name: Reorder Canvas Layers
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host action for repairing layer order when elements overlap incorrectly.
+  - version: cybervinci.tool/v1
+    id: system.canvas.resizeToFit
+    name: Resize Canvas Nodes To Fit
+    kind: action
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host action for resizing Canvas nodes so controls and content fit expected bounds.
+  - version: cybervinci.tool/v1
+    id: system.canvas.validateFooterPresence
+    name: Validate Canvas Footer Presence
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host guard for checking that complete page requests include a footer when appropriate.
+  - version: cybervinci.tool/v1
+    id: system.canvas.validateCloneCompleteness
+    name: Validate Canvas Clone Completeness
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host guard for checking that known-site clone requests include the expected major modules.
+  - version: cybervinci.tool/v1
+    id: system.canvas.getReferenceFromKnownSite
+    name: Get Reference From Known Site
+    kind: tool
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Canvas
+    description: Host tool for obtaining a reference when the prompt clearly names a known site without a URL.
+  - version: cybervinci.tool/v1
+    id: system.vision.judge
+    name: Vision Judge
+    kind: guard
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Vision
+    description: Host guard that uses the shared AI Runtime and optional independent vision provider/model to judge visual delivery.
+  - version: cybervinci.tool/v1
+    id: system.flow.aiAuthoringSpec
+    name: Flow AI Authoring Spec
+    kind: tool
+    source: system
+    implementation: host
+    exposeToModel: false
+    protected: true
+    category: Flow
+    description: Host tool for exposing flow.ai-authoring/v1 to dynamic workflow planning.

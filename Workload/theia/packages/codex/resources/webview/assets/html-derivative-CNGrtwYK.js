@@ -1,0 +1,1 @@
+import{t as e}from"./html-derivative-C-BI-c61.js";export{e as default};

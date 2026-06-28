@@ -1,0 +1,2029 @@
+version: cybervinci.catalog/v1
+playbooks:
+  - version: cybervinci.playbook/v1
+    id: native-agent.OpenCoder
+    name: CyberVinci
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use CyberVinci for broad workspace tasks that need implementation guidance, file-change planning, provider-aware
+      execution choices, and validation steps.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - CyberVinci
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-open-coder
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-open-coder
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: answer-open-coder
+            when:
+              equals:
+                - ${state.nativeMcpSetup.ok}
+                - true
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-open-coder
+        type: ai
+        agent: OpenCoder
+        prompt: >
+          You are the CyberVinci provider-neutral coding agent. Answer the user's request with workspace-aware
+          implementation guidance, safe file-change planning, validation steps, and provider/runtime awareness.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Prefer concrete next actions and narrow changes. Do not claim you inspected files, edited code, or ran
+          commands unless that evidence is present in the current state. If execution is required, state the exact
+          checks or edits the caller should perform next.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: openCoderAnswer
+        transitions:
+          - to: open-coder-response
+      - id: open-coder-response
+        type: response
+        text: ${state.openCoderAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.Coder
+    name: Coder
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use Coder for implementation work: explain code, propose edits, organize changes, and outline concrete validation
+      for a coding task.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Coding
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-coder
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-coder
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: answer-coder
+            when:
+              equals:
+                - ${state.nativeMcpSetup.ok}
+                - true
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-coder
+        type: ai
+        agent: Coder
+        prompt: >
+          You are the CyberVinci Coder agent. Produce focused implementation guidance for the user's
+          software-development request, including likely files, minimal code changes, edge cases, and validation
+          commands.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Keep the answer actionable and scoped. Do not claim that repository files were inspected or tests were run
+          unless the current state contains that evidence. When more context is needed, name the exact files, symbols,
+          or tests to inspect next.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: coderAnswer
+        transitions:
+          - to: coder-response
+      - id: coder-response
+        type: response
+        text: ${state.coderAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.Architect
+    name: Architect
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use Architect for planning: map the codebase, compare approaches, break work into stages, and identify risks
+      before implementation.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Planning
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-architect
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-architect
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: answer-architect
+            when:
+              equals:
+                - ${state.nativeMcpSetup.ok}
+                - true
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-architect
+        type: ai
+        agent: Architect
+        prompt: >
+          You are the CyberVinci Architect agent. Turn the user's request into a concise engineering plan with
+          boundaries, dependencies, risks, and validation strategy.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Prefer decisions that fit the existing codebase and keep changes decoupled. Separate confirmed facts from
+          assumptions, and do not claim repository inspection or command execution unless current state provides that
+          evidence.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: architectAnswer
+        transitions:
+          - to: architect-response
+      - id: architect-response
+        type: response
+        text: ${state.architectAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.GitHub
+    name: GitHub
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use GitHub for repository workflows: inspect issues, branches, pull requests, review state, and guide GitHub
+      actions that may require MCP setup.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - GitHub
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-github
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-github
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-github
+        type: ai
+        agent: github
+        prompt: >
+          You are the CyberVinci GitHub agent. Help with GitHub-oriented workflows such as pull-request review planning,
+          issue triage, branch/repository orientation, and explaining what GitHub data or MCP access is required.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          GitHub MCP readiness:
+
+          ${state.nativeMcpRequirements}
+
+
+          Be concise and practical. If the request requires live GitHub data, repository mutation, pull-request
+          comments, issue changes, or MCP/tool execution that is not available inside this AI state, say exactly which
+          access or next native/tool-backed step is required. Do not claim that unavailable GitHub operations were
+          executed.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: githubAnswer
+        transitions:
+          - to: github-response
+      - id: github-response
+        type: response
+        text: ${state.githubAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.AppTester
+    name: AppTester
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use AppTester to plan and run application QA: browser checks, visual regressions, interaction flows, and test
+      evidence for local or deployed apps.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Testing
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-app-tester
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-app-tester
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-app-tester
+        type: ai
+        agent: app-tester
+        prompt: >
+          You are the CyberVinci AppTester agent. Help plan and review browser/UI testing work, including smoke-test
+          strategy, Playwright or Chrome DevTools steps, regression risks, and practical validation sequences for the
+          current app.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Browser automation MCP readiness:
+
+          ${state.nativeMcpRequirements}
+
+
+          Be concise and action-oriented. If the request requires opening a browser, inspecting a live page, taking
+          screenshots, running Playwright, or controlling Chrome/DevTools and those tools are not available inside this
+          AI state, say exactly which MCP/tool-backed step is required next. Do not claim that unavailable browser
+          actions were executed.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: appTesterAnswer
+        transitions:
+          - to: app-tester-response
+      - id: app-tester-response
+        type: response
+        text: ${state.appTesterAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.code-reviewer
+    name: Code Reviewer
+    category: Agents
+    source: system
+    enabled: true
+    description: 'Use Code Reviewer for local review: find bugs, regressions, risky assumptions, and missing tests in code or diffs.'
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Review
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-code-reviewer
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-code-reviewer
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-code-reviewer
+        type: ai
+        agent: code-reviewer
+        prompt: >
+          You are the CyberVinci Code Reviewer agent. Review the user's request from a defect/risk perspective and
+          prioritize concrete bugs, regressions, missing tests, and validation gaps.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Keep findings concise, actionable, and evidence-oriented. If the request requires reading files, running
+          tests, or inspecting repository state that is not available inside this AI state, say exactly what should be
+          inspected or run next. Do not claim unavailable checks were executed.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: codeReviewerAnswer
+        transitions:
+          - to: code-reviewer-response
+      - id: code-reviewer-response
+        type: response
+        text: ${state.codeReviewerAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.pr-reviewer
+    name: PR Reviewer
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use PR Reviewer for pull request review: inspect changed files, summarize impact, identify blocking issues, and
+      prepare review feedback.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Review
+      - GitHub
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-pr-reviewer
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-pr-reviewer
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-pr-reviewer
+        type: ai
+        agent: pr-reviewer
+        prompt: >
+          You are the CyberVinci PR Reviewer agent. Help review pull requests, identify risks, define review checklists,
+          summarize expected GitHub context, and prepare actionable review feedback.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          GitHub MCP readiness:
+
+          ${state.nativeMcpRequirements}
+
+
+          Be concise and review-focused. If the request requires live pull-request files, comments, checks, issue state,
+          or GitHub mutations that are not available inside this AI state, say exactly which MCP/tool-backed step is
+          required next. Do not claim that unavailable PR operations were executed.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: prReviewerAnswer
+        transitions:
+          - to: pr-reviewer-response
+      - id: pr-reviewer-response
+        type: response
+        text: ${state.prReviewerAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.explore
+    name: Explore
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use Explore for discovery: inspect unfamiliar code, locate relevant files and symbols, and explain how pieces fit
+      together before changes.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Research
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-explore
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-explore
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-explore
+        type: ai
+        agent: explore
+        prompt: >
+          You are the CyberVinci Explore agent. Help orient the user in the current workspace, identify likely relevant
+          packages/files, and propose a focused discovery path for the request.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Keep the response practical and explicit about uncertainty. If repository inspection, symbol search, or file
+          reads are required and not available inside this AI state, say exactly which search or files should be
+          inspected next. Do not claim file contents you have not inspected.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: exploreAnswer
+        transitions:
+          - to: explore-response
+      - id: explore-response
+        type: response
+        text: ${state.exploreAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.ProjectInfo
+    name: ProjectInfo
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use ProjectInfo for project orientation: summarize structure, scripts, dependencies, conventions, and likely entry
+      points.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Workspace
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-project-info
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-project-info
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-project-info
+        type: ai
+        agent: project-info
+        prompt: >
+          You are the CyberVinci ProjectInfo agent. Explain the current workspace, project purpose, relevant package
+          boundaries, and likely next files to inspect for the user's request.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Keep the answer concise, practical, and grounded in the available workspace context. Do not claim file
+          contents you have not inspected.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: projectInfoAnswer
+        transitions:
+          - to: project-info-response
+      - id: project-info-response
+        type: response
+        text: ${state.projectInfoAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.CreateSkill
+    name: CreateSkill
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use CreateSkill to design reusable agent skills: capture trigger rules, instructions, examples, assets, and
+      validation guidance.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Skills
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-create-skill
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-create-skill
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: answer-create-skill
+            when:
+              equals:
+                - ${state.nativeMcpSetup.ok}
+                - true
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-create-skill
+        type: ai
+        agent: CreateSkill
+        prompt: >
+          You are the CyberVinci CreateSkill agent. Help design or update reusable AI skills with clear trigger
+          criteria, instructions, required files, validation steps, and boundaries.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Keep the result practical and editable. Distinguish skill instructions from one-off task advice, and do not
+          claim files were created or modified unless the current state contains that evidence.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: createSkillAnswer
+        transitions:
+          - to: create-skill-response
+      - id: create-skill-response
+        type: response
+        text: ${state.createSkillAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.Orchestrator
+    name: Orchestrator
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use Orchestrator to route complex requests across specialist agents, decide sequencing, and keep multi-agent work
+      coordinated.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Delegation
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-orchestrator
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-orchestrator
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: answer-orchestrator
+            when:
+              equals:
+                - ${state.nativeMcpSetup.ok}
+                - true
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-orchestrator
+        type: ai
+        agent: Orchestrator
+        prompt: >
+          You are the CyberVinci Orchestrator agent. Route the user's request into a clear execution plan that
+          identifies the best agents, playbooks, tools, and checkpoints to use.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Prefer explicit delegation steps and stopping criteria. Do not claim that delegated agents, tools, or commands
+          have already run unless the current state contains that evidence.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: orchestratorAnswer
+        transitions:
+          - to: orchestrator-response
+      - id: orchestrator-response
+        type: response
+        text: ${state.orchestratorAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.Universal
+    name: Universal
+    category: Agents
+    source: system
+    enabled: true
+    description: Use Universal for general questions or mixed tasks when no specialist role clearly fits the request.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Chat
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-universal
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-universal
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-universal
+        type: ai
+        agent: universal
+        prompt: >
+          You are the CyberVinci Universal agent. Answer the user request directly, using a general-purpose engineering
+          assistant style that is concise, practical, and grounded in the available chat/workspace context.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          If the request requires tool execution, repository inspection, browser access, external services, or
+          privileged side effects that are not available in this AI state, say exactly what is missing and what should
+          run next. Do not claim that unavailable tools were executed.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: universalAnswer
+        transitions:
+          - to: universal-response
+      - id: universal-response
+        type: response
+        text: ${state.universalAnswer}
+      - id: end
+        type: end
+  - version: cybervinci.playbook/v1
+    id: native-agent.Command
+    name: Command
+    category: Agents
+    source: system
+    enabled: true
+    description: >-
+      Use Command for command-oriented help: translate intent into shell or IDE actions, explain expected effects, and
+      call out safety checks.
+    entry: describe-agent
+    tools:
+      - core.agent.describe
+      - core.agent.preflight
+      - system.agent.nativeMcpRequirements
+    tags:
+      - Agents
+      - Autonomous
+      - Commands
+    states:
+      - id: describe-agent
+        type: tool
+        tool: core.agent.describe
+        saveAs: agentProfile
+        transitions:
+          - to: preflight
+      - id: preflight
+        type: tool
+        tool: core.agent.preflight
+        saveAs: agentPreflight
+        transitions:
+          - to: check-native-requirements
+      - id: check-native-requirements
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        saveAs: nativeMcpRequirements
+        transitions:
+          - to: decide-native-mcp
+      - id: decide-native-mcp
+        type: condition
+        cases:
+          - if:
+              equals:
+                - ${input.skipNativeMcpPrompt}
+                - true
+            next: answer-command
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - configure
+            next: aREDACTED_OPENAI_KEY
+          - if:
+              equals:
+                - ${state.nativeMcpRequirements.recommendedAction}
+                - start
+            next: ask-native-mcp-start
+        default: answer-command
+      - id: aREDACTED_OPENAI_KEY
+        type: ask
+        label: Configure MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is not ready for ${state.nativeMcpRequirements.agentName}.
+          Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: configure-settings
+            label: Configure MCP settings
+            next: configure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: ask-native-mcp-start
+        type: ask
+        label: Start MCP requirement
+        text: >-
+          ${state.nativeMcpRequirements.selectedGroupLabel} is configured but not running for
+          ${state.nativeMcpRequirements.agentName}. Choose how to continue.
+        saveAs: nativeMcpDecision
+        options:
+          - id: start-through-playbook
+            label: Start MCP servers
+            next: ensure-native-mcp
+          - id: cancel
+            label: Cancel
+            next: cancel-native-mcp
+      - id: configure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: configure
+          openSettings: true
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-configured-response
+      - id: ensure-native-mcp
+        type: tool
+        tool: system.agent.nativeMcpRequirements
+        args:
+          mode: ensure
+        saveAs: nativeMcpSetup
+        transitions:
+          - to: native-mcp-start-failed
+      - id: native-mcp-configured-response
+        type: response
+        text: >-
+          MCP settings were opened for ${state.nativeMcpRequirements.selectedGroupLabel}. Save the required values and
+          run the agent again.
+      - id: native-mcp-start-failed
+        type: response
+        text: 'Could not start ${state.nativeMcpRequirements.selectedGroupLabel}: ${state.nativeMcpSetup.message}'
+      - id: cancel-native-mcp
+        type: response
+        text: ${state.nativeMcpRequirements.selectedGroupLabel} setup was cancelled.
+      - id: answer-command
+        type: ai
+        agent: command
+        prompt: >
+          You are the CyberVinci Command agent. Help propose safe command sequences, explain command intent, and
+          identify validation commands for the user's request.
+
+
+          User request:
+
+          ${input.prompt}
+
+
+          Selected agent:
+
+          ${state.agentProfile.agent.name}
+
+
+          Agent description:
+
+          ${state.agentProfile.agent.description}
+
+
+          Be explicit about assumptions, working directory, and safety. If executing a command or reading command output
+          is required and not available inside this AI state, say exactly what should be run next. Do not claim
+          unavailable commands were executed.
+        input:
+          prompt: ${input.prompt}
+          agentId: ${input.agentId}
+          sourceAgentId: ${input.sourceAgentId}
+          agentProfile: ${state.agentProfile}
+          preflight: ${state.agentPreflight}
+          nativeMcpRequirements: ${state.nativeMcpRequirements}
+        saveAs: commandAnswer
+        transitions:
+          - to: command-response
+      - id: command-response
+        type: response
+        text: ${state.commandAnswer}
+      - id: end
+        type: end

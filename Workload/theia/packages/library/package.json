@@ -1,0 +1,60 @@
+{
+  "name": "@cybervinci/library",
+  "version": "1.72.0",
+  "description": "Theia - Versioned AI documentation context manager",
+  "dependencies": {
+    "@theia/ai-core": "1.72.0",
+    "@theia/ai-mcp-server": "1.72.0",
+    "@theia/core": "1.72.0",
+    "@cybervinci/branding": "1.72.0",
+    "@theia/workspace": "1.72.0",
+    "adm-zip": "^0.5.16",
+    "ajv": "^6.15.0",
+    "js-yaml": "^4.1.1",
+    "tar": "^6.2.1",
+    "tslib": "^2.8.1",
+    "zod": "^4.4.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "lib/common",
+  "theiaExtensions": [
+    {
+      "frontend": "lib/browser/library-frontend-module",
+      "backend": "lib/node/library-backend-module"
+    }
+  ],
+  "keywords": [
+    "theia-extension"
+  ],
+  "license": "EPL-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eclipse-theia/theia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eclipse-theia/theia/issues"
+  },
+  "homepage": "https://github.com/eclipse-theia/theia",
+  "files": [
+    "lib",
+    "src",
+    "schemas",
+    "examples"
+  ],
+  "scripts": {
+    "build": "theiaext build",
+    "clean": "theiaext clean",
+    "compile": "theiaext compile",
+    "lint": "theiaext lint",
+    "test": "theiaext test",
+    "watch": "theiaext watch"
+  },
+  "devDependencies": {
+    "@theia/ext-scripts": "1.72.0"
+  },
+  "nyc": {
+    "extends": "../../configs/nyc.json"
+  }
+}

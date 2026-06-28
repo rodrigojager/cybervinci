@@ -1,0 +1,52 @@
+{
+  "extends": "../../configs/base.tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "lib"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../branding"
+    },
+    {
+      "path": "../builder-ai"
+    },
+    {
+      "path": "../builder-editor-puck"
+    },
+    {
+      "path": "../builder-export-html"
+    },
+    {
+      "path": "../builder-export-react"
+    },
+    {
+      "path": "../builder-property-panel-rjsf"
+    },
+    {
+      "path": "../builder-registry"
+    },
+    {
+      "path": "../builder-renderer-mantine"
+    },
+    {
+      "path": "../builder-schema"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../filesystem"
+    },
+    {
+      "path": "../monaco"
+    },
+    {
+      "path": "../workspace"
+    }
+  ]
+}

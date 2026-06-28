@@ -1,0 +1,40 @@
+{
+  "extends": "../../configs/base.tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "lib"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../dev-packages/cli"
+    },
+    {
+      "path": "../ai-core"
+    },
+    {
+      "path": "../ai-runtime"
+    },
+    {
+      "path": "../branding"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../editor"
+    },
+    {
+      "path": "../filesystem"
+    },
+    {
+      "path": "../test"
+    },
+    {
+      "path": "../workspace"
+    }
+  ]
+}

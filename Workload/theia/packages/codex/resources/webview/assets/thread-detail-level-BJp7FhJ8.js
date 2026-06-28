@@ -1,0 +1,2 @@
+import{v as e}from"./src-DqZHIysr.js";import{t}from"./compiler-runtime-b9_ems4H.js";import{a as n}from"./setting-storage-BPHXC1M_.js";var r=t(),i=`STEPS_PROSE`,a=`STEPS_COMMANDS`;function o(e){return e===`STEPS_EXECUTION`?a:e??`STEPS_COMMANDS`}function s(){let t=(0,r.c)(2),i=n(e.conversationDetailMode),a;return t[0]===i?a=t[1]:(a=o(i),t[0]=i,t[1]=a),a}export{s as i,i as n,o as r,a as t};
+//# sourceMappingURL=thread-detail-level-BJp7FhJ8.js.map

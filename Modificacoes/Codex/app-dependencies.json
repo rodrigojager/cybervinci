@@ -1,0 +1,8 @@
+{
+  "examples/browser/package.json": {
+    "@cybervinci/codex": "1.72.0"
+  },
+  "examples/electron/package.json": {
+    "@cybervinci/codex": "1.72.0"
+  }
+}

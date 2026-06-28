@@ -1,0 +1,27 @@
+{
+  "id": "dotnet",
+  "name": ".NET",
+  "ecosystem": "dotnet",
+  "package_name": "Microsoft.NETCore.App",
+  "package_manager": "nuget",
+  "homepage": "https://learn.microsoft.com/dotnet",
+  "repository": "https://github.com/dotnet/docs",
+  "sources": [
+    {
+      "type": "git",
+      "url": "https://github.com/dotnet/docs",
+      "docs_path": ["docs"]
+    }
+  ],
+  "versioning": {
+    "strategy": "manual"
+  },
+  "license": {
+    "content_license": "CC-BY-4.0",
+    "redistribution_allowed": true
+  },
+  "update_policy": {
+    "check_interval": "weekly",
+    "compare": ["source_commit", "content_hash_sha256"]
+  }
+}

@@ -1,0 +1,2296 @@
+.cv-razor-widget,
+.cv-razor-widget > div,
+.cv-razor-editor {
+    height: 100%;
+    min-height: 0;
+}
+
+.cv-razor-editor {
+    --cv-left-panel-width: 260px;
+    --cv-source-panel-height: 320px;
+    --cv-razor-bg: var(--theia-editor-background);
+    --cv-razor-text: var(--theia-foreground, var(--theia-editor-foreground));
+    --cv-razor-muted: var(--theia-descriptionForeground, var(--cv-razor-text));
+    --cv-razor-panel: var(--theia-sideBar-background, var(--theia-editorWidget-background, var(--cv-razor-bg)));
+    --cv-razor-panel-deep: var(--theia-editorGroupHeader-tabsBackground, var(--cv-razor-panel));
+    --cv-razor-panel-soft: var(--theia-input-background, var(--theia-editorWidget-background, var(--cv-razor-panel)));
+    --cv-razor-panel-hover: var(--theia-list-hoverBackground, color-mix(in srgb, var(--cv-razor-accent) 14%, var(--cv-razor-panel-soft)));
+    --cv-razor-border: var(--theia-panel-border, var(--theia-border-color0, var(--theia-contrastBorder, transparent)));
+    --cv-razor-accent: var(--theia-button-background, var(--theia-focusBorder, #0f6cbd));
+    --cv-razor-accent-hover: var(--theia-button-hoverBackground, var(--cv-razor-accent));
+    --cv-razor-accent-foreground: var(--theia-button-foreground, #ffffff);
+    --cv-razor-accent-secondary: var(--theia-textLink-foreground, var(--theia-focusBorder, var(--cv-razor-accent)));
+    --cybervinci-ai-action-gradient: linear-gradient(135deg, var(--cv-razor-accent), var(--cv-razor-accent-secondary));
+    --cv-ai-action-gradient: var(--cybervinci-ai-action-gradient);
+    --cv-razor-active-background: var(--theia-list-activeSelectionBackground, var(--cv-razor-accent));
+    --cv-razor-active-foreground: var(--theia-list-activeSelectionForeground, var(--cv-razor-accent-foreground));
+    --cv-razor-canvas: color-mix(in srgb, var(--cv-razor-bg) 86%, var(--cv-razor-accent) 14%);
+    --cv-razor-canvas-grid: color-mix(in srgb, var(--cv-razor-muted) 18%, transparent);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in srgb, var(--cv-razor-bg) 90%, var(--cv-razor-accent) 10%);
+    color: var(--theia-editor-foreground, var(--cv-razor-text));
+    overflow: hidden;
+}
+
+.cv-razor-visual-open-icon,
+.lm-TabBar-toolbar .item .cv-razor-visual-open-icon,
+.lm-Menu-itemIcon.cv-razor-visual-open-icon {
+    color: var(--theia-focusBorder, var(--theia-icon-foreground)) !important;
+}
+
+.lm-TabBar-toolbar .item.enabled:hover .cv-razor-visual-open-icon,
+.lm-mod-current .cv-razor-visual-open-icon {
+    color: var(--cv-razor-accent-secondary, var(--theia-focusBorder, var(--theia-icon-foreground))) !important;
+}
+
+.cv-razor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 46px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--cv-razor-border);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--cv-razor-accent) 18%, transparent), transparent 38%),
+        var(--cv-razor-panel);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--cv-razor-text) 8%, transparent) inset;
+}
+
+.cv-razor-toolbar-primary,
+.cv-razor-toolbar-secondary,
+.cv-razor-mode-selectors {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cv-razor-toolbar button,
+.cv-razor-mode-selectors select,
+.cv-viewport-switcher button {
+    height: 32px;
+}
+
+.cv-razor-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 10px;
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    border: 1px solid var(--theia-button-border, transparent);
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.cv-razor-toolbar button:disabled {
+    opacity: 0.5;
+}
+
+.cv-razor-toolbar button:not(:disabled):hover {
+    filter: brightness(1.08);
+}
+
+.cv-razor-toolbar button.cv-ai-toolbar-button,
+.cv-razor-toolbar button.cv-ai-toolbar-button.active,
+.cv-razor-toolbar button.cv-ai-toolbar-button:not(:disabled):hover {
+    color: var(--cv-razor-accent-foreground) !important;
+    background: var(--cv-ai-action-gradient) !important;
+    border-color: transparent !important;
+}
+
+.cv-razor-toolbar button.cv-ai-toolbar-button .cv-ai-sparkles-icon {
+    color: inherit;
+}
+
+.cv-ai-sparkles-icon {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    fill: currentColor;
+    vertical-align: -2px;
+}
+
+.cv-ai-panel {
+    position: absolute;
+    top: 52px;
+    right: 368px;
+    z-index: 25;
+    display: grid;
+    gap: 12px;
+    width: min(720px, calc(100% - 40px));
+    padding: 14px;
+    color: var(--theia-editor-foreground, var(--cv-razor-text));
+    background: var(--theia-editorWidget-background, var(--cv-razor-panel));
+    border: 1px solid var(--cv-razor-border);
+    border-radius: 8px;
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+}
+
+.cv-ai-panel > header,
+.cv-ai-panel footer,
+.cv-ai-title,
+.cv-ai-safety,
+.cv-ai-provider-status {
+    display: flex;
+    align-items: center;
+}
+
+.cv-ai-panel > header {
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.cv-ai-title {
+    gap: 10px;
+    min-width: 0;
+}
+
+.cv-ai-title > .cv-ai-sparkles-icon {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    color: var(--cv-razor-accent-secondary);
+}
+
+.cv-ai-title h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.cv-ai-title span,
+.cv-ai-grid label > span,
+.cv-ai-instruction > span {
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.cv-ai-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(130px, 0.52fr);
+    gap: 10px;
+}
+
+.cv-ai-grid label,
+.cv-ai-instruction {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+}
+
+.cv-ai-grid select,
+.cv-ai-grid input,
+.cv-ai-instruction textarea {
+    width: 100%;
+    min-width: 0;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.cv-ai-grid select,
+.cv-ai-grid input {
+    height: 30px;
+    padding: 0 8px;
+}
+
+.cv-ai-instruction textarea {
+    padding: 8px;
+    resize: vertical;
+}
+
+.cv-ai-provider-status {
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px;
+    color: var(--theia-descriptionForeground);
+    background: color-mix(in srgb, var(--theia-editor-background) 70%, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.cv-ai-provider-status.ready {
+    color: var(--theia-testing-iconPassed);
+    border-color: color-mix(in srgb, var(--theia-testing-iconPassed) 50%, var(--theia-panel-border));
+}
+
+.cv-ai-provider-status.needs-auth,
+.cv-ai-provider-status.not-configured {
+    color: var(--theia-testing-iconQueued);
+    border-color: color-mix(in srgb, var(--theia-testing-iconQueued) 50%, var(--theia-panel-border));
+}
+
+.cv-ai-provider-status.unavailable {
+    color: var(--theia-errorForeground);
+    border-color: color-mix(in srgb, var(--theia-errorForeground) 50%, var(--theia-panel-border));
+}
+
+.cv-ai-panel .cv-ai-runtime-execution-picker {
+    padding: 8px;
+    background: color-mix(in srgb, var(--theia-editor-background) 70%, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+}
+
+.cv-ai-context {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px;
+    color: var(--theia-descriptionForeground);
+    background: color-mix(in srgb, var(--theia-editor-background) 70%, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.cv-ai-context > span {
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cv-ai-context.empty strong {
+    color: var(--theia-descriptionForeground);
+    font-weight: 500;
+}
+
+.cv-ai-context-chip,
+.cv-ai-context-restore {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: var(--theia-button-secondaryBackground, var(--theia-input-background));
+    border: 1px solid var(--theia-button-border, var(--theia-panel-border));
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.cv-ai-context-chip strong {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-ai-context-chip .fa-times {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-ai-context-restore {
+    color: var(--theia-descriptionForeground);
+    font-weight: 500;
+}
+
+.cv-ai-provider-status button,
+.cv-ai-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: var(--theia-button-secondaryBackground, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 5px;
+}
+
+.cv-ai-safety {
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.cv-ai-safety span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 8px;
+    color: var(--theia-descriptionForeground);
+    background: color-mix(in srgb, var(--theia-editor-background) 72%, transparent);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 999px;
+    font-size: 11px;
+}
+
+.cv-ai-message {
+    margin: 0;
+    padding: 8px;
+    color: var(--theia-foreground);
+    background: color-mix(in srgb, var(--theia-focusBorder) 14%, var(--theia-editor-background));
+    border: 1px solid color-mix(in srgb, var(--theia-focusBorder) 34%, var(--theia-panel-border));
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.cv-ai-message.error {
+    color: var(--theia-errorForeground);
+    background: color-mix(in srgb, var(--theia-errorForeground) 12%, var(--theia-editor-background));
+    border-color: color-mix(in srgb, var(--theia-errorForeground) 45%, var(--theia-panel-border));
+}
+
+.cv-ai-panel footer {
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.cv-ai-primary,
+.cv-ai-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 5px;
+    font-weight: 700;
+}
+
+.cv-ai-primary {
+    color: var(--cv-razor-accent-foreground);
+    background: var(--cv-ai-action-gradient);
+    border: 1px solid transparent;
+}
+
+.cv-ai-primary:disabled {
+    opacity: 0.55;
+}
+
+.cv-ai-secondary {
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: var(--theia-button-secondaryBackground, var(--theia-editorWidget-background));
+    border: 1px solid var(--theia-panel-border);
+}
+
+.cv-razor-mode-selectors select {
+    min-width: 118px;
+    padding: 0 8px;
+    color: var(--theia-dropdown-foreground);
+    background: var(--theia-dropdown-background);
+    border: 1px solid var(--theia-dropdown-border);
+    border-radius: 5px;
+}
+
+.cv-viewport-switcher {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid var(--theia-dropdown-border, var(--cv-razor-border));
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--theia-dropdown-background, var(--cv-razor-panel-soft)) 92%, var(--cv-razor-accent) 8%);
+}
+
+.cv-viewport-switcher button {
+    justify-content: center;
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+    color: var(--cv-razor-muted);
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--theia-dropdown-border, var(--cv-razor-border));
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.cv-viewport-switcher button:last-child {
+    border-right: 0;
+}
+
+.cv-viewport-switcher button:hover,
+.cv-viewport-switcher button.active {
+    color: var(--cv-razor-active-foreground);
+    background: var(--cv-razor-active-background);
+    filter: none;
+}
+
+.cv-razor-toolbar .fa,
+.cv-viewport-switcher .fa {
+    width: 16px;
+    text-align: center;
+}
+
+.cv-viewport-switcher .fa {
+    font-size: 16px;
+}
+
+.cv-viewport-switcher .fa-mobile {
+    font-size: 19px;
+}
+
+.cv-razor-ok-pill,
+.cv-razor-warning-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cv-razor-ok-pill {
+    color: var(--theia-testing-iconPassed);
+    background: rgba(35, 134, 54, 0.12);
+}
+
+.cv-razor-warning-pill {
+    color: var(--theia-testing-iconQueued);
+    background: rgba(187, 128, 9, 0.16);
+}
+
+.cv-razor-main {
+    display: grid;
+    grid-template-columns: minmax(220px, var(--cv-left-panel-width)) 6px minmax(0, 1fr) 350px;
+    min-height: 0;
+    height: 100%;
+}
+
+.cv-razor-workbench {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    background:
+        linear-gradient(var(--cv-razor-canvas-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--cv-razor-canvas-grid) 1px, transparent 1px),
+        var(--cv-razor-canvas);
+    background-size: 28px 28px;
+}
+
+.cv-razor-workbench-stack {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.cv-razor-workbench-stack.with-source {
+    grid-template-rows: minmax(0, 1fr) 7px minmax(180px, var(--cv-source-panel-height));
+}
+
+.cv-razor-canvas-region {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.cv-source-resizer {
+    min-height: 7px;
+    cursor: row-resize;
+    background:
+        linear-gradient(180deg, transparent, color-mix(in srgb, var(--theia-panel-border) 80%, transparent), transparent),
+        var(--theia-sideBar-background);
+}
+
+.cv-source-resizer:hover,
+.cv-source-resizer:focus {
+    background:
+        linear-gradient(180deg, transparent, var(--theia-focusBorder), transparent),
+        color-mix(in srgb, var(--theia-focusBorder) 12%, var(--theia-sideBar-background));
+    outline: none;
+}
+
+.cv-source-panel {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+    border-top: 1px solid var(--cv-razor-border);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--cv-razor-accent-secondary) 8%, transparent), transparent 42%),
+        var(--theia-editorWidget-background);
+}
+
+.cv-source-panel > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.cv-source-panel > header h3 {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cv-source-panel > header span {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-source-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.cv-source-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0 9px;
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    border: 1px solid var(--theia-button-border, transparent);
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.cv-source-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 38%);
+    min-width: 0;
+    min-height: 0;
+}
+
+.cv-source-monaco-editor {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    background: var(--theia-editor-background);
+}
+
+.cv-source-monaco-editor .monaco-editor,
+.cv-source-monaco-editor .monaco-editor-background,
+.cv-source-monaco-editor .monaco-editor .margin {
+    background-color: var(--theia-editor-background);
+}
+
+.cv-source-monaco-editor .cv-source-selected-line {
+    background: color-mix(in srgb, var(--cv-razor-accent-secondary) 14%, transparent);
+}
+
+.cv-source-monaco-editor .cv-source-selected-line-glyph {
+    border-left: 3px solid var(--cv-razor-accent-secondary);
+}
+
+.cv-source-cascade-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-left: 1px solid var(--theia-panel-border);
+    background: color-mix(in srgb, var(--theia-editorWidget-background) 78%, #111820 22%);
+}
+
+.cv-style-panel-title {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--cv-razor-border);
+    background: color-mix(in srgb, var(--cv-razor-panel) 86%, var(--cv-razor-accent) 14%);
+}
+
+.cv-style-panel-title h3 {
+    margin: 0;
+    color: var(--theia-foreground);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.cv-style-panel-title button,
+.cv-style-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0 8px;
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: color-mix(in srgb, var(--theia-button-secondaryBackground, var(--theia-editorWidget-background)) 84%, #ffffff 6%);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cv-style-toolbar {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: color-mix(in srgb, var(--theia-editorWidget-background) 76%, #121920 24%);
+}
+
+.cv-style-toolbar > button:last-child {
+    width: 30px;
+    padding: 0;
+}
+
+.cv-style-toolbar button.active,
+.cv-style-toolbar button[aria-expanded="true"] {
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    border-color: color-mix(in srgb, var(--theia-focusBorder) 70%, var(--theia-panel-border));
+}
+
+.cv-style-toolbar button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.cv-style-menu-anchor {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+}
+
+.cv-style-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 30;
+    display: grid;
+    gap: 8px;
+    width: min(280px, calc(100vw - 36px));
+    min-width: 220px;
+    padding: 10px;
+    color: var(--theia-foreground);
+    background: var(--theia-editorWidget-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.cv-style-popover label {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.cv-style-popover input,
+.cv-style-popover select {
+    width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    box-sizing: border-box;
+    padding: 4px 7px;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 4px;
+}
+
+.cv-style-popover button {
+    width: auto !important;
+}
+
+.cv-style-menu-list {
+    width: 180px;
+    min-width: 180px;
+    padding: 6px;
+}
+
+.cv-style-menu-list button {
+    justify-content: flex-start;
+    width: 100% !important;
+}
+
+.cv-style-show-popover label {
+    display: flex;
+    grid-template-columns: none;
+    align-items: center;
+    gap: 7px;
+}
+
+.cv-style-show-popover input {
+    width: auto;
+    min-height: 0;
+}
+
+.cv-style-search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px;
+    gap: 6px;
+    padding: 0 10px 8px;
+    border-bottom: 1px solid var(--theia-panel-border);
+    background: color-mix(in srgb, var(--theia-editorWidget-background) 76%, #121920 24%);
+}
+
+.cv-style-search-row input {
+    min-width: 0;
+    height: 28px;
+    padding: 0 8px;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 4px;
+}
+
+.cv-style-search-row button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: color-mix(in srgb, var(--theia-button-secondaryBackground, var(--theia-editorWidget-background)) 84%, #ffffff 6%);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 4px;
+}
+
+.cv-style-rules {
+    display: grid;
+    flex: 0 0 auto;
+    align-content: start;
+    gap: 12px;
+    min-height: min-content;
+    padding: 10px;
+    overflow: visible;
+}
+
+.cv-source-cascade-panel .cv-matched-rule {
+    position: relative;
+    display: grid;
+    gap: 0;
+    min-width: 0;
+    padding: 0;
+    overflow: visible;
+    color: var(--theia-editor-foreground);
+    background: color-mix(in srgb, var(--cv-razor-bg) 82%, var(--cv-razor-panel) 18%);
+    border: 0;
+    border-left: 2px solid var(--cv-razor-accent);
+    border-radius: 0;
+}
+
+.cv-source-cascade-panel .cv-style-rule-card.inline {
+    border-left-color: var(--cv-razor-accent-secondary);
+}
+
+.cv-style-media-row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-width: 0;
+    padding: 11px 16px 5px;
+    color: #f59e0b;
+    font-family: var(--theia-code-font-family);
+    font-size: 13px;
+}
+
+.cv-source-cascade-panel .cv-style-media-row code,
+.cv-source-cascade-panel .cv-matched-rule code,
+.cv-source-cascade-panel .cv-matched-rule span {
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.cv-source-cascade-panel .cv-style-media-row code {
+    color: inherit;
+}
+
+.cv-source-cascade-panel .cv-matched-rule header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 28px;
+    align-items: start;
+    gap: 8px;
+    min-width: 0;
+    padding: 13px 16px 6px;
+    border: 0;
+}
+
+.cv-style-media-row + header {
+    padding-top: 3px !important;
+}
+
+.cv-source-cascade-panel .cv-matched-rule header > div {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+    color: var(--theia-editor-foreground);
+    font-family: var(--theia-code-font-family);
+}
+
+.cv-source-cascade-panel .cv-matched-rule header button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    color: var(--theia-descriptionForeground);
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+}
+
+.cv-source-cascade-panel .cv-matched-rule header button:hover {
+    color: var(--theia-foreground);
+    background: color-mix(in srgb, var(--theia-focusBorder) 18%, transparent);
+}
+
+.cv-style-selector {
+    color: #00c8ff !important;
+}
+
+.cv-style-inline-selector {
+    color: #c8d7e6 !important;
+}
+
+.cv-source-cascade-panel .cv-rule-declarations {
+    display: grid;
+    gap: 3px;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 1px 16px 6px 38px;
+    overflow: visible;
+    color: var(--theia-editor-foreground);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+.cv-source-cascade-panel .cv-rule-declaration {
+    display: grid;
+    grid-template-columns: fit-content(45%) auto minmax(0, 1fr) auto auto;
+    column-gap: 0;
+    row-gap: 0;
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: visible;
+    color: var(--theia-editor-foreground);
+    font-family: var(--theia-code-font-family);
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.cv-source-cascade-panel .cv-rule-declaration > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.cv-source-cascade-panel .cv-rule-declaration > span:first-of-type {
+    margin-right: 5px;
+}
+
+.cv-source-cascade-panel .cv-rule-declaration strong,
+.cv-source-cascade-panel .cv-rule-declaration .fa {
+    margin-left: 5px;
+}
+
+.cv-source-cascade-panel .cv-rule-declaration.overridden {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-source-cascade-panel .cv-rule-declaration.overridden .cv-rule-property,
+.cv-source-cascade-panel .cv-rule-declaration.overridden .cv-rule-value {
+    text-decoration: line-through;
+}
+
+.cv-source-cascade-panel .cv-rule-property {
+    color: #00c8ff;
+}
+
+.cv-source-cascade-panel .cv-rule-value {
+    color: #ff7ab2;
+}
+
+.cv-source-cascade-panel .cv-rule-input {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0 2px;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font: inherit;
+    line-height: inherit;
+    text-overflow: clip;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.cv-source-cascade-panel textarea.cv-rule-input {
+    resize: vertical;
+}
+
+.cv-source-cascade-panel .cv-rule-input:hover,
+.cv-source-cascade-panel .cv-rule-input:focus {
+    background: color-mix(in srgb, var(--theia-input-background) 82%, transparent);
+    border-color: var(--theia-focusBorder);
+    outline: none;
+}
+
+.cv-source-cascade-panel .cv-rule-declaration strong,
+.cv-source-cascade-panel .cv-rule-declaration .fa {
+    color: #f6d74a;
+    font-size: 11px;
+}
+
+.cv-style-empty-rule {
+    height: 22px;
+}
+
+.cv-source-cascade-panel .cv-matched-rule footer {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+    min-width: 0;
+    padding: 0 16px 13px;
+    color: var(--theia-descriptionForeground);
+    font-family: var(--theia-code-font-family);
+    font-size: 11px;
+}
+
+.cv-source-cascade-panel .cv-matched-rule footer span:last-child {
+    min-width: 0;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-align: right;
+    text-overflow: clip;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.cv-style-computed {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 0 14px;
+    border-top: 1px solid var(--cv-razor-border);
+    background: color-mix(in srgb, var(--cv-razor-panel) 84%, var(--cv-razor-bg) 16%);
+    color: var(--cv-razor-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.cv-razor-structure-panel {
+    min-width: 0;
+    overflow: auto;
+    border-right: 1px solid var(--cv-razor-border);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--cv-razor-accent) 10%, transparent), transparent 250px),
+        var(--cv-razor-panel);
+}
+
+.cv-razor-left-resizer {
+    min-width: 6px;
+    cursor: col-resize;
+    background:
+        linear-gradient(90deg, transparent, color-mix(in srgb, var(--theia-panel-border) 80%, transparent), transparent),
+        var(--theia-sideBar-background);
+}
+
+.cv-razor-left-resizer:hover,
+.cv-razor-left-resizer:focus {
+    background:
+        linear-gradient(90deg, transparent, var(--theia-focusBorder), transparent),
+        color-mix(in srgb, var(--theia-focusBorder) 12%, var(--theia-sideBar-background));
+    outline: none;
+}
+
+.cv-razor-side-panel {
+    min-width: 0;
+    overflow: auto;
+    border-left: 1px solid var(--cv-razor-border);
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--cv-razor-accent-secondary) 8%, transparent), transparent 260px),
+        var(--cv-razor-panel);
+}
+
+.cv-razor-side-section {
+    padding: 12px;
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.cv-global-vars-panel {
+    display: grid;
+    gap: 10px;
+}
+
+.cv-global-vars-panel > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.cv-global-vars-panel h3 {
+    margin: 0;
+}
+
+.cv-global-vars-panel > header span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    color: var(--theia-badge-foreground, var(--cv-razor-active-foreground));
+    background: var(--theia-badge-background, var(--cv-razor-active-background));
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cv-global-vars-panel button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: var(--theia-button-secondaryForeground, var(--theia-foreground));
+    background: var(--theia-button-secondaryBackground, var(--theia-editorWidget-background));
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 5px;
+}
+
+.cv-global-vars-group {
+    display: grid;
+    gap: 8px;
+}
+
+.cv-global-vars-group h4 {
+    margin: 4px 0 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cv-global-var {
+    display: grid;
+    grid-template-columns: minmax(88px, 0.42fr) 34px minmax(0, 1fr) 28px;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.cv-global-var-radius {
+    grid-template-columns: minmax(88px, 0.42fr) minmax(70px, 0.55fr) minmax(0, 1fr) 28px;
+}
+
+.cv-global-var-other {
+    grid-template-columns: minmax(88px, 0.42fr) minmax(0, 1fr) 28px;
+}
+
+.cv-global-var-compact {
+    grid-template-columns: minmax(88px, 0.42fr) minmax(0, 1fr) 28px;
+}
+
+.cv-global-var span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-family: var(--theia-code-font-family);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-global-var input[type='color'] {
+    width: 34px;
+    height: 28px;
+    padding: 2px;
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+    background: var(--theia-input-background);
+}
+
+.cv-global-var input:not([type='color']) {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding: 0 7px;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+}
+
+.cv-global-var input[type='range'] {
+    padding: 0;
+}
+
+.cv-razor-side-section h3,
+.cv-razor-token-detail h4 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-muted {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-token-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cv-razor-token-list button {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 2px 8px;
+    width: 100%;
+    padding: 8px;
+    text-align: left;
+    color: var(--theia-foreground);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent),
+        var(--theia-editorWidget-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+}
+
+.cv-razor-token-list button.selected {
+    border-color: var(--theia-focusBorder);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theia-focusBorder) 60%, transparent);
+}
+
+.cv-razor-token-list button:hover {
+    border-color: color-mix(in srgb, var(--theia-focusBorder) 55%, var(--theia-panel-border));
+}
+
+.cv-razor-token-list code {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-token-detail dl {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 4px;
+}
+
+.cv-razor-token-detail dt {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-token-detail dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.cv-razor-token-detail pre,
+.cv-razor-diff-view,
+.cv-razor-source-view,
+.cv-razor-diff-dialog pre {
+    margin: 0;
+    padding: 10px;
+    color: var(--theia-editor-foreground);
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+
+.cv-razor-token-detail pre {
+    max-height: 220px;
+}
+
+.cv-razor-asset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cv-razor-asset-list article {
+    display: grid;
+    gap: 2px;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.cv-razor-asset-list article.warning {
+    border-color: var(--theia-editorWarning-foreground);
+}
+
+.cv-razor-asset-list code,
+.cv-razor-asset-list span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-razor-canvas-shell {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    overflow: auto;
+    padding: 12px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--cv-razor-accent) 12%, transparent), transparent 180px),
+        transparent;
+}
+
+.cv-razor-grapes-host {
+    flex: 1 1 auto;
+    width: 100% !important;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--cv-razor-border) 70%, var(--cv-razor-text) 30%);
+    border-radius: 8px;
+    background: var(--cv-razor-panel-deep);
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--cv-razor-bg) 72%, transparent);
+}
+
+.cv-razor-grapes-host .gjs-editor {
+    color: var(--cv-razor-text);
+    background: var(--cv-razor-panel-deep);
+    font-family: var(--theia-ui-font-family);
+}
+
+.cv-razor-grapes-host .gjs-one-bg {
+    background-color: var(--cv-razor-panel);
+}
+
+.cv-razor-grapes-host .gjs-two-color {
+    color: var(--cv-razor-text);
+}
+
+.cv-razor-grapes-host .gjs-three-bg {
+    background-color: var(--cv-razor-active-background);
+    color: var(--cv-razor-active-foreground);
+}
+
+.cv-razor-grapes-host .gjs-four-color,
+.cv-razor-grapes-host .gjs-four-color-h:hover {
+    color: var(--cv-razor-accent-secondary);
+}
+
+.cv-razor-grapes-host .gjs-pn-panel {
+    color: var(--cv-razor-text);
+    background: color-mix(in srgb, var(--cv-razor-panel) 96%, transparent);
+    border-color: color-mix(in srgb, var(--cv-razor-border) 72%, transparent);
+}
+
+.cv-razor-grapes-host .gjs-pn-btn {
+    min-width: 30px;
+    min-height: 30px;
+    border-radius: 5px;
+}
+
+.cv-razor-grapes-host .gjs-pn-btn.gjs-pn-active,
+.cv-razor-grapes-host .gjs-pn-btn:hover {
+    color: var(--cv-razor-active-foreground);
+    background: var(--cv-razor-active-background);
+    box-shadow: none;
+}
+
+.cv-razor-grapes-host .gjs-cv-canvas {
+    background:
+        linear-gradient(var(--cv-razor-canvas-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--cv-razor-canvas-grid) 1px, transparent 1px),
+        color-mix(in srgb, var(--cv-razor-bg) 90%, var(--cv-razor-text) 10%);
+    background-size: 24px 24px;
+}
+
+.cv-razor-grapes-host .gjs-frame-wrapper {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 20px 55px color-mix(in srgb, var(--cv-razor-bg) 78%, transparent);
+}
+
+.cv-razor-grapes-host .gjs-frame {
+    background: var(--theia-editor-background, #ffffff);
+}
+
+.cv-razor-grapes-host .gjs-pn-views,
+.cv-razor-grapes-host .gjs-pn-views-container {
+    display: none !important;
+}
+
+.cv-razor-grapes-host .gjs-cv-canvas {
+    right: 0 !important;
+    width: 100% !important;
+}
+
+.cv-razor-grapes-host .gjs-block {
+    min-height: 64px;
+    border-radius: 6px;
+    border-color: color-mix(in srgb, var(--cv-razor-border) 78%, transparent);
+    background: var(--cv-razor-panel-soft);
+    box-shadow: none;
+}
+
+.cv-razor-grapes-host .gjs-block:hover {
+    border-color: var(--cv-razor-accent-secondary);
+}
+
+.cv-razor-source-view,
+.cv-razor-diff-view {
+    width: 100%;
+    height: 100%;
+    resize: none;
+    border: 0;
+    border-radius: 0;
+}
+
+.cv-razor-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-status.error {
+    color: var(--theia-errorForeground);
+}
+
+.cv-razor-token {
+    outline: 1px dashed #d97706;
+    outline-offset: 2px;
+    background: rgba(217, 119, 6, 0.12);
+    color: #92400e;
+}
+
+.cv-razor-block {
+    display: block;
+    padding: 8px;
+    margin: 4px 0;
+    border: 1px dashed #d97706;
+}
+
+.cv-razor-inline {
+    padding: 1px 4px;
+}
+
+.cv-razor-directive {
+    display: none;
+}
+
+.cv-razor-diff-dialog {
+    width: min(900px, 80vw);
+}
+
+.cv-razor-diff-summary {
+    margin-bottom: 8px;
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-element-properties {
+    display: grid;
+    gap: 10px;
+}
+
+.cv-element-summary {
+    display: grid;
+    gap: 3px;
+    padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--theia-focusBorder) 55%, var(--theia-panel-border));
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.cv-element-summary strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-element-summary span {
+    color: var(--theia-descriptionForeground);
+    font-family: var(--theia-code-font-family);
+    font-size: 12px;
+}
+
+.cv-selected-razor-note {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.10);
+}
+
+.cv-selected-razor-note span,
+.cv-selected-razor-note p {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-property-group {
+    display: grid;
+    gap: 8px;
+}
+
+.cv-property-group h4 {
+    margin: 4px 0 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.cv-property-group label {
+    display: grid;
+    grid-template-columns: minmax(104px, 0.44fr) minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+}
+
+.cv-property-group label span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-property-group input,
+.cv-property-group textarea {
+    width: 100%;
+    min-width: 0;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+}
+
+.cv-property-group input {
+    height: 28px;
+    padding: 0 7px;
+}
+
+.cv-property-group textarea {
+    padding: 7px;
+    resize: vertical;
+}
+
+.cv-property-group input:focus,
+.cv-property-group textarea:focus {
+    outline: 1px solid var(--theia-focusBorder);
+    outline-offset: -1px;
+}
+
+.cv-property-action {
+    justify-self: start;
+    height: 30px;
+    padding: 0 10px;
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    border: 1px solid var(--theia-button-border, transparent);
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.cv-property-details {
+    display: grid;
+    gap: 8px;
+}
+
+.cv-property-details summary {
+    cursor: pointer;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.cv-property-details[open] summary {
+    margin-bottom: 8px;
+}
+
+.cv-property-details .cv-property-group label {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+}
+
+.cv-class-editor {
+    padding: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.cv-class-input-row {
+    grid-template-columns: minmax(64px, 0.26fr) minmax(0, 1fr) !important;
+}
+
+.cv-class-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+    min-height: 28px;
+    padding: 6px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-input-background);
+}
+
+.cv-class-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    max-width: 100%;
+    height: 24px;
+    padding: 0 7px;
+    color: var(--cv-razor-active-foreground);
+    background: var(--cv-razor-active-background);
+    border: 0;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cv-class-chip span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-class-chip .fa {
+    width: 12px;
+    font-size: 11px;
+    opacity: 0.84;
+}
+
+.cv-class-add-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cv-class-add-row input {
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    padding: 0 7px;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+}
+
+.cv-class-add-row button:disabled {
+    opacity: 0.5;
+}
+
+.cv-class-chain {
+    padding: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.cv-matched-rule-list {
+    display: grid;
+    gap: 8px;
+}
+
+.cv-matched-rule {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--theia-editorWidget-background) 88%, var(--theia-editor-background) 12%);
+}
+
+.cv-matched-rule header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cv-matched-rule header > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.cv-matched-rule code {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-foreground);
+    font-family: var(--theia-code-font-family);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-matched-rule header > span {
+    flex: 0 0 auto;
+    color: var(--theia-descriptionForeground);
+    font-family: var(--theia-code-font-family);
+    font-size: 11px;
+}
+
+.cv-rule-context {
+    min-width: 0;
+    overflow: hidden;
+    color: #f59e0b;
+    font-family: var(--theia-code-font-family);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-rule-declarations {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    padding: 7px;
+    overflow: auto;
+    color: var(--theia-editor-foreground);
+    background: var(--theia-editor-background);
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 5px;
+}
+
+.cv-rule-declaration {
+    display: grid;
+    grid-template-columns: 15px minmax(80px, 0.62fr) auto minmax(0, 1fr) auto;
+    gap: 5px;
+    align-items: baseline;
+    min-width: 0;
+    font-family: var(--theia-code-font-family);
+    font-size: 11px;
+}
+
+.cv-rule-declaration .fa {
+    width: 12px;
+    color: var(--theia-testing-iconPassed);
+    font-size: 11px;
+}
+
+.cv-rule-declaration.overridden {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-rule-declaration.overridden .cv-rule-property,
+.cv-rule-declaration.overridden .cv-rule-value {
+    text-decoration: line-through;
+}
+
+.cv-rule-declaration.overridden .fa {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-rule-property {
+    color: #5ccfe6;
+}
+
+.cv-rule-value {
+    color: #ff7ab2;
+}
+
+.cv-rule-declaration strong {
+    color: #f59e0b;
+    font-size: 11px;
+}
+
+.cv-matched-rule footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+}
+
+.cv-matched-rule footer span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-grapes-native-panel {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-editorWidget-background);
+}
+
+.cv-grapes-native-panel header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cv-grapes-native-panel h4 {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cv-grapes-native-panel h3 {
+    margin: 0;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cv-grapes-native-panel header span {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-grapes-blocks-host,
+.cv-grapes-layers-host,
+.cv-grapes-selectors-host,
+.cv-grapes-traits-host,
+.cv-grapes-styles-host {
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.cv-grapes-traits-host {
+    background: transparent !important;
+}
+
+.cv-grapes-blocks-host:empty::before,
+.cv-grapes-layers-host:empty::before,
+.cv-grapes-selectors-host:empty::before,
+.cv-grapes-traits-host:empty::before,
+.cv-grapes-styles-host:empty::before {
+    content: "Select an element to edit.";
+    display: block;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.cv-grapes-blocks-host:empty::before {
+    content: "Loading components.";
+}
+
+.cv-grapes-layers-host:empty::before {
+    content: "Loading DOM tree.";
+}
+
+.cv-grapes-selectors-host:empty::before {
+    content: "Select an element to edit classes.";
+}
+
+.cv-razor-structure-panel .gjs-block-category {
+    margin: 0 0 10px;
+    overflow: hidden;
+    border: 1px solid var(--cv-razor-border);
+    border-radius: 6px;
+    background: var(--cv-razor-panel-soft);
+}
+
+.cv-razor-structure-panel .gjs-block-category .gjs-title {
+    padding: 8px 10px;
+    color: var(--cv-razor-text);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--cv-razor-accent) 12%, transparent), transparent 75%),
+        var(--cv-razor-panel);
+    border-bottom: 1px solid var(--cv-razor-border);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cv-razor-structure-panel .gjs-blocks-c {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+}
+
+.cv-razor-structure-panel .gjs-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: auto;
+    min-height: 64px;
+    margin: 0;
+    padding: 8px 6px;
+    color: var(--cv-razor-text);
+    background:
+        linear-gradient(145deg, color-mix(in srgb, var(--cv-razor-text) 5%, transparent), transparent),
+        color-mix(in srgb, var(--cv-razor-panel-soft) 92%, var(--cv-razor-accent) 8%);
+    border: 1px solid var(--cv-razor-border);
+    border-radius: 6px;
+    box-shadow: none;
+    text-align: center;
+}
+
+.cv-razor-structure-panel .gjs-block:hover {
+    color: var(--cv-razor-active-foreground);
+    background: var(--cv-razor-active-background);
+    border-color: var(--cv-razor-accent-secondary);
+}
+
+.cv-razor-structure-panel .gjs-block__media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 22px;
+    min-height: 22px;
+    margin: 0;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.cv-razor-structure-panel .gjs-block__media svg {
+    display: block;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    max-width: 22px;
+    max-height: 22px;
+    fill: currentColor;
+}
+
+.cv-razor-structure-panel .gjs-block-label {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    color: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-structure-layers {
+    min-height: 0;
+}
+
+.cv-grapes-layers-host {
+    display: block;
+    min-height: 160px;
+}
+
+.cv-razor-structure-panel .gjs-layer {
+    color: var(--theia-foreground);
+    background: transparent;
+}
+
+.cv-razor-structure-panel .gjs-layer-title {
+    min-height: 28px;
+    color: var(--theia-foreground);
+    border-radius: 5px;
+}
+
+.cv-razor-structure-panel .gjs-layer-title:hover,
+.cv-razor-structure-panel .gjs-layer.gjs-selected > .gjs-layer-title {
+    background: color-mix(in srgb, var(--theia-focusBorder) 28%, transparent);
+}
+
+.cv-razor-structure-panel .gjs-layer-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-razor-structure-panel .gjs-layer-vis,
+.cv-razor-structure-panel .gjs-layer-move,
+.cv-razor-structure-panel .gjs-layer-caret,
+.cv-razor-structure-panel .gjs-layer-count {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-structure-panel .gjs-layer-children {
+    border-left: 1px solid color-mix(in srgb, var(--theia-panel-border) 75%, transparent);
+}
+
+.cv-razor-side-panel .gjs-clm-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.cv-grapes-selectors-host > .gjs-clm-tags + .gjs-clm-tags {
+    display: none;
+}
+
+.cv-razor-side-panel .gjs-clm-tags {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    color: var(--theia-foreground);
+    background: transparent;
+}
+
+.cv-razor-side-panel .gjs-clm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.cv-razor-side-panel .gjs-clm-header-label {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-razor-side-panel .gjs-clm-header-status {
+    min-width: 118px;
+}
+
+.cv-razor-side-panel #gjs-clm-tags-field {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 34px;
+    padding: 6px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 6px;
+    background: var(--theia-input-background);
+}
+
+.cv-razor-side-panel #gjs-clm-tags-c {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cv-razor-side-panel .gjs-clm-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    margin: 0;
+    padding: 4px 6px;
+    color: var(--cv-razor-active-foreground);
+    background: var(--cv-razor-active-background);
+    border: 0;
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.cv-razor-side-panel .gjs-clm-tag-label,
+.cv-razor-side-panel #gjs-clm-tag-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-razor-side-panel .gjs-clm-tag-close,
+.cv-razor-side-panel .gjs-clm-tag-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.cv-razor-side-panel .gjs-clm-tag-close svg,
+.cv-razor-side-panel .gjs-clm-tag-status svg,
+.cv-razor-side-panel .gjs-clm-tags-btn svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+}
+
+.cv-razor-side-panel .gjs-clm-tags-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--theia-button-foreground);
+    background: var(--theia-button-background);
+    border-radius: 5px;
+}
+
+.cv-razor-side-panel .gjs-clm-sel {
+    margin-top: 8px;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+}
+
+.cv-razor-side-panel .gjs-clm-field,
+.cv-razor-side-panel .gjs-clm-select,
+.cv-razor-side-panel .gjs-clm-new {
+    min-height: 28px;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+}
+
+.cv-razor-side-panel #gjs-clm-new {
+    flex: 1 1 88px;
+    min-width: 88px;
+    padding: 0 7px;
+    border: 0;
+}
+
+.cv-razor-side-panel .gjs-clm-field input,
+.cv-razor-side-panel .gjs-clm-select select,
+.cv-razor-side-panel .gjs-clm-new input {
+    color: var(--theia-input-foreground);
+    background: transparent;
+}
+
+.cv-razor-side-panel .gjs-clm-states {
+    margin-top: 8px;
+}
+
+.cv-razor-side-panel .gjs-trt-trait {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 4px;
+    align-items: stretch !important;
+    margin: 0 0 10px;
+    padding: 0;
+    width: 100%;
+}
+
+.cv-razor-side-panel .gjs-trt-trait__wrp,
+.cv-razor-side-panel .gjs-label-wrp,
+.cv-razor-side-panel .gjs-field-wrp {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    align-items: stretch;
+    width: 100% !important;
+    min-width: 0;
+}
+
+.cv-razor-side-panel .cv-grapes-traits-host,
+.cv-razor-side-panel .cv-grapes-traits-host > *,
+.cv-razor-side-panel .cv-grapes-traits-host [class^="gjs-tr"],
+.cv-razor-side-panel .cv-grapes-traits-host [class*=" gjs-tr"],
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-traits,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-traits-label,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-header,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-traits,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-trait,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-trait__wrp,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-trait__field,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-label-wrp,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-field-wrp {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-traits,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-traits {
+    padding: 0 !important;
+}
+
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-trait {
+    border: 0 !important;
+}
+
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-trait > .gjs-label-wrp,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-trt-trait > .gjs-field-wrp,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-field,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-field input,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-field select,
+.cv-razor-side-panel .cv-grapes-traits-host .gjs-field textarea {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.cv-razor-side-panel .gjs-trt-trait__label,
+.cv-razor-side-panel .gjs-label,
+.cv-razor-side-panel .gjs-sm-label,
+.cv-razor-side-panel .gjs-sm-property__label {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--theia-descriptionForeground);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cv-razor-side-panel .gjs-trt-trait__field,
+.cv-razor-side-panel .gjs-sm-field,
+.cv-razor-side-panel .gjs-field {
+    width: 100% !important;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.cv-razor-side-panel .gjs-field {
+    min-height: 28px;
+    color: var(--theia-input-foreground);
+    background: var(--theia-input-background);
+    border: 1px solid var(--theia-input-border, var(--theia-panel-border));
+    border-radius: 5px;
+}
+
+.cv-razor-side-panel .gjs-field input,
+.cv-razor-side-panel .gjs-field select,
+.cv-razor-side-panel .gjs-field textarea {
+    width: 100%;
+    min-width: 0;
+    color: var(--theia-input-foreground);
+    background: transparent;
+}
+
+.cv-razor-side-panel .gjs-field select {
+    background: var(--theia-input-background);
+}
+
+.cv-razor-side-panel .gjs-sm-sector {
+    margin: 0 0 8px;
+    overflow: hidden;
+    border: 1px solid var(--cv-razor-border);
+    border-radius: 6px;
+    background: var(--cv-razor-panel-soft);
+}
+
+.cv-razor-side-panel .gjs-sm-sector-title {
+    padding: 8px 10px;
+    color: var(--cv-razor-text);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--cv-razor-accent) 12%, transparent), transparent 75%),
+        var(--cv-razor-panel);
+    border-bottom: 1px solid var(--cv-razor-border);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cv-razor-side-panel .gjs-sm-properties {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+}
+
+.cv-razor-side-panel .gjs-sm-property {
+    width: 100% !important;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.cv-razor-side-panel .gjs-sm-property .gjs-sm-label {
+    margin-bottom: 4px;
+}
+
+.cv-razor-side-panel .gjs-sm-composite,
+.cv-razor-side-panel .gjs-sm-stack {
+    width: 100% !important;
+}
+
+.cv-razor-side-panel .gjs-sm-property__clear,
+.cv-razor-side-panel .gjs-sm-clear,
+.cv-razor-side-panel .gjs-sm-layer {
+    color: var(--theia-descriptionForeground);
+}
+
+.cv-razor-side-panel .gjs-sm-property__clear:hover,
+.cv-razor-side-panel .gjs-sm-clear:hover {
+    color: var(--theia-focusBorder);
+}

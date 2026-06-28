@@ -1,0 +1,25 @@
+{
+  "extends": "../../configs/base.tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "lib"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../ai-providers"
+    },
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../memory"
+    },
+    {
+      "path": "../workspace"
+    }
+  ]
+}

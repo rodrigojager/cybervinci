@@ -1,0 +1,14 @@
+version: cybervinci.catalog/v1
+playbooks:
+  - version: cybervinci.playbook/v1
+    id: direct-chat
+    name: Direct Chat
+    category: Chat
+    source: core
+    enabled: true
+    description: Default direct chat pass-through. It does not delegate to a native Theia agent.
+    entry: pass-through
+    tools: []
+    states:
+      - id: pass-through
+        type: end
