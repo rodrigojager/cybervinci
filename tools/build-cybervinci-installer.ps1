@@ -351,7 +351,7 @@ function Remove-WorkspacePackageDirectories([string]$TheiaRoot, [string[]]$Packa
     }
 }
 
-function Write-ReleaseProfile([string]$TheiaRoot, [object]$Manifest, [bool]$IncludeCSharp, [bool]$IncludeCodex) {
+function Write-ReleaseProfile([string]$TheiaRoot, [object]$Manifest, [bool]$IncludeCSharp, [bool]$IncludeCodex, [bool]$IncludeLocalOnly) {
     $components = @(
         [ordered]@{
             id = $Manifest.core.id
@@ -375,6 +375,15 @@ function Write-ReleaseProfile([string]$TheiaRoot, [object]$Manifest, [bool]$Incl
             packages = @((Get-OptionalComponent $Manifest "codex-extension").packages)
         }
     )
+    foreach ($component in @($Manifest.localOnlyComponents)) {
+        $components += [ordered]@{
+            id = $component.id
+            label = $component.label
+            selected = $IncludeLocalOnly
+            required = $false
+            packages = @($component.packages)
+        }
+    }
     $profile = [ordered]@{
         schemaVersion = 1
         productName = $Manifest.productName
@@ -480,6 +489,10 @@ function Remove-PackagesFromNodeModules([string]$NodeModulesRoot, [string[]]$Pac
 
 function New-PortablePayload([string]$TheiaRoot, [string]$Destination, [string]$InstallerScript, [string[]]$PackagesToExclude = @()) {
     Assert-ChildPath $script:InstallerOutputRoot $Destination
+    if ($DryRun) {
+        Write-Host "Would mirror portable payload $TheiaRoot -> $Destination"
+        return
+    }
     $electron = Join-Path $TheiaRoot "node_modules/electron/dist/electron.exe"
     $main = Join-Path $TheiaRoot "examples/electron/lib/backend/main.js"
     if (!(Test-Path -LiteralPath $electron)) {
@@ -487,10 +500,6 @@ function New-PortablePayload([string]$TheiaRoot, [string]$Destination, [string]$
     }
     if (!(Test-Path -LiteralPath $main)) {
         throw "Built Electron app not found. Run npm run build:electron first: $main"
-    }
-    if ($DryRun) {
-        Write-Host "Would mirror portable payload $TheiaRoot -> $Destination"
-        return
     }
     if (Test-Path -LiteralPath $Destination) {
         Remove-Item -LiteralPath $Destination -Recurse -Force
@@ -712,6 +721,7 @@ $variantName = if ($variantParts.Count -eq 0) {
 } else {
     $variantParts -join "-"
 }
+$includeLocalOnly = $variantName -eq "full"
 
 Write-Host "CyberVinci installer profile" -ForegroundColor Green
 Write-Host "  Source:  $source"
@@ -721,12 +731,14 @@ Write-Host "  Version: $AppVersion"
 Write-Host "  Variant: $variantName"
 Write-Host "  C#/.NET tooling: $includeCSharp"
 Write-Host "  Codex extension: $includeCodex"
+Write-Host "  All local/factory components: $includeLocalOnly"
 if ($manifest.PSObject.Properties.Name -contains 'localOnlyComponents') {
     $localOnlyLabels = New-Object System.Collections.Generic.List[string]
     foreach ($component in @($manifest.localOnlyComponents)) {
         [void]$localOnlyLabels.Add([string]$component.label)
     }
-    Write-Host "  Local-only components excluded: $($localOnlyLabels.ToArray() -join ', ')"
+    $localOnlyDisposition = if ($includeLocalOnly) { "included" } else { "excluded" }
+    Write-Host "  Local/factory components ${localOnlyDisposition}: $($localOnlyLabels.ToArray() -join ', ')"
 }
 
 if (!$SkipCopy) {
@@ -734,8 +746,10 @@ if (!$SkipCopy) {
 }
 
 $packagesToRemove = New-Object System.Collections.Generic.List[string]
-foreach ($pkg in (Get-ComponentPackages @($manifest.localOnlyComponents))) {
-    [void]$packagesToRemove.Add($pkg)
+if (!$includeLocalOnly) {
+    foreach ($pkg in (Get-ComponentPackages @($manifest.localOnlyComponents))) {
+        [void]$packagesToRemove.Add($pkg)
+    }
 }
 if (!$includeCSharp) {
     foreach ($pkg in (Get-OptionalComponent $manifest "csharp-dotnet").packages) {
@@ -752,7 +766,7 @@ if ($packagesToRemove.Count -gt 0) {
     Update-AppPackageDependencies $staging $packagesToRemove.ToArray()
     Remove-WorkspacePackageDirectories $staging $packagesToRemove.ToArray()
 }
-Write-ReleaseProfile $staging $manifest $includeCSharp $includeCodex
+Write-ReleaseProfile $staging $manifest $includeCSharp $includeCodex $includeLocalOnly
 
 if (!$SkipNpmInstall) {
     Invoke-CheckedCommand "npm.cmd" @("install") $staging

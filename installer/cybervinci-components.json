@@ -34,7 +34,7 @@
     {
       "id": "ai-output-cleaner",
       "label": "AI Output Cleaner",
-      "reason": "Keep in local source until the feature is mature enough for the public installer.",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
       "packages": [
         "@cybervinci/ai-output-cleaner"
       ]
@@ -42,7 +42,7 @@
     {
       "id": "arena",
       "label": "Arena",
-      "reason": "Keep in local source until the feature is mature enough for the public installer.",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
       "packages": [
         "@cybervinci/arena"
       ]
@@ -50,7 +50,7 @@
     {
       "id": "builder",
       "label": "Builder",
-      "reason": "Keep in local source until the feature is mature enough for the public installer.",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
       "packages": [
         "@cybervinci/builder",
         "@cybervinci/builder-ai",
@@ -66,7 +66,7 @@
     {
       "id": "memory",
       "label": "Memory",
-      "reason": "Keep in local source until the feature is mature enough for the public installer.",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
       "packages": [
         "@cybervinci/memory",
         "@cybervinci/memory-roslyn"
@@ -75,7 +75,7 @@
     {
       "id": "library",
       "label": "Library",
-      "reason": "Keep in local source until the feature is mature enough for the public installer.",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
       "packages": [
         "@cybervinci/library"
       ]
@@ -86,7 +86,7 @@
       "id": "csharp-dotnet",
       "label": "C# and .NET tooling",
       "defaultSelected": false,
-      "description": "Adds C# Kit for solution/project workflows, tests, IntelliSense-style LSP bridge, debug profiles and .NET workflow commands. Semantic Memory/Roslyn inventory is intentionally not bundled in the public installer yet.",
+      "description": "Adds C# Kit for solution/project workflows, tests, IntelliSense-style LSP bridge, debug profiles and .NET workflow commands. Memory/Roslyn inventory is bundled only by the full all-extensions build.",
       "features": [
         "CSharp Kit"
       ],

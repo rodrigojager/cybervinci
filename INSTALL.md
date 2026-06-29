@@ -27,7 +27,9 @@ one independent Inno Setup installer per variant:
 - `CyberVinci-Setup-<version>-full.exe`
 
 Each installer contains only its own payload. Unselected optional components are
-not installed and are not embedded in that installer.
+not installed and are not embedded in that installer. The `full` variant is the
+factory/all-extensions build and includes C# Kit, Codex, Memory, Library, Arena,
+AI Output Cleaner and Builder in addition to the required desktop core.
 
 The generated `.exe` files are written to `dist/cvi/windows`.
 
@@ -62,8 +64,9 @@ controls, virtual reasoning, virtual goal, playbooks, agency agents, Canvas,
 Flow, Flow-in-chat integration, visual HTML/cshtml editing and Markdown Mermaid
 preview.
 
-Arena, AI Output Cleaner, Builder, Memory and Library remain in local source for
-now and are intentionally excluded from the public installer payload.
+When both C# and Codex are selected, the single-variant build becomes the `full`
+all-extensions build and also bundles Memory, Library, Arena, AI Output Cleaner
+and Builder.
 
 Use non-interactive mode for a local release build:
 
