@@ -2788,23 +2788,9 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected normalizeProviderAiOperations(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest): OpenPencilDesignOperation[] {
         const page = this.documents.getActivePage(request.document);
-        const normalizedOperations = this.repairProviderAiMissingReferences(this.normalizeProviderAiFlatSiblingZOrder(this.normalizeProviderAiCreateIndexes(operations
+        return this.repairProviderAiMissingReferences(this.normalizeProviderAiFlatSiblingZOrder(this.normalizeProviderAiCreateIndexes(operations
             .map(operation => this.normalizeOperationParentReferences(operation, page))
             .map(operation => this.normalizeProviderAiOperationZOrder(operation)))), request, page);
-        if (request.mode === 'continuation' || request.selection.length || !this.isPageLevelAiPrompt(request.prompt)) {
-            return normalizedOperations;
-        }
-        if (!page.children.length || !normalizedOperations.some(operation => this.isTopLevelPageLikeCreateOperation(operation, page))) {
-            return normalizedOperations;
-        }
-        const createdIds = new Set(normalizedOperations
-            .filter((operation): operation is Extract<OpenPencilDesignOperation, { operation: 'createNode' | 'addNode' }> =>
-                (operation.operation === 'createNode' || operation.operation === 'addNode') && typeof operation.node.id === 'string')
-            .map(operation => operation.node.id));
-        const removals: OpenPencilDesignOperation[] = page.children
-            .filter(node => !createdIds.has(node.id))
-            .map(node => ({ operation: 'removeNode', nodeId: node.id }));
-        return removals.length ? [...removals, ...normalizedOperations] : normalizedOperations;
     }
 
     protected repairProviderAiMissingReferences(operations: OpenPencilDesignOperation[], request: OpenPencilAiDesignRequest, page: OpenPencilPage): OpenPencilDesignOperation[] {
@@ -3490,17 +3476,6 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
 
     protected aiPromptTargetPageWidth(prompt: string): number | undefined {
         return this.shouldPreservePageWidthForAiPrompt(prompt) ? 1200 : undefined;
-    }
-
-    protected isTopLevelPageLikeCreateOperation(operation: OpenPencilDesignOperation, page: OpenPencilPage): boolean {
-        if ((operation.operation !== 'createNode' && operation.operation !== 'addNode') || this.normalizePageParentId(operation.parentId, page)) {
-            return false;
-        }
-        const pageWidth = this.numberValue(page.width, 900);
-        const pageHeight = this.numberValue(page.height, 620);
-        const width = this.numberValue(operation.node.width, 0);
-        const height = this.numberValue(operation.node.height, 0);
-        return width >= pageWidth * 0.55 || height >= pageHeight * 0.55 || operation.node.type === 'frame';
     }
 
     protected validateAiOperationsPreview(
@@ -6332,6 +6307,13 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
             const y = this.numberValue(child.y, 0);
             const width = this.visibleNodeWidth(child);
             const height = this.visibleNodeHeight(child);
+            if (this.isTextLikeNode(child) && this.hasCorruptedAiTextContent(this.nodeTextContent(child))) {
+                issues.push({
+                    severity: 'error',
+                    path: childPath,
+                    message: `Text node '${child.name ?? child.id}' contains unreadable glyphs or placeholder characters.`
+                });
+            }
             if (validateAsManual && !this.isAiLayoutAllowedOutOfBounds(child)) {
                 if (parent.width !== undefined && (x < -tolerance || x + width > parent.width + tolerance)) {
                     issues.push({
@@ -6394,6 +6376,25 @@ export class OpenPencilDesignCommandServiceImpl implements OpenPencilDesignComma
                 }
             }
         }
+    }
+
+    protected hasCorruptedAiTextContent(text: string): boolean {
+        const compact = text.replace(/\s+/g, '');
+        if (compact.length < 4) {
+            return false;
+        }
+        if (/[\uFFFD\u25A1\u25A3-\u25A9\u25AD-\u25AF]/.test(compact)) {
+            return true;
+        }
+        const privateUse = compact.match(/[\uE000-\uF8FF]/g)?.length ?? 0;
+        if (privateUse >= 2 && privateUse / compact.length >= 0.35) {
+            return true;
+        }
+        if (/^(?:\?|\||_|\uFFFD|\u25A1|\u25AF){4,}$/.test(compact)) {
+            return true;
+        }
+        const questionMarks = compact.match(/\?/g)?.length ?? 0;
+        return compact.length >= 6 && questionMarks / compact.length >= 0.6;
     }
 
     protected shouldValidateAutoLayoutParentAsManual(

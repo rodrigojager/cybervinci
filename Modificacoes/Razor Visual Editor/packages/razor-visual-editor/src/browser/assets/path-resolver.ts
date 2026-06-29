@@ -21,7 +21,7 @@ export class RazorVisualPathResolver {
     }
 
     protected candidates(requestedPath: string, workspaceRoot: URI, sourceUri: URI): URI[] {
-        const normalized = requestedPath.trim().replace(/\\/g, '/');
+        const normalized = this.stripQueryAndFragment(requestedPath.trim().replace(/\\/g, '/'));
         if (!normalized || /^(https?:)?\/\//i.test(normalized) || normalized.startsWith('data:')) {
             return [];
         }
@@ -44,5 +44,12 @@ export class RazorVisualPathResolver {
             sourceUri.parent.resolve(normalized),
             workspaceRoot.resolve(normalized)
         ];
+    }
+
+    protected stripQueryAndFragment(path: string): string {
+        const queryIndex = path.indexOf('?');
+        const fragmentIndex = path.indexOf('#');
+        const indexes = [queryIndex, fragmentIndex].filter(index => index >= 0);
+        return indexes.length ? path.slice(0, Math.min(...indexes)) : path;
     }
 }

@@ -834,6 +834,9 @@ export const CyberVinciChatAiExecutionControls: React.FunctionComponent<{
         if (disabled) {
             return;
         }
+        if (menu === 'provider' && openMenu !== menu) {
+            setReloadVersion(version => version + 1);
+        }
         setOpenMenu(current => current === menu ? undefined : menu);
     };
 
@@ -865,7 +868,7 @@ export const CyberVinciChatAiExecutionControls: React.FunctionComponent<{
                         <span className='theia-ChatInput-AiProviderOptionName'>{provider.label}</span>
                         <span className='theia-ChatInput-AiProviderOptionDetail'>
                             {needsConfiguration
-                                ? provider.configurationRequired?.join(', ') ?? provider.message ?? 'Configuration required'
+                                ? provider.message ?? provider.configurationRequired?.join(', ') ?? 'Configuration required'
                                 : chatAiProviderRuntimeLabel(provider)}
                         </span>
                     </button>

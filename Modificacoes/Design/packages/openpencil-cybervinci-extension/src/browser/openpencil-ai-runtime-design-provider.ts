@@ -83,6 +83,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions instead of giving multiple texts the full row width.',
                     'For every row frame, each child must have a distinct non-overlapping x position; do not leave multiple row children at x:0.',
                     'For cards with a visual/icon/image and text copy, keep the visual and copy in separate vertical or horizontal regions; never place image placeholders over text.',
+                    'Text node content must be readable plain text. Do not use mojibake, replacement characters, private-use glyphs, box symbols, repeated question marks, or repeated bars as visual placeholders; use icon_font, image, rectangle, ellipse, line, or path nodes for icons and visuals.',
                     this.createImageInstructions(request),
                     'Do not include markdown, prose, DOM patches, HTML, CSS, shell commands, or filesystem edits.'
                 ].join(' ')
@@ -151,6 +152,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
                     'Header/search/navigation rows must allocate explicit widths for logo, search, links, location, and account actions instead of giving multiple texts the full row width.',
                     'For every row frame, each child must have a distinct non-overlapping x position; do not leave multiple row children at x:0.',
                     'For cards with a visual/icon/image and text copy, keep the visual and copy in separate vertical or horizontal regions; never place image placeholders over text.',
+                    'Text node content must be readable plain text. Do not use mojibake, replacement characters, private-use glyphs, box symbols, repeated question marks, or repeated bars as visual placeholders; use icon_font, image, rectangle, ellipse, line, or path nodes for icons and visuals.',
                     this.createImageInstructions(request),
                     'Do not restate operations that were already emitted.',
                     'When finished, emit {"type":"complete"}.',
@@ -201,6 +203,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'Never update, move, resize, replace, or select a node ID that does not already exist in the document context or that you have not created earlier in the same response.',
             'For new design elements, introduce stable IDs with createNode/addNode before referencing them from later operations.',
             'Infer whether the user wants a web page, app screen, component, poster, banner, social creative, wireframe, diagram, or reference board before choosing canvas structure. If the user asks to copy/recreate a website or app surface, treat it as that page/screen surface even when the word "page" is omitted.',
+            'Keep text nodes human-readable. Never encode icons or placeholders as unreadable Unicode, private-use glyphs, box characters, repeated question marks, or repeated bars.',
             request.mode === 'continuation'
                 ? 'Continuation mode: keep existing content, preserve geometry, and add or refine only what the user requested.'
                 : undefined,
@@ -228,6 +231,7 @@ export class OpenPencilAiRuntimeDesignProvider implements OpenPencilAiDesignProv
             'Never include CyberVinci/Theia editor placeholder text as content in the .op document.',
             'Do not reorder by emitting children before their container; final sibling z-order (text/icons in front, backgrounds behind) is normalized automatically by the canvas, so always emit the container first and the nodes inside it afterward.',
             'Preserve existing node IDs unless creating or explicitly replacing nodes.',
+            'Keep text nodes human-readable. Never encode icons or placeholders as unreadable Unicode, private-use glyphs, box characters, repeated question marks, or repeated bars.',
             this.createImageInstructions(request),
             request.mode === 'continuation'
                 ? 'Continuation mode: keep existing content, preserve geometry, and append or refine only what the user requested.'

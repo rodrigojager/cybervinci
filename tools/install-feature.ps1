@@ -23,17 +23,20 @@ if (!(Test-Path -LiteralPath $target)) {
 
 $dependencies = @{
     'AI Output Cleaner' = @('Distribution')
+    'AI-Chat-Experience' = @('Distribution', 'Branding', 'AI-Providers', 'Design', 'Flow')
     'Arena' = @('Distribution', 'Branding')
     'Branding' = @('Distribution')
     'Builder' = @('Distribution', 'Branding')
-    'CSharp Kit' = @('Distribution', 'Branding', 'Memory', 'Razor Visual Editor')
+    'CSharp Kit' = @('Distribution', 'Branding', 'Razor Visual Editor')
     'Codex' = @('Distribution', 'Branding', 'AI-Providers')
-    'AI-Providers' = @('Distribution', 'Branding', 'Memory')
+    'AI-Providers' = @('Distribution', 'Branding')
     'Design' = @('Distribution', 'Branding', 'AI-Providers')
-    'Flow' = @('Distribution', 'Branding', 'AI-Providers', 'Library', 'Memory')
+    'Flow' = @('Distribution', 'Branding', 'AI-Providers')
     'Library' = @('Distribution', 'Branding')
+    'Markdown-Mermaid' = @('Distribution')
     'Memory' = @('Distribution', 'Branding', 'Library')
     'Razor Visual Editor' = @('Distribution')
+    'Themes' = @('Distribution')
     'Distribution' = @()
 }
 
@@ -44,17 +47,20 @@ $systemSkills = @{
 $allFeatures = @(
     'Distribution',
     'Branding',
+    'Library',
+    'Memory',
+    'AI-Providers',
+    'Themes',
+    'Design',
+    'Flow',
+    'Razor Visual Editor',
+    'AI-Chat-Experience',
     'AI Output Cleaner',
     'Arena',
     'Builder',
-    'CSharp Kit',
-    'Library',
-    'Design',
-    'AI-Providers',
+    'Markdown-Mermaid',
     'Codex',
-    'Memory',
-    'Razor Visual Editor',
-    'Flow'
+    'CSharp Kit'
 )
 
 $aliases = @{
@@ -71,6 +77,13 @@ $aliases = @{
     'Codex-Cli' = 'AI-Providers'
     'Codex CLI' = 'AI-Providers'
     'Codex-Provider' = 'AI-Providers'
+    'AI Chat Experience' = 'AI-Chat-Experience'
+    'AI-Chat' = 'AI-Chat-Experience'
+    'Chat Experience' = 'AI-Chat-Experience'
+    'Markdown Mermaid' = 'Markdown-Mermaid'
+    'Mermaid' = 'Markdown-Mermaid'
+    'Theme' = 'Themes'
+    'Themes' = 'Themes'
     'AI Providers' = 'AI-Providers'
     'AI-Providers' = 'AI-Providers'
     'Product-Shell' = 'Branding'

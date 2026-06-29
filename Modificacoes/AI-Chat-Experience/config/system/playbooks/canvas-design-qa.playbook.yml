@@ -65,6 +65,16 @@ playbooks:
           visualSnapshot: ${state.visualSnapshot}
           uri: ${input.uri}
           visionJudgeMode: ${input.visionJudgeMode}
+          visionExecution: ${input.visionExecution}
+          visualExecution: ${input.visualExecution}
+          visionProviderId: ${input.visionProviderId}
+          visualProviderId: ${input.visualProviderId}
+          visionRuntime: ${input.visionRuntime}
+          visualRuntime: ${input.visualRuntime}
+          visionModelProvider: ${input.visionModelProvider}
+          visualModelProvider: ${input.visualModelProvider}
+          visionModel: ${input.visionModel}
+          visualModel: ${input.visualModel}
         onPass: done
         onFail: choose-repair-path
       - id: choose-repair-path
@@ -143,6 +153,16 @@ playbooks:
           reference: ${state.knownReference}
           uri: ${input.uri}
           visionJudgeMode: ${input.visionJudgeMode}
+          visionExecution: ${input.visionExecution}
+          visualExecution: ${input.visualExecution}
+          visionProviderId: ${input.visionProviderId}
+          visualProviderId: ${input.visualProviderId}
+          visionRuntime: ${input.visionRuntime}
+          visualRuntime: ${input.visualRuntime}
+          visionModelProvider: ${input.visionModelProvider}
+          visualModelProvider: ${input.visualModelProvider}
+          visionModel: ${input.visionModel}
+          visualModel: ${input.visualModel}
         onPass: done
         onFail: ask-continue
       - id: ask-continue

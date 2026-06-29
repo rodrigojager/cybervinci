@@ -210,6 +210,9 @@ export const CyberVinciAiExecutionPicker: React.FC<CyberVinciAiExecutionPickerPr
         if (disabled) {
             return;
         }
+        if (menu === 'provider' && openMenu !== menu) {
+            setReloadVersion(version => version + 1);
+        }
         menuAnchorRef.current = event.currentTarget;
         setOpenMenu(current => current === menu ? undefined : menu);
     };
@@ -226,7 +229,7 @@ export const CyberVinciAiExecutionPicker: React.FC<CyberVinciAiExecutionPickerPr
                 <span className='cv-ai-runtime-menu-option-name'>{candidate.label}</span>
                 <span className='cv-ai-runtime-menu-option-detail'>
                     {needsConfiguration
-                        ? candidate.configurationRequired?.join(', ') ?? candidate.message ?? 'Configuration required'
+                        ? candidate.message ?? candidate.configurationRequired?.join(', ') ?? 'Configuration required'
                         : cyberVinciProviderRuntimeLabel(candidate)}
                 </span>
             </button>;

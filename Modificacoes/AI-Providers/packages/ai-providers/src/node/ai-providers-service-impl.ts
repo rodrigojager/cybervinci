@@ -11,6 +11,7 @@
 import { ContributionProvider, Disposable, ILogger, generateUuid, nls } from '@theia/core';
 import { inject, injectable, named, optional } from '@theia/core/shared/inversify';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -93,6 +94,13 @@ interface DirectHttpUnavailableModel {
     expiresAt: number;
 }
 
+interface DirectHttpCredentialError {
+    reason: string;
+    keyFingerprint: string;
+    observedAt: number;
+    expiresAt: number;
+}
+
 interface ResolvedSpawnEnvironment {
     env: NodeJS.ProcessEnv;
     fingerprint: string;
@@ -143,6 +151,7 @@ const OPENCODE_STATUS_REQUEST_TIMEOUT = 15000;
 const OPENCODE_COMMAND_MAX_OUTPUT = 2 * 1024 * 1024;
 const DIRECT_HTTP_MODEL_CATALOG_TTL_MS = 30 * 60 * 1000;
 const DIRECT_HTTP_UNAVAILABLE_MODEL_TTL_MS = 30 * 60 * 1000;
+const DIRECT_HTTP_CREDENTIAL_ERROR_TTL_MS = 30 * 60 * 1000;
 const MODELS_DEV_CATALOG_URL = 'https://models.dev/api.json';
 const MODELS_DEV_CATALOG_TTL_MS = 12 * 60 * 60 * 1000;
 const OPENCODE_PROVIDER_DEFAULT_MODELS: Record<string, string> = {
@@ -287,6 +296,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         value?: CodexProviderModelMetadata[] | undefined;
     }>();
     protected directHttpUnavailableModels = new Map<string, Map<string, DirectHttpUnavailableModel>>();
+    protected directHttpCredentialErrors = new Map<string, DirectHttpCredentialError>();
     protected modelsDevCatalogCache: {
         expiresAt: number;
         promise?: Promise<Map<string, Map<string, CodexProviderModelMetadata>>>;
@@ -900,6 +910,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             }
             if (!response.ok) {
                 const detail = await response.text().catch(() => '');
+                this.markDirectHttpCredentialErrorFromResponse(provider, apiKey, response.status, detail);
                 this.markDirectHttpModelUnavailableFromError(provider, model, response.status, detail);
                 throw new Error(nls.localize(
                     'theia/ai/ai-providers/directApiHttpError',
@@ -910,6 +921,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
                 ));
             }
 
+            this.clearDirectHttpCredentialError(provider, apiKey);
             if (response.body) {
                 await this.readDirectHttpSseStream(protocol, streamId, response.body, client);
             } else {
@@ -2261,6 +2273,8 @@ export class CodexProviderServiceImpl implements CodexProviderService {
 
     protected async getDirectHttpStatus(provider: DirectHttpProviderConfig, request: CodexProviderStatusRequest): Promise<CodexProviderBackendStatus> {
         const apiKey = this.resolveDirectHttpApiKey(provider, request);
+        const credentialError = apiKey ? this.currentDirectHttpCredentialError(provider, apiKey) : undefined;
+        const available = !!apiKey && !credentialError;
         const modelMetadata = await this.readDirectHttpModelCatalog(provider).catch(error => {
             this.logger.debug(`${provider.label} model list failed:`, error);
             return [this.fallbackDirectHttpModelMetadata(provider)];
@@ -2269,20 +2283,20 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         return {
             runtime: 'direct-http',
             modelProvider: provider.provider,
-            available: !!apiKey,
+            available,
             executablePath: provider.baseUrl,
             appServer: false,
-            authenticated: !!apiKey,
-            authStatus: apiKey ? 'api key configured' : 'api key required',
-            accountLabel: apiKey ? provider.label : undefined,
+            authenticated: available,
+            authStatus: !apiKey ? 'api key required' : credentialError ? 'api key rejected' : 'api key configured',
+            accountLabel: available ? provider.label : undefined,
             models,
             modelMetadata,
-            configurationRequired: apiKey ? undefined : [provider.apiKeyEnvVar],
-            message: apiKey ? undefined : nls.localize(
+            configurationRequired: available ? undefined : [provider.apiKeyEnvVar],
+            message: credentialError?.reason ?? (apiKey ? undefined : nls.localize(
                 'theia/ai/ai-providers/directApiKeyMissing',
                 'Configure an API key or set {0} in the environment.',
                 provider.apiKeyEnvVar
-            ),
+            )),
             capabilities: {
                 webSearch: provider.provider === 'openrouter',
                 imageGeneration: false,
@@ -2384,6 +2398,68 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             return parsedMessage || 'Model is not available for this provider/account.';
         }
         return undefined;
+    }
+
+    protected markDirectHttpCredentialErrorFromResponse(provider: DirectHttpProviderConfig, apiKey: string, status: number, detail: string): string | undefined {
+        const reason = this.directHttpCredentialErrorReason(status, detail);
+        if (!reason) {
+            return undefined;
+        }
+        const now = Date.now();
+        this.directHttpCredentialErrors.set(provider.provider, {
+            reason,
+            keyFingerprint: this.directHttpApiKeyFingerprint(apiKey),
+            observedAt: now,
+            expiresAt: now + DIRECT_HTTP_CREDENTIAL_ERROR_TTL_MS
+        });
+        this.logger?.warn(`${provider.label} API key was rejected: ${reason}`);
+        return reason;
+    }
+
+    protected clearDirectHttpCredentialError(provider: DirectHttpProviderConfig, apiKey: string): void {
+        const current = this.directHttpCredentialErrors.get(provider.provider);
+        if (!current || current.keyFingerprint !== this.directHttpApiKeyFingerprint(apiKey)) {
+            return;
+        }
+        this.directHttpCredentialErrors.delete(provider.provider);
+    }
+
+    protected currentDirectHttpCredentialError(provider: DirectHttpProviderConfig, apiKey: string): DirectHttpCredentialError | undefined {
+        const current = this.directHttpCredentialErrors.get(provider.provider);
+        if (!current) {
+            return undefined;
+        }
+        if (current.expiresAt <= Date.now() || current.keyFingerprint !== this.directHttpApiKeyFingerprint(apiKey)) {
+            this.directHttpCredentialErrors.delete(provider.provider);
+            return undefined;
+        }
+        return current;
+    }
+
+    protected directHttpCredentialErrorReason(status: number, detail: string): string | undefined {
+        if (status !== 401 && status !== 403) {
+            return undefined;
+        }
+        const parsedMessage = this.extractDirectHttpErrorMessage(detail);
+        if (status === 401) {
+            return parsedMessage || nls.localize(
+                'theia/ai/ai-providers/directApiKeyRejected',
+                'The provider rejected the configured API key. Paste a valid key to continue.'
+            );
+        }
+        const candidate = parsedMessage || detail;
+        const normalized = candidate.toLowerCase();
+        if (/\b(api[\s_-]?key|auth|authenticated|authentication|unauthori[sz]ed|credential|forbidden|invalid|token)\b/.test(normalized)) {
+            return parsedMessage || nls.localize(
+                'theia/ai/ai-providers/directApiKeyRejectedForbidden',
+                'The provider rejected the configured API key or account permissions. Paste a valid key to continue.'
+            );
+        }
+        return undefined;
+    }
+
+    protected directHttpApiKeyFingerprint(apiKey: string): string {
+        return createHash('sha256').update(apiKey).digest('hex');
     }
 
     protected extractDirectHttpErrorMessage(detail: string): string | undefined {
@@ -2795,6 +2871,8 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             if (preset.runtime === 'direct-http') {
                 const provider = DIRECT_HTTP_PROVIDER_CONFIGS[preset.modelProvider];
                 const apiKey = provider ? this.resolveDirectHttpApiKey(provider, request) : undefined;
+                const credentialError = apiKey && provider ? this.currentDirectHttpCredentialError(provider, apiKey) : undefined;
+                const available = !!apiKey && !credentialError;
                 const modelMetadata = apiKey && provider
                     ? await this.readDirectHttpModelCatalog(provider).catch(error => {
                         this.logger.debug(`${provider.label} detected model list failed:`, error);
@@ -2805,16 +2883,16 @@ export class CodexProviderServiceImpl implements CodexProviderService {
                 return {
                     ...preset,
                     executablePath: provider?.baseUrl ?? preset.modelProvider,
-                    available: !!apiKey,
+                    available,
                     cliAvailable: true,
-                    configured: !!apiKey,
+                    configured: available,
                     models,
                     modelMetadata,
-                    message: apiKey ? undefined : nls.localize(
+                    message: credentialError?.reason ?? (apiKey ? undefined : nls.localize(
                         'theia/ai/ai-providers/directProviderNeedsApiKey',
                         'Set {0} or paste the API key in CyberVinci.',
                         provider?.apiKeyEnvVar ?? 'API_KEY'
-                    )
+                    ))
                 };
             }
             const executablePath = this.resolveDetectionExecutable(preset, request);

@@ -234,8 +234,12 @@ export declare class CyberVinciToolRegistry {
     protected estimatedTextHeight(text: string, width: number): number;
     protected cloneJson<T>(value: T): T;
     protected readResultRecord(result: CyberVinciHostToolExecutionResult): Record<string, unknown> | undefined;
-    protected visionJudgeInputItems(context: CyberVinciHostToolExecutionContext, visualSnapshot: Record<string, unknown> | undefined): CodexProviderInputItem[];
-    protected svgToDataUrl(svg: string): string;
+    protected visionJudgeInputItems(context: CyberVinciHostToolExecutionContext, visualSnapshot: Record<string, unknown> | undefined): Promise<CodexProviderInputItem[]>;
+    protected svgToPngDataUrl(svg: string, bounds: unknown): Promise<string | undefined>;
+    protected readVisualSnapshotSize(bounds: unknown): {
+        width: number;
+        height: number;
+    } | undefined;
     protected readVisionExecutionSelection(context: CyberVinciHostToolExecutionContext): CyberVinciAiExecutionSelection;
     protected readAiExecutionSelection(context: CyberVinciHostToolExecutionContext): CyberVinciAiExecutionSelection;
     protected readObjectInput<T>(value: unknown): Partial<T>;

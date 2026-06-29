@@ -161,6 +161,42 @@ async function main() {
   const playbookCalls = [];
   const preferenceValues = new Map();
   globalThis.btoa = globalThis.btoa || (value => Buffer.from(value, 'binary').toString('base64'));
+  globalThis.URL.createObjectURL = () => 'blob:canvas-vision-smoke';
+  globalThis.URL.revokeObjectURL = () => undefined;
+  globalThis.Image = class SmokeImage {
+    constructor() {
+      this.naturalWidth = 900;
+      this.naturalHeight = 620;
+      this.width = 900;
+      this.height = 620;
+    }
+    set src(_value) {
+      queueMicrotask(() => this.onload?.());
+    }
+  };
+  globalThis.window = {
+    document: {
+      createElement: tag => {
+        assert.equal(tag, 'canvas');
+        return {
+          width: 0,
+          height: 0,
+          getContext: kind => {
+            assert.equal(kind, '2d');
+            return {
+              imageSmoothingEnabled: false,
+              imageSmoothingQuality: 'low',
+              drawImage: () => undefined
+            };
+          },
+          toDataURL: type => {
+            assert.equal(type, 'image/png');
+            return 'data:image/png;base64,smoke-canvas-png';
+          }
+        };
+      }
+    }
+  };
 
   const registry = new CyberVinciToolRegistry();
   const smokePlaybook = {
@@ -694,7 +730,7 @@ async function main() {
         assert.equal(request.effectPolicy.previewOnly, true);
         assert.ok(request.input.reference);
         assert.ok(request.input.visualSnapshot);
-        assert.ok(request.inputItems.some(item => item.type === 'image' && item.url.startsWith('data:image/svg+xml;base64,')));
+        assert.ok(request.inputItems.some(item => item.type === 'image' && item.url.startsWith('data:image/png;base64,')));
         return {
           provider: { id: 'openrouter', label: 'OpenRouter' },
           execution: { model: 'gpt-5.5' },
