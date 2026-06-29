@@ -49,7 +49,10 @@ import {
 } from '../common';
 import { CyberVinciCatalogValidator } from './cybervinci-catalog-validator';
 
-const AGENCY_AGENTS_RELATIVE_PATH = path.join('Modificacoes', 'Skills', 'Manual', 'Agency Agents');
+const AGENCY_AGENTS_RELATIVE_PATHS = [
+    path.join('Modificacoes', 'Skills', 'Manual', 'Agency Agents'),
+    path.join('Skills', 'Manual', 'Agency Agents')
+];
 const CHAT_AGENTS_RELATIVE_PATH = path.join('Modificacoes', 'AI-Chat-Experience', 'config', 'chat-agents.json');
 const CHAT_CATALOG_RELATIVE_PATH = path.join('Modificacoes', 'AI-Chat-Experience', 'config');
 const DECLARATIVE_TOOL_TIMEOUT = 120_000;
@@ -1764,7 +1767,7 @@ export class CyberVinciAgencyAgentService implements CyberVinciAiChatExperienceS
         if (explicit) {
             const explicitCandidates = [
                 explicit,
-                path.join(explicit, AGENCY_AGENTS_RELATIVE_PATH)
+                ...AGENCY_AGENTS_RELATIVE_PATHS.map(relativePath => path.join(explicit, relativePath))
             ];
             for (const candidate of explicitCandidates) {
                 if (await this.pathExists(candidate)) {
@@ -1778,12 +1781,14 @@ export class CyberVinciAgencyAgentService implements CyberVinciAiChatExperienceS
             ...this.parentCandidates(__dirname)
         ];
         for (const base of candidates) {
-            const candidate = base.endsWith(AGENCY_AGENTS_RELATIVE_PATH)
-                ? base
-                : path.join(base, AGENCY_AGENTS_RELATIVE_PATH);
-            if (await this.pathExists(candidate)) {
-                this.cachedRoot = candidate;
-                return candidate;
+            for (const relativePath of AGENCY_AGENTS_RELATIVE_PATHS) {
+                const candidate = base.endsWith(relativePath)
+                    ? base
+                    : path.join(base, relativePath);
+                if (await this.pathExists(candidate)) {
+                    this.cachedRoot = candidate;
+                    return candidate;
+                }
             }
         }
         return undefined;

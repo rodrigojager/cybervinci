@@ -230,13 +230,13 @@
   background-color: var(--theia-inputOption-activeBackground, var(--theia-dropdown-background));
 }
 
-.theia-ChatInput-AiProviderButton:not(:disabled):hover,
-.theia-ChatInput-AiProviderButton.needs-configuration {
+.theia-ChatInput-AiProviderButton:not(:disabled):hover {
   border-color: var(--theia-focusBorder);
 }
 
 .theia-ChatInput-AiProviderButton.needs-configuration {
-  color: var(--theia-editorWarning-foreground, var(--theia-foreground));
+  color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
+  border-color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
 }
 
 .theia-ChatInput-AiProviderButton:disabled {
@@ -440,7 +440,7 @@
 }
 
 .theia-ChatInput-AiProviderMenuOption.unavailable {
-  color: var(--theia-editorWarning-foreground, var(--theia-foreground));
+  color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
 }
 
 .theia-ChatInput-AiProviderMenuOption:disabled {

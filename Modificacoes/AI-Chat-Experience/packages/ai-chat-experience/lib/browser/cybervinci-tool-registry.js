@@ -2741,7 +2741,9 @@ var CyberVinciToolRegistry = function () {
                             layoutDiagnostics = this.readResultRecord(diagnosticsResult);
                             knownReference = knownReferenceResult.ok ? knownReferenceResult.value : undefined;
                             explicitReference = (_g = (_f = context.input.reference) !== null && _f !== void 0 ? _f : context.input.referenceUrl) !== null && _g !== void 0 ? _g : context.input.referenceImage;
-                            inputItems = this.visionJudgeInputItems(context, visualSnapshot);
+                            return [4 /*yield*/, this.visionJudgeInputItems(context, visualSnapshot)];
+                        case 2:
+                            inputItems = _l.sent();
                             input = {
                                 prompt: prompt,
                                 requestedOutcome: (_h = context.input.requestedOutcome) !== null && _h !== void 0 ? _h : context.input.acceptanceCriteria,
@@ -2798,7 +2800,7 @@ var CyberVinciToolRegistry = function () {
                                     },
                                     execution: this.readVisionExecutionSelection(context)
                                 })];
-                        case 2:
+                        case 3:
                             result = _l.sent();
                             structured = (_j = result.structured) !== null && _j !== void 0 ? _j : {};
                             passed = structured.passed === true || (structured.passed !== false && structured.needsRepair !== true && ((_k = structured.score) !== null && _k !== void 0 ? _k : 1) >= 0.72);
@@ -3389,7 +3391,7 @@ var CyberVinciToolRegistry = function () {
                 ? result.value
                 : undefined;
         };
-        CyberVinciToolRegistry_1.prototype.visionJudgeInputItems = function (context, visualSnapshot) {
+        CyberVinciToolRegistry_1.prototype.visionJudgeInputItems = async function (context, visualSnapshot) {
             var items = [];
             var imageValues = [
                 context.input.imageUrl,
@@ -3412,18 +3414,66 @@ var CyberVinciToolRegistry = function () {
             }
             var svg = visualSnapshot === null || visualSnapshot === void 0 ? void 0 : visualSnapshot.svg;
             if (typeof svg === 'string' && svg.trim()) {
-                items.push({ type: 'image', url: this.svgToDataUrl(svg) });
+                var snapshot = await this.svgToPngDataUrl(svg, visualSnapshot === null || visualSnapshot === void 0 ? void 0 : visualSnapshot.bounds);
+                if (snapshot) {
+                    items.push({ type: 'image', url: snapshot });
+                }
+                else {
+                    items.push({
+                        type: 'text',
+                        text: 'The Canvas visual snapshot could not be rasterized to PNG for the vision model; use the document summary and layout diagnostics as fallback evidence.',
+                        text_elements: []
+                    });
+                }
             }
             return items;
         };
-        CyberVinciToolRegistry_1.prototype.svgToDataUrl = function (svg) {
-            var bytes = new TextEncoder().encode(svg);
-            var binary = '';
-            var chunkSize = 0x8000;
-            for (var index = 0; index < bytes.length; index += chunkSize) {
-                binary += String.fromCharCode.apply(String, bytes.slice(index, index + chunkSize));
+        CyberVinciToolRegistry_1.prototype.svgToPngDataUrl = async function (svg, bounds) {
+            var blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            try {
+                var image = await new Promise(function (resolve, reject) {
+                    var element = new Image();
+                    element.onload = function () { return resolve(element); };
+                    element.onerror = function () { return reject(new Error('Canvas SVG snapshot could not be rasterized for Vision Judge.')); };
+                    element.src = url;
+                });
+                var fallbackSize = this.readVisualSnapshotSize(bounds);
+                var naturalWidth = image.naturalWidth || image.width || (fallbackSize === null || fallbackSize === void 0 ? void 0 : fallbackSize.width) || 1;
+                var naturalHeight = image.naturalHeight || image.height || (fallbackSize === null || fallbackSize === void 0 ? void 0 : fallbackSize.height) || 1;
+                var maxDimension = 2200;
+                var scale = Math.min(1, maxDimension / Math.max(naturalWidth, naturalHeight));
+                var canvas = window.document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(naturalWidth * scale));
+                canvas.height = Math.max(1, Math.round(naturalHeight * scale));
+                var context = canvas.getContext('2d');
+                if (!context) {
+                    return undefined;
+                }
+                context.imageSmoothingEnabled = true;
+                context.imageSmoothingQuality = 'high';
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                return canvas.toDataURL('image/png');
             }
-            return "data:image/svg+xml;base64,".concat(btoa(binary));
+            catch (error) {
+                var _a;
+                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug('CyberVinci Vision Judge PNG snapshot creation failed:', error);
+                return undefined;
+            }
+            finally {
+                URL.revokeObjectURL(url);
+            }
+        };
+        CyberVinciToolRegistry_1.prototype.readVisualSnapshotSize = function (bounds) {
+            if (!bounds || typeof bounds !== 'object') {
+                return undefined;
+            }
+            var record = bounds;
+            var width = typeof record.width === 'number' ? record.width : Number(record.width);
+            var height = typeof record.height === 'number' ? record.height : Number(record.height);
+            return Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0
+                ? { width: width, height: height }
+                : undefined;
         };
         CyberVinciToolRegistry_1.prototype.readVisionExecutionSelection = function (context) {
             var useIndependentVisionModel = this.preferenceService.get(cybervinci_ai_chat_experience_preferences_1.CYBERVINCI_AI_CHAT_VISION_JUDGE_ENABLED_PREF, false);

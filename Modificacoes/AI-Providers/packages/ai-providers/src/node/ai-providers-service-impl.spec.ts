@@ -191,6 +191,48 @@ class TestCodexProviderServiceImpl extends CodexProviderServiceImpl {
         } : undefined;
     }
 
+    async directStatusAfterCredentialError(modelProvider: string, apiKey: string, detail: string, status = 401) {
+        const provider = this.resolveDirectHttpProviderConfig({
+            runtime: 'direct-http',
+            modelProvider
+        });
+        if (!provider) {
+            throw new Error(`No direct provider for ${modelProvider}`);
+        }
+        this.directHttpModelCatalogCache.set(provider.provider, {
+            value: [this.fallbackDirectHttpModelMetadata(provider)],
+            expiresAt: Date.now() + 60000
+        });
+        this.markDirectHttpCredentialErrorFromResponse(provider, apiKey, status, detail);
+        return this.getDirectHttpStatus(provider, {
+            runtime: 'direct-http',
+            modelProvider,
+            openRouterApiKey: modelProvider === 'openrouter' ? apiKey : undefined,
+            openCodeApiKey: modelProvider === 'opencode' || modelProvider === 'opencode-go' ? apiKey : undefined
+        });
+    }
+
+    async directStatusAfterChangedCredential(modelProvider: string, badApiKey: string, newApiKey: string, detail: string) {
+        const provider = this.resolveDirectHttpProviderConfig({
+            runtime: 'direct-http',
+            modelProvider
+        });
+        if (!provider) {
+            throw new Error(`No direct provider for ${modelProvider}`);
+        }
+        this.directHttpModelCatalogCache.set(provider.provider, {
+            value: [this.fallbackDirectHttpModelMetadata(provider)],
+            expiresAt: Date.now() + 60000
+        });
+        this.markDirectHttpCredentialErrorFromResponse(provider, badApiKey, 401, detail);
+        return this.getDirectHttpStatus(provider, {
+            runtime: 'direct-http',
+            modelProvider,
+            openRouterApiKey: modelProvider === 'openrouter' ? newApiKey : undefined,
+            openCodeApiKey: modelProvider === 'opencode' || modelProvider === 'opencode-go' ? newApiKey : undefined
+        });
+    }
+
     directEvent(protocol: 'openai-chat' | 'openai-responses' | 'anthropic-messages' | 'google-generate', block: string): Array<CodexProviderStreamMessage | undefined> {
         const tokens: Array<CodexProviderStreamMessage | undefined> = [];
         const client: CodexProviderClient = {
@@ -536,6 +578,33 @@ describe('CodexProviderServiceImpl', () => {
             unavailable: true,
             unavailableReason: 'Free promotion has ended for Qwen3.6 Plus Free. You can continue using the model by subscribing to OpenCode Go - https://opencode.ai/go'
         });
+    });
+
+    it('marks direct HTTP providers unavailable after an API key rejection', async () => {
+        const status = await service.directStatusAfterCredentialError('openrouter', 'bad-key', JSON.stringify({
+            error: {
+                message: 'Invalid API key'
+            }
+        }));
+
+        expect(status.available).equals(false);
+        expect(status.authenticated).equals(false);
+        expect(status.authStatus).equals('api key rejected');
+        expect(status.configurationRequired).deep.equals(['OPENROUTER_API_KEY']);
+        expect(status.message).equals('Invalid API key');
+    });
+
+    it('clears direct HTTP API key rejection state when the configured key changes', async () => {
+        const status = await service.directStatusAfterChangedCredential('openrouter', 'bad-key', 'new-key', JSON.stringify({
+            error: {
+                message: 'Invalid API key'
+            }
+        }));
+
+        expect(status.available).equals(true);
+        expect(status.authenticated).equals(true);
+        expect(status.authStatus).equals('api key configured');
+        expect(status.configurationRequired).equals(undefined);
     });
 
     it('marks OpenCode Go models as subscription included by default', () => {

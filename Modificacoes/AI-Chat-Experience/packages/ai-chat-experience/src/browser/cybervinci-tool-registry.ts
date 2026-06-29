@@ -21,12 +21,6 @@ import {
     redactFlowSecretsValue
 } from '@cybervinci/flow/lib/common';
 import {
-    MemoryItem,
-    MemoryScope,
-    MemoryService,
-    MemorySourceKind
-} from '@cybervinci/memory/lib/common';
-import {
     CyberVinciAiExecutionSelection,
     CyberVinciAiProviderDescriptor
 } from '@cybervinci/ai-runtime/lib/common';
@@ -80,6 +74,77 @@ import {
 const FLOW_START_WORKFLOW_COMMAND = 'cybervinci.flow.startWorkflow';
 const FLOW_RUN_DYNAMIC_WORKFLOW_COMMAND = 'cybervinci.flow.runDynamicWorkflow';
 const NATIVE_AGENT_PLAYBOOK_PREFIX = 'native-agent.';
+const MEMORY_SERVICE_TOKEN = 'cybervinci.memory.MemoryService';
+
+type MemoryScope = 'global' | 'workspace' | 'repository' | 'session' | 'task';
+type MemorySourceKind = string;
+type MemoryType =
+    | 'user_preference'
+    | 'project_decision'
+    | 'project_convention'
+    | 'file_location'
+    | 'architecture_note'
+    | 'workflow_note'
+    | 'interaction_summary'
+    | 'generated_skill_note'
+    | 'bug_history'
+    | 'command_note'
+    | 'testing_note'
+    | 'security_note'
+    | 'manual_note';
+
+interface MemoryItem {
+    id: string;
+    title: string;
+    memoryType: MemoryType;
+}
+
+interface MemoryService {
+    search(query: {
+        workspacePath: string;
+        text: string;
+        limit?: number;
+        sourceKinds?: MemorySourceKind[];
+        sessionId?: string;
+        taskId?: string;
+    }): Promise<Array<{
+        id: string;
+        sourceKind: string;
+        title: string;
+        snippet: string;
+        score: number;
+        uri?: string;
+        evidence?: string;
+        estimatedTokens?: number;
+    }>>;
+    buildContextPack(request: {
+        workspacePath: string;
+        prompt: string;
+        retrievalResults: unknown[];
+        tokenBudget: number;
+    }): Promise<unknown>;
+    proposeMemoryCandidate(request: {
+        workspacePath: string;
+        text: string;
+        source: string;
+        evidence: string;
+        eventId?: string;
+        relativePath?: string;
+        maxCandidates?: number;
+    }): Promise<{ candidates: unknown[]; created: number }>;
+    addMemory(memory: {
+        scope: MemoryScope;
+        workspacePath?: string;
+        memoryType: MemoryType;
+        title: string;
+        content: string;
+        importance?: 'low' | 'medium' | 'high' | 'critical';
+        source: string;
+        evidence?: string;
+        taskId?: string;
+        sessionId?: string;
+    }): Promise<MemoryItem>;
+}
 
 interface CyberVinciCanvasDiagnostic {
     category: 'document' | 'overlap' | 'off-canvas' | 'text-overflow' | 'footer' | 'clone-completeness' | 'layout-quality';
@@ -178,7 +243,7 @@ export class CyberVinciToolRegistry {
     @inject(FlowService) @optional()
     protected readonly flowService: FlowService | undefined;
 
-    @inject(MemoryService) @optional()
+    @inject(MEMORY_SERVICE_TOKEN) @optional()
     protected readonly memoryService: MemoryService | undefined;
 
     @inject(CyberVinciAiRuntimeFrontendService) @optional()
@@ -2346,7 +2411,7 @@ export class CyberVinciToolRegistry {
         const layoutDiagnostics = this.readResultRecord(diagnosticsResult);
         const knownReference = knownReferenceResult.ok ? knownReferenceResult.value : undefined;
         const explicitReference = context.input.reference ?? context.input.referenceUrl ?? context.input.referenceImage;
-        const inputItems = this.visionJudgeInputItems(context, visualSnapshot);
+        const inputItems = await this.visionJudgeInputItems(context, visualSnapshot);
         const input = {
             prompt,
             requestedOutcome: context.input.requestedOutcome ?? context.input.acceptanceCriteria,
@@ -3023,7 +3088,7 @@ export class CyberVinciToolRegistry {
             : undefined;
     }
 
-    protected visionJudgeInputItems(context: CyberVinciHostToolExecutionContext, visualSnapshot: Record<string, unknown> | undefined): CodexProviderInputItem[] {
+    protected async visionJudgeInputItems(context: CyberVinciHostToolExecutionContext, visualSnapshot: Record<string, unknown> | undefined): Promise<CodexProviderInputItem[]> {
         const items: CodexProviderInputItem[] = [];
         const imageValues = [
             context.input.imageUrl,
@@ -3044,19 +3109,64 @@ export class CyberVinciToolRegistry {
         }
         const svg = visualSnapshot?.svg;
         if (typeof svg === 'string' && svg.trim()) {
-            items.push({ type: 'image', url: this.svgToDataUrl(svg) });
+            const snapshot = await this.svgToPngDataUrl(svg, visualSnapshot?.bounds);
+            if (snapshot) {
+                items.push({ type: 'image', url: snapshot });
+            } else {
+                items.push({
+                    type: 'text',
+                    text: 'The Canvas visual snapshot could not be rasterized to PNG for the vision model; use the document summary and layout diagnostics as fallback evidence.',
+                    text_elements: []
+                });
+            }
         }
         return items;
     }
 
-    protected svgToDataUrl(svg: string): string {
-        const bytes = new TextEncoder().encode(svg);
-        let binary = '';
-        const chunkSize = 0x8000;
-        for (let index = 0; index < bytes.length; index += chunkSize) {
-            binary += String.fromCharCode(...bytes.slice(index, index + chunkSize));
+    protected async svgToPngDataUrl(svg: string, bounds: unknown): Promise<string | undefined> {
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        try {
+            const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const element = new Image();
+                element.onload = () => resolve(element);
+                element.onerror = () => reject(new Error('Canvas SVG snapshot could not be rasterized for Vision Judge.'));
+                element.src = url;
+            });
+            const fallbackSize = this.readVisualSnapshotSize(bounds);
+            const naturalWidth = image.naturalWidth || image.width || fallbackSize?.width || 1;
+            const naturalHeight = image.naturalHeight || image.height || fallbackSize?.height || 1;
+            const maxDimension = 2200;
+            const scale = Math.min(1, maxDimension / Math.max(naturalWidth, naturalHeight));
+            const canvas = window.document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(naturalHeight * scale));
+            const context = canvas.getContext('2d');
+            if (!context) {
+                return undefined;
+            }
+            context.imageSmoothingEnabled = true;
+            context.imageSmoothingQuality = 'high';
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/png');
+        } catch (error) {
+            this.logger?.debug('CyberVinci Vision Judge PNG snapshot creation failed:', error);
+            return undefined;
+        } finally {
+            URL.revokeObjectURL(url);
         }
-        return `data:image/svg+xml;base64,${btoa(binary)}`;
+    }
+
+    protected readVisualSnapshotSize(bounds: unknown): { width: number; height: number } | undefined {
+        if (!bounds || typeof bounds !== 'object') {
+            return undefined;
+        }
+        const record = bounds as Record<string, unknown>;
+        const width = typeof record.width === 'number' ? record.width : Number(record.width);
+        const height = typeof record.height === 'number' ? record.height : Number(record.height);
+        return Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0
+            ? { width, height }
+            : undefined;
     }
 
     protected readVisionExecutionSelection(context: CyberVinciHostToolExecutionContext): CyberVinciAiExecutionSelection {
@@ -3391,8 +3501,8 @@ export class CyberVinciToolRegistry {
             : 'workspace';
     }
 
-    protected readMemoryType(value: unknown): MemoryItem['memoryType'] {
-        const allowed: Array<MemoryItem['memoryType']> = [
+    protected readMemoryType(value: unknown): MemoryType {
+        const allowed: MemoryType[] = [
             'user_preference',
             'project_decision',
             'project_convention',
@@ -3405,7 +3515,7 @@ export class CyberVinciToolRegistry {
             'generated_skill_note',
             'manual_note'
         ];
-        return typeof value === 'string' && (allowed as string[]).includes(value) ? value as MemoryItem['memoryType'] : 'manual_note';
+        return typeof value === 'string' && (allowed as string[]).includes(value) ? value as MemoryType : 'manual_note';
     }
 
     protected readMemoryTitle(input: Record<string, unknown>, content: string): string {

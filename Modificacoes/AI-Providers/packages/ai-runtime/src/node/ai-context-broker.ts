@@ -10,25 +10,72 @@
 
 import { inject, injectable, optional } from '@theia/core/shared/inversify';
 import {
-    ContextPack,
-    MemoryContextSuggestionResult,
-    MemoryService,
-    RetrievalResult
-} from '@cybervinci/memory/lib/common';
-import {
     CyberVinciAiContextReport,
     CyberVinciAiTaskRequest
 } from '../common';
+
+const MEMORY_SERVICE_TOKEN = 'cybervinci.memory.MemoryService';
 
 export interface CyberVinciAiPreparedContext {
     report: CyberVinciAiContextReport;
     promptSection?: string;
 }
 
+interface RetrievalResult {
+    id: string;
+    sourceKind: string;
+    title: string;
+    snippet: string;
+    score: number;
+    uri?: string;
+    evidence?: string;
+    estimatedTokens?: number;
+    rankingSignals?: Record<string, unknown>;
+}
+
+interface MemoryContextSuggestionResult {
+    suggestions: Array<{
+        id: string;
+        sourceKind: string;
+        title: string;
+        reason: string;
+        score: number;
+        uri?: string;
+        estimatedTokens: number;
+        rankingSignals?: Record<string, unknown>;
+    }>;
+    estimatedTokens: number;
+    omittedCount: number;
+}
+
+interface ContextPack {
+    estimatedTokens: number;
+    sections: Array<{ id: string; title: string; content: string }>;
+    citations: Array<{ resultId: string; sourceKind: string; title: string; uri?: string }>;
+}
+
+interface MemoryService {
+    suggestContext(request: {
+        workspacePath: string;
+        prompt: string;
+        limit: number;
+        tokenBudget: number;
+        sourceKinds?: string[];
+        sessionId?: string;
+        taskId?: string;
+    }): Promise<MemoryContextSuggestionResult>;
+    buildContextPack(request: {
+        workspacePath: string;
+        prompt: string;
+        retrievalResults: RetrievalResult[];
+        tokenBudget: number;
+    }): Promise<ContextPack>;
+}
+
 @injectable()
 export class CyberVinciAiContextBroker {
 
-    @inject(MemoryService) @optional()
+    @inject(MEMORY_SERVICE_TOKEN) @optional()
     protected readonly memoryService?: MemoryService;
 
     async prepare(request: CyberVinciAiTaskRequest): Promise<CyberVinciAiPreparedContext> {
@@ -54,7 +101,7 @@ export class CyberVinciAiContextBroker {
                 prompt,
                 limit: policy?.maxItems ?? 8,
                 tokenBudget: policy?.tokenBudget ?? 1400,
-                sourceKinds: policy?.sourceKinds as never,
+                sourceKinds: policy?.sourceKinds,
                 sessionId: policy?.sessionId ?? request.sessionId,
                 taskId: policy?.taskId ?? request.taskId
             });

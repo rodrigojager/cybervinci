@@ -174,8 +174,8 @@
 }
 
 .cv-ai-runtime-picker-button.needs-configuration {
-    border-color: var(--theia-warn-foreground);
-    color: var(--theia-warn-foreground);
+    border-color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
+    color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
 }
 
 .cv-ai-runtime-picker-button:focus-visible {
@@ -256,7 +256,7 @@
 }
 
 .cv-ai-runtime-menu-option.unavailable {
-    color: var(--theia-descriptionForeground);
+    color: var(--theia-errorForeground, var(--theia-charts-red, #f14c4c));
 }
 
 .cv-ai-runtime-menu-option-name,

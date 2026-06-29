@@ -99,7 +99,7 @@ export class RazorVisualAssetResolver {
     protected extractCssLinks(content: string): string[] {
         const links: string[] = [];
         for (const match of content.matchAll(/<link\b[^>]*rel=["'][^"']*stylesheet[^"']*["'][^>]*>/gi)) {
-            const href = /\bhref=["']([^"']+)["']/i.exec(match[0])?.[1];
+            const href = this.extractCssHref(match[0]);
             if (href) {
                 links.push(href);
             }
@@ -107,15 +107,23 @@ export class RazorVisualAssetResolver {
         return links;
     }
 
+    protected extractCssHref(linkTag: string): string | undefined {
+        const razorPath = /@(?:Url\.)?(?:Content|Href)\s*\(\s*["']([^"']+)["']\s*\)/i.exec(linkTag)?.[1];
+        if (razorPath) {
+            return razorPath;
+        }
+        return /\bhref\s*=\s*["']([^"']+)["']/i.exec(linkTag)?.[1];
+    }
+
     protected extractScriptLinks(content: string): string[] {
         return Array.from(content.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)).map(match => match[1]);
     }
 
     protected extractStyleBundles(content: string): string[] {
-        return Array.from(content.matchAll(/@Styles\.Render\s*\(\s*"([^"]+)"\s*\)/g)).map(match => match[1]);
+        return Array.from(content.matchAll(/@Styles\.Render\s*\(\s*["']([^"']+)["']\s*\)/g)).map(match => match[1]);
     }
 
     protected extractScriptBundles(content: string): string[] {
-        return Array.from(content.matchAll(/@Scripts\.Render\s*\(\s*"([^"]+)"\s*\)/g)).map(match => match[1]);
+        return Array.from(content.matchAll(/@Scripts\.Render\s*\(\s*["']([^"']+)["']\s*\)/g)).map(match => match[1]);
     }
 }

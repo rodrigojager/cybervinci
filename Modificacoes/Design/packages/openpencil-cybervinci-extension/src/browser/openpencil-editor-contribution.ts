@@ -349,6 +349,7 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
     protected readonly toDispose = new DisposableCollection();
     protected readonly documents = new OpenPencilDocumentService();
     protected readonly templates = new OpenPencilTemplateService();
+    protected readonly visualJudgeFailureWarnings = new Set<string>();
 
     @inject(EditorManager)
     protected readonly editorManager: EditorManager;
@@ -3291,11 +3292,11 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
 
     protected canRunAiVisualReferenceComparison(executionChoice: OpenPencilAiExecutionChoice): boolean {
         const visualMetadata = this.resolveAiVisualModelMetadata(executionChoice);
+        const explicitVisualJudge = !!executionChoice.visualExecution;
         return !!this.aiRuntimeService
-            && !!executionChoice.execution
+            && !!(executionChoice.visualExecution ?? executionChoice.execution)
             && executionChoice.visualReference?.mode !== 'off'
-            && (this.modelMetadataSupportsInputModality(visualMetadata, 'image')
-                || (!!executionChoice.visualExecution && !visualMetadata));
+            && (explicitVisualJudge || this.modelMetadataSupportsInputModality(visualMetadata, 'image'));
     }
 
     protected resolveAiVisualModelMetadata(executionChoice: OpenPencilAiExecutionChoice): CyberVinciAiModelMetadata | undefined {
@@ -3404,8 +3405,24 @@ export class OpenPencilEditorContribution extends NavigatableWidgetOpenHandler<O
                 errorName: error instanceof Error ? error.name : typeof error,
                 messageLength: error instanceof Error ? error.message.length : String(error).length
             });
+            this.warnVisualJudgeFailureOnce(visualExecution, error);
             return undefined;
         }
+    }
+
+    protected warnVisualJudgeFailureOnce(execution: CyberVinciAiExecutionSelection, error: unknown): void {
+        const message = error instanceof Error ? error.message : String(error);
+        const executionLabel = [
+            execution.label || execution.providerId || execution.runtime,
+            execution.model
+        ].filter(Boolean).join(' / ');
+        const warningKey = `${execution.providerId ?? execution.runtime}:${execution.model ?? ''}:${message.slice(0, 160)}`;
+        if (this.visualJudgeFailureWarnings.has(warningKey)) {
+            return;
+        }
+        this.visualJudgeFailureWarnings.add(warningKey);
+        const detail = message.length > 220 ? `${message.slice(0, 217)}...` : message;
+        this.messages.warn(`Canvas AI Vision Judge failed with ${executionLabel || 'the selected provider/model'}: ${detail}`);
     }
 
     protected async renderOpenPencilDocumentToPngDataUrl(document: OpenPencilDocument): Promise<string | undefined> {

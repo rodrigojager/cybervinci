@@ -6,7 +6,6 @@
     "@cybervinci/ai-providers": "1.72.0",
     "@cybervinci/ai-runtime": "1.72.0",
     "@cybervinci/flow": "1.72.0",
-    "@cybervinci/memory": "1.72.0",
     "@cybervinci/openpencil-extension": "1.72.0",
     "@theia/ai-chat": "1.72.0",
     "@theia/ai-core": "1.72.0",
@@ -40,7 +39,8 @@
   "homepage": "https://github.com/eclipse-theia/theia",
   "files": [
     "lib",
-    "src"
+    "src",
+    "config"
   ],
   "scripts": {
     "build": "theiaext build",
