@@ -9,6 +9,7 @@
 // *****************************************************************************
 
 import { ConnectionHandler, RpcConnectionHandler, bindContributionProvider } from '@theia/core';
+import { BackendApplicationContribution } from '@theia/core/lib/node';
 import { ContainerModule } from '@theia/core/shared/inversify';
 import { CODEX_CLI_SERVICE_PATH, CodexProviderClient, CodexProviderService } from '../common/ai-providers-service';
 import { CodexProviderSpawnEnvironmentContribution } from './ai-providers-spawn-environment';
@@ -18,6 +19,7 @@ export default new ContainerModule(bind => {
     bindContributionProvider(bind, CodexProviderSpawnEnvironmentContribution);
     bind(CodexProviderServiceImpl).toSelf().inSingletonScope();
     bind(CodexProviderService).toService(CodexProviderServiceImpl);
+    bind(BackendApplicationContribution).toService(CodexProviderServiceImpl);
 
     bind(ConnectionHandler).toDynamicValue(ctx =>
         new RpcConnectionHandler<CodexProviderClient>(CODEX_CLI_SERVICE_PATH, client => {

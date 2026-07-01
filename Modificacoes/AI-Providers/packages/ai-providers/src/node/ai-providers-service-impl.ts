@@ -152,8 +152,25 @@ const OPENCODE_COMMAND_MAX_OUTPUT = 2 * 1024 * 1024;
 const DIRECT_HTTP_MODEL_CATALOG_TTL_MS = 30 * 60 * 1000;
 const DIRECT_HTTP_UNAVAILABLE_MODEL_TTL_MS = 30 * 60 * 1000;
 const DIRECT_HTTP_CREDENTIAL_ERROR_TTL_MS = 30 * 60 * 1000;
+const BASE_PROCESS_ENVIRONMENT_TTL_MS = 30 * 1000;
 const MODELS_DEV_CATALOG_URL = 'https://models.dev/api.json';
 const MODELS_DEV_CATALOG_TTL_MS = 12 * 60 * 60 * 1000;
+const AI_PROVIDER_ENVIRONMENT_KEYS = [
+    'PATH',
+    'Path',
+    'CODEX_CLI_PATH',
+    'OPENROUTER_API_KEY',
+    'OPENCODE_API_KEY',
+    'GEMINI_CLI_PATH',
+    'CLAUDE_CODE_CLI_PATH',
+    'CURSOR_AGENT_CLI_PATH',
+    'OPENAI_API_KEY',
+    'ANTHROPIC_API_KEY',
+    'GOOGLE_API_KEY',
+    'GEMINI_API_KEY',
+    'HUGGINGFACE_API_KEY',
+    'VERCEL_AI_API_KEY'
+];
 const OPENCODE_PROVIDER_DEFAULT_MODELS: Record<string, string> = {
     openrouter: 'openrouter/openai/gpt-5.5',
     'opencode-go': 'opencode-go/deepseek-v4-flash',
@@ -307,9 +324,15 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     protected activeStreamId: string | undefined;
     protected processKey = '';
     protected stderrTail: string[] = [];
+    protected baseProcessEnvironmentCache: { expiresAt: number, value: ResolvedSpawnEnvironment } | undefined;
+    protected baseProcessEnvironmentPromise: Promise<ResolvedSpawnEnvironment> | undefined;
 
     setClient(client: CodexProviderClient): void {
         this.client = client;
+    }
+
+    async initialize(): Promise<void> {
+        await this.primeProcessEnvironment();
     }
 
     onAppServerNotification(listener: (notification: CodexProviderAppServerNotification) => void): Disposable {
@@ -390,6 +413,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     }
 
     async login(request: CodexProviderLoginRequest): Promise<CodexProviderLoginResult> {
+        await this.primeProcessEnvironment();
         const directProvider = this.resolveDirectHttpProviderConfig(request);
         if (directProvider) {
             return {
@@ -425,6 +449,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     }
 
     async restart(request: CodexProviderStatusRequest): Promise<CodexProviderBackendStatus> {
+        await this.primeProcessEnvironment();
         if (this.isDirectHttpRuntime(request.runtime)) {
             for (const stream of this.activeStreams.values()) {
                 if (stream.runtime === 'direct-http') {
@@ -464,6 +489,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     }
 
     async getStatus(request: CodexProviderStatusRequest): Promise<CodexProviderBackendStatus> {
+        await this.primeProcessEnvironment();
         const detectedProviders = await this.detectProviders(request);
         const directProvider = this.resolveDirectHttpProviderConfig(request);
         if (directProvider) {
@@ -508,6 +534,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
     }
 
     async invokeAppServerRequest(request: CodexProviderAppServerRequest): Promise<unknown> {
+        await this.primeProcessEnvironment();
         await this.ensureServer(request.executablePath, request.profile, request.cwd);
         return this.sendRequest(request.method, request.params ?? {}, request.timeoutMs);
     }
@@ -647,7 +674,8 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         this.pendingServerResponses.get(response.requestId)?.(response);
     }
 
-    protected sendBackendMessages(streamId: string, request: CodexProviderBackendRequest, client: CodexProviderClient | undefined): Promise<void> {
+    protected async sendBackendMessages(streamId: string, request: CodexProviderBackendRequest, client: CodexProviderClient | undefined): Promise<void> {
+        await this.primeProcessEnvironment();
         const directProvider = this.resolveDirectHttpProviderConfig(request);
         if (directProvider) {
             return this.sendDirectHttpMessages(directProvider, streamId, request, client);
@@ -766,11 +794,12 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             const executable = this.resolveCliExecutable(adapter, request);
             const args = this.buildCliRunArgs(adapter, request);
             const spawnInfo = this.buildSpawnInfo(executable, args);
+            const resolvedEnvironment = await this.resolveSpawnEnvironment({ executablePath: executable, cwd, sessionId: request.sessionId });
             const prompt = this.buildCliPrompt(adapter, request.prompt, request.input, cwd);
             const workspaceBefore = await this.snapshotWorkspaceFiles(cwd);
             const childProcess = spawn(spawnInfo.command, spawnInfo.args, {
                 cwd,
-                env: { ...process.env },
+                env: resolvedEnvironment.env,
                 shell: spawnInfo.shell,
                 windowsHide: true
             });
@@ -2009,10 +2038,156 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         });
     }
 
-    protected async resolveSpawnEnvironment(context: CodexProviderSpawnEnvironmentContext): Promise<ResolvedSpawnEnvironment> {
+    protected async primeProcessEnvironment(): Promise<void> {
+        await this.resolveBaseProcessEnvironment();
+    }
+
+    protected async resolveBaseProcessEnvironment(): Promise<ResolvedSpawnEnvironment> {
+        const now = Date.now();
+        if (this.baseProcessEnvironmentCache && this.baseProcessEnvironmentCache.expiresAt > now) {
+            return {
+                env: { ...this.baseProcessEnvironmentCache.value.env },
+                fingerprint: this.baseProcessEnvironmentCache.value.fingerprint
+            };
+        }
+        if (!this.baseProcessEnvironmentPromise) {
+            this.baseProcessEnvironmentPromise = this.loadBaseProcessEnvironment()
+                .then(value => {
+                    this.baseProcessEnvironmentCache = {
+                        expiresAt: Date.now() + BASE_PROCESS_ENVIRONMENT_TTL_MS,
+                        value
+                    };
+                    return value;
+                })
+                .finally(() => {
+                    this.baseProcessEnvironmentPromise = undefined;
+                });
+        }
+        const value = await this.baseProcessEnvironmentPromise;
+        return {
+            env: { ...value.env },
+            fingerprint: value.fingerprint
+        };
+    }
+
+    protected async loadBaseProcessEnvironment(): Promise<ResolvedSpawnEnvironment> {
         const env: NodeJS.ProcessEnv = { ...process.env };
+        if (process.platform === 'win32') {
+            try {
+                this.mergeWindowsEnvironment(env, await this.readWindowsEnvironmentFromRegistry());
+            } catch (error) {
+                this.logger.debug('CyberVinci AI Providers could not read Windows user environment:', error);
+            }
+            this.applyPathEntries(env, this.defaultWindowsPathEntries(env));
+        }
+        this.applyResolvedEnvironmentToProcess(env);
+        return {
+            env,
+            fingerprint: this.environmentFingerprint(env)
+        };
+    }
+
+    protected readWindowsEnvironmentFromRegistry(): Promise<NodeJS.ProcessEnv> {
+        const systemRoot = process.env.SystemRoot || 'C:\\Windows';
+        const powershell = path.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+        const script = [
+            '$ErrorActionPreference = "Stop"',
+            '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)',
+            '$OutputEncoding = [Console]::OutputEncoding',
+            '$result = @{}',
+            'foreach ($scope in @("Machine", "User")) {',
+            '  $vars = [Environment]::GetEnvironmentVariables($scope)',
+            '  foreach ($key in $vars.Keys) {',
+            '    $value = [string]$vars[$key]',
+            '    if ($value) { $result[$key] = [Environment]::ExpandEnvironmentVariables($value) }',
+            '  }',
+            '}',
+            '$result | ConvertTo-Json -Compress'
+        ].join('; ');
+        return this.runRawCommandOutput(powershell, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], undefined, 3000, { ...process.env })
+            .then(output => {
+                const parsed = JSON.parse(output.replace(/^\uFEFF/, '').trim() || '{}') as Record<string, unknown>;
+                const env: NodeJS.ProcessEnv = {};
+                for (const [key, value] of Object.entries(parsed)) {
+                    if (typeof value === 'string' && value.trim()) {
+                        env[key] = value;
+                    }
+                }
+                return env;
+            });
+    }
+
+    protected mergeWindowsEnvironment(env: NodeJS.ProcessEnv, incoming: NodeJS.ProcessEnv): void {
+        const pathKey = this.findPathKey(env);
+        const incomingPathKey = Object.keys(incoming).find(key => key.toLowerCase() === 'path');
+        if (incomingPathKey && incoming[incomingPathKey]) {
+            this.applyPathEntries(env, incoming[incomingPathKey]!.split(path.delimiter).filter(entry => !!entry));
+        }
+        for (const [key, value] of Object.entries(incoming)) {
+            if (!value || key.toLowerCase() === 'path') {
+                continue;
+            }
+            const existingKey = Object.keys(env).find(candidate => candidate.toLowerCase() === key.toLowerCase());
+            if (!existingKey || !env[existingKey]) {
+                env[existingKey ?? key] = value;
+            }
+        }
+        if (!env[pathKey]) {
+            env[pathKey] = incoming[incomingPathKey ?? 'Path'];
+        }
+    }
+
+    protected defaultWindowsPathEntries(env: NodeJS.ProcessEnv): string[] {
+        if (process.platform !== 'win32') {
+            return [];
+        }
+        const userProfile = env.USERPROFILE || os.homedir();
+        const localAppData = env.LOCALAPPDATA || (userProfile ? path.join(userProfile, 'AppData', 'Local') : undefined);
+        const programFiles = env.ProgramFiles || 'C:\\Program Files';
+        const programFilesX86 = env['ProgramFiles(x86)'];
+        return [
+            userProfile ? path.join(userProfile, 'AppData', 'Roaming', 'npm') : undefined,
+            localAppData ? path.join(localAppData, 'Programs', 'nodejs') : undefined,
+            programFiles ? path.join(programFiles, 'nodejs') : undefined,
+            programFilesX86 ? path.join(programFilesX86, 'nodejs') : undefined,
+            env.VOLTA_HOME ? path.join(env.VOLTA_HOME, 'bin') : undefined,
+            env.FNM_MULTISHELL_PATH,
+            env.MISE_BIN
+        ].filter((entry): entry is string => !!entry);
+    }
+
+    protected applyResolvedEnvironmentToProcess(env: NodeJS.ProcessEnv): void {
+        const processPathKey = this.findPathKey(process.env);
+        const envPathKey = this.findPathKey(env);
+        if (env[envPathKey]) {
+            process.env[processPathKey] = env[envPathKey];
+        }
+        for (const [key, value] of Object.entries(env)) {
+            if (!value || key.toLowerCase() === 'path') {
+                continue;
+            }
+            const existingKey = Object.keys(process.env).find(candidate => candidate.toLowerCase() === key.toLowerCase());
+            if (!existingKey || !process.env[existingKey]) {
+                process.env[existingKey ?? key] = value;
+            }
+        }
+    }
+
+    protected environmentFingerprint(env: NodeJS.ProcessEnv): string {
+        const relevant = AI_PROVIDER_ENVIRONMENT_KEYS
+            .map(key => {
+                const actualKey = Object.keys(env).find(candidate => candidate.toLowerCase() === key.toLowerCase());
+                return actualKey ? `${key}=${env[actualKey] ?? ''}` : `${key}=`;
+            })
+            .join('\n');
+        return createHash('sha256').update(relevant).digest('hex');
+    }
+
+    protected async resolveSpawnEnvironment(context: CodexProviderSpawnEnvironmentContext): Promise<ResolvedSpawnEnvironment> {
+        const baseEnvironment = await this.resolveBaseProcessEnvironment();
+        const env: NodeJS.ProcessEnv = { ...baseEnvironment.env };
         const pathEntries: string[] = [];
-        const fingerprints: string[] = [];
+        const fingerprints: string[] = [baseEnvironment.fingerprint];
         const contributions = this.spawnEnvironmentContributions?.getContributions() ?? [];
         for (const contribution of contributions) {
             let fragment: CodexProviderSpawnEnvironmentFragment | undefined;
@@ -2042,6 +2217,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             env,
             fingerprint: JSON.stringify({
                 sessionId: context.sessionId || '',
+                base: baseEnvironment.fingerprint,
                 pathEntries,
                 fingerprints
             })
@@ -3079,20 +3255,33 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         };
     }
 
-    protected runCommandOutput(executable: string, args: string[], cwd: string | undefined, timeoutMs: number): Promise<string> {
+    protected async runCommandOutput(executable: string, args: string[], cwd: string | undefined, timeoutMs: number): Promise<string> {
         const spawnInfo = this.buildSpawnInfo(executable, args);
+        const resolvedEnvironment = await this.resolveSpawnEnvironment({ executablePath: executable, cwd });
+        return this.runRawCommandOutput(spawnInfo.command, spawnInfo.args, cwd, timeoutMs, resolvedEnvironment.env, spawnInfo.shell, executable);
+    }
+
+    protected runRawCommandOutput(
+        command: string,
+        args: string[],
+        cwd: string | undefined,
+        timeoutMs: number,
+        env: NodeJS.ProcessEnv,
+        shell = false,
+        displayCommand = command
+    ): Promise<string> {
         return new Promise((resolve, reject) => {
-            const childProcess = spawn(spawnInfo.command, spawnInfo.args, {
+            const childProcess = spawn(command, args, {
                 cwd: cwd || process.cwd(),
-                env: { ...process.env },
-                shell: spawnInfo.shell,
+                env,
+                shell,
                 windowsHide: true
             });
             let stdout = '';
             let stderr = '';
             const timeout = setTimeout(() => {
                 childProcess.kill();
-                reject(new Error(nls.localize('theia/ai/ai-providers/commandTimedOut', 'Timed out while running {0}.', executable)));
+                reject(new Error(nls.localize('theia/ai/ai-providers/commandTimedOut', 'Timed out while running {0}.', displayCommand)));
             }, timeoutMs);
             childProcess.stdout.setEncoding('utf8');
             childProcess.stdout.on('data', chunk => stdout = this.truncateCommandOutput(stdout + String(chunk)));
@@ -3111,7 +3300,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
                     reject(new Error(output || nls.localize(
                         'theia/ai/ai-providers/commandExitedWithCode',
                         '{0} exited with code {1}.',
-                        executable,
+                        displayCommand,
                         code ?? nls.localize('theia/ai/ai-providers/unknownCode', 'unknown')
                     )));
                 }
@@ -3879,7 +4068,7 @@ export class CodexProviderServiceImpl implements CodexProviderService {
             const commandLine = [executable, ...args].map(arg => this.quoteWindowsArg(arg)).join(' ');
             return {
                 command: 'cmd.exe',
-                args: ['/d', '/s', '/c', commandLine],
+                args: ['/d', '/s', '/c', `chcp 65001>nul & ${commandLine}`],
                 shell: false
             };
         }
@@ -3890,12 +4079,13 @@ export class CodexProviderServiceImpl implements CodexProviderService {
         };
     }
 
-    protected readExecutableVersion(executable: string, cwd?: string): Promise<string | undefined> {
+    protected async readExecutableVersion(executable: string, cwd?: string): Promise<string | undefined> {
         const spawnInfo = this.buildSpawnInfo(executable, ['--version']);
+        const resolvedEnvironment = await this.resolveSpawnEnvironment({ executablePath: executable, cwd });
         return new Promise((resolve, reject) => {
             const childProcess = spawn(spawnInfo.command, spawnInfo.args, {
                 cwd: cwd || process.cwd(),
-                env: { ...process.env },
+                env: resolvedEnvironment.env,
                 shell: spawnInfo.shell,
                 windowsHide: true
             });

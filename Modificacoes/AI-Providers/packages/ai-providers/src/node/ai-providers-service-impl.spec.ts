@@ -253,6 +253,16 @@ class TestCodexProviderServiceImpl extends CodexProviderServiceImpl {
         return pathKey ? resolved.env[pathKey] : undefined;
     }
 
+    mergeWindowsEnv(base: NodeJS.ProcessEnv, incoming: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+        const env = { ...base };
+        this.mergeWindowsEnvironment(env, incoming);
+        return env;
+    }
+
+    spawnInfo(executable: string, args: string[]): { command: string, args: string[], shell: boolean } {
+        return this.buildSpawnInfo(executable, args);
+    }
+
     setSpawnEnvironmentContributions(contributions: CodexProviderSpawnEnvironmentContribution[]): void {
         (this as unknown as { spawnEnvironmentContributions: ContributionProvider<CodexProviderSpawnEnvironmentContribution> }).spawnEnvironmentContributions = {
             getContributions: () => contributions
@@ -793,6 +803,36 @@ describe('CodexProviderServiceImpl', () => {
 
         expect(fingerprint).to.contain('chat-1');
         expect(mergedPath?.split(path.delimiter)[0]).to.equal('C:\\cleaner\\bin');
+    });
+
+    it('merges Windows user environment without replacing explicit process values', () => {
+        const merged = service.mergeWindowsEnv({
+            Path: 'C:\\existing\\bin',
+            OPENAI_API_KEY: 'already-set'
+        }, {
+            Path: 'C:\\Users\\dev\\AppData\\Roaming\\npm;C:\\Program Files\\nodejs',
+            OPENAI_API_KEY: 'from-registry',
+            OPENCODE_API_KEY: 'from-registry'
+        });
+
+        expect(merged.OPENAI_API_KEY).to.equal('already-set');
+        expect(merged.OPENCODE_API_KEY).to.equal('from-registry');
+        if (process.platform === 'win32') {
+            expect(merged.Path?.split(path.delimiter).slice(0, 2)).deep.equals([
+                'C:\\Users\\dev\\AppData\\Roaming\\npm',
+                'C:\\Program Files\\nodejs'
+            ]);
+        }
+    });
+
+    it('runs Windows command wrappers through cmd.exe with UTF-8 output enabled', () => {
+        if (process.platform !== 'win32') {
+            return;
+        }
+        const spawnInfo = service.spawnInfo('codex.cmd', ['--version']);
+        expect(spawnInfo.command).to.equal('cmd.exe');
+        expect(spawnInfo.args.join(' ')).contains('chcp 65001>nul');
+        expect(spawnInfo.args.join(' ')).contains('codex.cmd --version');
     });
 
     it('emits synthetic file changes with unified diffs for shell-created edits', async () => {

@@ -274,6 +274,51 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
         await this.preferenceService.set(preferenceName, value || undefined, PreferenceScope.User);
     }
 
+    protected async selectProviderPreset(preset: ProviderPreset): Promise<void> {
+        let detected = this.detectedProviderFor(preset);
+        if (!detected) {
+            await this.refreshStatus();
+            detected = this.detectedProviderFor(preset);
+        }
+        if (!detected?.available) {
+            const configured = await this.configurePresetRequirement(preset, detected);
+            if (!configured) {
+                return;
+            }
+        }
+        await this.applyProviderPreset(preset);
+    }
+
+    protected async configurePresetRequirement(preset: ProviderPreset, detected?: CodexProviderDetectedProvider): Promise<boolean> {
+        const apiKeyPreference = this.apiKeyPreferenceForPreset(preset);
+        if (apiKeyPreference) {
+            const current = this.preferenceService.get<string>(apiKeyPreference, '');
+            if (!current || detected?.configured === false) {
+                return this.promptForPreference(apiKeyPreference, this.apiKeyPromptForPreset(preset), this.apiKeyPlaceholderForPreset(preset), true);
+            }
+            return true;
+        }
+        const executablePreference = this.executablePreferenceForPreset(preset);
+        if (executablePreference && detected && !detected.cliAvailable) {
+            return this.promptForPreference(executablePreference, this.executablePromptForPreset(preset), this.defaultExecutableForPreset(preset), false);
+        }
+        return true;
+    }
+
+    protected async promptForPreference(preferenceName: string, prompt: string, placeHolder: string, password: boolean): Promise<boolean> {
+        const value = await this.quickInputService.input({
+            placeHolder,
+            prompt,
+            password
+        });
+        if (value === undefined) {
+            return false;
+        }
+        await this.setPreference(preferenceName, value.trim() || undefined);
+        await this.refreshStatus();
+        return true;
+    }
+
     protected render(): React.ReactNode {
         const status = this.status;
         const available = status?.available !== false;
@@ -555,7 +600,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
                 key={item.preset}
                 className={`ai-providers-connect-item ${state} ${active ? 'active' : ''}`}
                 title={this.detectedProviderTitle(detected)}
-                onClick={() => this.applyProviderPreset(item.preset)}
+                onClick={() => this.selectProviderPreset(item.preset)}
             >
                 <span className={this.providerCatalogIcon(item.preset)} />
                 <span className="ai-providers-connect-copy">
@@ -622,7 +667,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
             <button
                 className={`ai-providers-segment ${active ? 'active' : ''} ${availabilityClass}`}
                 title={this.detectedProviderTitle(detected)}
-                onClick={() => this.applyProviderPreset(preset)}
+                onClick={() => this.selectProviderPreset(preset)}
             >
                 <span className={iconClass} />
                 <span>{label}</span>
@@ -675,7 +720,7 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
                     {!provider.available && provider.cliAvailable && provider.message ? <span> · {provider.message}</span> : undefined}
                 </div>
                 <div className="ai-providers-detection-actions">
-                    <button className="theia-button secondary" onClick={() => this.applyProviderPreset(preset)}>
+                    <button className="theia-button secondary" onClick={() => this.selectProviderPreset(preset)}>
                         {provider.available
                             ? nls.localizeByDefault('Use')
                             : provider.cliAvailable && provider.configured === false
@@ -711,6 +756,66 @@ export class CodexProviderConfigurationWidget extends ReactWidget {
         return this.status?.detectedProviders?.find(provider =>
             provider.runtime === config.runtime && provider.modelProvider === config.provider
         );
+    }
+
+    protected apiKeyPreferenceForPreset(preset: ProviderPreset): string | undefined {
+        if (preset === 'openrouter') {
+            return CODEX_CLI_OPENROUTER_API_KEY_PREF;
+        }
+        if (preset === 'opencode-go' || preset === 'opencode') {
+            return CODEX_CLI_OPENCODE_API_KEY_PREF;
+        }
+        return undefined;
+    }
+
+    protected executablePreferenceForPreset(preset: ProviderPreset): string | undefined {
+        if (preset === 'codex') {
+            return CODEX_CLI_EXECUTABLE_PATH_PREF;
+        }
+        if (preset === 'gemini') {
+            return CODEX_CLI_GEMINI_EXECUTABLE_PATH_PREF;
+        }
+        if (preset === 'claude-code') {
+            return CODEX_CLI_CLAUDE_EXECUTABLE_PATH_PREF;
+        }
+        if (preset === 'cursor') {
+            return CODEX_CLI_CURSOR_EXECUTABLE_PATH_PREF;
+        }
+        return undefined;
+    }
+
+    protected apiKeyPromptForPreset(preset: ProviderPreset): string {
+        return preset === 'openrouter'
+            ? nls.localize('theia/ai-providers/configuration/openRouterApiKeyPrompt', 'OpenRouter API Key')
+            : nls.localize('theia/ai-providers/configuration/openCodeApiKeyPrompt', 'OpenCode API Key');
+    }
+
+    protected apiKeyPlaceholderForPreset(preset: ProviderPreset): string {
+        return preset === 'openrouter' ? 'OPENROUTER_API_KEY' : 'OPENCODE_API_KEY';
+    }
+
+    protected executablePromptForPreset(preset: ProviderPreset): string {
+        return nls.localize('theia/ai-providers/configuration/executablePrompt', '{0} executable path', this.currentProviderLabelForPreset(preset));
+    }
+
+    protected defaultExecutableForPreset(preset: ProviderPreset): string {
+        if (preset === 'codex') {
+            return 'codex';
+        }
+        if (preset === 'gemini') {
+            return 'gemini';
+        }
+        if (preset === 'claude-code') {
+            return 'claude';
+        }
+        if (preset === 'cursor') {
+            return 'cursor-agent';
+        }
+        return '';
+    }
+
+    protected currentProviderLabelForPreset(preset: ProviderPreset): string {
+        return PROVIDER_CATALOG.find(item => item.preset === preset)?.label ?? preset;
     }
 
     protected presetForDetectedProvider(provider: CodexProviderDetectedProvider): ProviderPreset {

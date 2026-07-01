@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "productName": "CyberVinci",
+  "releaseKind": "desktop-installer",
+  "core": {
+    "id": "desktop-core",
+    "label": "CyberVinci Desktop",
+    "required": true,
+    "description": "Desktop CyberVinci with product shell, themes, AI Chat, provider controls, Canvas, Flow, visual HTML/cshtml editing, virtual goal, virtual reasoning, playbooks, agency agents and chat-integrated Flow.",
+    "features": [
+      "Distribution",
+      "Branding",
+      "Themes",
+      "AI-Providers",
+      "AI-Chat-Experience",
+      "Design",
+      "Flow",
+      "Razor Visual Editor",
+      "Markdown-Mermaid"
+    ],
+    "packages": [
+      "@cybervinci/branding",
+      "@cybervinci/themes",
+      "@cybervinci/ai-providers",
+      "@cybervinci/ai-runtime",
+      "@cybervinci/ai-chat-experience",
+      "@cybervinci/openpencil-extension",
+      "@cybervinci/flow",
+      "@cybervinci/razor-visual-editor",
+      "@cybervinci/markdown-mermaid-preview"
+    ]
+  },
+  "localOnlyComponents": [
+    {
+      "id": "ai-output-cleaner",
+      "label": "AI Output Cleaner",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
+      "packages": [
+        "@cybervinci/ai-output-cleaner"
+      ]
+    },
+    {
+      "id": "arena",
+      "label": "Arena",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
+      "packages": [
+        "@cybervinci/arena"
+      ]
+    },
+    {
+      "id": "builder",
+      "label": "Builder",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
+      "packages": [
+        "@cybervinci/builder",
+        "@cybervinci/builder-ai",
+        "@cybervinci/builder-editor-puck",
+        "@cybervinci/builder-export-html",
+        "@cybervinci/builder-export-react",
+        "@cybervinci/builder-property-panel-rjsf",
+        "@cybervinci/builder-registry",
+        "@cybervinci/builder-renderer-mantine",
+        "@cybervinci/builder-schema"
+      ]
+    },
+    {
+      "id": "memory",
+      "label": "Memory",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
+      "packages": [
+        "@cybervinci/memory",
+        "@cybervinci/memory-roslyn"
+      ]
+    },
+    {
+      "id": "library",
+      "label": "Library",
+      "reason": "Bundled in the full all-extensions build for local validation; excluded from smaller variants.",
+      "packages": [
+        "@cybervinci/library"
+      ]
+    }
+  ],
+  "optionalComponents": [
+    {
+      "id": "csharp-dotnet",
+      "label": "C# and .NET tooling",
+      "defaultSelected": false,
+      "description": "Adds C# Kit for solution/project workflows, tests, IntelliSense-style LSP bridge, debug profiles and .NET workflow commands. Memory/Roslyn inventory is bundled only by the full all-extensions build.",
+      "features": [
+        "CSharp Kit"
+      ],
+      "packages": [
+        "@cybervinci/csharp-kit"
+      ],
+      "runtimeRequirements": [
+        "dotnet SDK on PATH for full workflow support",
+        "csharp-ls, OmniSharp, VS Code C# extension runtime or explicit workspace adapter config for full C# language-server support",
+        "Razor language-server runtime or VS Code C# extension runtime for full Razor LSP support",
+        "netcoredbg, vsdbg or explicit CoreCLR debug adapter config for F5 debugging"
+      ],
+      "validationCommands": [
+        "npm --prefix packages/csharp-kit run check:runtime-readiness",
+        "npm --prefix packages/csharp-kit run check:runtime-readiness:full -- --workspace <workspace>"
+      ]
+    },
+    {
+      "id": "codex-extension",
+      "label": "Codex extension",
+      "defaultSelected": false,
+      "description": "Adds the CyberVinci Codex sidebar/webview extension and host bridge. AI Providers stay installed in core so chat can still use provider modes without this dedicated sidebar.",
+      "features": [
+        "Codex"
+      ],
+      "packages": [
+        "@cybervinci/codex"
+      ],
+      "runtimeRequirements": [
+        "Bundled Codex webview resources or CODEX_VSCODE_EXTENSION_WEBVIEW during package build",
+        "Codex CLI/authentication configured by the user for real Codex execution"
+      ],
+      "validationCommands": [
+        "npm --prefix packages/codex run compile",
+        "npm run build:electron"
+      ]
+    }
+  ]
+}

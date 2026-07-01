@@ -37,7 +37,7 @@ import {
     CODEX_CLI_WEB_SEARCH_CONTEXT_SIZE_PREF,
     CODEX_CLI_WEB_SEARCH_PREF
 } from '../common/ai-providers-preferences';
-import { CodexProviderRuntime, CodexProviderStatus } from '../common/ai-providers-service';
+import { CodexProviderDetectedProvider, CodexProviderRuntime, CodexProviderStatus } from '../common/ai-providers-service';
 import { CYBERVINCI_AI_PROVIDERS_OUTPUT_CHANNEL, CodexProviderFrontendService } from './ai-providers-frontend-service';
 import { CODEX_CLI_LANGUAGE_MODEL_ID } from './ai-providers-language-model';
 
@@ -430,7 +430,7 @@ export class CodexProviderCommandContribution implements CommandContribution {
             return;
         }
         if (selected.preferenceName === '__codex_provider_preset') {
-            await this.applyProviderPreset(selected.value as ProviderPreset);
+            await this.configureProviderModel(selected.value as ProviderPreset);
             return;
         }
         let value = selected.value;
@@ -599,8 +599,17 @@ export class CodexProviderCommandContribution implements CommandContribution {
             : preset === 'opencode-go' || preset === 'opencode'
                 ? CODEX_CLI_OPENCODE_API_KEY_PREF
                 : undefined;
-        if (!preferenceName || (!force && this.preferenceService.get<string>(preferenceName, ''))) {
+        if (!preferenceName) {
             return true;
+        }
+        if (!force) {
+            if (this.preferenceService.get<string>(preferenceName, '')) {
+                return true;
+            }
+            const detected = await this.detectedProviderForPreset(preset);
+            if (detected?.available) {
+                return true;
+            }
         }
         const value = await this.quickInputService.input({
             placeHolder: preset === 'openrouter' ? 'OPENROUTER_API_KEY' : 'OPENCODE_API_KEY',
@@ -614,6 +623,14 @@ export class CodexProviderCommandContribution implements CommandContribution {
         }
         await this.preferenceService.set(preferenceName, value.trim() || undefined, PreferenceScope.User);
         return true;
+    }
+
+    protected async detectedProviderForPreset(preset: ProviderPreset): Promise<CodexProviderDetectedProvider | undefined> {
+        const config = PROVIDER_PRESET_CONFIG[preset];
+        const status = await this.codexProvider.getStatus();
+        return status.detectedProviders?.find(provider =>
+            provider.runtime === config.runtime && provider.modelProvider === config.provider
+        );
     }
 
     protected async configureProviderCredentials(preset: ProviderPreset, force = false): Promise<boolean> {
